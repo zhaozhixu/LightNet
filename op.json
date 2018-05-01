@@ -1,0 +1,75 @@
+{
+    "slice1": {
+        "op": "slice"
+        "args": {
+            "src": "input"
+            "dst": ""
+            "axis": 1
+            "start": 1
+            "len": 2
+        }
+    }
+    "reshape1": {
+        "op": "reshape"
+        "args": {
+            "src": "slice1_dst"
+            "dst": ""
+            "dims": [1, 2, 3]
+        }
+    }
+    "maxreduce1": {
+        "op": "maxreduce"
+        "args": {
+            "src": "reshape1_dst"
+            "dst": ""
+            "arg": ""
+            "axis": 1
+        }
+    }
+    "mul1": {
+        "op": "mul"
+        "args": {
+            "src1": "maxreduce1_dst"
+            "src2": "maxreduce1_arg"
+            "dst": ""
+        }
+    }
+    "transpose1": {
+        "op": "transpose"
+        "args": {
+            "src": "mul1_dst"
+            "dst": ""
+            "axes": [2, 1, 0]
+        }
+    }
+    "conv1": {
+        "op": "convolution"
+        "args": {
+            "src": "transpose1_dst"
+            "dst": ""
+            "channel": 64
+            "size": [3, 3]
+            "stride": [2, 2]
+            "padding": [1, 1]
+        }
+    }
+    "relu1": {
+        "op": "activation"
+        "args": {
+            "src": "conv1_dst"
+            "dst": ""
+            "type": "relu"
+        }
+    }
+    "pool1": {
+        "op": "pooling"
+        "args": {
+            "src": "relu1_dst"
+            "dst": ""
+            "type": "max"
+            "size": [3, 3]
+            "stride": [2, 2]
+            "padding": [1, 1]
+        }
+    }
+}
