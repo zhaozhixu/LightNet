@@ -1,4 +1,11 @@
 *~
-*.out
-*.o
 *.bak
+*.o
+*.so
+*.out
+check_output.xml
+test_lightnet
+GPATH
+GRTAGS
+GTAGS
+obj/

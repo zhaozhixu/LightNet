@@ -1,9 +1,11 @@
 {
     "slice1": {
         "op": "slice"
-        "args": {
+        "tensor": {
             "src": "input"
-            "dst": ""
+            "dst": "slice1"
+        }
+        "param": {
             "axis": 1
             "start": 1
             "len": 2
@@ -11,42 +13,53 @@
     }
     "reshape1": {
         "op": "reshape"
-        "args": {
-            "src": "slice1_dst"
-            "dst": ""
+        "tensor": {
+            "src": "slice1"
+            "dst": "reshape1"
+        }
+        "param": {
             "dims": [1, 2, 3]
         }
     }
     "maxreduce1": {
         "op": "maxreduce"
-        "args": {
-            "src": "reshape1_dst"
-            "dst": ""
-            "arg": ""
+        "tensor": {
+            "src": "reshape1"
+            "dst": "maxreduce1_dst"
+            "arg": "maxreduce1_arg"
+        }
+        "param": {
             "axis": 1
         }
     }
     "mul1": {
         "op": "mul"
-        "args": {
+        "tensor": {
             "src1": "maxreduce1_dst"
             "src2": "maxreduce1_arg"
-            "dst": ""
+            "dst": "mul1"
+        }
+        "param": {
         }
     }
     "transpose1": {
         "op": "transpose"
-        "args": {
-            "src": "mul1_dst"
-            "dst": ""
+        "tensor": {
+            "src": "mul1"
+            "dst": "transpose1"
+            "workspace": "transpose1_workspace"
+        }
+        "param": {
             "axes": [2, 1, 0]
         }
     }
     "conv1": {
         "op": "convolution"
-        "args": {
-            "src": "transpose1_dst"
-            "dst": ""
+        "tensor": {
+            "src": "transpose1"
+            "dst": "conv1"
+        }
+        "param": {
             "channel": 64
             "size": [3, 3]
             "stride": [2, 2]
@@ -55,17 +68,21 @@
     }
     "relu1": {
         "op": "activation"
-        "args": {
-            "src": "conv1_dst"
-            "dst": ""
+        "tensor": {
+            "src": "conv1"
+            "dst": "relu1"
+        }
+        "param": {
             "type": "relu"
         }
     }
     "pool1": {
         "op": "pooling"
-        "args": {
-            "src": "relu1_dst"
-            "dst": ""
+        "tensor": {
+            "src": "relu1"
+            "dst": "pool1"
+        }
+        "param": {
             "type": "max"
             "size": [3, 3]
             "stride": [2, 2]
