@@ -1,91 +1,91 @@
 {
     "slice1": {
-        "op": "slice"
+        "op": "slice",
         "tensor": {
-            "src": "input"
+            "src": "input",
             "dst": "slice1"
-        }
+        },
         "param": {
-            "axis": 1
-            "start": 1
+            "axis": 1,
+            "start": 1,
             "len": 2
         }
-    }
+    },
     "reshape1": {
-        "op": "reshape"
+        "op": "reshape",
         "tensor": {
-            "src": "slice1"
+            "src": "slice1",
             "dst": "reshape1"
-        }
+        },
         "param": {
             "dims": [1, 2, 3]
         }
-    }
+    },
     "maxreduce1": {
-        "op": "maxreduce"
+        "op": "maxreduce",
         "tensor": {
-            "src": "reshape1"
-            "dst": "maxreduce1_dst"
+            "src": "reshape1",
+            "dst": "maxreduce1_dst",
             "arg": "maxreduce1_arg"
-        }
+        },
         "param": {
             "axis": 1
         }
-    }
+    },
     "mul1": {
-        "op": "mul"
+        "op": "mul",
         "tensor": {
-            "src1": "maxreduce1_dst"
-            "src2": "maxreduce1_arg"
+            "src1": "maxreduce1_dst",
+            "src2": "maxreduce1_arg",
             "dst": "mul1"
-        }
+        },
         "param": {
         }
-    }
+    },
     "transpose1": {
-        "op": "transpose"
+        "op": "transpose",
         "tensor": {
-            "src": "mul1"
-            "dst": "transpose1"
+            "src": "mul1",
+            "dst": "transpose1",
             "workspace": "transpose1_workspace"
-        }
+        },
         "param": {
             "axes": [2, 1, 0]
         }
-    }
+    },
     "conv1": {
-        "op": "convolution"
+        "op": "convolution",
         "tensor": {
-            "src": "transpose1"
+            "src": "transpose1",
             "dst": "conv1"
-        }
+        },
         "param": {
-            "channel": 64
-            "size": [3, 3]
-            "stride": [2, 2]
+            "channel": 64,
+            "size": [3, 3],
+            "stride": [2, 2],
             "padding": [1, 1]
         }
-    }
+    },
     "relu1": {
-        "op": "activation"
+        "op": "activation",
         "tensor": {
-            "src": "conv1"
+            "src": "conv1",
             "dst": "relu1"
-        }
+        },
         "param": {
             "type": "relu"
         }
-    }
+    },
     "pool1": {
-        "op": "pooling"
+        "op": "pooling",
         "tensor": {
-            "src": "relu1"
+            "src": "relu1",
             "dst": "pool1"
-        }
+        },
         "param": {
-            "type": "max"
-            "size": [3, 3]
-            "stride": [2, 2]
+            "type": "max",
+            "size": [3, 3],
+            "stride": [2, 2],
             "padding": [1, 1]
         }
     }
