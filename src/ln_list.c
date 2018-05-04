@@ -31,13 +31,13 @@ void ln_list_free(ln_list *list)
      }
 }
 
-void ln_list_free_deep(ln_list *list)
+void ln_list_free_deep(ln_list *list, void (*free_func)(void *))
 {
      ln_list *tmp, *l;
 
      for (l = list; l;) {
           tmp = l->next;
-          ln_free(l->data);
+          free_func(l->data);
           ln_free(l);
           l = tmp;
      }

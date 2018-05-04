@@ -18,7 +18,7 @@ extern "C" {
 
 ln_list *ln_list_append(ln_list *list, void *data);
 void ln_list_free(ln_list *list);
-void ln_list_free_deep(ln_list *list);
+void ln_list_free_deep(ln_list *list, void (*free_func)(void *));
 ln_list *ln_list_nth(ln_list *list, int n);
 void *ln_list_nth_data(ln_list *list, int n);
 ln_list *ln_list_remove(ln_list *list, void *data);

@@ -5,6 +5,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+typedef enum ln_bool ln_bool;
+enum ln_bool {
+     LN_FALSE = 0,
+     LN_TRUE = 1
+};
+
 typedef int (*ln_cmp_func)(void *, void *);
 
 #define ln_free free

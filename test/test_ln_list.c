@@ -6,6 +6,16 @@ static int *data;
 static size_t data_len;
 static ln_list *list;
 
+static void free_int(int *i)
+{
+     free(i);
+}
+
+static void free_int_wrapper(void *p)
+{
+     free_int(p);
+}
+
 static void setup(void)
 {
      int i;
@@ -202,6 +212,21 @@ START_TEST(test_list_from_array_size_t)
      }
 }
 END_TEST
+
+START_TEST(test_ln_list_free_deep)
+{
+     ln_list *l;
+     int *int1, *int2;
+
+     int1 = ln_alloc(sizeof(int));
+     int2 = ln_alloc(sizeof(int));
+     *int1 = 1;
+     *int2 = 2;
+     l = ln_list_append(NULL, int1);
+     l = ln_list_append(l, int2);
+     ln_list_free_deep(l, free_int_wrapper);
+}
+END_TEST
 /* end of tests */
 
 Suite *make_list_suite(void)
@@ -222,6 +247,7 @@ Suite *make_list_suite(void)
      tcase_add_test(tc_list, test_list_index);
      tcase_add_test(tc_list, test_list_length);
      tcase_add_test(tc_list, test_list_from_array_size_t);
+     tcase_add_test(tc_list, test_ln_list_free_deep);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_list);
