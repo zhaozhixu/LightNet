@@ -283,6 +283,8 @@ tl_tensor *tl_tensor_slice(const tl_tensor *src, tl_tensor *dst, int axis,
 
      assert(src);
      assert(axis < src->ndim && axis >= 0);
+     assert(len <= src->dims[axis] && len > 0);
+     assert(start < src->dims[axis] && start >= 0);
      assert(len + start <= src->dims[axis]);
      if (dst) {
           assert(src->dtype == dst->dtype);

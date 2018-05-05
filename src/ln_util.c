@@ -15,7 +15,7 @@ void *ln_alloc(size_t size)
 
      p = malloc(size);
      if (p == NULL) {
-          err(EXIT_FAILURE, "malloc(%luz) failed", size);
+          err(EXIT_FAILURE, "ln_alloc: malloc(%luz) failed", size);
      }
 
      return p;
