@@ -23,7 +23,6 @@ struct ln_op {
      ln_op_func   post_run;
 };
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,5 +41,45 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
 }
 #endif
 
+/*
+ * Convenient macros for checking parameters in ln_op_func.
+ * NOTE: If there is more error handling work, please write the code yourself
+ * instead of using those macros.
+ */
+#define ln_op_check(level, condition, msg_fmt, varg...)			\
+     do {								\
+	  if (!(condition)) {						\
+	       *error = ln_error_create((level), (msg_fmt), ##varg);	\
+	       return;							\
+	  }								\
+     } while(0)
+#define ln_op_check_param(level, condition, msg)		\
+     ln_op_check(level, condition,				\
+		 "%s: \"%s\"'s params should satisfy \"%s\"",	\
+		 op_arg->optype, op_arg->name, (msg));
+#define ln_op_check_param_exist(level, condition, arg_name)	\
+     ln_op_check(level, condition,				\
+		 "%s: \"%s\" needs a \"%s\" param",		\
+		 op_arg->optype, op_arg->name, (arg_name));
+#define ln_op_check_param_num(level, condition, num)	\
+     ln_op_check(level, condition,			\
+		 "%s: \"%s\" needs %d params",		\
+		 op_arg->optype, op_arg->name, (num));
+#define ln_op_check_tensor_exist(level, condition, arg_name)	\
+     ln_op_check(level, condition,				\
+		 "%s: \"%s\" needs a \"%s\" tensor",		\
+		 op_arg->optype, op_arg->name, (arg_name));
+#define ln_op_check_tensor_num(level, condition, num)	\
+     ln_op_check(level, condition,			\
+		 "%s: \"%s\" needs %d tensors",		\
+		 op_arg->optype, op_arg->name, (num));
+#define ln_op_check_tensor_dup(level, condition, name)		\
+     ln_op_check(level, condition,				\
+		 "%s: \"%s\"'s \"%s\" tensor is duplicated",	\
+		 op_arg->optype, op_arg->name, (name));
+#define ln_op_check_tensor_notseen(level, condition, name)		\
+     ln_op_check(level, condition,					\
+		 "%s: \"%s\"'s \"%s\" tensor is not seen before",	\
+		 op_arg->optype, op_arg->name, (name));
 
 #endif  /* _LN_OP_H_ */
