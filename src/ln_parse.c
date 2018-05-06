@@ -1,13 +1,15 @@
 #include <string.h>
+#include <assert.h>
 #include "ln_parse.h"
 #include "ln_error.h"
 #include "ln_util.h"
 #include "ln_op.h"
 #include "cJSON.h"
 
-static ln_op *parse_op(const cJSON *op_json, ln_list *ops, ln_error **error)
+static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
+		       const ln_list *registered_ops, ln_error **error)
 {
-     ln_op *op;
+     ln_op *op, *proto_op;
      ln_op_arg *op_arg;
      ln_tensor_table *tensors = NULL;
      ln_param_table *params = NULL;
@@ -66,33 +68,60 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops, ln_error **error)
 	       goto err;
 	  }
      }
+     proto_op = ln_op_list_find_by_optype(registered_ops,
+					  optype_json->valuestring);
+     if (!proto_op) {
+	  *error = ln_error_create(LN_ERROR,
+				   "can't find registered optype \"%s\" in op \"%s\"",
+				   optype_json->valuestring,
+				   name_json->valuestring);
+	  goto err;
+     }
+
      op_arg = ln_op_arg_create(name_json->valuestring, optype_json->valuestring,
 			       tensors, params);
+     op = ln_op_create(op_arg, proto_op->pre_run, proto_op->run,
+		       proto_op->post_run);
+     return op;
 
 err:
      ln_tensor_table_free(tensors);
      ln_param_table_free(params);
-
+     return NULL;
 }
 
-ln_list *ln_parse_ops(const char * const json_str, ln_error **error)
+ln_list *ln_parse_ops(const char * const json_str,
+		      const ln_list *registered_ops, ln_error **error)
 {
      const cJSON *ops_json;
      const cJSON *op_json;
      cJSON *json;
      ln_list *ops = NULL;
+     ln_op *op;
 
      json = cJSON_Parse(json_str);
      if (!json) {
 	  *error = ln_error_create(LN_ERROR, "parsing JSON before: %s",
 				  cJSON_GetErrorPtr());
-	  goto end;
+	  goto err_json;
      }
 
      ops_json = cJSON_GetObjectItem(json, "ops");
      cJSON_ArrayForEach(op_json, ops_json) {
+	  op = parse_op(op_json, ops, registered_ops, error);
+	  if (*error) {
+	       assert(!op);
+	       goto err_parse_op;
+	  }
+	  ops = ln_list_append(ops, op);
      }
 
-end:
-     cJSON_Delete(ops_json);
+     cJSON_Delete(json);
+     return ops;
+
+err_parse_op:
+     ln_op_list_free(ops, TL_TRUE);
+err_json:
+     cJSON_Delete(json);
+     return NULL;
 }

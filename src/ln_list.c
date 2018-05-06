@@ -125,7 +125,7 @@ ln_list *ln_list_insert_nth(ln_list *list, void *data, int n)
      return list;
 }
 
-ln_list *ln_list_find(ln_list *list, void *data)
+ln_list *ln_list_find(const ln_list *list, void *data)
 {
      ln_list *l;
 
@@ -135,7 +135,7 @@ ln_list *ln_list_find(ln_list *list, void *data)
      return NULL;
 }
 
-ln_list *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)
+ln_list *ln_list_find_custom(const ln_list *list, void *data, ln_cmp_func cmp)
 {
      ln_list *l;
 

@@ -111,7 +111,7 @@ static int find_by_arg_name(void *data1, void *data2)
      return strcmp(p1->arg_name, p2->arg_name);
 }
 
-ln_param_entry *ln_param_table_find_by_arg_name(ln_param_table *table,
+ln_param_entry *ln_param_table_find_by_arg_name(const ln_param_table *table,
 						char *arg_name)
 {
      ln_param_entry cmp_entry;

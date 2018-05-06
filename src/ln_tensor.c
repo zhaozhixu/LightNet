@@ -52,7 +52,7 @@ static int find_by_arg_name(void *data1, void *data2)
      return strcmp(t1->arg_name, t2->arg_name);
 }
 
-ln_tensor_entry *ln_tensor_table_find_by_arg_name(ln_tensor_table *table,
+ln_tensor_entry *ln_tensor_table_find_by_arg_name(const ln_tensor_table *table,
 						  char *arg_name)
 {
      ln_tensor_entry cmp_entry;
@@ -73,7 +73,7 @@ static int find_by_name(void *data1, void *data2)
      return strcmp(t1->name, t2->name);
 }
 
-ln_tensor_entry *ln_tensor_table_find_by_name(ln_tensor_table *table,
+ln_tensor_entry *ln_tensor_table_find_by_name(const ln_tensor_table *table,
 					      char *name)
 {
      ln_tensor_entry cmp_entry;

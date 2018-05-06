@@ -33,8 +33,10 @@ ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
 void ln_op_arg_free(ln_op_arg *op_arg);
 ln_op *ln_op_create(ln_op_arg *op_arg, ln_op_func pre_run, ln_op_func run,
 		    ln_op_func post_run);
-void ln_op_free(ln_op *op);
+void ln_op_free(ln_op *op, ln_bool do_free_op_arg);
+void ln_op_list_free(ln_list *ops, ln_bool do_free_op_args);
 tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
+ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
 
 #ifdef __cplusplus
 }

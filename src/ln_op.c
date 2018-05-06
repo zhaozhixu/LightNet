@@ -37,12 +37,32 @@ ln_op *ln_op_create(ln_op_arg *op_arg, ln_op_func pre_run, ln_op_func run,
      return op;
 }
 
-void ln_op_free(ln_op *op)
+void ln_op_free(ln_op *op, ln_bool do_free_op_arg)
 {
+     if (do_free_op_arg)
+	  ln_op_arg_free(op->op_arg);
      ln_free(op);
 }
 
-tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
+static void op_free_with_arg_wrapper(void *p)
+{
+     ln_op_free(p, LN_TRUE);
+}
+
+static void op_free_without_arg_wrapper(void *p)
+{
+     ln_op_free(p, LN_FALSE);
+}
+
+void ln_op_list_free(ln_list *ops, ln_bool do_free_op_args)
+{
+     if (do_free_op_args)
+	  ln_list_free_deep(ops, op_free_with_arg_wrapper);
+     else
+	  ln_list_free_deep(ops, op_free_without_arg_wrapper);
+}
+
+tl_tensor *ln_op_list_find_tensor_by_name(const ln_list *ops, char *name)
 {
      ln_list *l;
      ln_op *op;
@@ -58,4 +78,25 @@ tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
 	  return NULL;
 
      return entry->tensor;
+}
+
+static int find_by_optype(void *data1, void *data2)
+{
+     ln_op *op1, *op2;
+
+     op1 = (ln_op *)data1;
+     op2 = (ln_op *)data2;
+     return strcmp(op1->op_arg->optype, op2->op_arg->optype);
+}
+
+ln_op *ln_op_list_find_by_optype(const ln_list *ops, char *optype)
+{
+     ln_op cmp_op;
+     ln_op *result_op;
+
+     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL);
+     result_op = ln_list_find_custom(ops, &cmp_op, find_by_optype);
+     ln_op_arg_free(cmp_op.op_arg);
+
+     return result_op;
 }
