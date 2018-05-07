@@ -42,9 +42,13 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
 #endif
 
 /*
- * Convenient macros for checking parameters in ln_op_func.
+ * Convenient macros for checking parameters in a ln_op_func,
+ * usually in a ln_op->pre_run function.
  * NOTE: If there is more error handling work, please write the code yourself
  * instead of using those macros.
+ * NOTE: Normally we shouldn't use those kind of error handling routines in
+ * ln_op->run and ln_op->post_run functions, where errors should be considered
+ * as bugs.
  */
 #define ln_op_check(level, condition, msg_fmt, varg...)			\
      do {								\
@@ -53,33 +57,52 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
 	       return;							\
 	  }								\
      } while(0)
-#define ln_op_check_param(level, condition, msg)		\
-     ln_op_check(level, condition,				\
-		 "%s: \"%s\"'s params should satisfy \"%s\"",	\
-		 op_arg->optype, op_arg->name, (msg));
-#define ln_op_check_param_exist(level, condition, arg_name)	\
-     ln_op_check(level, condition,				\
-		 "%s: \"%s\" needs a \"%s\" param",		\
-		 op_arg->optype, op_arg->name, (arg_name));
-#define ln_op_check_param_num(level, condition, num)	\
-     ln_op_check(level, condition,			\
-		 "%s: \"%s\" needs %d params",		\
-		 op_arg->optype, op_arg->name, (num));
-#define ln_op_check_tensor_exist(level, condition, arg_name)	\
-     ln_op_check(level, condition,				\
+
+#define ln_op_check_param_satisfy_msg(level, condition, msg)    \
+     ln_op_check(level, condition,                              \
+                 "%s: \"%s\"'s params should satisfy \"%s\"",   \
+                 op_arg->optype, op_arg->name, (msg))
+
+/* condition is appended as the message */
+#define ln_op_check_param_satisfy(level, condition)                     \
+     ln_op_check_param_satisfy_msg(level, condition, #condition)
+
+/* entry should be returned by
+   ln_param_table_find_by_arg_name(op_arg->params, arg_name) */
+#define ln_op_check_param_exist(level, entry, arg_name)         \
+     ln_op_check(level, entry,                                  \
+                 "%s: \"%s\" needs a \"%s\" param",		\
+                 op_arg->optype, op_arg->name, (arg_name))
+
+/* table_length should be returned by ln_param_table_length(op_arg->params) */
+#define ln_op_check_param_num_eq(level, table_length, num)              \
+     ln_op_check(level, table_length == num,                            \
+		 "%s: \"%s\" needs %d params, got %d params",           \
+		 op_arg->optype, op_arg->name, (num), (table_length))
+
+/* entry should be returned by
+   ln_tensor_table_find_by_arg_name(op_arg->tensors, arg_name) */
+#define ln_op_check_tensor_exist(level, entry, arg_name)	\
+     ln_op_check(level, entry,                                  \
 		 "%s: \"%s\" needs a \"%s\" tensor",		\
-		 op_arg->optype, op_arg->name, (arg_name));
-#define ln_op_check_tensor_num(level, condition, num)	\
-     ln_op_check(level, condition,			\
-		 "%s: \"%s\" needs %d tensors",		\
-		 op_arg->optype, op_arg->name, (num));
-#define ln_op_check_tensor_dup(level, condition, name)		\
-     ln_op_check(level, condition,				\
-		 "%s: \"%s\"'s \"%s\" tensor is duplicated",	\
-		 op_arg->optype, op_arg->name, (name));
-#define ln_op_check_tensor_notseen(level, condition, name)		\
-     ln_op_check(level, condition,					\
-		 "%s: \"%s\"'s \"%s\" tensor is not seen before",	\
-		 op_arg->optype, op_arg->name, (name));
+		 op_arg->optype, op_arg->name, (arg_name))
+
+/* table_length should be returned by ln_tensor_table_length(op_arg->tensors) */
+#define ln_op_check_tensor_num_eq(level, table_length, num)             \
+     ln_op_check(level, table_length == num,                            \
+                 "%s: \"%s\" needs %d tensors, got %d tensors",         \
+		 op_arg->optype, op_arg->name, (num), (table_length))
+
+/* entry should have been checked with ln_op_check_tensor_exist */
+#define ln_op_check_tensor_not_defined(level, entry)                    \
+     ln_op_check(level, !entry->tensor,                                 \
+		 "%s: \"%s\"'s \"%s\" tensor \"%s\" has been defined before", \
+		 op_arg->optype, op_arg->name, entry->arg_name, entry->name)
+
+/* entry should have been checked with ln_op_check_tensor_exist */
+#define ln_op_check_tensor_defined(level, entry)                        \
+     ln_op_check(level, entry->tensor,					\
+		 "%s: \"%s\"'s \"%s\" tensor \"%s\" has not been defined before", \
+		 op_arg->optype, op_arg->name, entry->arg_name, entry->name)
 
 #endif  /* _LN_OP_H_ */
