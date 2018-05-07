@@ -18,6 +18,51 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      cJSON *optype_json = cJSON_GetObjectItem(op_json, "optype");
      cJSON *tensors_json = cJSON_GetObjectItem(op_json, "tensors");
      cJSON *params_json = cJSON_GetObjectItem(op_json, "params");
+     if (!name_json) {
+	  *error = ln_error_create(LN_ERROR,
+				   "an op doesn't have a \"name\" key");
+	  return NULL;
+     }
+     if (!cJSON_IsString(name_json)) {
+	  *error = ln_error_create(LN_ERROR, "an op's name is not a String");
+	  return NULL;
+     }
+     if (!optype_json) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\" doesn't have an \"optype\" key",
+				   name_json->valuestring);
+	  return NULL;
+     }
+     if (!cJSON_IsString(optype_json)) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\"'s optype is not a String",
+				   name_json->valuestring);
+	  return NULL;
+     }
+     if (!tensors_json) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\" doesn't have a \"tensors\" key",
+				   name_json->valuestring);
+	  return NULL;
+     }
+     if (!cJSON_IsArray(tensors_json)) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\"'s tensors is not an Array",
+				   name_json->valuestring);
+	  return NULL;
+     }
+     if (!params_json) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\" doesn't have a \"params\" key",
+				   name_json->valuestring);
+	  return NULL;
+     }
+     if (!cJSON_IsArray(params_json)) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\"'s params is not an Array",
+				   name_json->valuestring);
+	  return NULL;
+     }
 
      cJSON *tensor_json, *param_json;
      cJSON *tensor_arg_name_json, *tensor_name_json;
@@ -25,7 +70,33 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      tl_tensor *tensor;
      cJSON_ArrayForEach(tensor_json, tensors_json) {
 	  tensor_arg_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
-	  tensor_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
+	  tensor_name_json = cJSON_GetObjectItem(tensor_json, "name");
+	  if (!tensor_arg_name_json) {
+	       *error = ln_error_create(LN_ERROR,
+					"one of op \"%s\"'s tensors doesn't have an \"arg_name\" key",
+					name_json->valuestring);
+	       return NULL;
+	  }
+	  if (!cJSON_IsString(tensor_arg_name_json)) {
+	       *error = ln_error_create(LN_ERROR,
+					"one of op \"%s\"'s tensors's arg_name is not a String",
+					name_json->valuestring);
+	       return NULL;
+	  }
+	  if (!tensor_name_json) {
+	       *error = ln_error_create(LN_ERROR,
+					"op \"%s\"'s \"%s\" tensor doesn't have a \"name\" key",
+					name_json->valuestring,
+					tensor_arg_name_json->valuestring);
+	       return NULL;
+	  }
+	  if (!cJSON_IsString(tensor_name_json)) {
+	       *error = ln_error_create(LN_ERROR,
+					"op \"%s\"'s \"%s\" tensor's name is not a String",
+					name_json->valuestring,
+					tensor_arg_name_json->valuestring);
+	       return NULL;
+	  }
 	  tensor = ln_op_list_find_tensor_by_name(ops,
 						  tensor_name_json->valuestring);
 	  tensors = ln_tensor_table_append(tensors,
@@ -35,7 +106,26 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      }
      cJSON_ArrayForEach(param_json, params_json) {
 	  param_arg_name_json = cJSON_GetObjectItem(param_json, "arg_name");
+	  if (!param_arg_name_json) {
+	       *error = ln_error_create(LN_ERROR,
+					"one of op \"%s\"'s params doesn't have an \"arg_name\" key",
+					name_json->valuestring);
+	       return NULL;
+	  }
+	  if (!cJSON_IsString(param_arg_name_json)) {
+	       *error = ln_error_create(LN_ERROR,
+					"one of op \"%s\"'s params's arg_name is not a String",
+					name_json->valuestring);
+	       return NULL;
+	  }
 	  param_value_json = cJSON_GetObjectItem(param_json, "value");
+	  if (!param_value_json) {
+	       *error = ln_error_create(LN_ERROR,
+					"op \"%s\"'s \"%s\" param doesn't have a \"value\" key",
+					name_json->valuestring,
+					param_arg_name_json->valuestring);
+	       return NULL;
+	  }
 	  if (cJSON_IsNumber(param_value_json)) {
 	       params = ln_param_table_append_number(params,
 						     param_arg_name_json->valuestring,
@@ -60,11 +150,14 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 	       params = ln_param_table_append_null(params,
 						   param_arg_name_json->valuestring);
 	  }
+	  else if (cJSON_IsArray(param_value_json)) {
+
+	  }
 	  else {
 	       *error = ln_error_create(LN_ERROR,
-					"unsupported JSON type of param \"%s\" in op \"%s\"",
-					param_arg_name_json->valuestring,
-					name_json->valuestring);
+					"op \"%s\"'s param \"%s\"'s value is an unsupported JSON type",
+					name_json->valuestring,
+					param_arg_name_json->valuestring);
 	       goto err;
 	  }
      }
@@ -72,9 +165,9 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 					  optype_json->valuestring);
      if (!proto_op) {
 	  *error = ln_error_create(LN_ERROR,
-				   "can't find registered optype \"%s\" in op \"%s\"",
-				   optype_json->valuestring,
-				   name_json->valuestring);
+				   "op \"%s\"'s optype \"%s\" is not registered"
+				   name_json->valuestring,
+				   optype_json->valuestring);
 	  goto err;
      }
 
@@ -107,6 +200,14 @@ ln_list *ln_parse_ops(const char * const json_str,
      }
 
      ops_json = cJSON_GetObjectItem(json, "ops");
+     if (!ops_json) {
+	  *error = ln_error_create(LN_ERROR, "top object should have an \"ops\" item");
+	  goto err_json;
+     }
+     if (!cJSON_IsArray(ops_json)) {
+	  *error = ln_error_create(LN_ERROR, "item \"ops\" has to be an Array");
+	  goto err_json;
+     }
      cJSON_ArrayForEach(op_json, ops_json) {
 	  op = parse_op(op_json, ops, registered_ops, error);
 	  if (*error) {

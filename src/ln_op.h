@@ -74,6 +74,11 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
                  "%s: \"%s\" needs a \"%s\" param",		\
                  op_arg->optype, op_arg->name, (arg_name))
 
+#define ln_op_check_param_type(level, entry, param_type)                \
+     ln_op_check(level, entry,                                          \
+                 "%s: \"%s\"'s \"%s\" param should be of type %s",      \
+                 op_arg->optype, op_arg->name, entry->arg_name, )
+
 /* table_length should be returned by ln_param_table_length(op_arg->params) */
 #define ln_op_check_param_num_eq(level, table_length, num)              \
      ln_op_check(level, table_length == num,                            \
