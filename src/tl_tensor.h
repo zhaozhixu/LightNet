@@ -19,7 +19,8 @@ extern "C" {
 int tl_tensor_issameshape(const tl_tensor *t1, const tl_tensor *t2);
 tl_tensor *tl_tensor_create(void *data, int ndim, const int *dims,
                                  tl_dtype dtype);
-void tl_tensor_free(tl_tensor *t, int do_free_data);
+void tl_tensor_free(tl_tensor *t);
+void tl_tensor_free_data_too(tl_tensor *t);
 tl_tensor *tl_tensor_zeros(tl_dtype dtype, int ndim, ...);
 tl_tensor *tl_tensor_vcreate(tl_dtype dtype, int ndim, ...);
 tl_tensor *tl_tensor_clone(const tl_tensor *src);

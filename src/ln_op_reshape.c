@@ -79,7 +79,7 @@ static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
      assert(dst_entry);
 
      /* free the tensor memory allocated in pre_run() */
-     tl_tensor_free(dst_entry->tensor, TL_TRUE);
+     tl_tensor_free_data_too(dst_entry->tensor);
 }
 
 static ln_op_arg op_arg_reshape = {

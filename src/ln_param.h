@@ -5,7 +5,8 @@
 
 typedef enum ln_param_type ln_param_type;
 enum ln_param_type {
-     LN_PARAM_NULL,
+     LN_PARAM_INVALID = -1,
+     LN_PARAM_NULL = 0,
      LN_PARAM_STRING,
      LN_PARAM_NUMBER,
      LN_PARAM_BOOL,
@@ -62,6 +63,7 @@ void ln_param_table_free(ln_param_table *table);
 ln_param_entry *ln_param_table_find_by_arg_name(const ln_param_table *table,
 						char *arg_name);
 int ln_param_table_length(ln_param_table *table);
+const char *ln_param_type_name(ln_param_type type);
 
 #ifdef __cplusplus
 }

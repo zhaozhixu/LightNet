@@ -93,14 +93,17 @@ tl_tensor *tl_tensor_create(void *data, int ndim, const int *dims,
      return t;
 }
 
-void tl_tensor_free(tl_tensor *t, int do_free_data)
+void tl_tensor_free(tl_tensor *t)
 {
      assert(t);
      tl_free(t->dims);
-     if (do_free_data) {
-          tl_free(t->data);
-     }
      tl_free(t);
+}
+
+void tl_tensor_free_data_too(tl_tensor *t)
+{
+     tl_free(t->data);
+     tl_tensor_free(t);
 }
 
 /* TODO: va_list length not checked */

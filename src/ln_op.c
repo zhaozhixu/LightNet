@@ -1,6 +1,6 @@
 #include "ln_op.h"
 
-ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
+static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
 			    ln_tensor_table *tensors, ln_param_table *params)
 {
      ln_op_arg *op_arg;
@@ -16,20 +16,21 @@ ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
      return op_arg;
 }
 
-void ln_op_arg_free(ln_op_arg *op_arg)
+static void ln_op_arg_free(ln_op_arg *op_arg)
 {
      ln_free(op_arg->name);
      ln_free(op_arg->optype);
      ln_free(op_arg);
 }
 
-ln_op *ln_op_create(ln_op_arg *op_arg, ln_op_func pre_run, ln_op_func run,
-		    ln_op_func post_run)
+ln_op *ln_op_create(const char *name, const char *optype,
+                    ln_tensor_table *tensors, ln_param_table *params,
+                    ln_op_func pre_run, ln_op_func run, ln_op_func post_run)
 {
      ln_op *op;
 
      ln_op = ln_alloc(sizeof(ln_op));
-     ln_op->op_arg = op_arg;
+     ln_op->op_arg = ln_op_arg_create(name, optype, tensors, params);
      ln_op->pre_run = pre_run;
      ln_op->run = run;
      ln_op->post_run = post_run;
@@ -37,29 +38,25 @@ ln_op *ln_op_create(ln_op_arg *op_arg, ln_op_func pre_run, ln_op_func run,
      return op;
 }
 
-void ln_op_free(ln_op *op, ln_bool do_free_op_arg)
+void ln_op_free(ln_op *op)
 {
-     if (do_free_op_arg)
-	  ln_op_arg_free(op->op_arg);
+     ln_op_arg_free(op->op_arg);
      ln_free(op);
 }
 
-static void op_free_with_arg_wrapper(void *p)
+static void op_free_tables_too_wrapper(void *p)
 {
-     ln_op_free(p, LN_TRUE);
+     ln_op *op;
+
+     op = (ln_op *)p;
+     ln_tensor_table_free(op->op_arg->tensors);
+     ln_param_table_free(op->op_arg->params);
+     ln_op_free(p);
 }
 
-static void op_free_without_arg_wrapper(void *p)
+void ln_op_list_free_tables_too(ln_list *ops)
 {
-     ln_op_free(p, LN_FALSE);
-}
-
-void ln_op_list_free(ln_list *ops, ln_bool do_free_op_args)
-{
-     if (do_free_op_args)
-	  ln_list_free_deep(ops, op_free_with_arg_wrapper);
-     else
-	  ln_list_free_deep(ops, op_free_without_arg_wrapper);
+     ln_list_free_deep(ops, op_free_tables_too_wrapper);
 }
 
 tl_tensor *ln_op_list_find_tensor_by_name(const ln_list *ops, char *name)
@@ -99,4 +96,30 @@ ln_op *ln_op_list_find_by_optype(const ln_list *ops, char *optype)
      ln_op_arg_free(cmp_op.op_arg);
 
      return result_op;
+}
+
+void ln_op_list_do_run(ln_list *ops, ln_error **error)
+{
+     ln_list *l;
+     ln_op *op;
+
+     for (l = ops; l; l = l->next) {
+          op = (ln_op *)l->data;
+          op->run(op->op_arg, error);
+          if (*error)
+               return;
+     }
+}
+
+void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
+{
+     ln_list *l;
+     ln_op *op;
+
+     for (l = ops; l; l = l->next) {
+          op = (ln_op *)l->data;
+          op->post_run(op->op_arg, error);
+          if (*error)
+               return;
+     }
 }

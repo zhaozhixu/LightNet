@@ -3,6 +3,9 @@
 #include "ln_op.h"
 #include "tl_tensor.h"
 
+/*
+ * This function should do the parameter checking and memory allocation.
+ */
 static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      ln_tensor_entry *dst_entry, *src_entry;
@@ -27,12 +30,15 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      axis_entry = ln_param_table_find_by_arg_name(op_arg->params, "axis");
      ln_op_check_param_exist(LN_ERROR, axis_entry, "axis");
+     ln_op_check_param_type(LN_ERROR, axis_entry, LN_PARAM_NUMBER);
 
      start_entry = ln_param_table_find_by_arg_name(op_arg->params, "start");
      ln_op_check_param_exist(LN_ERROR, start_entry, "start");
+     ln_op_check_param_type(LN_ERROR, start_entry, LN_PARAM_NUMBER);
 
      len_entry = ln_param_table_find_by_arg_name(op_arg->params, "len");
      ln_op_check_param_exist(LN_ERROR, len_entry, "len");
+     ln_op_check_param_type(LN_ERROR, len_entry, LN_PARAM_NUMBER);
 
      axis = (int)axis_entry->value_number;
      start = (int)start_entry->value_number;
@@ -52,6 +58,10 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 						src_entry->tensor->dtype);
 }
 
+/*
+ * Normally we should only do the calculations here. Operations with memory
+ * and such should go in pre_run().
+ */
 static void slice_run(ln_op_arg *op_arg, ln_error **error)
 {
      ln_tensor_entry *dst_entry, *src_entry;
@@ -77,6 +87,9 @@ static void slice_run(ln_op_arg *op_arg, ln_error **error)
 		     (int)len_entry->value_number);
 }
 
+/*
+ * This function should undo everything with memory that pre_run() did.
+ */
 static void slice_post_run(ln_op_arg *op_arg, ln_error **error)
 {
      ln_tensor_entry *dst_entry;
@@ -85,7 +98,7 @@ static void slice_post_run(ln_op_arg *op_arg, ln_error **error)
      assert(dst_entry);
 
      /* free the tensor memory allocated in pre_run() */
-     tl_tensor_free(dst_entry->tensor, TL_TRUE);
+     tl_tensor_free_data_too(dst_entry->tensor);
 }
 
 static ln_op_arg op_arg_slice = {
@@ -95,6 +108,7 @@ static ln_op_arg op_arg_slice = {
      .params = NULL,
 };
 
+/* struct used for op registration in ln_oplist.c */
 ln_op ln_op_slice = {
      .op_arg = &op_arg_slice,
      .pre_run = slice_pre_run,
