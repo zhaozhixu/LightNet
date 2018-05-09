@@ -27,15 +27,15 @@ struct ln_op {
 extern "C" {
 #endif
 
-ln_op *ln_op_create(const char *name, const char *optype,
-                    ln_tensor_table *tensors, ln_param_table *params,
-                    ln_op_func pre_run, ln_op_func run, ln_op_func post_run);
-void ln_op_free(ln_op *op);
-void ln_op_list_free_tables_too(ln_list *ops);
-tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
-ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
-void ln_op_list_do_run(ln_list *ops, ln_error **error);
-void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
+     ln_op *ln_op_create(const char *name, const char *optype,
+                         ln_tensor_table *tensors, ln_param_table *params,
+                         ln_op_func pre_run, ln_op_func run, ln_op_func post_run);
+     void ln_op_free(ln_op *op);
+     void ln_op_list_free_tables_too(ln_list *ops);
+     tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
+     ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
+     void ln_op_list_do_run(ln_list *ops, ln_error **error);
+     void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 
 #ifdef __cplusplus
 }
@@ -88,15 +88,24 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 /* table_length should be returned by ln_param_table_length(op_arg->params) */
 #define ln_op_check_param_num_eq(level, table_length, num)              \
      ln_op_check(level, table_length == num,                            \
-		 "%s: \"%s\" needs %d params, but got %d params",       \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+                 "%s: \"%s\" needs %d params, but got %d params",       \
+                 op_arg->optype, op_arg->name, (num), (table_length))
+
+#define ln_op_check_tensor_satisfy_msg(level, condition, msg)   \
+     ln_op_check(level, condition,                              \
+                 "%s: \"%s\"'s tensors should satisfy \"%s\"",  \
+                 op_arg->optype, op_arg->name, (msg))
+
+/* condition is appended as the message */
+#define ln_op_check_tensor_satisfy(level, condition)                    \
+     ln_op_check_tensor_satisfy_msg(level, condition, #condition)
 
 /* entry should be returned by
    ln_tensor_table_find_by_arg_name(op_arg->tensors, arg_name) */
 #define ln_op_check_tensor_exist(level, entry, arg_name)	\
      ln_op_check(level, entry,                                  \
-		 "%s: \"%s\" needs a \"%s\" tensor",		\
-		 op_arg->optype, op_arg->name, (arg_name))
+                 "%s: \"%s\" needs a \"%s\" tensor",		\
+                 op_arg->optype, op_arg->name, (arg_name))
 
 /* table_length should be returned by ln_tensor_table_length(op_arg->tensors) */
 #define ln_op_check_tensor_num_eq(level, table_length, num)             \

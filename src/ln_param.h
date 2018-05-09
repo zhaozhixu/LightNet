@@ -5,14 +5,16 @@
 
 typedef enum ln_param_type ln_param_type;
 enum ln_param_type {
-     LN_PARAM_INVALID = -1,
+     /* NULL should always be the first type */
      LN_PARAM_NULL = 0,
      LN_PARAM_STRING,
      LN_PARAM_NUMBER,
      LN_PARAM_BOOL,
      LN_PARAM_ARRAY_STRING,
      LN_PARAM_ARRAY_NUMBER,
-     LN_PARAM_ARRAY_BOOL
+     LN_PARAM_ARRAY_BOOL,
+     LN_PARAM_INVALID
+     /* INVALID should always be the last type */
 };
 
 typedef struct ln_param_entry ln_param_entry;
@@ -20,14 +22,14 @@ struct ln_param_entry {
      char          *arg_name;
      ln_param_type  type;
      int            array_len;
-     union {
-          char     *value_string;
-          double    value_number;
-          ln_bool   value_bool;
-          char    **value_array_string;
-          double   *value_array_number;
-          ln_bool  *value_array_bool;
-     };
+     double         value_double;
+     int            value_int;
+     ln_bool        value_bool;
+     char          *value_string;
+     char         **value_array_string;
+     double        *value_array_double;
+     int           *value_array_int;
+     ln_bool       *value_array_bool;
 };
 
 typedef ln_list ln_param_table;

@@ -1,7 +1,5 @@
-#include <math.h>
 #include <assert.h>
 #include "ln_op.h"
-#include "tl_tensor.h"
 
 /*
  * This function should do the parameter checking and memory allocation.
@@ -40,9 +38,9 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_exist(LN_ERROR, len_entry, "len");
      ln_op_check_param_type(LN_ERROR, len_entry, LN_PARAM_NUMBER);
 
-     axis = (int)axis_entry->value_number;
-     start = (int)start_entry->value_number;
-     len = (int)len_entry->value_number;
+     axis = axis_entry->value_int;
+     start = start_entry->value_int;
+     len = len_entry->value_int;
      ln_op_check_param_satisfy(LN_ERROR,
 			      axis >= 0 && axis < src_entry->tensor->ndim);
      ln_op_check_param_satisfy(LN_ERROR,
@@ -51,9 +49,8 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 			      len > 0 && len <= src_entry->tensor->dims[axis]);
      ln_op_check_param_satisfy(LN_ERROR,
 			      len + start <= src_entry->tensor->dims[axis]);
-     /* have checked tensors and parameters */
 
-     /* allocate memory for tensors needing allocation */
+     /* allocate tensor memory in need */
      dst_entry->tensor = tl_tensor_create_slice(src_entry->tensor, axis, len,
 						src_entry->tensor->dtype);
 }
@@ -67,8 +64,9 @@ static void slice_run(ln_op_arg *op_arg, ln_error **error)
      ln_tensor_entry *dst_entry, *src_entry;
      ln_param_entry *axis_entry, *start_entry, *len_entry;
 
-     /* Those tensors and params should have been checked in pre_run().
-	Further errors should be considered as bugs, so we use asserts here. */
+     /* Get tensors and parameters, which should have been checked in pre_run().
+        Further errors should be considered as bugs, so we use asserts to catch
+        return value. */
      src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
      assert(src_entry);
      dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
@@ -82,13 +80,13 @@ static void slice_run(ln_op_arg *op_arg, ln_error **error)
 
      /* do the real work */
      tl_tensor_slice(src_entry->tensor, dst_entry->tensor,
-		     (int)axis_entry->value_number,
-		     (int)start_entry->value_number,
-		     (int)len_entry->value_number);
+		     axis_entry->value_int,
+		     start_entry->value_int,
+                     len_entry->value_int);
 }
 
 /*
- * This function should undo everything with memory that pre_run() did.
+ * This function should free all memory that pre_run() and run() allocated.
  */
 static void slice_post_run(ln_op_arg *op_arg, ln_error **error)
 {

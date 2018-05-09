@@ -1,5 +1,6 @@
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 #include "ln_param.h"
 #include "ln_util.h"
 
@@ -8,35 +9,20 @@ static ln_param_entry *ln_param_entry_create(const char *arg_name,
 {
      ln_param_entry *entry;
 
+     assert(type >= LN_PARAM_NULL && type < LN_PARAM_INVALID);
      entry = ln_alloc(sizeof(ln_param_entry));
      entry->arg_name = ln_alloc(sizeof(char)*(strlen(arg_name)+1));
      strcpy(entry->arg_name, arg_name);
      entry->type = type;
      entry->array_len = 0;
-     switch (entry->type) {
-     case LN_PARAM_NULL:
-          break;
-     case LN_PARAM_STRING:
-          entry->value_string = NULL;
-          break;
-     case LN_PARAM_NUMBER:
-          entry->value_number = 0;
-          break;
-     case LN_PARAM_BOOL:
-          entry->value_bool = LN_FALSE;
-          break;
-     case LN_PARAM_ARRAY_STRING:
-          entry->value_array_string = NULL;
-          break;
-     case LN_PARAM_ARRAY_NUMBER:
-          entry->value_array_number = NULL;
-          break;
-     case LN_PARAM_ARRAY_BOOL:
-          entry->value_array_bool = NULL;
-          break;
-     default:
-          assert(0 && "unsupported ln_param_type");
-     }
+     entry->value_string = NULL;
+     entry->value_double = 0;
+     entry->value_int = 0;
+     entry->value_bool = LN_FALSE;
+     entry->value_array_string = NULL;
+     entry->value_array_double = NULL;
+     entry->value_array_int = NULL;
+     entry->value_array_bool = NULL;
 
      return entry;
 }
@@ -44,31 +30,16 @@ static ln_param_entry *ln_param_entry_create(const char *arg_name,
 static void ln_param_entry_free(ln_param_entry *entry)
 {
      ln_free(entry->arg_name);
-     switch (entry->type) {
-     case LN_PARAM_STRING:
-          ln_free(entry->value_string);
-          break;
-     case LN_PARAM_NUMBER:
-          break;
-     case LN_PARAM_BOOL:
-          break;
-     case LN_PARAM_ARRAY_STRING:
+     ln_free(entry->value_string);
+     if (entry->type == LN_PARAM_ARRAY_STRING) {
           int i;
           for (i = 0; i < entry->array_len; i++)
                ln_free(entry->value_array_string[i]);
-          ln_free(entry->value_array_string);
-          break;
-     case LN_PARAM_ARRAY_NUMBER:
-          ln_free(entry->value_array_number);
-          break;
-     case LN_PARAM_ARRAY_BOOL:
-          ln_free(entry->value_array_bool);
-          break;
-     case LN_PARAM_NULL:
-          break;
-     default:
-          assert(0 && "unsupported ln_param_type");
      }
+     ln_free(entry->value_array_string);
+     ln_free(entry->value_array_double);
+     ln_free(entry->value_array_int);
+     ln_free(entry->value_array_bool);
      ln_free(entry);
 }
 
@@ -92,7 +63,15 @@ ln_param_table *ln_param_table_append_number(ln_param_table *table,
      ln_param_entry *entry;
 
      entry = ln_param_entry_create(arg_name, LN_PARAM_NUMBER);
-     entry->value_number = number;
+     entry->value_double = number;
+     /* use saturation in case of overflow */
+     if (number >= INT_MAX)
+          entry->value_int = INT_MAX;
+     else if (number <= INT_MIN)
+          entry->value_int = INT_MIN;
+     else
+          entry->value_int = (int)number;
+
      table = ln_list_append(table, entry);
      return table;
 }
@@ -150,8 +129,19 @@ ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
      assert(array_len >= 0);
      entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
      entry->array_len = array_len;
-     entry->value_array_number = ln_alloc(sizeof(double)*array_len);
-     memmove(entry->value_array_number, array_number, sizeof(double)*array_len);
+     entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+     entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+     memmove(entry->value_array_double, array_number, sizeof(double)*array_len);
+     for (i = 0; i < array_len; i++) {
+          /* use saturation in case of overflow */
+          if (array_number[i] >= INT_MAX)
+               entry->value_array_int[i] = INT_MAX;
+          else if (array_number[i] <= INT_MIN)
+               entry->value_array_int[i] = INT_MIN;
+          else
+               entry->value_array_int[i] = (int)array_number[i];
+     }
+
      table = ln_list_append(table, entry);
 }
 
@@ -161,7 +151,6 @@ ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
                                                   ln_bool *array_bool)
 {
      ln_param_entry *entry;
-     int i;
 
      assert(array_len >= 0);
      entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_BOOL);
