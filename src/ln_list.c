@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2018 Zhao Zhixu
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "ln_list.h"
 #include "ln_util.h"
 
@@ -125,23 +147,23 @@ ln_list *ln_list_insert_nth(ln_list *list, void *data, int n)
      return list;
 }
 
-ln_list *ln_list_find(const ln_list *list, void *data)
+void *ln_list_find(ln_list *list, void *data)
 {
      ln_list *l;
 
      for (l = list; l; l = l->next)
           if (data == l->data)
-               return l;
+               return l->data;
      return NULL;
 }
 
-ln_list *ln_list_find_custom(const ln_list *list, void *data, ln_cmp_func cmp)
+void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)
 {
      ln_list *l;
 
      for (l = list; l; l = l->next)
           if (cmp(data, l->data) == 0)
-               return l;
+               return l->data;
      return NULL;
 }
 

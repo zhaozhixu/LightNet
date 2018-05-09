@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2018 Zhao Zhixu
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #ifndef _LN_OP_H_
 #define _LN_OP_H_
 
@@ -27,15 +49,15 @@ struct ln_op {
 extern "C" {
 #endif
 
-     ln_op *ln_op_create(const char *name, const char *optype,
-                         ln_tensor_table *tensors, ln_param_table *params,
-                         ln_op_func pre_run, ln_op_func run, ln_op_func post_run);
-     void ln_op_free(ln_op *op);
-     void ln_op_list_free_tables_too(ln_list *ops);
-     tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
-     ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
-     void ln_op_list_do_run(ln_list *ops, ln_error **error);
-     void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
+ln_op *ln_op_create(const char *name, const char *optype,
+                    ln_tensor_table *tensors, ln_param_table *params,
+                    ln_op_func pre_run, ln_op_func run, ln_op_func post_run);
+void ln_op_free(ln_op *op);
+void ln_op_list_free_tables_too(ln_list *ops);
+tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
+ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
+void ln_op_list_do_run(ln_list *ops, ln_error **error);
+void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 
 #ifdef __cplusplus
 }
@@ -79,11 +101,11 @@ extern "C" {
  * entry should have been checked with ln_op_check_param_exist
  * type is an enum defined in ln_param.h
  */
-#define ln_op_check_param_type(level, entry, type)                      \
-     ln_op_check(level, entry->type == type,                            \
+#define ln_op_check_param_type(level, entry, param_type)                \
+     ln_op_check(level, entry->type == param_type,                      \
                  "%s: \"%s\"'s \"%s\" param's value should be of type %s, but got a %s", \
-                 op_arg->optype, op_arg->name, entry->arg_name,         \
-                 ln_param_type_name(type), ln_param_type_name(entry->type))
+                 op_arg->optype, op_arg->name,                          \
+                 ln_param_type_name(param_type), ln_param_type_name(entry->type))
 
 /* table_length should be returned by ln_param_table_length(op_arg->params) */
 #define ln_op_check_param_num_eq(level, table_length, num)              \

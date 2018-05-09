@@ -1,8 +1,28 @@
+/*
+ * Copyright (c) 2018 Zhao Zhixu
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <string.h>
 #include <assert.h>
 #include "ln_parse.h"
-#include "ln_error.h"
-#include "ln_util.h"
 #include "ln_op.h"
 #include "cJSON.h"
 
@@ -15,7 +35,7 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
      ln_param_type first_type = LN_PARAM_INVALID;
      ln_param_type type;
      cJSON *element_json;
-     ind array_len = cJSON_GetArraySize(array_json);
+     int array_len = cJSON_GetArraySize(array_json);
      char **array_string = NULL;
      double *array_number = NULL;
      ln_bool *array_bool = NULL;
@@ -57,6 +77,7 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 		    break;
 	       default:
 		    /* handled before */
+		    break;
 	       }
 	  }
 	  else if (first_type != type) {
@@ -80,6 +101,7 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 	       break;
 	  default:
 	       /* handled before */
+	       break;
 	  }
 	  idx++;
      }
@@ -103,6 +125,7 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 	  break;
      default:
 	  /* handled before */
+	  break;
      }
 
 end:
@@ -117,7 +140,7 @@ end:
 }
 
 static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
-		       const ln_list *registered_ops, int idx, ln_error **error)
+		       ln_list *registered_ops, int idx, ln_error **error)
 {
      ln_op *op, *proto_op;
      ln_tensor_table *tensors = NULL;
@@ -284,7 +307,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 					  optype_json->valuestring);
      if (!proto_op) {
 	  *error = ln_error_create(LN_ERROR,
-				   "op \"%s\"'s optype \"%s\" is not registered"
+				   "op \"%s\"'s optype \"%s\" is not registered",
 				   name_json->valuestring,
 				   optype_json->valuestring);
 	  goto err;
@@ -312,7 +335,7 @@ err:
 }
 
 ln_list *ln_parse_ops(const char * const json_str,
-		      const ln_list *registered_ops, ln_error **error)
+		      ln_list *registered_ops, ln_error **error)
 {
      const cJSON *ops_json;
      const cJSON *op_json;

@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2018 Zhao Zhixu
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <string.h>
 #include <assert.h>
 #include <limits.h>
@@ -101,7 +123,7 @@ ln_param_table *ln_param_table_append_null(ln_param_table *table,
 ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
                                                   const char *arg_name,
                                                   int array_len,
-                                                  const char **array_string)
+                                                  char **array_string)
 {
      ln_param_entry *entry;
      int i;
@@ -116,6 +138,7 @@ ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
           strcpy(entry->value_array_string[i], array_string[i]);
      }
      table = ln_list_append(table, entry);
+     return table;
 }
 
 ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
@@ -143,6 +166,7 @@ ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
      }
 
      table = ln_list_append(table, entry);
+     return table;
 }
 
 ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
@@ -158,6 +182,7 @@ ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
      entry->value_array_bool = ln_alloc(sizeof(ln_bool)*array_len);
      memmove(entry->value_array_bool, array_bool, sizeof(ln_bool)*array_len);
      table = ln_list_append(table, entry);
+     return table;
 }
 
 
@@ -180,7 +205,7 @@ static int find_by_arg_name(void *data1, void *data2)
      return strcmp(p1->arg_name, p2->arg_name);
 }
 
-ln_param_entry *ln_param_table_find_by_arg_name(const ln_param_table *table,
+ln_param_entry *ln_param_table_find_by_arg_name(ln_param_table *table,
 						char *arg_name)
 {
      ln_param_entry cmp_entry;
@@ -209,7 +234,7 @@ const char *ln_param_type_name(ln_param_type type)
      case LN_PARAM_BOOL:
           return "Boolean";
      case LN_PARAM_ARRAY_STRING:
-          return "String Array"
+          return "String Array";
      case LN_PARAM_ARRAY_NUMBER:
           return "Number Array";
      case LN_PARAM_ARRAY_BOOL:
