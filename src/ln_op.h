@@ -104,7 +104,7 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 #define ln_op_check_param_type(level, entry, param_type)                \
      ln_op_check(level, entry->type == param_type,                      \
                  "%s: \"%s\"'s \"%s\" param's value should be of type %s, but got a %s", \
-                 op_arg->optype, op_arg->name,                          \
+                 op_arg->optype, op_arg->name, entry->arg_name          \
                  ln_param_type_name(param_type), ln_param_type_name(entry->type))
 
 /* table_length should be returned by ln_param_table_length(op_arg->params) */
