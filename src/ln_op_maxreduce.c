@@ -28,12 +28,45 @@
  */
 static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
+     ln_tensor_entry *src_entry, *dst_entry, *arg_entry;
+     ln_param_entry *axis_entry;
+     int tensors_n, params_n;
+     int axis;
 
      /* check tensors and parameters */
-     /* ...... */
+     tensors_n = ln_tensor_table_length(op_arg->tensors);
+     ln_op_check_tensor_num_ge(LN_ERROR, tensors_n, 2);
+     ln_op_check_tensor_num_le(LN_ERROR, tensors_n, 3);
+
+     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
+     ln_op_check_tensor_exist(LN_ERROR, src_entry, "src");
+     ln_op_check_tensor_defined(LN_ERROR, src_entry);
+
+     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
+     ln_op_check_tensor_exist(LN_ERROR, dst_entry, "dst");
+     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
+
+     /* "arg" is an optional parameter */
+     arg_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "arg");
+     if (arg_entry)
+          ln_op_check_tensor_not_defined(LN_ERROR, arg_entry);
+
+     params_n = ln_param_table_length(op_arg->params);
+     ln_op_check_param_num_eq(LN_ERROR, params_n, 1);
+
+     axis_entry = ln_param_table_find_by_arg_name(op_arg->params, "axis");
+     ln_op_check_param_type(LN_ERROR, axis_entry, LN_PARAM_NUMBER);
+
+     axis = axis_entry->value_int;
+     ln_op_check_param_satisfy(LN_ERROR,
+                               axis >= 0 && axis < src_entry->tensor->ndim);
 
      /* allocate tensor memory in need */
-     /* ...... */
+     dst_entry->tensor = tl_tensor_create_slice(src_entry->tensor, axis, 1,
+                                                src_entry->tensor->dtype);
+     if (arg_entry)
+          arg_entry->tensor = tl_tensor_create_slice(src_entry->tensor, axis, 1,
+                                                     src_entry->tensor->dtype);
 }
 
 /*
@@ -42,14 +75,27 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void maxreduce_run(ln_op_arg *op_arg, ln_error **error)
 {
+     ln_tensor_entry *src_entry, *dst_entry, *arg_entry;
+     ln_param_entry *axis_entry;
 
      /* Get tensors and parameters, which should have been checked in pre_run().
         Further errors should be considered as bugs, so we use asserts to catch
         return value. */
-     /* ...... */
+     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
+     assert(src_entry);
+     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
+     assert(dst_entry);
+     arg_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "arg");
+     axis_entry = ln_param_table_find_by_arg_name(op_arg->params, "axis");
+     assert(axis_entry);
 
      /* do the real work */
-     /* ...... */
+     if (arg_entry)
+          tl_tensor_maxreduce(src_entry->tensor, dst_entry->tensor,
+                              arg_entry->tensor, axis_entry->value_int);
+     else
+          tl_tensor_maxreduce(src_entry->tensor, dst_entry->tensor,
+                              NULL, axis_entry->value_int);
 }
 
 /*
@@ -57,9 +103,16 @@ static void maxreduce_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void maxreduce_post_run(ln_op_arg *op_arg, ln_error **error)
 {
+     ln_tensor_entry *dst_entry, *arg_entry;
+
+     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
+     assert(dst_entry);
+     arg_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "arg");
 
      /* free the tensor memory allocated in pre_run() and run() */
-     /* ..... */
+     tl_tensor_free_data_too(dst_entry->tensor);
+     if (arg_entry)
+          tl_tensor_free_data_too(arg_entry->tensor);
 }
 
 static ln_op_arg op_arg_maxreduce = {

@@ -243,4 +243,3 @@ const char *ln_param_type_name(ln_param_type type)
           assert(0 && "unsupported ln_param_type");
      }
 }
-nn
