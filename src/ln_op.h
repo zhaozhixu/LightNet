@@ -33,7 +33,7 @@ struct ln_op_arg {
      char            *optype;
      ln_tensor_table *tensors;
      ln_param_table  *params;
-     void            *extra;
+     void            *priv;
 };
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);

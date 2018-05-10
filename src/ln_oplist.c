@@ -31,5 +31,6 @@ ln_op *ln_init_ops[] = {
      &ln_op_slice,
      &ln_op_maxreduce,
      &ln_op_maxreduce,
+     &ln_op_elew,
      /* end of init ops */
 };
