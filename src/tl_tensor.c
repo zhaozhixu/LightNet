@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2018 Zhao Zhixu
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,7 +94,7 @@ int tl_tensor_issameshape(const tl_tensor *t1, const tl_tensor *t2)
 }
 
 tl_tensor *tl_tensor_create(void *data, int ndim, const int *dims,
-                         tl_dtype dtype)
+                            tl_dtype dtype)
 {
      tl_tensor *t;
      size_t size;
@@ -258,7 +280,7 @@ int tl_tensor_save(const char *file_name, const tl_tensor *t, const char *fmt)
 }
 
 tl_tensor *tl_tensor_create_slice(const tl_tensor *src, int axis, int len,
-                              tl_dtype dtype)
+                                  tl_dtype dtype)
 {
      tl_tensor *dst;
      int *dims;
@@ -276,7 +298,7 @@ tl_tensor *tl_tensor_create_slice(const tl_tensor *src, int axis, int len,
 }
 
 tl_tensor *tl_tensor_slice(const tl_tensor *src, tl_tensor *dst, int axis,
-                         int start, int len)
+                           int start, int len)
 {
      int i;
      int d_vol, s_vol, vol;
@@ -295,7 +317,7 @@ tl_tensor *tl_tensor_slice(const tl_tensor *src, tl_tensor *dst, int axis,
 #ifndef NDEBUG
           for (i = 0; i < src->ndim; i++)
                assert(i == axis ? dst->dims[i] == len :
-                    dst->dims[i] == src->dims[i]);
+                      dst->dims[i] == src->dims[i]);
 #endif
      } else {
           dst = tl_tensor_create_slice(src, axis, len, src->dtype);
@@ -350,7 +372,7 @@ tl_tensor *tl_tensor_vreshape(const tl_tensor *src, int ndim, ...)
 }
 
 tl_tensor *tl_tensor_maxreduce(const tl_tensor *src, tl_tensor *dst,
-                              tl_tensor *arg, int axis)
+                               tl_tensor *arg, int axis)
 {
      /* suppose the shape of src is [N, C, H, W], dim = 1, then thread_num is N x H x W
         reduce_vol is H x W, index_vol is C x H x W */
@@ -369,7 +391,7 @@ tl_tensor *tl_tensor_maxreduce(const tl_tensor *src, tl_tensor *dst,
 #ifndef NDEBUG
           for (i = 0; i < dst->ndim; i++)
                assert(i == axis ? dst->dims[i] == 1 :
-                    dst->dims[i] == src->dims[i]);
+                      dst->dims[i] == src->dims[i]);
 #endif
      } else {
           dst = tl_tensor_create_slice(src, axis, 1, src->dtype);
@@ -378,7 +400,7 @@ tl_tensor *tl_tensor_maxreduce(const tl_tensor *src, tl_tensor *dst,
           assert(arg->dtype == TL_INT32);
           for (i = 0; i < arg->ndim; i++)
                assert(i == axis ? arg->dims[i] == 1 :
-                    arg->dims[i] == src->dims[i]);
+                      arg->dims[i] == src->dims[i]);
      }
 
      for (i = axis+1, thread_num = 1; i < dst->ndim; i++)
@@ -423,16 +445,16 @@ tl_tensor *tl_tensor_maxreduce(const tl_tensor *src, tl_tensor *dst,
      return dst;
 }
 
-tl_tensor *tl_tensor_mul(const tl_tensor *src1, const tl_tensor *src2,
-                         tl_tensor *dst)
+tl_tensor *tl_tensor_elew(const tl_tensor *src1, const tl_tensor *src2,
+                          tl_tensor *dst, tl_elew_op elew_op)
 {
      int thread_num;
      int di;
      size_t dsize;
      tl_dtype dtype;
      void *s1_data, *s2_data, *d_data;
-     void *mul_res;
-     tl_mul_func mul;
+     void *elew_res;
+     tl_elew_func elew;
 
      assert(tl_tensor_issameshape(src1, src2));
      assert(src1->dtype == src2->dtype);
@@ -449,21 +471,21 @@ tl_tensor *tl_tensor_mul(const tl_tensor *src1, const tl_tensor *src2,
      d_data = dst->data;
      dtype = src1->dtype;
      dsize = tl_size_of(dtype);
-     mul = tl_mul_getfunc(dtype);
-     mul_res = tl_alloc(dsize);
+     elew = tl_elew_getfunc(dtype);
+     elew_res = tl_alloc(dsize);
      for (di = 0; di < thread_num; di++) {
-          mul(tl_padd(s1_data, di, dsize),
-               tl_padd(s2_data, di, dsize), mul_res);
-          tl_passign(d_data, di, mul_res, 0, dsize);
+          elew(tl_padd(s1_data, di, dsize),
+               tl_padd(s2_data, di, dsize), elew_res, elew_op);
+          tl_passign(d_data, di, elew_res, 0, dsize);
      }
-     tl_free(mul_res);
+     tl_free(elew_res);
 
      return dst;
 }
 
 /* (optional) workspace size equals (sizeof(int) * dst->ndim * dst->len), two of them */
 tl_tensor *tl_tensor_transpose(const tl_tensor *src, tl_tensor *dst,
-                              const int *axes, int **workspace)
+                               const int *axes, int **workspace)
 {
      int *s_ids, *d_ids, *s_dims, *d_dims;
      int thread_num;

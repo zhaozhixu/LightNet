@@ -37,14 +37,15 @@
             ]
         },
         {
-            "name": "mul1",
-            "optype": "mul",
+            "name": "elew1",
+            "optype": "elew",
             "tensors": [
                 {"arg_name": "src1", "name": "maxreduce1_dst"},
                 {"arg_name": "src2", "name": "maxreduce1_arg"},
-                {"arg_name": "dst", "name": "mul1"}
+                {"arg_name": "dst", "name": "elew1"}
             ],
             "params": [
+                {"arg_name": "elew_op", "value": "TL_MUL"}
             ],
         }
         {
