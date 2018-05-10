@@ -126,7 +126,7 @@ open OPLIST_BAK, '<', "$oplist_file.bak"
 open OPLIST, '>', $oplist_file
   or die "Cannot open $oplist_file: $!";
 while (<OPLIST_BAK>) {
-  s|/\* end of extern declarations \*/|$declare\n/* end of declarations */|;
+  s|/\* end of declarations \*/|$declare\n/* end of declarations */|;
   s|/\* end of init ops \*/|$item\n     /* end of init ops */|;
   print OPLIST;
 }

@@ -25,11 +25,11 @@
 
 extern ln_op ln_op_slice;
 extern ln_op ln_op_maxreduce;
+extern ln_op ln_op_elew;
 /* end of declarations */
 
 ln_op *ln_init_ops[] = {
      &ln_op_slice,
-     &ln_op_maxreduce,
      &ln_op_maxreduce,
      &ln_op_elew,
      /* end of init ops */
