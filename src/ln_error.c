@@ -68,10 +68,12 @@ void ln_error_handle(ln_error **error)
 	  fprintf(stderr, "ERROR: %s\n", (*error)->err_str);
 	  fflush(NULL);
 	  abort();
+	  break;
      case LN_ERROR_SYS:
 	  fprintf(stderr, "ERROR_SYS: %s\n", (*error)->err_str);
 	  fflush(NULL);
 	  abort();
+	  break;
      case LN_WARNING:
 	  fprintf(stderr, "WARNING: %s\n", (*error)->err_str);
 	  fflush(NULL);
@@ -86,6 +88,12 @@ void ln_error_handle(ln_error **error)
 	  return;
      case LN_INFO:
 	  fprintf(stderr, "INFO: %s\n", (*error)->err_str);
+	  fflush(NULL);
+	  ln_error_free(*error);
+	  *error = NULL;
+	  return;
+     default :
+	  fprintf(stderr, "WARNING: unsupported ln_error_level %d\n", (*error)->level);
 	  fflush(NULL);
 	  ln_error_free(*error);
 	  *error = NULL;

@@ -6,6 +6,7 @@
 *.out
 check_output.xml
 test_lightnet
+lightnet
 GPATH
 GRTAGS
 GTAGS

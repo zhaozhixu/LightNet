@@ -32,6 +32,8 @@ extern "C" {
 
 Suite *make_master_suite(void);
 Suite *make_list_suite(void);
+Suite *make_error_suite(void);
+Suite *make_param_suite(void);
 /* end of declarations */
 
 #ifdef __cplusplus
