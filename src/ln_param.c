@@ -99,8 +99,8 @@ ln_param_table *ln_param_table_append_number(ln_param_table *table,
 }
 
 ln_param_table *ln_param_table_append_bool(ln_param_table *table,
-                                        const char *arg_name,
-                                        ln_bool bool)
+					   const char *arg_name,
+					   ln_bool bool)
 {
      ln_param_entry *entry;
 
@@ -111,7 +111,7 @@ ln_param_table *ln_param_table_append_bool(ln_param_table *table,
 }
 
 ln_param_table *ln_param_table_append_null(ln_param_table *table,
-                                        const char *arg_name)
+					   const char *arg_name)
 {
      ln_param_entry *entry;
 
@@ -121,9 +121,9 @@ ln_param_table *ln_param_table_append_null(ln_param_table *table,
 }
 
 ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
-                                                  const char *arg_name,
-                                                  int array_len,
-                                                  char **array_string)
+						   const char *arg_name,
+						   int array_len,
+						   char **array_string)
 {
      ln_param_entry *entry;
      int i;
@@ -142,9 +142,9 @@ ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
 }
 
 ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
-                                                  const char *arg_name,
-                                                  int array_len,
-                                                  double *array_number)
+						   const char *arg_name,
+						   int array_len,
+						   double *array_number)
 {
      ln_param_entry *entry;
      int i;
@@ -170,9 +170,9 @@ ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
 }
 
 ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
-                                             const char *arg_name,
-                                             int array_len,
-                                             ln_bool *array_bool)
+						 const char *arg_name,
+						 int array_len,
+						 ln_bool *array_bool)
 {
      ln_param_entry *entry;
 
@@ -206,7 +206,7 @@ static int find_by_arg_name(void *data1, void *data2)
 }
 
 ln_param_entry *ln_param_table_find_by_arg_name(ln_param_table *table,
-                                             char *arg_name)
+						char *arg_name)
 {
      ln_param_entry cmp_entry;
      ln_param_entry *result_entry;
