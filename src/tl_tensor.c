@@ -497,6 +497,15 @@ tl_tensor *tl_tensor_transpose(const tl_tensor *src, tl_tensor *dst,
      void *s_data, *d_data;
      int i;
 
+#ifndef NDEBUG
+     int *tmp = tl_alloc(src->ndim * sizeof(int));
+     memset(tmp, 0, src->ndim * sizeof(int));
+     for (i = 0; i < src->ndim; i++)
+          tmp[axes[i]] = 1;
+     for (i = 0; i < src->ndim; i++)
+          assert(tmp[i] && "axes don't match src tensor's shape");
+     tl_free(tmp);
+#endif
      assert(src);
      if (dst) {
           assert(src->dtype == dst->dtype);

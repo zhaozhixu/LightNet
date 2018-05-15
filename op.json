@@ -54,7 +54,6 @@
             "tensors": [
                 {"arg_name": "src", "name": "mul1"},
                 {"arg_name": "dst", "name": "transpose1"},
-                {"arg_name": "workspace", "name": "transpose1_workspace"}
             ],
             "params": [
                 {"arg_name": "axes", "value": [2, 1, 0]}
