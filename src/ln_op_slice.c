@@ -35,7 +35,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_table_length(op_arg->tensors);
-     ln_op_check_tensor_num_eq(LN_ERROR, tensors_n, 2);
+     ln_op_check_tensor_len_eq(LN_ERROR, tensors_n, 2);
 
      src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
      ln_op_check_tensor_exist(LN_ERROR, src_entry, "src");
@@ -46,7 +46,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_tensor_not_defined(LN_WARNING, dst_entry);
 
      params_n = ln_param_table_length(op_arg->params);
-     ln_op_check_param_num_eq(LN_ERROR, params_n, 3);
+     ln_op_check_param_len_eq(LN_ERROR, params_n, 3);
 
      axis_entry = ln_param_table_find_by_arg_name(op_arg->params, "axis");
      ln_op_check_param_exist(LN_ERROR, axis_entry, "axis");

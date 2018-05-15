@@ -35,7 +35,7 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
      strcpy(op_arg->optype, optype);
      op_arg->tensors = tensors;
      op_arg->params = params;
-     op_arg->extra = NULL;
+     op_arg->priv = NULL;
 
      return op_arg;
 }
