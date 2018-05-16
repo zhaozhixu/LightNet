@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "test_lightnet.h"
 #include "../src/ln_op.h"
 
@@ -71,11 +72,72 @@ static void pre_run1 (ln_op_arg *op_arg, ln_error **error)
 
 static void run1 (ln_op_arg *op_arg, ln_error **error)
 {
+     ln_tensor_entry *tensor_entry;
 
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name5");
+     assert(tensor_entry);
+
+     ((int32_t *)tensor_entry->tensor->data)[0] = 1;
+     ((int32_t *)tensor_entry->tensor->data)[1] = 1;
 }
 
 static void post_run1 (ln_op_arg *op_arg, ln_error **error)
 {
+     ln_tensor_entry *tensor_entry;
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name5");
+     assert(tensor_entry);
+
+     tl_tensor_free_data_too(tensor_entry->tensor);
+     tensor_entry->tensor = NULL;
+}
+
+static void pre_run2 (ln_op_arg *op_arg, ln_error **error)
+{
+     ln_tensor_entry *tensor_entry;
+     int tensors_n, params_n;
+
+     tensors_n = ln_tensor_table_length(op_arg->tensors);
+     ln_op_check_tensor_len_eq(LN_ERROR, tensors_n, 3);
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name3");
+     ln_op_check_tensor_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name3");
+     ln_op_check_tensor_defined(LN_ERROR, tensor_entry);
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name4");
+     ln_op_check_tensor_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name4");
+     ln_op_check_tensor_defined(LN_ERROR, tensor_entry);
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name6");
+     ln_op_check_tensor_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name6");
+     ln_op_check_tensor_not_defined(LN_WARNING, tensor_entry);
+
+     params_n = ln_param_table_length(op_arg->params);
+     ln_op_check_param_len_eq(LN_ERROR, params_n, 0);
+
+     tensor_entry->tensor = tl_tensor_zeros(TL_INT32, 2, 1, 2);
+}
+
+static void run2 (ln_op_arg *op_arg, ln_error **error)
+{
+     ln_tensor_entry *tensor_entry;
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name6");
+     assert(tensor_entry);
+
+     ((int32_t *)tensor_entry->tensor->data)[0] = 1;
+     ((int32_t *)tensor_entry->tensor->data)[1] = 1;
+}
+
+static void post_run2 (ln_op_arg *op_arg, ln_error **error)
+{
+     ln_tensor_entry *tensor_entry;
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "test_tensor_arg_name6");
+     assert(tensor_entry);
+
+     tl_tensor_free_data_too(tensor_entry->tensor);
+     tensor_entry->tensor = NULL;
 }
 
 START_TEST(test_ln_op_create)
@@ -138,7 +200,7 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
                                       "test_tensor_name2", tensor2);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name5",
                                       "test_tensor_name5", NULL);
-     op1 = ln_op_create("test_name1", "test_optype1", tensors, NULL, pre_run, run, post_run);
+     op1 = ln_op_create("test_name1", "test_optype1", tensors, NULL, pre_run1, run1, post_run1);
 
      tensor3 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
      tensor4 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
@@ -148,7 +210,7 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
                                       "test_tensor_name4", tensor4);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name6",
                                       "test_tensor_name6", NULL);
-     op2 = ln_op_create("test_name2", "test_optype2", tensors, NULL, pre_run, run, post_run);
+     op2 = ln_op_create("test_name2", "test_optype2", tensors, NULL, pre_run2, run2, post_run2);
 
      ops = ln_list_append(NULL, op1);
      ops = ln_list_append(ops, op2);
@@ -168,6 +230,28 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
      ck_assert_ptr_eq(op, op1);
      op = ln_op_list_find_by_optype(ops, "test_optype2");
      ck_assert_ptr_eq(op, op2);
+
+     ln_error *error = NULL;
+     ln_op_list_do_pre_run(ops, &error);
+     ln_error_handle(&error);
+     ck_assert_ptr_ne(ln_op_list_find_tensor_by_name(ops, "test_tensor_name5"), NULL);
+     ck_assert_ptr_ne(ln_op_list_find_tensor_by_name(ops, "test_tensor_name6"), NULL);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name5")->data)[0], 0);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name5")->data)[0], 0);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name6")->data)[0], 0);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name6")->data)[0], 0);
+
+     ln_op_list_do_run(ops, &error);
+     ln_error_handle(&error);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name5")->data)[0], 1);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name5")->data)[0], 1);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name6")->data)[0], 1);
+     ck_assert_int_eq(((int32_t *)ln_op_list_find_tensor_by_name(ops, "test_tensor_name6")->data)[0], 1);
+
+     ln_op_list_do_post_run(ops, &error);
+     ln_error_handle((&error));
+     ck_assert_ptr_eq(ln_op_list_find_tensor_by_name(ops, "test_tensor_name5"), NULL);
+     ck_assert_ptr_eq(ln_op_list_find_tensor_by_name(ops, "test_tensor_name6"), NULL);
 
      tl_tensor_free_data_too(tensor1);
      tl_tensor_free_data_too(tensor2);
