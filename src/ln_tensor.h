@@ -39,11 +39,8 @@ typedef ln_list ln_tensor_table;
 extern "C" {
 #endif
 
-ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg_name,
-					tl_tensor *tensor);
-void ln_tensor_entry_free(ln_tensor_entry *entry);
-ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *name,
-					const char *arg_name, tl_tensor *tensor);
+ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
+					const char *name, tl_tensor *tensor);
 void ln_tensor_table_free(ln_tensor_table *table);
 ln_tensor_entry *ln_tensor_table_find_by_arg_name(ln_tensor_table *table,
 						  char *arg_name);

@@ -23,8 +23,8 @@
 #include "ln_tensor.h"
 #include "ln_util.h"
 
-ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg_name,
-					tl_tensor *tensor)
+static ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg_name,
+                                               tl_tensor *tensor)
 {
      ln_tensor_entry *entry;
 
@@ -38,15 +38,15 @@ ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg_name,
      return entry;
 }
 
-void ln_tensor_entry_free(ln_tensor_entry *entry)
+static void ln_tensor_entry_free(ln_tensor_entry *entry)
 {
      ln_free(entry->name);
      ln_free(entry->arg_name);
      ln_free(entry);
 }
 
-ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *name,
-					const char *arg_name, tl_tensor *tensor)
+ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
+					const char *name, tl_tensor *tensor)
 {
      ln_tensor_entry *entry;
 

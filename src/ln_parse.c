@@ -236,8 +236,8 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 	  tensor = ln_op_list_find_tensor_by_name(ops,
 						  tensor_name_json->valuestring);
 	  tensors = ln_tensor_table_append(tensors,
-					   tensor_name_json->valuestring,
 					   tensor_arg_name_json->valuestring,
+					   tensor_name_json->valuestring,
 					   tensor);
 	  i++;
      }
