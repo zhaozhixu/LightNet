@@ -123,6 +123,13 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 							 param_arg_name_json->valuestring,
 							 array_len, array_bool);
 	  break;
+     case LN_PARAM_INVALID:
+	  assert(array_len == 0);
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\"'s param \"%s\"'s value is an empty array",
+				   name_json->valuestring,
+				   param_arg_name_json->valuestring);
+	  goto end;
      default:
 	  /* handled before */
 	  break;

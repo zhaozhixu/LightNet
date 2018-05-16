@@ -1,0 +1,63 @@
+{
+    "ops": [
+        {
+            "name": "slice1",
+            "optype": "slice",
+            "tensors": [
+                {"arg_name": "src", "name": "input"},
+                {"arg_name": "dst", "name": "slice1"}
+            ],
+            "params": [
+                {"arg_name": "axis", "value": 1},
+                {"arg_name": "start", "value": 1},
+                {"arg_name": "len", "value": 2}
+            ]
+        },
+        {
+            "name": "reshape1",
+            "optype": "reshape",
+            "tensors": [
+                {"arg_name": "src", "name": "slice1"},
+                {"arg_name": "dst", "name": "reshape1"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [1, 2, 3]}
+            ]
+        },
+        {
+            "name": "maxreduce1",
+            "optype": "maxreduce",
+            "tensors": [
+                {"arg_name": "src", "name": "reshape1"},
+                {"arg_name": "dst", "name": "maxreduce1_dst"},
+                {"arg_name": "arg", "name": "maxreduce1_arg"}
+            ],
+            "params": [
+                {"arg_name": "axis", "value": 1}
+            ]
+        },
+        {
+            "name": "elew1",
+            "optype": "elew",
+            "tensors": [
+                {"arg_name": "src1", "name": "maxreduce1_dst"},
+                {"arg_name": "src2", "name": "maxreduce1_arg"},
+                {"arg_name": "dst", "name": "elew1"}
+            ],
+            "params": [
+                {"arg_name": "elew_op", "value": "TL_MUL"}
+            ],
+        }
+        {
+            "name": "transpose1",
+            "optype": "transpose",
+            "tensors": [
+                {"arg_name": "src", "name": "mul1"},
+                {"arg_name": "dst", "name": "transpose1"},
+            ],
+            "params": [
+                {"arg_name": "axes", "value": [2, 1, 0]}
+            ]
+        }
+    ]
+}

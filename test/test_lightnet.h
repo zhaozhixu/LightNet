@@ -36,6 +36,7 @@ Suite *make_error_suite(void);
 Suite *make_param_suite(void);
 Suite *make_tensor_suite(void);
 Suite *make_op_suite(void);
+Suite *make_parse_suite(void);
 /* end of declarations */
 
 #ifdef __cplusplus
