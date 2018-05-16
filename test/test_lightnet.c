@@ -37,6 +37,7 @@ int main(int argc, char **argv)
      srunner_add_suite(sr, make_error_suite());
      srunner_add_suite(sr, make_param_suite());
      srunner_add_suite(sr, make_tensor_suite());
+     srunner_add_suite(sr, make_op_suite());
      /* end of adding suites */
 
      srunner_set_xml (sr, "result/check_output.xml");

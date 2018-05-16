@@ -122,6 +122,19 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
      return result_op;
 }
 
+void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
+{
+     ln_list *l;
+     ln_op *op;
+
+     for (l = ops; l; l = l->next) {
+          op = (ln_op *)l->data;
+          op->pre_run(op->op_arg, error);
+          if (*error)
+               return;
+     }
+}
+
 void ln_op_list_do_run(ln_list *ops, ln_error **error)
 {
      ln_list *l;
