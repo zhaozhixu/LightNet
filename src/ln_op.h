@@ -54,6 +54,7 @@ ln_op *ln_op_create(const char *name, const char *optype,
                     ln_tensor_table *tensors, ln_param_table *params,
                     ln_op_func pre_run, ln_op_func run, ln_op_func post_run);
 void ln_op_free(ln_op *op);
+ln_list *ln_op_list_create_from_array(ln_op **op_array);
 void ln_op_list_free_tables_too(ln_list *ops);
 tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
 ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);

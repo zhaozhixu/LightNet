@@ -34,5 +34,5 @@ ln_op *ln_init_ops[] = {
      &ln_op_maxreduce,
      &ln_op_elew,
      &ln_op_transpose,
-     /* end of init ops */
+     NULL /* end of init ops */
 };

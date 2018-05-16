@@ -68,12 +68,12 @@ void ln_op_free(ln_op *op)
      ln_free(op);
 }
 
-ln_list *ln_op_list_create_from_array(ln_op *op_array, int n)
+ln_list *ln_op_list_create_from_array(ln_op **op_array)
 {
      ln_list *ops = NULL;
      int i;
 
-     for (i = 0; i < n; i++)
+     for (i = 0; op_array[i]; i++)
           ops = ln_list_append(ops, op_array[i]);
 
      return ops;

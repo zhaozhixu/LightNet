@@ -46,14 +46,14 @@
             ],
             "params": [
                 {"arg_name": "elew_op", "value": "TL_MUL"}
-            ],
-        }
+            ]
+        },
         {
             "name": "transpose1",
             "optype": "transpose",
             "tensors": [
-                {"arg_name": "src", "name": "mul1"},
-                {"arg_name": "dst", "name": "transpose1"},
+                {"arg_name": "src", "name": "elew1"},
+                {"arg_name": "dst", "name": "transpose1"}
             ],
             "params": [
                 {"arg_name": "axes", "value": [2, 1, 0]}

@@ -52,7 +52,7 @@
             "name": "transpose1",
             "optype": "transpose",
             "tensors": [
-                {"arg_name": "src", "name": "mul1"},
+                {"arg_name": "src", "name": "elew1"},
                 {"arg_name": "dst", "name": "transpose1"},
             ],
             "params": [
