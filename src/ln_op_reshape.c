@@ -56,7 +56,7 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
      params_n = ln_param_table_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 2);
+     ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
 
      dims_entry = ln_param_table_find_by_arg_name(op_arg->params, "dims");
      ln_op_check_param_exist(LN_ERROR, dims_entry, "dims");
@@ -72,35 +72,23 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_satisfy_msg(LN_ERROR,
                                    src_entry->tensor->len == compute_length(ndim, dims),
                                    "\"src\" tensor length is not equal with requested length");
-     /* have checked tensors and parameters */
 
-     /* Allocate memory for tensors needing allocation. In this case, no need. */
+     /* Allocate memory for tensors needing allocation. */
+     dst_entry->tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
 }
 
 /*
  * Normally we should only do the calculations here. Operations with memory
  * and such should go in pre_run(). But since this is an "in-place" reshape,
- * operation don't need to allocate data memory for "dst" tensor. So we can
- * assign "dst" tensor here by sharing data with "src".
+ * operation don't need to allocate data memory for "dst" tensor.
  */
 static void reshape_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry, *src_entry;
-     ln_param_entry *dims_entry;
 
      /* Those tensors and params should have been checked in pre_run().
 	Further errors should be considered as bugs, so we use asserts here. */
-     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
-     assert(src_entry);
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-     dims_entry = ln_param_table_find_by_arg_name(op_arg->params, "dims");
-     assert(dims_entry);
 
      /* do the real work */
-     dst_entry->tensor = tl_tensor_reshape(src_entry->tensor,
-                                           dims_entry->array_len,
-                                           dims_entry->value_array_int);
 }
 
 /*
@@ -114,8 +102,7 @@ static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
      assert(dst_entry);
 
      /*
-      * There is no tensor memory allocated in pre_run(), but a tensor struct
-      * allocated in run().
+      * Only free the tensor struct, not its data shared with src.
       */
      tl_tensor_free(dst_entry->tensor);
 }

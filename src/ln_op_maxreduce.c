@@ -55,6 +55,7 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
 
      axis_entry = ln_param_table_find_by_arg_name(op_arg->params, "axis");
+     ln_op_check_param_exist(LN_ERROR, axis_entry, "axis");
      ln_op_check_param_type(LN_ERROR, axis_entry, LN_PARAM_NUMBER);
 
      axis = axis_entry->value_int;

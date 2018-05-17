@@ -65,18 +65,18 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 	  if (first_type == LN_PARAM_INVALID) {
 	       first_type = type;
 	       switch (first_type) {
-	       case LN_PARAM_ARRAY_STRING:
+	       case LN_PARAM_STRING:
 		    array_string = ln_alloc(sizeof(char *)*array_len);
 		    memset(array_string, 0, sizeof(char *)*array_len);
 		    break;
-	       case LN_PARAM_ARRAY_NUMBER:
+	       case LN_PARAM_NUMBER:
 		    array_number = ln_alloc(sizeof(double)*array_len);
 		    break;
-	       case LN_PARAM_ARRAY_BOOL:
+	       case LN_PARAM_BOOL:
 		    array_bool = ln_alloc(sizeof(ln_bool)*array_len);
 		    break;
 	       default:
-		    /* handled before */
+		    assert(0 && "handled before, shouldn't get here");
 		    break;
 	       }
 	  }
@@ -88,19 +88,19 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 	       goto end;
 	  }
 	  switch (type) {
-	  case LN_PARAM_ARRAY_STRING:
+	  case LN_PARAM_STRING:
 	       array_string[idx] =
 		    ln_alloc(sizeof(char)*(strlen(element_json->valuestring)+1));
 	       strcpy(array_string[idx], element_json->valuestring);
 	       break;
-	  case LN_PARAM_ARRAY_NUMBER:
+	  case LN_PARAM_NUMBER:
 	       array_number[idx] = element_json->valuedouble;
 	       break;
-	  case LN_PARAM_ARRAY_BOOL:
+	  case LN_PARAM_BOOL:
 	       array_bool[idx] = cJSON_IsTrue(element_json) ? LN_TRUE : LN_FALSE;
 	       break;
 	  default:
-	       /* handled before */
+	       assert(0 && "handled before, shouldn't get here");
 	       break;
 	  }
 	  idx++;
@@ -108,17 +108,17 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 
      assert(idx == array_len);
      switch (first_type) {
-     case LN_PARAM_ARRAY_STRING:
+     case LN_PARAM_STRING:
 	  param_table = ln_param_table_append_array_string(param_table,
 							   param_arg_name_json->valuestring,
 							   array_len, array_string);
 	  break;
-     case LN_PARAM_ARRAY_NUMBER:
+     case LN_PARAM_NUMBER:
 	  param_table = ln_param_table_append_array_number(param_table,
 							   param_arg_name_json->valuestring,
 							   array_len, array_number);
 	  break;
-     case LN_PARAM_ARRAY_BOOL:
+     case LN_PARAM_BOOL:
 	  param_table = ln_param_table_append_array_bool(param_table,
 							 param_arg_name_json->valuestring,
 							 array_len, array_bool);
@@ -131,7 +131,7 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
 				   param_arg_name_json->valuestring);
 	  goto end;
      default:
-	  /* handled before */
+	  assert(0 && "handled before, shouldn't get here");
 	  break;
      }
 

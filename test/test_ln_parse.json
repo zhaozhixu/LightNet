@@ -1,16 +1,27 @@
 {
     "ops": [
         {
+            "name": "zeros1",
+            "optype": "zeros",
+            "tensors": [
+                {"arg_name": "dst", "name": "zeros1"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [2, 4]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"}
+            ]
+        },
+        {
             "name": "slice1",
             "optype": "slice",
             "tensors": [
-                {"arg_name": "src", "name": "input"},
+                {"arg_name": "src", "name": "zeros1"},
                 {"arg_name": "dst", "name": "slice1"}
             ],
             "params": [
                 {"arg_name": "axis", "value": 1},
                 {"arg_name": "start", "value": 1},
-                {"arg_name": "len", "value": 2}
+                {"arg_name": "len", "value": 3}
             ]
         },
         {
@@ -21,7 +32,7 @@
                 {"arg_name": "dst", "name": "reshape1"}
             ],
             "params": [
-                {"arg_name": "dims", "value": [1, 2, 3]}
+                {"arg_name": "dims", "value": [3, 2]}
             ]
         },
         {
@@ -33,7 +44,7 @@
                 {"arg_name": "arg", "name": "maxreduce1_arg"}
             ],
             "params": [
-                {"arg_name": "axis", "value": 1}
+                {"arg_name": "axis", "value": 0}
             ]
         },
         {
@@ -56,7 +67,7 @@
                 {"arg_name": "dst", "name": "transpose1"}
             ],
             "params": [
-                {"arg_name": "axes", "value": [2, 1, 0]}
+                {"arg_name": "axes", "value": [1, 0]}
             ]
         }
     ]

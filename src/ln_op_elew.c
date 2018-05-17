@@ -74,6 +74,7 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
 
      elew_op_entry = ln_param_table_find_by_arg_name(op_arg->params, "elew_op");
+     ln_op_check_param_exist(LN_ERROR, elew_op_entry, "elew_op");
      ln_op_check_param_type(LN_ERROR, elew_op_entry, LN_PARAM_STRING);
 
      elew_op = k2v(elew_op_entry->value_string);

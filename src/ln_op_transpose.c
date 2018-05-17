@@ -49,6 +49,7 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
 
      axes_entry = ln_param_table_find_by_arg_name(op_arg->params, "axes");
+     ln_op_check_param_exist(LN_ERROR, axes_entry, "axes");
      ln_op_check_param_type(LN_ERROR, axes_entry, LN_PARAM_ARRAY_NUMBER);
 
      axes = axes_entry->value_array_int;

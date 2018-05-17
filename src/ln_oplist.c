@@ -24,15 +24,19 @@
 #include "ln_list.h"
 
 extern ln_op ln_op_slice;
+extern ln_op ln_op_reshape;
 extern ln_op ln_op_maxreduce;
 extern ln_op ln_op_elew;
 extern ln_op ln_op_transpose;
+extern ln_op ln_op_zeros;
 /* end of declarations */
 
 ln_op *ln_init_ops[] = {
      &ln_op_slice,
+     &ln_op_reshape,
      &ln_op_maxreduce,
      &ln_op_elew,
      &ln_op_transpose,
+     &ln_op_zeros,
      NULL /* end of init ops */
 };
