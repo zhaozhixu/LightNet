@@ -44,15 +44,24 @@ static int k2v(char *str)
      return -1;
 }
 
+static int compute_length(int ndim, const int *dims)
+{
+     int i, len;
+
+     for (i = 0, len = 1; i < ndim; i++)
+          len *= dims[i];
+     return len;
+}
+
 /*
  * This function should do the parameter checking and tensor memory allocation.
  */
-static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      ln_tensor_entry *dst_entry;
-     ln_param_entry *dtype_entry, *dims_entry;
-     int tensors_n, params_n;
+     ln_param_entry *dims_entry, *dtype_entry, *data_entry;
      int dtype, i;
+     void *data;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_table_length(op_arg->tensors);
@@ -63,7 +72,7 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
      params_n = ln_param_table_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 2);
+     ln_op_check_param_len_eq(LN_ERROR, params_n, 3);
 
      dtype_entry = ln_param_table_find_by_arg_name(op_arg->params, "dtype");
      ln_op_check_param_exist(LN_ERROR, dtype_entry, "dtype");
@@ -82,56 +91,68 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
                                         dims_entry->value_array_int[i] > 0,
                                         "\"dims\" array elements should be positive");
 
+     data_entry = ln_param_table_find_by_arg_name(op_arg->params, "data");
+     ln_op_check_param_exist(LN_ERROR, data_entry, "data");
+     ln_op_check(LN_ERROR,
+                 data_entry->type == LN_PARAM_ARRAY_NUMBER
+                 || data_entry->type == LN_PARAM_NULL,
+                 "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but got a %s",
+                 op_arg->optype, op_arg->name, entry->arg_name,
+                 ln_param_type_name(LN_PARAM_ARRAY_NUMBER),
+                 ln_param_type_name(LN_PARAM_NULL),
+                 ln_param_type_name(data_entry->type));
+
+     if (data_entry->type == LN_PARAM_ARRAY_NUMBER)
+          ln_op_check_param_satisfy_msg(LN_ERROR,
+                                        compute_length(dims_entry->array_len,
+                                                       dims_entry->value_array_int)
+                                        == data_entry->array_len,
+                                        "\"data\" array length should match with \"dims\"")
+
      /* allocate tensor memory in need */
-     dst_entry->tensor = tl_tensor_create(NULL, dims_entry->array_len,
-                                          dims_entry->value_array_int,
-                                          dtype);
+     if (data_entry->type == LN_PARAM_NULL)
+          dst_entry->tensor = tl_tensor_create(NULL, dims_entry->array_len,
+                                               dims_entry->value_array_int,
+                                               dtype);
 }
 
 /*
  * Normally we should only do the calculations here. Operations with memory
  * and such should go in pre_run().
  */
-static void zeros_run(ln_op_arg *op_arg, ln_error **error)
+static void create_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry;
 
      /* Get tensors and parameters, which should have been checked in pre_run().
         Further errors should be considered as bugs, so we use asserts to catch
         return value. */
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
+     /* ...... */
 
      /* do the real work */
-     memset(dst_entry->tensor->data, 0,
-            dst_entry->tensor->len*tl_size_of(dst_entry->tensor->dtype));
+     /* ...... */
 }
 
 /*
  * This function should free all tensor memory pre_run() and run() allocated.
  */
-static void zeros_post_run(ln_op_arg *op_arg, ln_error **error)
+static void create_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry;
-
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
 
      /* free the tensor memory allocated in pre_run() and run() */
-     tl_tensor_free_data_too(dst_entry->tensor);
+     /* ..... */
 }
 
-static ln_op_arg op_arg_zeros = {
+static ln_op_arg op_arg_create = {
      .name = NULL,
-     .optype = "zeros",
+     .optype = "create",
      .tensors = NULL,
      .params = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_zeros = {
-     .op_arg = &op_arg_zeros,
-     .pre_run = zeros_pre_run,
-     .run = zeros_run,
-     .post_run = zeros_post_run
+ln_op ln_op_create = {
+     .op_arg = &op_arg_create,
+     .pre_run = create_pre_run,
+     .run = create_run,
+     .post_run = create_post_run
 };

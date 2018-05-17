@@ -29,6 +29,7 @@ extern ln_op ln_op_maxreduce;
 extern ln_op ln_op_elew;
 extern ln_op ln_op_transpose;
 extern ln_op ln_op_zeros;
+extern ln_op ln_op_create;
 /* end of declarations */
 
 ln_op *ln_init_ops[] = {
@@ -38,5 +39,6 @@ ln_op *ln_init_ops[] = {
      &ln_op_elew,
      &ln_op_transpose,
      &ln_op_zeros,
+     &ln_op_create,
      NULL /* end of init ops */
 };
