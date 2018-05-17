@@ -29,13 +29,20 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
-/* TODO: maybe platform dependent */
 static const size_t dtype_size[TL_DTYPE_SIZE] = {
-     4, 4, 2, 1, 4, 2, 1, 4
+     sizeof(double),
+     sizeof(float),
+     sizeof(int32_t),
+     sizeof(int16_t),
+     sizeof(int8_t),
+     sizeof(uint32_t),
+     sizeof(uint16_t),
+     sizeof(uint8_t),
+     sizeof(tl_bool_t)
 };
 
 static const char *dtype_fmt[TL_DTYPE_SIZE] = {
-     "%.3f", "%d", "%d", "%d", "%u", "%u", "%u", "%d"
+     "%.3f", "%.3f", "%d", "%d", "%d", "%u", "%u", "%u", "%d"
 };
 
 static inline void check_dtype(tl_dtype dtype)
@@ -54,6 +61,14 @@ const char *tl_fmt(tl_dtype dtype)
 {
      check_dtype(dtype);
      return dtype_fmt[dtype];
+}
+
+static int fprintf_double(FILE *fp, const char *fmt, void *p)
+{
+     if (!fmt)
+          return fprintf(fp, dtype_fmt[TL_DOUBLE], *(double *)p);
+     else
+          return fprintf(fp, fmt, *(double *)p);
 }
 
 static int fprintf_float(FILE *fp, const char *fmt, void *p)
@@ -121,6 +136,7 @@ static int fprintf_bool(FILE *fp, const char *fmt, void *p)
 }
 
 static tl_fprintf_func fprintf_func[TL_DTYPE_SIZE] = {
+     fprintf_double,
      fprintf_float,
      fprintf_int32,
      fprintf_int16,
@@ -144,6 +160,11 @@ tl_fprintf_func tl_fprintf_getfunc(tl_dtype dtype)
 }
 
 /* tl_cmp_func */
+static int cmp_double(void *p1, void *p2)
+{
+     return *(double *)p1 - *(double *)p2;
+}
+
 static int cmp_float(void *p1, void *p2)
 {
      return *(float *)p1 - *(float *)p2;
@@ -185,6 +206,7 @@ static int cmp_bool(void *p1, void *p2)
 }
 
 static tl_cmp_func cmp_func[TL_DTYPE_SIZE] = {
+     cmp_double,
      cmp_float,
      cmp_int32,
      cmp_int16,
@@ -214,6 +236,58 @@ static inline void check_elew_op(tl_elew_op op)
 }
 
 typedef void (*elew_op_func) (void *p1, void *p2, void *r);
+
+static void mul_double(void *p1, void *p2, void *r)
+{
+     *(double *)r = *(double *)p1 * *(double *)p2;
+}
+
+static void div_double(void *p1, void *p2, void *r)
+{
+     assert(*(double *)p2);
+     *(double *)r = *(double *)p1 / *(double *)p2;
+}
+
+static void sum_double(void *p1, void *p2, void *r)
+{
+     *(double *)r = *(double *)p1 + *(double *)p2;
+}
+
+static void sub_double(void *p1, void *p2, void *r)
+{
+     *(double *)r = *(double *)p1 - *(double *)p2;
+}
+
+static void max_double(void *p1, void *p2, void *r)
+{
+     *(double *)r = max(*(double *)p1, *(double *)p2);
+}
+
+static void min_double(void *p1, void *p2, void *r)
+{
+     *(double *)r = min(*(double *)p1, *(double *)p2);
+}
+
+static void pow_double(void *p1, void *p2, void *r)
+{
+     *(double *)r = powf(*(double *)p1, *(double *)p2);
+}
+
+static elew_op_func elew_op_double[TL_ELEW_OP_SIZE] = {
+     mul_double,
+     div_double,
+     sum_double,
+     sub_double,
+     max_double,
+     min_double,
+     pow_double
+};
+
+static void elew_double(void *p1, void *p2, void *r, tl_elew_op elew_op)
+{
+     check_elew_op(elew_op);
+     elew_op_double[elew_op](p1, p2, r);
+}
 
 static void mul_float(void *p1, void *p2, void *r)
 {
@@ -695,6 +769,7 @@ static void elew_bool(void *p1, void *p2, void *r, tl_elew_op elew_op)
 }
 
 static tl_elew_func elew_func[TL_DTYPE_SIZE] = {
+     elew_double,
      elew_float,
      elew_int32,
      elew_int16,

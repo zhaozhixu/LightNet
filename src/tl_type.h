@@ -34,9 +34,10 @@ enum tl_bool_t {
 };
 
 /* keep the size and the enum order in sync with tl_type.c */
-#define TL_DTYPE_SIZE 8
+#define TL_DTYPE_SIZE 9
 typedef enum tl_dtype tl_dtype;
 enum tl_dtype {
+     TL_DOUBLE,
      TL_FLOAT,
      TL_INT32,
      TL_INT16,
