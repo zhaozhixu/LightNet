@@ -100,6 +100,22 @@ ln_list *ln_list_remove(ln_list *list, void *data)
      return list;
 }
 
+ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp)
+{
+     ln_list **lp;
+     ln_list *tmp;
+
+     for (lp = &list; *lp; lp = &(*lp)->next) {
+          if (cmp((*lp)->data, data) == 0) {
+               tmp = *lp;
+               *lp = tmp->next;
+               ln_free(tmp);
+               break;
+          }
+     }
+     return list;
+}
+
 ln_list *ln_list_remove_nth(ln_list *list, int n)
 {
      ln_list **lp;

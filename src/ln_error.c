@@ -44,9 +44,9 @@ ln_error *ln_error_create(ln_error_level level, const char *fmt, ...)
      va_end(ap);
 
      if (level == LN_ERROR_SYS || level == LN_WARNING_SYS)
-	  snprintf(error->err_str+strlen(error->err_str),
-		   MAX_ERROR_LENGTH-strlen(error->err_str)-1, ": %s",
-		   strerror(errsv));
+          snprintf(error->err_str+strlen(error->err_str),
+                   MAX_ERROR_LENGTH-strlen(error->err_str)-1, ": %s",
+                   strerror(errsv));
 
      return error;
 }
@@ -60,43 +60,40 @@ void ln_error_free(ln_error *error)
 void ln_error_handle(ln_error **error)
 {
      if (!*error)
-	  return;
+          return;
 
      fflush(stdout);
      switch ((*error)->level) {
      case LN_ERROR:
-	  fprintf(stderr, "ERROR: %s\n", (*error)->err_str);
-	  fflush(NULL);
-	  abort();
-	  break;
+          fprintf(stderr, "ERROR: %s\n", (*error)->err_str);
+          fflush(NULL);
+          abort();
+          break;
      case LN_ERROR_SYS:
-	  fprintf(stderr, "ERROR_SYS: %s\n", (*error)->err_str);
-	  fflush(NULL);
-	  abort();
-	  break;
+          fprintf(stderr, "ERROR_SYS: %s\n", (*error)->err_str);
+          fflush(NULL);
+          abort();
+          break;
      case LN_WARNING:
-	  fprintf(stderr, "WARNING: %s\n", (*error)->err_str);
-	  fflush(NULL);
-	  ln_error_free(*error);
-	  *error = NULL;
-	  return;
+          fprintf(stderr, "WARNING: %s\n", (*error)->err_str);
+          fflush(NULL);
+          ln_error_free(*error);
+          *error = NULL;
+          return;
      case LN_WARNING_SYS:
-	  fprintf(stderr, "WARNING_SYS: %s\n", (*error)->err_str);
-	  fflush(NULL);
-	  ln_error_free(*error);
-	  *error = NULL;
-	  return;
+          fprintf(stderr, "WARNING_SYS: %s\n", (*error)->err_str);
+          fflush(NULL);
+          ln_error_free(*error);
+          *error = NULL;
+          return;
      case LN_INFO:
-	  fprintf(stderr, "INFO: %s\n", (*error)->err_str);
-	  fflush(NULL);
-	  ln_error_free(*error);
-	  *error = NULL;
-	  return;
+          fprintf(stderr, "INFO: %s\n", (*error)->err_str);
+          fflush(NULL);
+          ln_error_free(*error);
+          *error = NULL;
+          return;
      default :
-	  fprintf(stderr, "WARNING: unsupported ln_error_level %d\n", (*error)->level);
-	  fflush(NULL);
-	  ln_error_free(*error);
-	  *error = NULL;
-	  return;
+          assert(0 && "shouldn't get here, unsupported ln_error_level");
+          return;
      }
 }

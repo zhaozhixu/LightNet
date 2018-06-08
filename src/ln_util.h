@@ -40,7 +40,9 @@ typedef int (*ln_cmp_func)(void *, void *);
 #define LN_MAXLINE 4096
 
 #ifdef __cplusplus
-extern "C" {
+#define LN_CPPSTART extern "C" {
+#define LN_CPPEND }
+LN_CPPSTART
 #endif
 
 void *ln_alloc(size_t size);
@@ -56,7 +58,7 @@ void ln_err_sys(const char *fmt, ...);
 void ln_err_dump(const char *fmt, ...);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_UTIL_H_ */

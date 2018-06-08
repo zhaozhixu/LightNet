@@ -27,13 +27,13 @@
 #include "ln_error.h"
 
 #ifdef __cplusplus
-extern "C" {
+LN_CPPSTART
 #endif
 
 ln_list *ln_parse_ops(const char * const json_str,
 		      ln_list *registered_ops, ln_error **error);
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_PARSE_H_ */

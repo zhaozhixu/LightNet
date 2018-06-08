@@ -56,7 +56,12 @@ static void teardown(void)
      ln_list_free(list);
 }
 
-START_TEST(test_list_append_nth)
+static int cmp(void *p1, void *p2)
+{
+     return *(int *)p1 - *(int *)p2;
+}
+
+START_TEST(test_ln_list_append_nth)
 {
      ln_list *l;
 
@@ -68,7 +73,7 @@ START_TEST(test_list_append_nth)
 }
 END_TEST
 
-START_TEST(test_list_remove)
+START_TEST(test_ln_list_remove)
 {
      int num, i;
 
@@ -93,7 +98,33 @@ START_TEST(test_list_remove)
 }
 END_TEST
 
-START_TEST(test_list_remove_insert_nth)
+START_TEST(test_ln_list_remove_custom)
+{
+     int num, i;
+
+     list = ln_list_remove_custom(list, &data[0], cmp);
+     ck_assert_int_eq(*(int *)ln_list_nth_data(list, 0), 1);
+
+     list = ln_list_insert_nth(list, &data[0], 0);
+     list = ln_list_remove_custom(list, &data[4], cmp);
+     ck_assert_int_eq(*(int *)ln_list_nth_data(list, 3), 3);
+     ck_assert_ptr_eq(ln_list_nth_data(list, 4), NULL);
+
+     list = ln_list_insert_nth(list, &data[4], 4);
+     num = -1;
+     list = ln_list_remove_custom(list, &num, cmp);
+     for (i = 0; i < data_len; i++)
+          ck_assert_int_eq(*(int *)ln_list_nth_data(list, i), data[i]);
+
+     num = 5;
+     list = ln_list_remove_custom(list, &num, cmp);
+     for (i = 0; i < data_len; i++)
+          ck_assert_int_eq(*(int *)ln_list_nth_data(list, i), data[i]);
+
+}
+END_TEST
+
+START_TEST(test_ln_list_remove_insert_nth)
 {
      int i;
 
@@ -131,7 +162,7 @@ START_TEST(test_list_remove_insert_nth)
 }
 END_TEST
 
-START_TEST(test_list_find)
+START_TEST(test_ln_list_find)
 {
      int n1 = 6;
      int n2 = -1;
@@ -153,7 +184,7 @@ static int cmp(void *a, void *b)
      return *(int *)a - *(int *)b;
 }
 
-START_TEST(test_list_find_custom)
+START_TEST(test_ln_list_find_custom)
 {
      int n1 = 6;
      int n2 = -1;
@@ -170,7 +201,7 @@ START_TEST(test_list_find_custom)
 }
 END_TEST
 
-START_TEST(test_list_position)
+START_TEST(test_ln_list_position)
 {
      int pos;
      ln_list *l;
@@ -187,7 +218,7 @@ START_TEST(test_list_position)
 }
 END_TEST
 
-START_TEST(test_list_index)
+START_TEST(test_ln_list_index)
 {
      int pos;
      int n;
@@ -204,7 +235,25 @@ START_TEST(test_list_index)
 }
 END_TEST
 
-START_TEST(test_list_length)
+START_TEST(test_ln_list_index_custom)
+{
+     int pos;
+     int n;
+
+     pos = ln_list_index(list, list->next->data, cmp);
+     ck_assert_int_eq(pos, 1);
+
+     n = 6;
+     pos = ln_list_index(list, &n, cmp);
+     ck_assert_int_eq(pos, -1);
+
+     pos = ln_list_index(list, NULL, cmp);
+     ck_assert_int_eq(pos, -1);
+}
+END_TEST
+
+
+START_TEST(test_ln_list_length)
 {
      ln_list *l;
      int data;
@@ -218,7 +267,7 @@ START_TEST(test_list_length)
 }
 END_TEST
 
-START_TEST(test_list_from_array_size_t)
+START_TEST(test_ln_list_from_array_size_t)
 {
      ln_list *l;
      size_t i;
@@ -260,15 +309,17 @@ Suite *make_list_suite(void)
      tc_list = tcase_create("tc_list");
      tcase_add_checked_fixture(tc_list, setup, teardown);
 
-     tcase_add_test(tc_list, test_list_append_nth);
-     tcase_add_test(tc_list, test_list_remove);
-     tcase_add_test(tc_list, test_list_remove_insert_nth);
-     tcase_add_test(tc_list, test_list_find);
-     tcase_add_test(tc_list, test_list_find_custom);
-     tcase_add_test(tc_list, test_list_position);
-     tcase_add_test(tc_list, test_list_index);
-     tcase_add_test(tc_list, test_list_length);
-     tcase_add_test(tc_list, test_list_from_array_size_t);
+     tcase_add_test(tc_list, test_ln_list_append_nth);
+     tcase_add_test(tc_list, test_ln_list_remove);
+     tcase_add_test(tc_list, test_ln_list_remove_custom);
+     tcase_add_test(tc_list, test_ln_list_remove_insert_nth);
+     tcase_add_test(tc_list, test_ln_list_find);
+     tcase_add_test(tc_list, test_ln_list_find_custom);
+     tcase_add_test(tc_list, test_ln_list_position);
+     tcase_add_test(tc_list, test_ln_list_index);
+     tcase_add_test(tc_list, test_ln_list_index_custom);
+     tcase_add_test(tc_list, test_ln_list_length);
+     tcase_add_test(tc_list, test_ln_list_from_array_size_t);
      tcase_add_test(tc_list, test_ln_list_free_deep);
      /* end of adding tests */
 

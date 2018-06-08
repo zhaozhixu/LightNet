@@ -47,7 +47,7 @@ struct ln_op {
 };
 
 #ifdef __cplusplus
-extern "C" {
+LN_CPPSTART
 #endif
 
 ln_op *ln_op_create(const char *name, const char *optype,
@@ -63,7 +63,7 @@ void ln_op_list_do_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 /*
@@ -76,12 +76,12 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
  * ln_op->run and ln_op->post_run functions, where errors should be considered
  * as bugs.
  */
-#define ln_op_check(level, condition, msg_fmt, varg...)			\
-     do {								\
-	  if (!(condition)) {						\
-	       *error = ln_error_create((level), (msg_fmt), ##varg);	\
-	       return;							\
-	  }								\
+#define ln_op_check(level, condition, msg_fmt, varg...)                 \
+     do {                                                               \
+          if (!(condition)) {                                           \
+               *error = ln_error_create((level), (msg_fmt), ##varg);	\
+               return;                                                  \
+          }                                                             \
      } while(0)
 
 #define ln_op_check_param_satisfy_msg(level, condition, msg)    \

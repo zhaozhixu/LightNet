@@ -36,7 +36,7 @@ struct ln_tensor_entry {
 typedef ln_list ln_tensor_table;
 
 #ifdef __cplusplus
-extern "C" {
+LN_CPPSTART
 #endif
 
 ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
@@ -49,7 +49,7 @@ ln_tensor_entry *ln_tensor_table_find_by_name(ln_tensor_table *table,
 int ln_tensor_table_length(ln_tensor_table *table);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_TENSOR_H_ */

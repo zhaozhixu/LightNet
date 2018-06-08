@@ -57,7 +57,7 @@ struct ln_param_entry {
 typedef ln_list ln_param_table;
 
 #ifdef __cplusplus
-extern "C" {
+LN_CPPSTART
 #endif
 
 ln_param_table *ln_param_table_append_string(ln_param_table *table,
@@ -90,7 +90,7 @@ int ln_param_table_length(ln_param_table *table);
 const char *ln_param_type_name(ln_param_type type);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_PARAM_H_ */

@@ -39,7 +39,7 @@ struct ln_error {
 };
 
 #ifdef __cplusplus
-extern "C" {
+LN_CPPSTART
 #endif
 
 ln_error *ln_error_create(ln_error_level level, const char *fmt, ...);
@@ -47,7 +47,7 @@ void ln_error_free(ln_error *error);
 void ln_error_handle(ln_error **error);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_ERROR_H_ */

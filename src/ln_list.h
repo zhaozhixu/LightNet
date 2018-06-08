@@ -35,7 +35,7 @@ struct ln_list_node {
 typedef ln_list_node ln_list;
 
 #ifdef __cplusplus
-extern "C" {
+LN_CPPSTART
 #endif
 
 ln_list *ln_list_append(ln_list *list, void *data);
@@ -45,6 +45,7 @@ ln_list *ln_list_nth(ln_list *list, int n);
 void *ln_list_nth_data(ln_list *list, int n);
 ln_list *ln_list_remove(ln_list *list, void *data);
 ln_list *ln_list_remove_nth(ln_list *list, int n);
+ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp);
 ln_list *ln_list_insert_nth(ln_list *list, void *data, int n);
 void *ln_list_find(ln_list *list, void *data);
 void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp);
@@ -56,7 +57,7 @@ ln_list *ln_list_from_array_size_t(size_t *array, size_t n);
 ln_list *ln_list_copy_size_t(ln_list *list);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif     /* _LN_LIST_H_ */
