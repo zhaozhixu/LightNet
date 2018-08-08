@@ -8,5 +8,5 @@ DEBUG ?= no
 INSTALL_DIR ?= /usr/local
 PKGCONFIG_DIR ?= /usr/local/lib/pkgconfig
 TARGET ?= lightnet
-WITH_CUDA ?= no
+WITH_CUDA ?= yes
 WITH_CUDNN ?= no
