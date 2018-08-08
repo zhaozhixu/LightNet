@@ -43,8 +43,8 @@
      do {								\
 	  int _ck_n = (N);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       intmax_t _ck_x = (XA)[i];					\
-	       intmax_t _ck_y = (YA)[i];					\
+	       intmax_t _ck_x = (XA)[i];                                \
+	       intmax_t _ck_y = (YA)[i];                                \
 	       if (_ck_x != _ck_x)					\
 		    ck_assert_msg(0,					\
 				  "Assertion 'array "#XA" == "#YA"' failed: "#XA"[%d] == %d, "#YA"[%d] == %d", \

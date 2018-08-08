@@ -60,7 +60,7 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
      /* check tensors and parameters */
      /* ...... */
 
-     /* allocate tensor memory in need */
+     /* allocate memory in need */
      /* ...... */
 }
 
@@ -71,9 +71,7 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* Get tensors and parameters, which should have been checked in pre_run().
-        Further errors should be considered as bugs, so we use asserts to catch
-        return value. */
+     /* Get tensors and parameters */
      /* ...... */
 
      /* do the real work */
@@ -86,7 +84,7 @@ static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* free the tensor memory allocated in pre_run() and run() */
+     /* free memory allocated in pre_run() */
      /* ..... */
 }
 
@@ -95,10 +93,11 @@ static ln_op_arg op_arg_${op_name} = {
      .optype = "${op_name}",
      .tensors = NULL,
      .params = NULL,
+     .priv = NULL
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_${op_name} = {
+ln_op ln_opimpl_${op_name} = {
      .op_arg = &op_arg_${op_name},
      .pre_run = ${op_name}_pre_run,
      .run = ${op_name}_run,
@@ -116,8 +115,8 @@ open OP, '>', $op_file
 print OP $op_tpl;
 close OP;
 
-my $declare = "extern ln_op ln_op_${op_name};";
-my $item = "&ln_op_${op_name},";
+my $declare = "extern ln_op ln_opimpl_${op_name};";
+my $item = "&ln_opimpl_${op_name},";
 my $oplist_file = "$root/src/ln_oplist.c";
 copy($oplist_file, "$oplist_file.bak")
   or die "Cannot backup file $oplist_file: $!";

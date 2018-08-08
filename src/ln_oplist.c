@@ -30,6 +30,7 @@ extern ln_op ln_opimpl_elew;
 extern ln_op ln_opimpl_transpose;
 extern ln_op ln_opimpl_zeros;
 extern ln_op ln_opimpl_create;
+extern ln_op ln_opimpl_create_cuda;
 /* end of declarations */
 
 ln_op *ln_init_ops[] = {
@@ -40,5 +41,6 @@ ln_op *ln_init_ops[] = {
      &ln_opimpl_transpose,
      &ln_opimpl_zeros,
      &ln_opimpl_create,
+     &ln_opimpl_create_cuda,
      NULL /* end of init ops */
 };

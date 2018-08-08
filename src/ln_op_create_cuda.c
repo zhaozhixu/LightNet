@@ -54,9 +54,9 @@ static int compute_length(int ndim, const int *dims)
 }
 
 /*
- * This function should do tensor and parameter checking and memory allocation.
+ * This function should do the parameter checking and tensor memory allocation.
  */
-static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      ln_tensor_entry *dst_entry;
      ln_param_entry *dims_entry, *dtype_entry, *data_entry;
@@ -114,14 +114,14 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
                           &data_entry->value_array_double[i], TL_DOUBLE);
           }
-          dst_entry->tensor = tl_tensor_create(data, dims_entry->array_len,
-                                               dims_entry->value_array_int,
-                                               dtype);
+          dst_entry->tensor = tl_tensor_create_cuda(data, dims_entry->array_len,
+                                                    dims_entry->value_array_int,
+                                                    dtype);
      }
      if (data_entry->type == LN_PARAM_NULL)
-          dst_entry->tensor = tl_tensor_create(NULL, dims_entry->array_len,
-                                               dims_entry->value_array_int,
-                                               dtype);
+          dst_entry->tensor = tl_tensor_create_cuda(NULL, dims_entry->array_len,
+                                                    dims_entry->value_array_int,
+                                                    dtype);
      op_arg->priv = dst_entry->tensor;
 }
 
@@ -129,11 +129,10 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
  * Normally we should only do the calculations here. Operations with memory
  * and such should go in pre_run().
  */
-static void create_run(ln_op_arg *op_arg, ln_error **error)
+static void create_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* Get tensors and parameters, which should have been checked in pre_run().
-        Further errors should be considered as bugs, so we use asserts to catch
-        return value. */
+
+     /* Get tensors and parameters */
      /* ...... */
 
      /* do the real work */
@@ -143,24 +142,25 @@ static void create_run(ln_op_arg *op_arg, ln_error **error)
 /*
  * This function should free all tensor memory pre_run() and run() allocated.
  */
-static void create_post_run(ln_op_arg *op_arg, ln_error **error)
+static void create_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* free the tensor memory allocated in pre_run() and run() */
-     tl_tensor_free_data_too(op_arg->priv);
+
+     /* free memory allocated in pre_run() */
+     tl_tensor_free_data_too_cuda(op_arg->priv);
 }
 
-static ln_op_arg op_arg_create = {
+static ln_op_arg op_arg_create_cuda = {
      .name = NULL,
-     .optype = "create",
+     .optype = "create_cuda",
      .tensors = NULL,
      .params = NULL,
      .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_create = {
-     .op_arg = &op_arg_create,
-     .pre_run = create_pre_run,
-     .run = create_run,
-     .post_run = create_post_run
+ln_op ln_opimpl_create_cuda = {
+     .op_arg = &op_arg_create_cuda,
+     .pre_run = create_cuda_pre_run,
+     .run = create_cuda_run,
+     .post_run = create_cuda_post_run
 };
