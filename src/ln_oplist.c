@@ -23,22 +23,22 @@
 #include "ln_op.h"
 #include "ln_list.h"
 
-extern ln_op ln_op_slice;
-extern ln_op ln_op_reshape;
-extern ln_op ln_op_maxreduce;
-extern ln_op ln_op_elew;
-extern ln_op ln_op_transpose;
-extern ln_op ln_op_zeros;
-extern ln_op ln_op_create;
+extern ln_op ln_opimpl_slice;
+extern ln_op ln_opimpl_reshape;
+extern ln_op ln_opimpl_maxreduce;
+extern ln_op ln_opimpl_elew;
+extern ln_op ln_opimpl_transpose;
+extern ln_op ln_opimpl_zeros;
+extern ln_op ln_opimpl_create;
 /* end of declarations */
 
 ln_op *ln_init_ops[] = {
-     &ln_op_slice,
-     &ln_op_reshape,
-     &ln_op_maxreduce,
-     &ln_op_elew,
-     &ln_op_transpose,
-     &ln_op_zeros,
-     &ln_op_create,
+     &ln_opimpl_slice,
+     &ln_opimpl_reshape,
+     &ln_opimpl_maxreduce,
+     &ln_opimpl_elew,
+     &ln_opimpl_transpose,
+     &ln_opimpl_zeros,
+     &ln_opimpl_create,
      NULL /* end of init ops */
 };

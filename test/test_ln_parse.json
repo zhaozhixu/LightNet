@@ -69,6 +69,18 @@
             "params": [
                 {"arg_name": "axes", "value": [1, 0]}
             ]
+        },
+        {
+            "name": "create1",
+            "optype": "create",
+            "tensors": [
+                {"arg_name": "dst", "name": "create1_dst"}
+            ],
+            "params": [
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "dims", "value": [2, 3]},
+                {"arg_name": "data", "value": [1, 2, 3, 4, 5, 6]}
+            ]
         }
     ]
 }

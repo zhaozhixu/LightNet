@@ -179,11 +179,6 @@ START_TEST(test_ln_list_find)
 }
 END_TEST
 
-static int cmp(void *a, void *b)
-{
-     return *(int *)a - *(int *)b;
-}
-
 START_TEST(test_ln_list_find_custom)
 {
      int n1 = 6;
@@ -229,9 +224,6 @@ START_TEST(test_ln_list_index)
      n = 6;
      pos = ln_list_index(list, &n);
      ck_assert_int_eq(pos, -1);
-
-     pos = ln_list_index(list, NULL);
-     ck_assert_int_eq(pos, -1);
 }
 END_TEST
 
@@ -240,14 +232,11 @@ START_TEST(test_ln_list_index_custom)
      int pos;
      int n;
 
-     pos = ln_list_index(list, list->next->data, cmp);
+     pos = ln_list_index_custom(list, list->next->data, cmp);
      ck_assert_int_eq(pos, 1);
 
      n = 6;
-     pos = ln_list_index(list, &n, cmp);
-     ck_assert_int_eq(pos, -1);
-
-     pos = ln_list_index(list, NULL, cmp);
+     pos = ln_list_index_custom(list, &n, cmp);
      ck_assert_int_eq(pos, -1);
 }
 END_TEST

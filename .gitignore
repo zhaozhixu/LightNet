@@ -4,6 +4,7 @@
 *.o
 *.so
 *.out
+*.el
 check_output.xml
 test_lightnet
 lightnet
@@ -12,3 +13,4 @@ GPATH
 GRTAGS
 GTAGS
 obj/
+build/

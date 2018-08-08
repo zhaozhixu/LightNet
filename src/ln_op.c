@@ -112,7 +112,7 @@ tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
      return entry->tensor;
 }
 
-static int find_by_optype(void *data1, void *data2)
+static int cmp_by_optype(void *data1, void *data2)
 {
      ln_op *op1, *op2;
 
@@ -127,7 +127,28 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
      ln_op *result_op;
 
      cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL);
-     result_op = ln_list_find_custom(ops, &cmp_op, find_by_optype);
+     result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_optype);
+     ln_op_arg_free(cmp_op.op_arg);
+
+     return result_op;
+}
+
+static int cmp_by_name(void *data1, void *data2)
+{
+     ln_op *op1, *op2;
+
+     op1 = (ln_op *)data1;
+     op2 = (ln_op *)data2;
+     return strcmp(op1->op_arg->name, op2->op_arg->name);
+}
+
+ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
+{
+     ln_op cmp_op;
+     ln_op *result_op;
+
+     cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL);
+     result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_name);
      ln_op_arg_free(cmp_op.op_arg);
 
      return result_op;

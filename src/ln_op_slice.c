@@ -129,7 +129,7 @@ static ln_op_arg op_arg_slice = {
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_slice = {
+ln_op ln_opimpl_slice = {
      .op_arg = &op_arg_slice,
      .pre_run = slice_pre_run,
      .run = slice_run,

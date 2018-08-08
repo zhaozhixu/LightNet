@@ -67,7 +67,7 @@ static void pre_run1 (ln_op_arg *op_arg, ln_error **error)
      params_n = ln_param_table_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 0);
 
-     tensor_entry->tensor = tl_tensor_zeros(TL_INT32, 2, 1, 2);
+     tensor_entry->tensor = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
 }
 
 static void run1 (ln_op_arg *op_arg, ln_error **error)
@@ -115,7 +115,7 @@ static void pre_run2 (ln_op_arg *op_arg, ln_error **error)
      params_n = ln_param_table_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 0);
 
-     tensor_entry->tensor = tl_tensor_zeros(TL_INT32, 2, 1, 2);
+     tensor_entry->tensor = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
 }
 
 static void run2 (ln_op_arg *op_arg, ln_error **error)
@@ -151,8 +151,8 @@ START_TEST(test_ln_op_create)
                                            "test_params_string1");
      params = ln_param_table_append_string(params, "test_params_arg_name2",
                                            "test_params_string2");
-     tensor1 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
-     tensor2 = tl_tensor_zeros(TL_INT32, 2, 3, 4);
+     tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
+     tensor2 = tl_tensor_zeros(2, (int[]){3, 4}, TL_INT32);
      tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name1",
                                       "test_tensor_name1", tensor1);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name2",
@@ -192,8 +192,8 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
      ln_tensor_table *tensors;
      tl_tensor *tensor1, *tensor2, *tensor3, *tensor4, *tensor;
 
-     tensor1 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
-     tensor2 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
+     tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
+     tensor2 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name1",
                                       "test_tensor_name1", tensor1);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name2",
@@ -202,8 +202,8 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
                                       "test_tensor_name5", NULL);
      op1 = ln_op_create("test_name1", "test_optype1", tensors, NULL, pre_run1, run1, post_run1);
 
-     tensor3 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
-     tensor4 = tl_tensor_zeros(TL_INT32, 2, 1, 2);
+     tensor3 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
+     tensor4 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name3",
                                       "test_tensor_name3", tensor3);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name4",

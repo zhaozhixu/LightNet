@@ -66,61 +66,65 @@ static void teardown(void)
 START_TEST(test_ln_parse_ops)
 {
      ln_list *ops;
-     ln_op *op;
+     ln_op *op, *op_proto;
+     ln_param_entry *param_entry;
+     ln_tensor_entry *tensor_entry;
      tl_tensor *tensor1, *tensor2;
 
      ops = ln_parse_ops(json_str, registered_ops, &error);
      ln_error_handle(&error);
 
      /* zeros1 */
-     op = ln_list_nth_data(ops, 0);
-     ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops, "zeros")->pre_run);
-     ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "zeros")->run);
-     ck_assert_ptr_eq(op->post_run, ln_op_list_find_by_optype(registered_ops, "zeros")->post_run);
+     op = ln_op_list_find_by_name(ops, "zeros1");
+     op_proto = ln_op_list_find_by_optype(registered_ops, "zeros");
+     ck_assert_ptr_eq(op->pre_run,op_proto ->pre_run);
+     ck_assert_ptr_eq(op->run, op_proto->run);
+     ck_assert_ptr_eq(op->post_run, op_proto->post_run);
      ck_assert_str_eq(op->op_arg->name, "zeros1");
      ck_assert_str_eq(op->op_arg->optype, "zeros");
      ck_assert_ptr_eq(op->op_arg->priv, NULL);
-     ck_assert_str_eq(ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst")->name,
-                      "zeros1");
-     tensor1 = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst")->tensor;
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "dtype")->type,
-                      LN_PARAM_STRING);
-     ck_assert_str_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "dtype")->value_string,
-                      "TL_FLOAT");
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "dims")->type,
-                      LN_PARAM_ARRAY_NUMBER);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params,
-                                                      "dims")->value_array_int[0], 2);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params,
-                                                      "dims")->value_array_int[1], 4);
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst");
+     ck_assert_str_eq(tensor_entry->name, "zeros1");
+     tensor1 = tensor_entry->tensor;
+
+     param_entry = ln_param_table_find_by_arg_name(op->op_arg->params, "dtype");
+     ck_assert_int_eq(param_entry->type, LN_PARAM_STRING);
+     ck_assert_str_eq(param_entry->value_string, "TL_FLOAT");
+     param_entry = ln_param_table_find_by_arg_name(op->op_arg->params, "dims");
+     ck_assert_int_eq(param_entry->type, LN_PARAM_ARRAY_NUMBER);
+     ck_assert_int_eq(param_entry->value_array_int[0], 2);
+     ck_assert_int_eq(param_entry->value_array_int[1], 4);
 
      /* slice1 */
-     op = ln_list_nth_data(ops, 1);
-     ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops, "slice")->pre_run);
-     ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "slice")->run);
-     ck_assert_ptr_eq(op->post_run, ln_op_list_find_by_optype(registered_ops, "slice")->post_run);
+     op = ln_op_list_find_by_name(ops, "slice1");
+     op_proto = ln_op_list_find_by_optype(registered_ops, "slice");
+     ck_assert_ptr_eq(op->pre_run, op_proto->pre_run);
+     ck_assert_ptr_eq(op->run, op_proto->run);
+     ck_assert_ptr_eq(op->post_run, op_proto->post_run);
      ck_assert_str_eq(op->op_arg->name, "slice1");
      ck_assert_str_eq(op->op_arg->optype, "slice");
      ck_assert_ptr_eq(op->op_arg->priv, NULL);
-     ck_assert_str_eq(ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "src")->name,
-                      "zeros1");
-     ck_assert_ptr_eq(ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "src")->tensor,
-                      tensor1);
-     ck_assert_str_eq(ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst")->name,
-                      "slice1");
-     tensor1 = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst")->tensor;
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "axis")->type,
-                      LN_PARAM_NUMBER);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "axis")->value_int, 1);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "start")->type,
-                      LN_PARAM_NUMBER);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "start")->value_int, 1);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "len")->type,
-                      LN_PARAM_NUMBER);
-     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "len")->value_int, 3);
+
+     tensor_entry = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "src");
+     ck_assert_str_eq(tensor_entry->name, "zeros1");
+     ck_assert_ptr_eq(tensor_entry->tensor, tensor1);
+     tensor_entry = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst");
+     ck_assert_str_eq(tensor_entry->name, "slice1");
+     tensor1 = tensor_entry->tensor;
+
+     param_entry = ln_param_table_find_by_arg_name(op->op_arg->params, "axis");
+     ck_assert_int_eq(param_entry->type, LN_PARAM_NUMBER);
+     ck_assert_int_eq(param_entry->value_int, 1);
+     param_entry = ln_param_table_find_by_arg_name(op->op_arg->params, "start");
+     ck_assert_int_eq(param_entry->type, LN_PARAM_NUMBER);
+     ck_assert_int_eq(param_entry->value_int, 1);
+     param_entry = ln_param_table_find_by_arg_name(op->op_arg->params, "len");
+     ck_assert_int_eq(param_entry->type, LN_PARAM_NUMBER);
+     ck_assert_int_eq(param_entry->value_int, 3);
 
      /* reshape1 */
-     op = ln_list_nth_data(ops, 2);
+     op = ln_op_list_find_by_name(ops, "reshape1");
      ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops, "reshape")->pre_run);
      ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "reshape")->run);
      ck_assert_ptr_eq(op->post_run, ln_op_list_find_by_optype(registered_ops,
@@ -143,7 +147,7 @@ START_TEST(test_ln_parse_ops)
                                                       "dims")->value_array_int[1], 2);
 
      /* maxreduce1 */
-     op = ln_list_nth_data(ops, 3);
+     op = ln_op_list_find_by_name(ops, "maxreduce1");
      ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops,
                                                              "maxreduce")->pre_run);
      ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "maxreduce")->run);
@@ -167,7 +171,7 @@ START_TEST(test_ln_parse_ops)
      ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "axis")->value_int, 0);
 
      /* elew1 */
-     op = ln_list_nth_data(ops, 4);
+     op = ln_op_list_find_by_name(ops, "elew1");
      ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops, "elew")->pre_run);
      ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "elew")->run);
      ck_assert_ptr_eq(op->post_run, ln_op_list_find_by_optype(registered_ops, "elew")->post_run);
@@ -191,7 +195,7 @@ START_TEST(test_ln_parse_ops)
                       "TL_MUL");
 
      /* transpose1 */
-     op = ln_list_nth_data(ops, 5);
+     op = ln_op_list_find_by_name(ops, "transpose1");
      ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops,
                                                              "transpose")->pre_run);
      ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "transpose")->run);
@@ -212,6 +216,25 @@ START_TEST(test_ln_parse_ops)
                                                       "axes")->value_array_int[0], 1);
      ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params,
                                                       "axes")->value_array_int[1], 0);
+
+     /* create1 */
+     op = ln_op_list_find_by_name(ops, "create1");
+     ck_assert_ptr_eq(op->pre_run, ln_op_list_find_by_optype(registered_ops,
+                                                             "create")->pre_run);
+     ck_assert_ptr_eq(op->run, ln_op_list_find_by_optype(registered_ops, "create")->run);
+     ck_assert_ptr_eq(op->post_run, ln_op_list_find_by_optype(registered_ops,
+                                                              "create")->post_run);
+     ck_assert_str_eq(op->op_arg->name, "create1");
+     ck_assert_str_eq(op->op_arg->optype, "create");
+     ck_assert_ptr_eq(op->op_arg->priv, NULL);
+     ck_assert_str_eq(ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst")->name,
+                      "create1_dst");
+     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params, "dims")->type,
+                      LN_PARAM_ARRAY_NUMBER);
+     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params,
+                                                      "dims")->value_array_int[0], 2);
+     ck_assert_int_eq(ln_param_table_find_by_arg_name(op->op_arg->params,
+                                                      "dims")->value_array_int[1], 3);
 
      ln_op_list_do_post_run(ops, &error);
      ln_error_handle(&error);

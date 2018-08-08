@@ -1,34 +1,14 @@
-.SUFFIXES:
-TARGET = lightnet
+include ../config.mk
+
+TARGET ?= lightnet
+TARGET_BIN = $(TARGET)
+
 CC = gcc
 CXX = g++
 CUCC = nvcc
-
-CFLAGS = -Wall
-CXXFLAGS = -std=c++11 -Wall
-CUFLAGS = -m64 -arch=sm_35 -ccbin $(CXX)
-LDFLAGS = $(CFLAGS)
-
-ifdef DEBUG
-CFLAGS += -g -O0 -DLN_DEBUG
-CXXFLAGS += -g -O0 -DLN_DEBUG
-CUFLAGS += -lineinfo
-LDFLAGS += -g -O0
-else
-# CFLAGS += -O3 -DNDEBUG
-# CXXFLAGS += -O3 -DNDEBUG
-CFLAGS += -O3
-CXXFLAGS += -O3
-CUFLAGS +=
-LDFLAGS += -O3
-endif
-
-ifeq "$(MAKECMDGOALS)" "libso"
-CFLAGS += -fPIC
-CUFLAGS += --compiler-options '-fPIC' --linker-options '-Wl,--no-undefined -shared' -shared
-LDFLAGS += -shared -Wl,--no-undefined
-LIBTARGET = lib$(TARGET).so
-endif
+AR = ar cr
+ECHO = @echo
+SHELL = /bin/sh
 
 ifdef VERBOSE
 AT =
@@ -36,9 +16,65 @@ else
 AT = @
 endif
 
-AR = ar cr
-ECHO = @echo
-SHELL = /bin/sh
+CFLAGS = -Wall
+CXXFLAGS = -std=c++11 -Wall
+CUFLAGS = -m64 -arch=sm_30 -ccbin $(CXX)
+LDFLAGS = $(CFLAGS)
+
+ifeq ($(DEBUG), yes)
+CFLAGS += -g -O0 -DLN_DEBUG
+CXXFLAGS += -g -O0 -DLN_DEBUG
+CUFLAGS += -lineinfo
+LDFLAGS += -g -O0
+else
+CFLAGS += -O3
+CXXFLAGS += -O3
+CUFLAGS += -O3
+LDFLAGS += -O3
+endif
+
+INCPATHS = -I/usr/local/include `pkg-config --cflags tensorlight`
+LDFLAGS += -L/usr/local/lib -lm `pkg-config --libs tensorlight`
+
+ifeq ($(WITH_CUDA), yes)
+CFLAGS += -DLN_CUDA
+CXXFLAGS += -DLN_CUDA
+CUFLAGS += -DLN_CUDA
+CUDA_INSTALL_DIR ?= /usr/local/cuda
+INCPATHS += -I$(CUDA_INSTALL_DIR)/include
+LDFLAGS += -L$(CUDA_INSTALL_DIR)/lib64 -lcuda -lcudart -lcublas -lcurand -lstdc++
+ifeq ($(WITH_CUDNN), yes)
+CFLAGS += -DLN_CUDNN
+CXXFLAGS += -DLN_CUDNN
+CUFLAGS += -DLN_CUDNN
+LDFLAGS += -lcudnn
+endif
+endif
+
+CFLAGS += $(INCPATHS)
+CXXFLAGS += $(INCPATHS)
+CUFLAGS += $(INCPATHS)
+
+SRC = $(wildcard *.c)
+SRC += $(wildcard *.cpp)
+SRC += $(wildcard *.cc)
+SRC += $(wildcard *.cu)
+NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu,$(SRC))
+CUDA_SRC = $(filter %cuda.c %cuda.cu,$(SRC))
+CUDNN_SRC = $(filter %cudnn.c %cudnn.cu,$(SRC))
+
+OBJDIR = obj
+OBJS   = $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(NORMAL_SRC)))
+OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(NORMAL_SRC)))
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(NORMAL_SRC)))
+ifeq ($(WITH_CUDA), yes)
+OBJS  += $(patsubst %.cu,$(OBJDIR)/%.o,$(filter %.cu,$(CUDA_SRC)))
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDA_SRC)))
+ifeq ($(WITH_CUDNN), yes)
+OBJS  += $(patsubst %.cu,$(OBJDIR)/%.o,$(filter %.cu,$(CUDNN_SRC)))
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDNN_SRC)))
+endif
+endif
 
 define concat
   $1$2$3$4$5$6$7$8
@@ -59,34 +95,12 @@ define make-depend-cu
   rm -f $3.$$$$
 endef
 
-SRCS = *.cpp *.cc *.c *.cu
-OUTDIR = .
-OBJDIR = $(call concat,$(OUTDIR),/obj)
-OBJS   = $(patsubst %.c, $(OBJDIR)/%.o, $(wildcard *.c))
-OBJS  += $(patsubst %.cpp, $(OBJDIR)/%.o, $(wildcard *.cpp))
-OBJS  += $(patsubst %.cc, $(OBJDIR)/%.o, $(wildcard *.cc))
-CUOBJS = $(patsubst %.cu, $(OBJDIR)/%.o, $(wildcard *.cu))
+.PHONY: all bin clean
+all: bin
 
-TRIPLE?=x86_64-linux
-CUDA_INSTALL_DIR = /usr/local/cuda-8.0
-CUDA_LIBDIR = lib
-INCPATHS    =-I"$(CUDA_INSTALL_DIR)/include" -I"/usr/local/include"
-LIBPATHS    =-L"$(CUDA_INSTALL_DIR)/targets/$(TRIPLE)/$(CUDA_LIBDIR)" -L"/usr/local/lib" -L"/usr/local/cuda/lib64" -L"$(CUDA_INSTALL_DIR)/$(CUDA_LIBDIR)"
-LIBS = $(LIBPATHS) -lcudart -lcudart_static -lm
-CFLAGS += $(INCPATHS)
-CXXFLAGS += $(INCPATHS)
-CUFLAGS += $(INCPATHS)
-LDFLAGS += $(LIBS)
+bin: $(OBJDIR)/$(TARGET_BIN)
 
-.PHONY: all libso
-all: $(OUTDIR)/$(TARGET)
-libso: $(OUTDIR)/$(LIBTARGET)
-
-$(OUTDIR)/$(LIBTARGET): $(OBJS) $(CUOBJS)
-	$(ECHO) Linking: $^
-	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
-
-$(OUTDIR)/$(TARGET): $(OBJS) $(CUOBJS)
+$(OBJDIR)/$(TARGET_BIN): $(OBJS)
 	$(ECHO) Linking: $^
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 
@@ -118,5 +132,5 @@ clean:
 	rm -rf $(OBJDIR)
 
 ifneq "$(MAKECMDGOALS)" "clean"
-  -include $(OBJDIR)/*.d
+-include $(OBJDIR)/*.d
 endif

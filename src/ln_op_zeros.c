@@ -83,9 +83,9 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
                                         "\"dims\" array elements should be positive");
 
      /* allocate tensor memory in need */
-     dst_entry->tensor = tl_tensor_create(NULL, dims_entry->array_len,
-                                          dims_entry->value_array_int,
-                                          dtype);
+     dst_entry->tensor = tl_tensor_zeros(dims_entry->array_len,
+                                         dims_entry->value_array_int,
+                                         dtype);
 }
 
 /*
@@ -129,7 +129,7 @@ static ln_op_arg op_arg_zeros = {
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_zeros = {
+ln_op ln_opimpl_zeros = {
      .op_arg = &op_arg_zeros,
      .pre_run = zeros_pre_run,
      .run = zeros_run,

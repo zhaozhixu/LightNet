@@ -141,7 +141,7 @@ static ln_op_arg op_arg_elew = {
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_elew = {
+ln_op ln_opimpl_elew = {
      .op_arg = &op_arg_elew,
      .pre_run = elew_pre_run,
      .run = elew_run,

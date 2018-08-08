@@ -124,7 +124,7 @@ static ln_op_arg op_arg_maxreduce = {
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_maxreduce = {
+ln_op ln_opimpl_maxreduce = {
      .op_arg = &op_arg_maxreduce,
      .pre_run = maxreduce_pre_run,
      .run = maxreduce_run,

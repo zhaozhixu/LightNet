@@ -114,7 +114,7 @@ static ln_op_arg op_arg_reshape = {
      .params = NULL,
 };
 
-ln_op ln_op_reshape = {
+ln_op ln_opimpl_reshape = {
      .op_arg = &op_arg_reshape,
      .pre_run = reshape_pre_run,
      .run = reshape_run,

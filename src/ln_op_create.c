@@ -60,7 +60,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      ln_tensor_entry *dst_entry;
      ln_param_entry *dims_entry, *dtype_entry, *data_entry;
-     int dtype, i;
+     int tensors_n, params_n, dtype, i;
      void *data;
 
      /* check tensors and parameters */
@@ -97,10 +97,11 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                  data_entry->type == LN_PARAM_ARRAY_NUMBER
                  || data_entry->type == LN_PARAM_NULL,
                  "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but got a %s",
-                 op_arg->optype, op_arg->name, entry->arg_name,
+                 op_arg->optype, op_arg->name, data_entry->arg_name,
                  ln_param_type_name(LN_PARAM_ARRAY_NUMBER),
                  ln_param_type_name(LN_PARAM_NULL),
                  ln_param_type_name(data_entry->type));
+
      if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
           ln_op_check_param_satisfy_msg(LN_ERROR,
                                         compute_length(dims_entry->array_len,
@@ -109,9 +110,12 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                                         "\"data\" array length should match with \"dims\"");
           data = ln_alloc(tl_size_of(dtype) * data_entry->array_len);
           for (i = 0; i < data_entry->array_len; i++) {
-               data_entry->value_array_double[i];
-               tl_padd(data, i, tl_size_of(dtype));
+               tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
+                          &data_entry->value_array_double[i], TL_DOUBLE);
           }
+          dst_entry->tensor = tl_tensor_create(data, dims_entry->array_len,
+                                               dims_entry->value_array_int,
+                                               dtype);
      }
 
      /* allocate tensor memory in need */
@@ -155,7 +159,7 @@ static ln_op_arg op_arg_create = {
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_create = {
+ln_op ln_opimpl_create = {
      .op_arg = &op_arg_create,
      .pre_run = create_pre_run,
      .run = create_run,

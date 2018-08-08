@@ -131,7 +131,7 @@ static ln_op_arg op_arg_transpose = {
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_op_transpose = {
+ln_op ln_opimpl_transpose = {
      .op_arg = &op_arg_transpose,
      .pre_run = transpose_pre_run,
      .run = transpose_run,

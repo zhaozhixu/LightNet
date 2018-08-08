@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 #include "ln_error.h"
 #include "ln_util.h"
 
