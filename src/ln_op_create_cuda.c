@@ -140,7 +140,7 @@ static void create_cuda_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * This function should free all tensor memory pre_run() and run() allocated.
+ * This function should free all tensor memory pre_run() allocated.
  */
 static void create_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {

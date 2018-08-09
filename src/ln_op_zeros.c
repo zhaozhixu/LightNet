@@ -86,6 +86,8 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
      dst_entry->tensor = tl_tensor_zeros(dims_entry->array_len,
                                          dims_entry->value_array_int,
                                          dtype);
+
+     op_arg->priv = dst_entry->tensor;
 }
 
 /*
@@ -94,31 +96,20 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void zeros_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry;
-
-     /* Get tensors and parameters, which should have been checked in pre_run().
-        Further errors should be considered as bugs, so we use asserts to catch
-        return value. */
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
+     tl_tensor *dst;
 
      /* do the real work */
-     memset(dst_entry->tensor->data, 0,
-            dst_entry->tensor->len*tl_size_of(dst_entry->tensor->dtype));
+     dst = op_arg->priv;
+     memset(dst->data, 0, dst->len*tl_size_of(dst->dtype));
 }
 
 /*
- * This function should free all tensor memory pre_run() and run() allocated.
+ * This function should free all tensor memory pre_run() allocated.
  */
 static void zeros_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry;
-
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-
      /* free the tensor memory allocated in pre_run() and run() */
-     tl_tensor_free_data_too(dst_entry->tensor);
+     tl_tensor_free_data_too(op_arg->priv);
 }
 
 static ln_op_arg op_arg_zeros = {
@@ -126,6 +117,7 @@ static ln_op_arg op_arg_zeros = {
      .optype = "zeros",
      .tensors = NULL,
      .params = NULL,
+     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

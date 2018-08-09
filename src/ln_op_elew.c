@@ -23,7 +23,7 @@
 #include <assert.h>
 #include "ln_op.h"
 
-static int k2v(char *str)
+static tl_elew_op k2v(char *str)
 {
      if (!strcmp(str, "TL_MUL"))
           return TL_MUL;
@@ -42,6 +42,13 @@ static int k2v(char *str)
      return -1;
 }
 
+struct priv_s {
+     tl_tensor  *src1;
+     tl_tensor  *src2;
+     tl_tensor  *dst;
+     tl_elew_op  elew_op;
+};
+
 /*
  * This function should do the parameter checking and tensor memory allocation.
  */
@@ -50,7 +57,8 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_tensor_entry *src1_entry, *src2_entry, *dst_entry;
      ln_param_entry *elew_op_entry;
      int tensors_n, params_n;
-     int elew_op;
+     tl_elew_op elew_op;
+     struct priv_s *priv;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_table_length(op_arg->tensors);
@@ -83,14 +91,18 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
                                    "\"elew_op\" param should be a supported tl_elew_op");
 
      /* allocate tensor memory in need */
-     dst_entry->tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim,
-                                          src2_entry->tensor->dims,
-                                          src1_entry->tensor->dtype);
+     dst_entry->tensor = tl_tensor_zeros(src1_entry->tensor->ndim,
+                                         src2_entry->tensor->dims,
+                                         src1_entry->tensor->dtype);
 
-     /* use op_arg->priv to store the result of k2v()
+     /* use op_arg->priv to store private data
         to be used directly in elew_run() */
-     op_arg->priv = ln_alloc(sizeof(int));
-     *(int *)op_arg->priv = elew_op;
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->src1 = src1_entry->tensor;
+     priv->src2 = src2_entry->tensor;
+     priv->dst = dst_entry->tensor;
+     priv->elew_op = elew_op;
+     op_arg->priv = priv;
 }
 
 /*
@@ -99,37 +111,23 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void elew_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *src1_entry, *src2_entry, *dst_entry;
-
-     /* Get tensors and parameters, which should have been checked in pre_run().
-        Further errors should be considered as bugs, so we use asserts to catch
-        return value. */
-     src1_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src1");
-     assert(src1_entry);
-     src2_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src2");
-     assert(src2_entry);
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-     /* elew_op_entry stored in op_arg->priv */
-     assert(op_arg->priv);
+     struct priv_s *priv;
 
      /* do the real work */
-     tl_tensor_elew(src1_entry->tensor, src2_entry->tensor, dst_entry->tensor,
-                    *(int *)op_arg->priv);
+     priv = op_arg->priv;
+     tl_tensor_elew(priv->src1, priv->src2, priv->dst, priv->elew_op);
 }
 
 /*
- * This function should free all tensor memory pre_run() and run() allocated.
+ * This function should free all tensor memory pre_run() allocated.
  */
 static void elew_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry;
+     struct priv_s *priv;
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-
-     /* free the tensor memory allocated in pre_run() and run() */
-     tl_tensor_free_data_too(dst_entry->tensor);
+     /* free the memory allocated in pre_run() */
+     priv = op_arg->priv;
+     tl_tensor_free_data_too(priv->dst);
      ln_free(op_arg->priv);
 }
 
@@ -138,6 +136,7 @@ static ln_op_arg op_arg_elew = {
      .optype = "elew",
      .tensors = NULL,
      .params = NULL,
+     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

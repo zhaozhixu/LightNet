@@ -219,7 +219,7 @@ START_TEST(test_ln_parse_ops)
      ck_assert_ptr_eq(op->post_run, op_proto->post_run);
      ck_assert_str_eq(op->op_arg->name, "create1");
      ck_assert_str_eq(op->op_arg->optype, "create");
-     ck_assert_ptr_eq(op->op_arg->priv, NULL);
+     ck_assert_ptr_ne(op->op_arg->priv, NULL);
 
      tensor_entry = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst");
      ck_assert_str_eq(tensor_entry->name, "create1_dst");

@@ -1,4 +1,5 @@
 include config.mk
+include common.mk
 
 TARGET ?= lightnet
 TARGET_VERSION = $(TARGET).$(MAJOR).$(MINOR).$(MICRO)

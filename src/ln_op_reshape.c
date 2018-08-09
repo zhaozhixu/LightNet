@@ -73,8 +73,10 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
                                    src_entry->tensor->len == compute_length(ndim, dims),
                                    "\"src\" tensor length is not equal with requested length");
 
-     /* Allocate memory for tensors needing allocation. */
+     /* Allocate memory in need. */
      dst_entry->tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
+
+     op_arg->priv = dst_entry->tensor;
 }
 
 /*
@@ -85,26 +87,18 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void reshape_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* Those tensors and params should have been checked in pre_run().
-	Further errors should be considered as bugs, so we use asserts here. */
-
      /* do the real work */
 }
 
 /*
- * This function should free all memory that pre_run() and run() allocated.
+ * This function should free all memory that pre_run() allocated.
  */
 static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *dst_entry;
-
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-
      /*
       * Only free the tensor struct, not its data shared with src.
       */
-     tl_tensor_free(dst_entry->tensor);
+     tl_tensor_free(op_arg->priv);
 }
 
 static ln_op_arg op_arg_reshape = {
@@ -112,6 +106,7 @@ static ln_op_arg op_arg_reshape = {
      .optype = "reshape",
      .tensors = NULL,
      .params = NULL,
+     .priv = NULL,
 };
 
 ln_op ln_opimpl_reshape = {

@@ -141,11 +141,11 @@ static void create_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * This function should free all tensor memory pre_run() and run() allocated.
+ * This function should free all tensor memory pre_run() allocated.
  */
 static void create_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* free the tensor memory allocated in pre_run() and run() */
+     /* free the tensor memory allocated in pre_run() */
      tl_tensor_free_data_too(op_arg->priv);
 }
 

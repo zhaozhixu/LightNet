@@ -23,6 +23,13 @@
 #include <assert.h>
 #include "ln_op.h"
 
+struct priv_s {
+     tl_tensor *src;
+     tl_tensor *dst;
+     int       *axes;
+     int      **workspace;
+};
+
 /*
  * This function should do the parameter checking and tensor memory allocation.
  */
@@ -32,6 +39,7 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_param_entry *axes_entry;
      int tensors_n, params_n;
      int *axes;
+     struct priv_s *priv;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_table_length(op_arg->tensors);
@@ -63,12 +71,12 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
                                         "\"axes\" should match \"src\" tensor's shape");
      ln_free(tmp);
 
-     /* allocate tensor memory in need */
+     /* allocate memory in need */
      int *d_dims = ln_alloc(src_entry->tensor->ndim * sizeof(int));
      for (i = 0; i < src_entry->tensor->ndim; i++)
           d_dims[i] = src_entry->tensor->dims[axes[i]];
-     dst_entry->tensor = tl_tensor_create(NULL, src_entry->tensor->ndim, d_dims,
-                                          src_entry->tensor->dtype);
+     dst_entry->tensor = tl_tensor_zeros(src_entry->tensor->ndim, d_dims,
+                                         src_entry->tensor->dtype);
      ln_free(d_dims);
 
      /* allocate workspace */
@@ -77,7 +85,13 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
                              dst_entry->tensor->len);
      workspace[1] = ln_alloc(sizeof(int) * dst_entry->tensor->ndim *
                              dst_entry->tensor->len);
-     op_arg->priv = workspace;
+
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->src = src_entry->tensor;
+     priv->dst = dst_entry->tensor;
+     priv->axes = axes;
+     priv->workspace = workspace;
+     op_arg->priv = priv;
 }
 
 /*
@@ -86,40 +100,27 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void transpose_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *src_entry, *dst_entry;
-     ln_param_entry *axes_entry;
-
-     /* Get tensors and parameters, which should have been checked in pre_run().
-        Further errors should be considered as bugs, so we use asserts to catch
-        return value. */
-     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
-     assert(src_entry);
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-     axes_entry = ln_param_table_find_by_arg_name(op_arg->params, "axes");
-     assert(axes_entry);
+     struct priv_s *priv;
 
      /* do the real work */
-     tl_tensor_transpose(src_entry->tensor, dst_entry->tensor,
-                         axes_entry->value_array_int, op_arg->priv);
+     priv = op_arg->priv;
+     tl_tensor_transpose(priv->src, priv->dst, priv->axes, priv->workspace);
 }
 
 /*
- * This function should free all tensor memory pre_run() and run() allocated.
+ * This function should free all tensor memory pre_run() allocated.
  */
 static void transpose_post_run(ln_op_arg *op_arg, ln_error **error)
 {
+     struct priv_s *priv;
 
-     ln_tensor_entry *dst_entry;
+     /* free the tensor memory allocated in pre_run() */
+     priv = op_arg->priv;
+     tl_tensor_free_data_too(priv->dst);
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     assert(dst_entry);
-
-     /* free the tensor memory allocated in pre_run() and run() */
-     tl_tensor_free_data_too(dst_entry->tensor);
-
-     ln_free(((int **)op_arg->priv)[0]);
-     ln_free(((int **)op_arg->priv)[1]);
+     ln_free(priv->workspace[0]);
+     ln_free(priv->workspace[1]);
+     ln_free(priv->workspace);
      ln_free(op_arg->priv);
 }
 
@@ -128,6 +129,7 @@ static ln_op_arg op_arg_transpose = {
      .optype = "transpose",
      .tensors = NULL,
      .params = NULL,
+     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

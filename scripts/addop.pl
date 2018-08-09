@@ -52,7 +52,7 @@ my $op_tpl = <<EOF;
 #include "ln_op.h"
 
 /*
- * This function should do the parameter checking and tensor memory allocation.
+ * This function should do the parameter checking and memory allocation.
  */
 static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
@@ -71,15 +71,12 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* Get tensors and parameters */
-     /* ...... */
-
      /* do the real work */
      /* ...... */
 }
 
 /*
- * This function should free all tensor memory pre_run() and run() allocated.
+ * This function should free all tensor memory pre_run() allocated.
  */
 static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 {
@@ -93,7 +90,7 @@ static ln_op_arg op_arg_${op_name} = {
      .optype = "${op_name}",
      .tensors = NULL,
      .params = NULL,
-     .priv = NULL
+     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

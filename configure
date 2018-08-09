@@ -10,6 +10,7 @@ Generate configuration makefile for building LightNet.
 options:
   -h, --help                 print this information
   --target=<name>            target name, default is lightnet
+  --abbr=<abbr>              abbreviation name, default is ln
   --build-dir=<path>         building directory, default is build
   --install-dir=<path>       installation directory, default is /usr/local
   --pkgconfig-dir=<path>     pkgconfig directory, default is
@@ -22,9 +23,10 @@ options:
   --debug=<value>            set to yes when debugging, default is no
 EOF
 
-# default options
+# default options, go in config.mk
 my %opts = (
             "TARGET" => "lightnet",
+            "ABBR" => "ln",
             "BUILD_DIR" => "build",
             "INSTALL_DIR" => "/usr/local",
             "PKGCONFIG_DIR" => "/usr/local/lib/pkgconfig",
@@ -60,27 +62,27 @@ while (@ARGV > 0) {
 # TODO: check versions
 my $output;
 $output = `gcc --version`;
-if ($output eq "") {
+if (!defined $output or $output eq "") {
   &err_exit("gcc not installed");
 }
 
 $output = `make --version`;;
-if ($output eq "") {
+if (!defined $output or $output eq "") {
   &err_exit("make not installed");
 }
 
 $output = `pkg-config --version`;;
-if ($output eq "") {
+if (!defined $output or $output eq "") {
   &err_exit("pkg-config not installed");
 }
 
 $output = `pkg-config --modversion check`;
-if ($output eq "") {
+if (!defined $output or $output eq "") {
   &err_exit("check not installed");
 }
 
 $output = `pkg-config --modversion tensorlight`;
-if ($output eq "") {
+if (!defined $output or $output eq "") {
   &err_exit("tensorlight not installed");
 }
 
@@ -93,7 +95,7 @@ if ($opts{WITH_CUDNN} eq "yes") {
 
 if ($opts{WITH_CUDA} eq "yes") {
   $output = `nvcc --version`;;
-  if ($output eq "") {
+  if (!defined $output or $output eq "") {
     &err_exit("nvcc not installed");
   }
 }
