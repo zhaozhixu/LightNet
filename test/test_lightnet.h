@@ -43,51 +43,68 @@
 #define ck_array(type, varg...) (type[]){varg}
 #endif
 #ifndef ck_assert_array_int_eq
-#define ck_assert_array_int_eq(XA, YA, N)				\
+#define ck_assert_array_int_eq(AX, AY, N)				\
      do {								\
 	  int _ck_n = (N);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       intmax_t _ck_x = ((int*)XA)[i];				\
-	       intmax_t _ck_y = ((int*)YA)[i];				\
+	       intmax_t _ck_x = ((int*)AX)[i];				\
+	       intmax_t _ck_y = ((int*)AY)[i];				\
 	       if (_ck_x != _ck_y)					\
 		    ck_assert_msg(0,					\
-				  "Assertion 'array "#XA" == "#YA"' failed: "#XA"[%d] == %d, "#YA"[%d] == %d", \
+				  "Assertion 'array "#AX" == "#AY"' failed: "#AX"[%d] == %d, "#AY"[%d] == %d", \
 				  i, _ck_x, i, _ck_y);			\
 	  }								\
      } while(0)
 #endif
 
 #ifndef ck_assert_array_uint_eq
-#define ck_assert_array_uint_eq(XA, YA, N)				\
+#define ck_assert_array_uint_eq(AX, AY, N)				\
      do {								\
 	  int _ck_n = (N);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       uintmax_t _ck_x = ((unsigned int*)XA)[i];		\
-	       uintmax_t _ck_y = ((unsigned int*)YA)[i];		\
+	       uintmax_t _ck_x = ((unsigned int*)AX)[i];		\
+	       uintmax_t _ck_y = ((unsigned int*)AY)[i];		\
 	       if (_ck_x != _ck_y)					\
 		    ck_assert_msg(0,					\
-				  "Assertion 'array "#XA" == "#YA"' failed: "#XA"[%d] == %ud, "#YA"[%d] == %ud", \
+				  "Assertion 'array "#AX" == "#AY"' failed: "#AX"[%d] == %ud, "#AY"[%d] == %ud", \
 				  i, _ck_x, i, _ck_y);			\
 	  }								\
      } while(0)
 #endif
 
 #ifndef ck_assert_array_float_eq_tol
-#define ck_assert_array_float_eq_tol(XA, YA, N, T)			\
+#define ck_assert_array_float_eq_tol(AX, AY, N, T)			\
      do {								\
 	  int _ck_n = (N);						\
 	  float _ck_t = (T);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       float _ck_x = ((float*)XA)[i];				\
-	       float _ck_y = ((float*)YA)[i];				\
+	       float _ck_x = ((float*)AX)[i];				\
+	       float _ck_y = ((float*)AY)[i];				\
 	       if (fabsf(_ck_x - _ck_y) >= _ck_t)			\
 		    ck_assert_msg(0,					\
-				  "Assertion 'array "#XA" ~= "#YA"' failed: "#XA"[%d] == %f, "#YA"[%d] == %f, "#T" == %f", \
+				  "Assertion 'array "#AX" ~= "#AY"' failed: "#AX"[%d] == %f, "#AY"[%d] == %f, "#T" == %f", \
 				  i, _ck_x, i, _ck_y, _ck_t);		\
 	  }								\
      } while(0)
 #endif
 
+#ifndef ck_assert_tensor_eq
+#define ck_assert_tensor_eq(TX, TY)                                     \
+     do {                                                               \
+          tl_tensor *_ck_tx = (TX);                                     \
+          tl_tensor *_ck_ty = (TY);                                     \
+          ck_assert_msg(_ck_tx->ndim == _ck_ty->ndim,                   \
+                        "Assertion 'tensor "#TX" == "#TY"' failed: "#YX"->ndim == %d, "#TY"->ndim == %d", \
+                        _ck_tx->ndim, _ck_ty->ndim);                    \
+          ck_assert_msg(_ck_tx->len == _ck_ty->len,                     \
+                        "Assertion 'tensor "#TX" == "#TY"' failed: "#YX"->len == %d, "#TY"->len == %d", \
+                        _ck_tx->len, _ck_ty->len);                      \
+          ck_assert_msg(_ck_tx->dtype == _ck_ty->dtype,                 \
+                        "Assertion 'tensor "#TX" == "#TY"' failed: "#YX"->dtype == %s, "#TY"->dtype == %s", \
+                        tl_dtype_name(_ck_tx->dtype),                   \
+                        tl_dtype_name(_ck_ty->dtype));                  \
+     } while(0)
+#endif
 
 #ifdef __cplusplus
 #define CPPSTART extern "C" {
