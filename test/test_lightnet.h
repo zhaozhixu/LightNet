@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <check.h>
+#include <math.h>
 
 #ifndef ck_assert_float_eq_tol
 #define ck_assert_float_eq_tol(X, Y, T)					\
@@ -32,71 +33,59 @@
 	  float _ck_x = (X);						\
 	  float _ck_y = (Y);						\
 	  float _ck_t = (T);						\
-	  ck_assert_msg(_ck_x - _ck_y < _ck_t,				\
-			"Assertion '%s' failed: %s == %f, %s == %f, %s == %f", \
+	  ck_assert_msg(fabsf(_ck_x - _ck_y) < _ck_t,			\
+			"Assertion '%s' failed: %s ~= %f, %s == %f, %s == %f", \
 			#X" == "#Y, #X, _ck_x, #Y, _ck_y, #T, _ck_t);	\
      } while(0)
 #endif
 
+#ifndef ck_array
+#define ck_array(type, varg...) (type[]){varg}
+#endif
 #ifndef ck_assert_array_int_eq
-#define _ck_assert_array_int_eq(XA, YA, N)				\
+#define ck_assert_array_int_eq(XA, YA, N)				\
      do {								\
 	  int _ck_n = (N);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       intmax_t _ck_x = (XA)[i];                                \
-	       intmax_t _ck_y = (YA)[i];                                \
-	       if (_ck_x != _ck_x)					\
+	       intmax_t _ck_x = ((int*)XA)[i];				\
+	       intmax_t _ck_y = ((int*)YA)[i];				\
+	       if (_ck_x != _ck_y)					\
 		    ck_assert_msg(0,					\
 				  "Assertion 'array "#XA" == "#YA"' failed: "#XA"[%d] == %d, "#YA"[%d] == %d", \
 				  i, _ck_x, i, _ck_y);			\
 	  }								\
      } while(0)
-
-static inline void ck_assert_array_int_eq(int *XA, int *YA, int N)
-{
-     _ck_assert_array_int_eq(XA, YA, N);
-}
 #endif
 
 #ifndef ck_assert_array_uint_eq
-#define _ck_assert_array_uint_eq(XA, YA, N)				\
+#define ck_assert_array_uint_eq(XA, YA, N)				\
      do {								\
 	  int _ck_n = (N);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       uintmax_t _ck_x = (XA)[i];				\
-	       uintmax_t _ck_y = (XA)[i];				\
+	       uintmax_t _ck_x = ((unsigned int*)XA)[i];		\
+	       uintmax_t _ck_y = ((unsigned int*)YA)[i];		\
 	       if (_ck_x != _ck_y)					\
 		    ck_assert_msg(0,					\
 				  "Assertion 'array "#XA" == "#YA"' failed: "#XA"[%d] == %ud, "#YA"[%d] == %ud", \
 				  i, _ck_x, i, _ck_y);			\
 	  }								\
      } while(0)
-
-static inline void ck_assert_array_uint_eq(unsigned int *XA, unsigned int *YA, int N)
-{
-     _ck_assert_array_uint_eq(XA, YA, N);
-}
 #endif
 
 #ifndef ck_assert_array_float_eq_tol
-#define _ck_assert_array_float_eq_tol(XA, YA, N, T)			\
+#define ck_assert_array_float_eq_tol(XA, YA, N, T)			\
      do {								\
 	  int _ck_n = (N);						\
 	  float _ck_t = (T);						\
 	  for (int i = 0; i < _ck_n; i++) {				\
-	       float _ck_x = (XA)[i];					\
-	       float _ck_y = (XA)[i];					\
-	       if (_ck_x - _ck_y >= _ck_t)				\
+	       float _ck_x = ((float*)XA)[i];				\
+	       float _ck_y = ((float*)YA)[i];				\
+	       if (fabsf(_ck_x - _ck_y) >= _ck_t)			\
 		    ck_assert_msg(0,					\
-				  "Assertion 'array "#XA" == "#YA"' failed: "#XA"[%d] == %f, "#YA"[%d] == %f, "#T" == %f", \
+				  "Assertion 'array "#XA" ~= "#YA"' failed: "#XA"[%d] == %f, "#YA"[%d] == %f, "#T" == %f", \
 				  i, _ck_x, i, _ck_y, _ck_t);		\
 	  }								\
      } while(0)
-
-static inline void ck_assert_array_float_eq_tol(float *XA, float *YA, int N, float T)
-{
-     _ck_assert_array_float_eq_tol(XA, YA, N, T);
-}
 #endif
 
 

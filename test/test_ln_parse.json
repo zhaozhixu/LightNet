@@ -1,21 +1,22 @@
 {
     "ops": [
         {
-            "name": "zeros1",
-            "optype": "zeros",
+            "name": "create1",
+            "optype": "create",
             "tensors": [
-                {"arg_name": "dst", "name": "zeros1"}
+                {"arg_name": "dst", "name": "create1"}
             ],
             "params": [
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
                 {"arg_name": "dims", "value": [2, 4]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"}
+                {"arg_name": "data", "value": [1, 2, 3, 4, 5, 6, 7, 8]}
             ]
         },
         {
             "name": "slice1",
             "optype": "slice",
             "tensors": [
-                {"arg_name": "src", "name": "zeros1"},
+                {"arg_name": "src", "name": "create1"},
                 {"arg_name": "dst", "name": "slice1"}
             ],
             "params": [
@@ -71,15 +72,14 @@
             ]
         },
         {
-            "name": "create1",
-            "optype": "create",
+            "name": "zeros1",
+            "optype": "zeros",
             "tensors": [
-                {"arg_name": "dst", "name": "create1_dst"}
+                {"arg_name": "dst", "name": "zeros1"}
             ],
             "params": [
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "dims", "value": [2, 3]},
-                {"arg_name": "data", "value": [1, 2, 3, 4, 5, 6]}
+                {"arg_name": "dims", "value": [2, 4]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"}
             ]
         }
     ]

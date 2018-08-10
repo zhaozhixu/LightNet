@@ -5,6 +5,7 @@
 *.so
 *.out
 *.el
+config.mk
 check_output.xml
 test_lightnet
 lightnet

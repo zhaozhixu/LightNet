@@ -27,7 +27,7 @@ struct priv_s {
      tl_tensor *src;
      tl_tensor *dst;
      int       *axes;
-     int      **workspace;
+     tl_tensor *workspace;
 };
 
 /*
@@ -80,11 +80,7 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_free(d_dims);
 
      /* allocate workspace */
-     int **workspace = ln_alloc(sizeof(int *) * 2);
-     workspace[0] = ln_alloc(sizeof(int) * dst_entry->tensor->ndim *
-                             dst_entry->tensor->len);
-     workspace[1] = ln_alloc(sizeof(int) * dst_entry->tensor->ndim *
-                             dst_entry->tensor->len);
+     tl_tensor *workspace = tl_tensor_zeros(1, (int[]){dst_entry->tensor->ndim*dst_entry->tensor->len*2}, TL_INT32);
 
      priv = ln_alloc(sizeof(struct priv_s));
      priv->src = src_entry->tensor;
@@ -117,10 +113,7 @@ static void transpose_post_run(ln_op_arg *op_arg, ln_error **error)
      /* free the tensor memory allocated in pre_run() */
      priv = op_arg->priv;
      tl_tensor_free_data_too(priv->dst);
-
-     ln_free(priv->workspace[0]);
-     ln_free(priv->workspace[1]);
-     ln_free(priv->workspace);
+     tl_tensor_free_data_too(priv->workspace);
      ln_free(op_arg->priv);
 }
 
