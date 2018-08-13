@@ -33,11 +33,11 @@ int main(int argc, char **argv)
      SRunner *sr;
 
      sr = srunner_create(make_master_suite());
-     /* srunner_add_suite(sr, make_list_suite()); */
-     /* srunner_add_suite(sr, make_error_suite()); */
-     /* srunner_add_suite(sr, make_param_suite()); */
-     /* srunner_add_suite(sr, make_tensor_suite()); */
-     /* srunner_add_suite(sr, make_op_suite()); */
+     srunner_add_suite(sr, make_list_suite());
+     srunner_add_suite(sr, make_error_suite());
+     srunner_add_suite(sr, make_param_suite());
+     srunner_add_suite(sr, make_tensor_suite());
+     srunner_add_suite(sr, make_op_suite());
      srunner_add_suite(sr, make_parse_suite());
      /* end of adding suites */
 
