@@ -80,7 +80,7 @@
 	  for (int i = 0; i < _ck_n; i++) {				\
 	       float _ck_x = ((float*)AX)[i];				\
 	       float _ck_y = ((float*)AY)[i];				\
-	       if (fabsf(_ck_x - _ck_y) >= _ck_t)			\
+	       if (fabsf(_ck_x - _ck_y) > _ck_t)			\
 		    ck_assert_msg(0,					\
 				  "Assertion 'array "#AX" ~= "#AY"' failed: "#AX"[%d] == %f, "#AY"[%d] == %f, "#T" == %f", \
 				  i, _ck_x, i, _ck_y, _ck_t);		\
@@ -88,22 +88,75 @@
      } while(0)
 #endif
 
-#ifndef ck_assert_tensor_eq
-#define ck_assert_tensor_eq(TX, TY)                                     \
+#ifndef ck_assert_tensor_eq_tol
+#define _ck_tensor_abs(X, Y) ((X) > (Y) ? (X) - (Y) : (Y) - (X))
+#define _ck_tensor_msg(TP, T)                                           \
+     ck_assert_msg(_ck_tensor_abs(((TP*)_ck_tx->data)[i], ((TP*)_ck_ty->data)[i]) <= T, \
+                   msg, i, ((TP*)_ck_tx->data)[i], i, ((TP*)_ck_ty->data)[i]);
+#define ck_assert_tensor_eq_tol(TX, TY, T)                              \
      do {                                                               \
           tl_tensor *_ck_tx = (TX);                                     \
           tl_tensor *_ck_ty = (TY);                                     \
           ck_assert_msg(_ck_tx->ndim == _ck_ty->ndim,                   \
-                        "Assertion 'tensor "#TX" == "#TY"' failed: "#YX"->ndim == %d, "#TY"->ndim == %d", \
+                        "Assertion 'tensor "#TX" == "#TY"' failed: "#TX"->ndim == %d, "#TY"->ndim == %d", \
                         _ck_tx->ndim, _ck_ty->ndim);                    \
           ck_assert_msg(_ck_tx->len == _ck_ty->len,                     \
-                        "Assertion 'tensor "#TX" == "#TY"' failed: "#YX"->len == %d, "#TY"->len == %d", \
+                        "Assertion 'tensor "#TX" == "#TY"' failed: "#TX"->len == %d, "#TY"->len == %d", \
                         _ck_tx->len, _ck_ty->len);                      \
           ck_assert_msg(_ck_tx->dtype == _ck_ty->dtype,                 \
-                        "Assertion 'tensor "#TX" == "#TY"' failed: "#YX"->dtype == %s, "#TY"->dtype == %s", \
+                        "Assertion 'tensor "#TX" == "#TY"' failed: "#TX"->dtype == %s, "#TY"->dtype == %s", \
                         tl_dtype_name(_ck_tx->dtype),                   \
                         tl_dtype_name(_ck_ty->dtype));                  \
+          for (int i = 0; i < _ck_tx->ndim; i++) {                      \
+               ck_assert_msg(_ck_tx->dims[i] == _ck_ty->dims[i],        \
+                             "Assertion 'tensor "#TX" == "#TY"' failed: "#TX"->dims[%d] == %d, "#TY"->dims[%d] == %d", \
+                             i, _ck_tx->dims[i], i, _ck_ty->dims[i]);   \
+	  }                                                             \
+          const char *dtype_fmt = tl_dtype_fmt(_ck_tx->dtype);          \
+          const char *msg_fmt = "Assertion 'tensor "#TX" == "#TY"' failed: "#TX"->data[%%d] == %s, "#TY"->data[%%d] == %s, "#T" == %s"; \
+          size_t n = (strlen(msg_fmt)+20);                              \
+          char *msg = ln_alloc(sizeof(char)*n);                         \
+          snprintf(msg, n, msg_fmt, dtype_fmt, dtype_fmt, dtype_fmt);   \
+          for (int i = 0; i < _ck_tx->len; i++) {                       \
+               switch (_ck_tx->dtype) {                                 \
+               case TL_DOUBLE:                                          \
+                    _ck_tensor_msg(double, T);                          \
+                    break;                                              \
+               case TL_FLOAT:                                           \
+                    _ck_tensor_msg(float, T);                           \
+                    break;                                              \
+               case TL_INT32:                                           \
+                    _ck_tensor_msg(int32_t, T);                         \
+                    break;                                              \
+               case TL_INT16:                                           \
+                    _ck_tensor_msg(int16_t, T);                         \
+                    break;                                              \
+               case TL_INT8:                                            \
+                    _ck_tensor_msg(int8_t, T);                          \
+                    break;                                              \
+               case TL_UINT32:                                          \
+                    _ck_tensor_msg(uint32_t, T);                        \
+                    break;                                              \
+               case TL_UINT16:                                          \
+                    _ck_tensor_msg(uint16_t, T);                        \
+                    break;                                              \
+               case TL_UINT8:                                           \
+                    _ck_tensor_msg(uint8_t, T);                         \
+                    break;                                              \
+               case TL_BOOL:                                            \
+                    _ck_tensor_msg(tl_bool_t, T);                       \
+                    break;                                              \
+               default:                                                 \
+                    assert(0 && "unsupported tl_dtype");                \
+                    break;                                              \
+               }                                                        \
+          }                                                             \
+          ln_free(msg);                                                 \
      } while(0)
+#endif
+
+#ifndef ck_assert_tensor_eq
+#define ck_assert_tensor_eq(TX, TY) ck_assert_tensor_eq_tol(TX, TY, 0)
 #endif
 
 #ifdef __cplusplus
