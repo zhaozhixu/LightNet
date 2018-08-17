@@ -20,29 +20,55 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "ln_op.h"
-#include "ln_list.h"
 
-extern ln_op ln_opimpl_slice;
-extern ln_op ln_opimpl_reshape;
-extern ln_op ln_opimpl_maxreduce;
-extern ln_op ln_opimpl_elew;
-extern ln_op ln_opimpl_transpose;
-extern ln_op ln_opimpl_zeros;
-extern ln_op ln_opimpl_create;
-extern ln_op ln_opimpl_create_cuda;
-extern ln_op ln_opimpl_elew_cuda;
-/* end of declarations */
+/*
+ * This function should do the parameter checking and memory allocation.
+ */
+static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
+{
 
-ln_op *ln_init_ops[] = {
-     &ln_opimpl_slice,
-     &ln_opimpl_reshape,
-     &ln_opimpl_maxreduce,
-     &ln_opimpl_elew,
-     &ln_opimpl_transpose,
-     &ln_opimpl_zeros,
-     &ln_opimpl_create,
-     &ln_opimpl_create_cuda,
-     &ln_opimpl_elew_cuda,
-     NULL /* end of init ops */
+     /* check tensors and parameters */
+     /* ...... */
+
+     /* allocate memory in need */
+     /* ...... */
+}
+
+/*
+ * Normally we should only do the calculations here. Operations with memory
+ * and such should go in pre_run().
+ */
+static void elew_cuda_run(ln_op_arg *op_arg, ln_error **error)
+{
+
+     /* do the real work */
+     /* ...... */
+}
+
+/*
+ * This function should free all tensor memory pre_run() allocated.
+ */
+static void elew_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
+{
+
+     /* free memory allocated in pre_run() */
+     /* ..... */
+}
+
+static ln_op_arg op_arg_elew_cuda = {
+     .name = NULL,
+     .optype = "elew_cuda",
+     .tensors = NULL,
+     .params = NULL,
+     .priv = NULL,
+};
+
+/* struct used for op registration in ln_oplist.c */
+ln_op ln_opimpl_elew_cuda = {
+     .op_arg = &op_arg_elew_cuda,
+     .pre_run = elew_cuda_pre_run,
+     .run = elew_cuda_run,
+     .post_run = elew_cuda_post_run
 };

@@ -141,7 +141,7 @@ START_TEST(test_ln_parse_ops)
      ck_assert_ptr_eq(tensor_entry->tensor, tensor1);
      tensor_entry = ln_tensor_table_find_by_arg_name(op->op_arg->tensors, "dst");
      ck_assert_str_eq(tensor_entry->name, "reshape1");
-     tensor_true = tl_tensor_create((float[]){0, 0, 0, 0, 0, 1},
+     tensor_true = tl_tensor_create((float[]){0, 0, 0, 0, 0, 0},
                                    2, (int[]){3, 2}, TL_FLOAT);
      tl_assert_tensor_eq(tensor_true, tensor_entry->tensor);
      tl_tensor_free(tensor_true);
