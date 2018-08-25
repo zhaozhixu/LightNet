@@ -31,7 +31,8 @@ typedef struct ln_op_arg ln_op_arg;
 struct ln_op_arg {
      char            *name;
      char            *optype;
-     ln_tensor_table *tensors;
+     ln_tensor_table *tensors_in;
+     ln_tensor_table *tensors_out;
      ln_param_table  *params;
      void            *priv;     /* for other private data storage */
 };

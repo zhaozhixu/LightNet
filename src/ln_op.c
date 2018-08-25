@@ -23,7 +23,8 @@
 #include "ln_op.h"
 
 static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
-                                   ln_tensor_table *tensors,
+                                   ln_tensor_table *tensors_in,
+                                   ln_tensor_table *tensors_out,
                                    ln_param_table *params)
 {
      ln_op_arg *op_arg;
@@ -33,7 +34,8 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
      strcpy(op_arg->name, name);
      op_arg->optype = ln_alloc(sizeof(char)*(strlen(optype)+1));
      strcpy(op_arg->optype, optype);
-     op_arg->tensors = tensors;
+     op_arg->tensors_in = tensors_in;
+     op_arg->tensors_out = tensors_out;
      op_arg->params = params;
      op_arg->priv = NULL;
 
@@ -48,13 +50,15 @@ static void ln_op_arg_free(ln_op_arg *op_arg)
 }
 
 ln_op *ln_op_create(const char *name, const char *optype,
-                    ln_tensor_table *tensors, ln_param_table *params,
+                    ln_tensor_table *tensors_in, ln_tensor_table *tensors_out,
+                    ln_param_table *params,
                     ln_op_func pre_run, ln_op_func run, ln_op_func post_run)
 {
      ln_op *op;
 
      op = ln_alloc(sizeof(ln_op));
-     op->op_arg = ln_op_arg_create(name, optype, tensors, params);
+     op->op_arg = ln_op_arg_create(name, optype,
+                                   tensors_in, tensors_out, params);
      op->pre_run = pre_run;
      op->run = run;
      op->post_run = post_run;
@@ -84,7 +88,8 @@ static void op_free_tables_too_wrapper(void *p)
      ln_op *op;
 
      op = (ln_op *)p;
-     ln_tensor_table_free(op->op_arg->tensors);
+     ln_tensor_table_free(op->op_arg->tensors_in);
+     ln_tensor_table_free(op->op_arg->tensors_out);
      ln_param_table_free(op->op_arg->params);
      ln_op_free(p);
 }
