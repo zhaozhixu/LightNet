@@ -58,11 +58,7 @@ static void elew_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 static ln_op_arg op_arg_elew_cuda = {
-     .name = NULL,
      .optype = "elew_cuda",
-     .tensors = NULL,
-     .params = NULL,
-     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

@@ -107,7 +107,10 @@ tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
 
      for (l = ops; l; l = l->next) {
 	  op = (ln_op *)l->data;
-	  entry = ln_tensor_table_find_by_name(op->op_arg->tensors, name);
+	  entry = ln_tensor_table_find_by_name(op->op_arg->tensors_in, name);
+	  if (entry)
+	       break;
+          entry = ln_tensor_table_find_by_name(op->op_arg->tensors_out, name);
 	  if (entry)
 	       break;
      }
@@ -131,7 +134,7 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
      ln_op cmp_op;
      ln_op *result_op;
 
-     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL);
+     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL);
      result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_optype);
      ln_op_arg_free(cmp_op.op_arg);
 
@@ -152,7 +155,7 @@ ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
      ln_op cmp_op;
      ln_op *result_op;
 
-     cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL);
+     cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL, NULL);
      result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_name);
      ln_op_arg_free(cmp_op.op_arg);
 

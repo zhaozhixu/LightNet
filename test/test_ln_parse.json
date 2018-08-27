@@ -3,7 +3,9 @@
         {
             "name": "create1",
             "optype": "create",
-            "tensors": [
+            "tensors_in": [
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "create1"}
             ],
             "params": [
@@ -15,8 +17,10 @@
         {
             "name": "slice1",
             "optype": "slice",
-            "tensors": [
-                {"arg_name": "src", "name": "create1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "create1"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "slice1"}
             ],
             "params": [
@@ -28,8 +32,10 @@
         {
             "name": "reshape1",
             "optype": "reshape",
-            "tensors": [
-                {"arg_name": "src", "name": "slice1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "slice1"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "reshape1"}
             ],
             "params": [
@@ -39,8 +45,10 @@
         {
             "name": "maxreduce1",
             "optype": "maxreduce",
-            "tensors": [
-                {"arg_name": "src", "name": "reshape1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "reshape1"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "maxreduce1_dst"},
                 {"arg_name": "arg", "name": "maxreduce1_arg"}
             ],
@@ -51,9 +59,11 @@
         {
             "name": "elew1",
             "optype": "elew",
-            "tensors": [
+            "tensors_in": [
                 {"arg_name": "src1", "name": "maxreduce1_dst"},
-                {"arg_name": "src2", "name": "maxreduce1_arg"},
+                {"arg_name": "src2", "name": "maxreduce1_arg"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "elew1"}
             ],
             "params": [
@@ -63,8 +73,10 @@
         {
             "name": "transpose1",
             "optype": "transpose",
-            "tensors": [
-                {"arg_name": "src", "name": "elew1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "elew1"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "transpose1"}
             ],
             "params": [
@@ -74,7 +86,9 @@
         {
             "name": "zeros1",
             "optype": "zeros",
-            "tensors": [
+            "tensors_in": [
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "zeros1"}
             ],
             "params": [

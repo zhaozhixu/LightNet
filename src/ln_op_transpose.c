@@ -42,15 +42,18 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
      struct priv_s *priv;
 
      /* check tensors and parameters */
-     tensors_n = ln_tensor_table_length(op_arg->tensors);
-     ln_op_check_tensor_len_eq(LN_ERROR, tensors_n, 2);
+     tensors_n = ln_tensor_table_length(op_arg->tensors_in);
+     ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 1);
 
-     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "src");
-     ln_op_check_tensor_exist(LN_ERROR, src_entry, "src");
+     tensors_n = ln_tensor_table_length(op_arg->tensors_out);
+     ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
+
+     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_in, "src");
+     ln_op_check_tensor_in_exist(LN_ERROR, src_entry, "src");
      ln_op_check_tensor_defined(LN_ERROR, src_entry);
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors, "dst");
-     ln_op_check_tensor_exist(LN_ERROR, dst_entry, "dst");
+     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_out, "dst");
+     ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
      params_n = ln_param_table_length(op_arg->params);
@@ -118,11 +121,7 @@ static void transpose_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 static ln_op_arg op_arg_transpose = {
-     .name = NULL,
      .optype = "transpose",
-     .tensors = NULL,
-     .params = NULL,
-     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

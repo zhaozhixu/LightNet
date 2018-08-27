@@ -150,12 +150,14 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 		       ln_list *registered_ops, int idx, ln_error **error)
 {
      ln_op *op, *proto_op;
-     ln_tensor_table *tensors = NULL;
+     ln_tensor_table *tensors_in = NULL;
+     ln_tensor_table *tensors_out = NULL;
      ln_param_table *params = NULL;
 
      cJSON *name_json = cJSON_GetObjectItem(op_json, "name");
      cJSON *optype_json = cJSON_GetObjectItem(op_json, "optype");
-     cJSON *tensors_json = cJSON_GetObjectItem(op_json, "tensors");
+     cJSON *tensors_in_json = cJSON_GetObjectItem(op_json, "tensors_in");
+     cJSON *tensors_out_json = cJSON_GetObjectItem(op_json, "tensors_out");
      cJSON *params_json = cJSON_GetObjectItem(op_json, "params");
      if (!name_json) {
 	  *error = ln_error_create(LN_ERROR,
@@ -177,19 +179,31 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      }
      if (!cJSON_IsString(optype_json)) {
 	  *error = ln_error_create(LN_ERROR,
-				   "op \"%s\"'s optype is not a String",
+				   "op \"%s\"'s \"optype\" is not a String",
 				   name_json->valuestring);
 	  goto err;
      }
-     if (!tensors_json) {
+     if (!tensors_in_json) {
 	  *error = ln_error_create(LN_ERROR,
-				   "op \"%s\" doesn't have a \"tensors\" key",
+				   "op \"%s\" doesn't have a \"tensors_in\" key",
 				   name_json->valuestring);
 	  goto err;
      }
-     if (!cJSON_IsArray(tensors_json)) {
+     if (!tensors_out_json) {
 	  *error = ln_error_create(LN_ERROR,
-				   "op \"%s\"'s tensors is not an Array",
+				   "op \"%s\" doesn't have a \"tensors_out\" key",
+				   name_json->valuestring);
+	  goto err;
+     }
+     if (!cJSON_IsArray(tensors_in_json)) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\"'s \"tensors_in\" is not an Array",
+				   name_json->valuestring);
+	  goto err;
+     }
+     if (!cJSON_IsArray(tensors_out_json)) {
+	  *error = ln_error_create(LN_ERROR,
+				   "op \"%s\"'s \"tensors_out\" is not an Array",
 				   name_json->valuestring);
 	  goto err;
      }
@@ -201,7 +215,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      }
      if (!cJSON_IsArray(params_json)) {
 	  *error = ln_error_create(LN_ERROR,
-				   "op \"%s\"'s params is not an Array",
+				   "op \"%s\"'s \"params\" is not an Array",
 				   name_json->valuestring);
 	  goto err;
      }
@@ -211,18 +225,18 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      cJSON *param_arg_name_json, *param_value_json;
      tl_tensor *tensor;
      int i = 0;
-     cJSON_ArrayForEach(tensor_json, tensors_json) {
+     cJSON_ArrayForEach(tensor_json, tensors_in_json) {
 	  tensor_arg_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
 	  tensor_name_json = cJSON_GetObjectItem(tensor_json, "name");
 	  if (!tensor_arg_name_json) {
 	       *error = ln_error_create(LN_ERROR,
-					"one of op \"%s\"'s tensors doesn't have an \"arg_name\" key at tensor index %d",
+					"one of op \"%s\"'s input tensors doesn't have an \"arg_name\" key at tensor index %d",
 					name_json->valuestring, i);
 	       goto err;
 	  }
 	  if (!cJSON_IsString(tensor_arg_name_json)) {
 	       *error = ln_error_create(LN_ERROR,
-					"one of op \"%s\"'s tensors's arg_name is not a String at tensor index %d",
+					"one of op \"%s\"'s input tensors's arg_name is not a String at tensor index %d",
 					name_json->valuestring, i);
 	       goto err;
 	  }
@@ -242,10 +256,48 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 	  }
 	  tensor = ln_op_list_find_tensor_by_name(ops,
 						  tensor_name_json->valuestring);
-	  tensors = ln_tensor_table_append(tensors,
-					   tensor_arg_name_json->valuestring,
-					   tensor_name_json->valuestring,
-					   tensor);
+	  tensors_in = ln_tensor_table_append(tensors_in,
+                                              tensor_arg_name_json->valuestring,
+                                              tensor_name_json->valuestring,
+                                              tensor);
+	  i++;
+     }
+     i = 0;
+     cJSON_ArrayForEach(tensor_json, tensors_out_json) {
+	  tensor_arg_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
+	  tensor_name_json = cJSON_GetObjectItem(tensor_json, "name");
+	  if (!tensor_arg_name_json) {
+	       *error = ln_error_create(LN_ERROR,
+					"one of op \"%s\"'s output tensors doesn't have an \"arg_name\" key at tensor index %d",
+					name_json->valuestring, i);
+	       goto err;
+	  }
+	  if (!cJSON_IsString(tensor_arg_name_json)) {
+	       *error = ln_error_create(LN_ERROR,
+					"one of op \"%s\"'s output tensors's arg_name is not a String at tensor index %d",
+					name_json->valuestring, i);
+	       goto err;
+	  }
+	  if (!tensor_name_json) {
+	       *error = ln_error_create(LN_ERROR,
+					"op \"%s\"'s \"%s\" tensor doesn't have a \"name\" key",
+					name_json->valuestring,
+					tensor_arg_name_json->valuestring);
+	       goto err;
+	  }
+	  if (!cJSON_IsString(tensor_name_json)) {
+	       *error = ln_error_create(LN_ERROR,
+					"op \"%s\"'s \"%s\" tensor's name is not a String",
+					name_json->valuestring,
+					tensor_arg_name_json->valuestring);
+	       goto err;
+	  }
+	  tensor = ln_op_list_find_tensor_by_name(ops,
+						  tensor_name_json->valuestring);
+	  tensors_out = ln_tensor_table_append(tensors_out,
+                                               tensor_arg_name_json->valuestring,
+                                               tensor_name_json->valuestring,
+                                               tensor);
 	  i++;
      }
      i = 0;
@@ -321,8 +373,8 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      }
 
      op = ln_op_create(name_json->valuestring, optype_json->valuestring,
-		       tensors, params, proto_op->pre_run, proto_op->run,
-		       proto_op->post_run);
+		       tensors_in, tensors_out, params, proto_op->pre_run,
+                       proto_op->run, proto_op->post_run);
      /*
       * op->pre_run() runs here, because we need it to allocate tensors
       * for following ops to reference to them.
@@ -337,7 +389,8 @@ err_pre_run:
      ln_op_free(op);
 err:
      ln_param_table_free(params);
-     ln_tensor_table_free(tensors);
+     ln_tensor_table_free(tensors_in);
+     ln_tensor_table_free(tensors_out);
      return NULL;
 }
 
