@@ -40,7 +40,7 @@ LN_CPPSTART
 ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size);
 void ln_mem_pool_free(ln_mem_pool *mem_pool);
 size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size);
-void ln_mem_free(ln_mem_pool *mem_pool, size_t start);
+void ln_mem_free(ln_mem_pool *mem_pool, size_t addr);
 
 #ifdef __cplusplus
 LN_CPPEND

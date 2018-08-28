@@ -39,9 +39,9 @@ all: $(TARGET_TEST)
 	$(ECHO) Running tests...
 	$(AT)./$(TARGET_TEST)
 
-$(TARGET_TEST): $(OBJS)
-	$(ECHO) Linking: $^ $(SRCOBJS)
-	$(AT)$(CC) -o $@ $^ $(SRCOBJS) $(LDFLAGS)
+$(TARGET_TEST): $(OBJS) $(SRCOBJS)
+	$(ECHO) Linking: $^
+	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.c
 	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi

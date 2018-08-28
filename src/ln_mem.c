@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "ln_mem.h"
 #include "ln_error.h"
 
@@ -57,6 +58,7 @@ ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)
      ln_mem_pool *mem_pool;
      mem_info *minfo;
 
+     assert(size > 0 && align_size > 0);
      mem_pool = ln_alloc(sizeof(ln_mem_pool));
      mem_pool->size = size;
      mem_pool->align_size = align_size;
@@ -85,6 +87,7 @@ static int best_fit(ln_mem_pool *mem_pool, size_t size)
      int min_idx;
      ln_list *l;
      int i;
+
      for (l = mem_pool->mem_blocks, i = 0; l; l = l->next, i++) {
           mem_info *minfo = l->data;
           size_t align_start = minfo->start % align_size == 0 ? minfo->start :
@@ -111,11 +114,11 @@ static int best_fit(ln_mem_pool *mem_pool, size_t size)
 
 size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
 {
+     assert(size > 0);
      int fit_idx = best_fit(mem_pool, size);
      if (fit_idx < 0) {
           ln_error *error = ln_error_create(LN_ERROR,
-                                            "out of virtual memory pool when allocating %ld bytes",
-                                            size);
+                                            "ln_mem_alloc(): out of virtual memory pool when allocating %ld bytes", size);
           ln_error_handle(&error);
      }
 
@@ -133,17 +136,26 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
           mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
                                                          fit_idx,
                                                          mem_info_free_wrapper);
+
+     size_t hole_size = align_start - new_minfo->start;
+     if (hole_size == 0)
+          return align_start;
+     mem_info *hole_minfo = mem_info_create(HOLE, minfo->start, hole_size);
+     mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
+                                               hole_minfo, fit_idx);
+     new_minfo->start = align_start;
+     new_minfo->size -= hole_size;
      return align_start;
 }
 
-void ln_mem_free(ln_mem_pool *mem_pool, size_t start)
+void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
 {
      int i;
      ln_list *l, *l_next, *l_before = NULL;
      mem_info *minfo;
      for (l = mem_pool->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
           minfo = l->data;
-          if (minfo->flag != SYMBOL || minfo->start != start)
+          if (minfo->flag != SYMBOL || minfo->start != addr)
                continue;
           l_next = l->next;
           if (l_next && ((mem_info *)l_next->data)->flag == HOLE) {
@@ -161,5 +173,11 @@ void ln_mem_free(ln_mem_pool *mem_pool, size_t start)
           }
           minfo->flag = HOLE;
           break;
+     }
+     if (!l) {
+          ln_error *error = ln_error_create(LN_ERROR,
+                                            "ln_mem_free(): invalid address: 0x%012lx",
+                                            addr);
+          ln_error_handle(&error);
      }
 }
