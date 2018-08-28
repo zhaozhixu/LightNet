@@ -86,11 +86,7 @@ static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 static ln_op_arg op_arg_${op_name} = {
-     .name = NULL,
      .optype = "${op_name}",
-     .tensors = NULL,
-     .params = NULL,
-     .priv = NULL,
 };
 
 /* struct used for op registration in ln_oplist.c */

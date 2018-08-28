@@ -133,6 +133,25 @@ ln_list *ln_list_remove_nth(ln_list *list, int n)
      return list;
 }
 
+ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
+                                 void (*free_func)(void *))
+{
+     ln_list **lp;
+     ln_list *tmp;
+     int i;
+
+     for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
+          if (i == n) {
+               tmp = *lp;
+               *lp = tmp->next;
+               free_func(tmp->data);
+               ln_free(tmp);
+               break;
+          }
+     }
+     return list;
+}
+
 /*
  * Return the list with inserted element, or NULL if list == NULL.
  * If the position n is negative or larger or equal than the length
