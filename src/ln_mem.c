@@ -134,17 +134,18 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
      minfo->size -= mem_size;
      if (minfo->size == 0)
           mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
-                                                         fit_idx,
+                                                         fit_idx + 1,
                                                          mem_info_free_wrapper);
 
      size_t hole_size = align_start - new_minfo->start;
      if (hole_size == 0)
           return align_start;
-     mem_info *hole_minfo = mem_info_create(HOLE, minfo->start, hole_size);
+     mem_info *hole_minfo = mem_info_create(HOLE, new_minfo->start, hole_size);
      mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
                                                hole_minfo, fit_idx);
      new_minfo->start = align_start;
      new_minfo->size -= hole_size;
+     best_fit(mem_pool, 8);
      return align_start;
 }
 
@@ -179,5 +180,17 @@ void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
                                             "ln_mem_free(): invalid address: 0x%012lx",
                                             addr);
           ln_error_handle(&error);
+     }
+}
+
+void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp)
+{
+     ln_list *l;
+     mem_info *minfo;
+
+     for (l = mem_pool->mem_blocks; l; l = l->next) {
+          minfo = l->data;
+          fprintf(fp, "0x%012lx-0x%012lx %s\n", minfo->start,
+                  minfo->start+minfo->size-1, minfo->flag==HOLE?"H":"S");
      }
 }
