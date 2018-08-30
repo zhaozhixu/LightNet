@@ -25,17 +25,10 @@
 
 #include "ln_util.h"
 
-typedef struct ln_list_node ln_list_node;
-
-struct ln_list_node {
-     void          *data;
-     ln_list_node  *next;
-};
-
 typedef struct ln_list ln_list;
 struct ln_list {
-     int           len;
-     ln_list_node *head;
+     void     *data;
+     ln_list  *next;
 };
 
 #ifdef __cplusplus
