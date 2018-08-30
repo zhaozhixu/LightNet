@@ -394,8 +394,8 @@ err:
      return NULL;
 }
 
-ln_list *ln_parse_ops(const char * const json_str,
-		      ln_list *registered_ops, ln_error **error)
+ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
+                      ln_error **error)
 {
      const cJSON *ops_json;
      const cJSON *op_json;

@@ -23,6 +23,15 @@
 #include "ln_list.h"
 #include "ln_util.h"
 
+ln_list *ln_list_create(void)
+{
+     ln_list *l;
+
+     l = ln_alloc(sizeof(ln_list));
+     l->len = 0;
+     l->head = ;
+}
+
 /* return the list with appended element (a new list if list == NULL) */
 ln_list *ln_list_append(ln_list *list, void *data)
 {

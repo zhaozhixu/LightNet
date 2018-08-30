@@ -20,20 +20,10 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_PARSE_H_
-#define _LN_PARSE_H_
+#include "ln_optimize.h"
+#include "ln_mem.h"
 
-#include "ln_list.h"
-#include "ln_error.h"
+ln_list *ln_optimize_mem(ln_list *ops)
+{
 
-#ifdef __cplusplus
-LN_CPPSTART
-#endif
-
-ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
-                      ln_error **error);
-#ifdef __cplusplus
-LN_CPPEND
-#endif
-
-#endif	/* _LN_PARSE_H_ */
+}

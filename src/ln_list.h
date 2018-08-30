@@ -32,7 +32,11 @@ struct ln_list_node {
      ln_list_node  *next;
 };
 
-typedef ln_list_node ln_list;
+typedef struct ln_list ln_list;
+struct ln_list {
+     int           len;
+     ln_list_node *head;
+};
 
 #ifdef __cplusplus
 LN_CPPSTART
