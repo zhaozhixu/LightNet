@@ -25,20 +25,38 @@
 
 #include "ln_util.h"
 
+typedef struct ln_list_node ln_list_node;
+struct ln_list_node {
+     void          *data;
+     ln_list_node  *next;
+};
+
 typedef struct ln_list ln_list;
 struct ln_list {
-     void     *data;
-     ln_list  *next;
+     int           len;
+     ln_list_node *head;
 };
+
+/*
+ * the iteration through the list:
+ *
+ * my_data_t *data;
+ * LN_LIST_FOR_EACH(data, list) {
+ *      ... data ...
+ * }
+ */
+#define LN_LIST_FOR_EACH(data, list)                                    \
+     for (ln_list_node *ln = (list ? list->head : NULL);                \
+          ln && (((data) = ln->data) ? 1 : 1); ln = ln->next)
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
+ln_list *ln_list_create(void);
 ln_list *ln_list_append(ln_list *list, void *data);
 void ln_list_free(ln_list *list);
 void ln_list_free_deep(ln_list *list, void (*free_func)(void *));
-ln_list *ln_list_nth(ln_list *list, int n);
 void *ln_list_nth_data(ln_list *list, int n);
 ln_list *ln_list_remove(ln_list *list, void *data);
 ln_list *ln_list_remove_nth(ln_list *list, int n);
@@ -48,7 +66,6 @@ ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp);
 ln_list *ln_list_insert_nth(ln_list *list, void *data, int n);
 void *ln_list_find(ln_list *list, void *data);
 void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp);
-int ln_list_position(ln_list *list, ln_list *llink);
 int ln_list_index(ln_list *list, void *data);
 int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp);
 int ln_list_length(ln_list *list);
