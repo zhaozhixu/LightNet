@@ -73,7 +73,6 @@ START_TEST(test_ln_parse_ops)
 
      ops = ln_parse_ops(json_str, registered_ops, &error);
      ln_error_handle(&error);
-
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");
      op_proto = ln_op_list_find_by_optype(registered_ops, "create");

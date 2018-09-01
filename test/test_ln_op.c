@@ -143,22 +143,23 @@ static void post_run2 (ln_op_arg *op_arg, ln_error **error)
 START_TEST(test_ln_op_create)
 {
      ln_op *op;
-     ln_tensor_table *tensors;
+     ln_tensor_table *tensors = ln_tensor_table_create();
+     ln_tensor_table *empty_tensors = ln_tensor_table_create();
      tl_tensor *tensor1, *tensor2;
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
 
-     params = ln_param_table_append_string(NULL, "test_params_arg_name1",
+     params = ln_param_table_append_string(params, "test_params_arg_name1",
                                            "test_params_string1");
      params = ln_param_table_append_string(params, "test_params_arg_name2",
                                            "test_params_string2");
      tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor2 = tl_tensor_zeros(2, (int[]){3, 4}, TL_INT32);
-     tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name1",
+     tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name1",
                                       "test_tensor_name1", tensor1);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name2",
                                       "test_tensor_name2", tensor2);
 
-     op = ln_op_create("test_name", "test_optype", tensors, NULL,
+     op = ln_op_create("test_name", "test_optype", tensors, empty_tensors,
                        params, pre_run, run, post_run);
      ck_assert_ptr_eq(op->pre_run, pre_run);
      ck_assert_ptr_eq(op->run, run);
@@ -167,7 +168,7 @@ START_TEST(test_ln_op_create)
      ck_assert_str_eq(op->op_arg->optype, "test_optype");
      ck_assert_ptr_eq(op->op_arg->params, params);
      ck_assert_ptr_eq(op->op_arg->tensors_in, tensors);
-     ck_assert_ptr_eq(op->op_arg->tensors_out, NULL);
+     ck_assert_ptr_eq(op->op_arg->tensors_out, empty_tensors);
 
      tl_tensor_free_data_too(tensor1);
      tl_tensor_free_data_too(tensor2);
@@ -191,32 +192,38 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
 {
      ln_list *ops;
      ln_op *op1, *op2, *op;
-     ln_tensor_table *tensors;
+     ln_tensor_table *tensors, *empty_tensors;
+     ln_param_table *empty_params;
      tl_tensor *tensor1, *tensor2, *tensor3, *tensor4, *tensor;
 
+     empty_tensors = ln_tensor_table_create();
+     empty_params = ln_param_table_create();
+     tensors = ln_list_create();
      tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor2 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
-     tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name1",
+     tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name1",
                                       "test_tensor_name1", tensor1);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name2",
                                       "test_tensor_name2", tensor2);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name5",
                                       "test_tensor_name5", NULL);
-     op1 = ln_op_create("test_name1", "test_optype1", tensors, NULL,
-                        NULL, pre_run1, run1, post_run1);
+     op1 = ln_op_create("test_name1", "test_optype1", tensors, empty_tensors,
+                        empty_params, pre_run1, run1, post_run1);
 
      tensor3 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor4 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
-     tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name3",
+     tensors = ln_list_create();
+     tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name3",
                                       "test_tensor_name3", tensor3);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name4",
                                       "test_tensor_name4", tensor4);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name6",
                                       "test_tensor_name6", NULL);
-     op2 = ln_op_create("test_name2", "test_optype2", NULL,
-                        tensors, NULL, pre_run2, run2, post_run2);
+     op2 = ln_op_create("test_name2", "test_optype2", empty_tensors,
+                        tensors, empty_params, pre_run2, run2, post_run2);
 
-     ops = ln_list_append(NULL, op1);
+     ops = ln_list_create();
+     ops = ln_list_append(ops, op1);
      ops = ln_list_append(ops, op2);
 
      tensor = ln_op_list_find_tensor_by_name(ops, "test_tensor_name1");

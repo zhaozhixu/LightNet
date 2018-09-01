@@ -60,6 +60,7 @@ typedef ln_list ln_param_table;
 LN_CPPSTART
 #endif
 
+ln_param_table *ln_param_table_create(void);
 ln_param_table *ln_param_table_append_string(ln_param_table *table,
                                              const char *arg_name,
                                              const char *string);

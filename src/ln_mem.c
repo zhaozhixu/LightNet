@@ -63,7 +63,8 @@ ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)
      mem_pool->size = size;
      mem_pool->align_size = align_size;
      minfo = mem_info_create(HOLE, 0, size);
-     mem_pool->mem_blocks = ln_list_append(NULL, minfo);
+     mem_pool->mem_blocks = ln_list_create();
+     ln_list_append(mem_pool->mem_blocks, minfo);
 
      return mem_pool;
 }
@@ -85,11 +86,11 @@ static int best_fit(ln_mem_pool *mem_pool, size_t size)
      size_t min_size;
      size_t align_size = mem_pool->align_size;
      int min_idx;
-     ln_list *l;
+     ln_list_node *ln;
      int i;
 
-     for (l = mem_pool->mem_blocks, i = 0; l; l = l->next, i++) {
-          mem_info *minfo = l->data;
+     for (ln = mem_pool->mem_blocks->head, i = 0; ln; ln = ln->next, i++) {
+          mem_info *minfo = ln->data;
           size_t align_start = minfo->start % align_size == 0 ? minfo->start :
                align_size - minfo->start % align_size + minfo->start;
           size_t mem_end = minfo->start + minfo->size - 1;
@@ -128,21 +129,18 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
           align_size - minfo->start % align_size + minfo->start;
      size_t mem_size = size + align_start - minfo->start;
      mem_info *new_minfo = mem_info_create(SYMBOL, minfo->start, mem_size);
-     mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
-                                               new_minfo, fit_idx);
+     ln_list_insert_nth(mem_pool->mem_blocks, new_minfo, fit_idx);
      minfo->start += mem_size;
      minfo->size -= mem_size;
      if (minfo->size == 0)
-          mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
-                                                         fit_idx + 1,
-                                                         mem_info_free_wrapper);
+          ln_list_remove_nth_deep(mem_pool->mem_blocks, fit_idx + 1,
+                                  mem_info_free_wrapper);
 
      size_t hole_size = align_start - new_minfo->start;
      if (hole_size == 0)
           return align_start;
      mem_info *hole_minfo = mem_info_create(HOLE, new_minfo->start, hole_size);
-     mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
-                                               hole_minfo, fit_idx);
+     ln_list_insert_nth(mem_pool->mem_blocks, hole_minfo, fit_idx);
      new_minfo->start = align_start;
      new_minfo->size -= hole_size;
      best_fit(mem_pool, 8);
@@ -152,30 +150,29 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
 void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
 {
      int i;
-     ln_list *l, *l_next, *l_before = NULL;
+     ln_list_node *ln, *ln_next, *ln_before = NULL;
      mem_info *minfo;
-     for (l = mem_pool->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
-          minfo = l->data;
+     for (ln = mem_pool->mem_blocks->head, i = 0; ln;
+          ln_before = ln, ln = ln->next, i++) {
+          minfo = ln->data;
           if (minfo->flag != SYMBOL || minfo->start != addr)
                continue;
-          l_next = l->next;
-          if (l_next && ((mem_info *)l_next->data)->flag == HOLE) {
-               minfo->size += ((mem_info *)l_next->data)->size;
-               mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
-                                                              i + 1,
-                                                              mem_info_free_wrapper);
+          ln_next = ln->next;
+          if (ln_next && ((mem_info *)ln_next->data)->flag == HOLE) {
+               minfo->size += ((mem_info *)ln_next->data)->size;
+               ln_list_remove_nth_deep(mem_pool->mem_blocks, i + 1,
+                                       mem_info_free_wrapper);
           }
-          if (l_before && ((mem_info *)l_before->data)->flag == HOLE) {
-               minfo->start -= ((mem_info *)l_before->data)->size;
-               minfo->size += ((mem_info *)l_before->data)->size;
-               mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
-                                                              i - 1,
-                                                              mem_info_free_wrapper);
+          if (ln_before && ((mem_info *)ln_before->data)->flag == HOLE) {
+               minfo->start -= ((mem_info *)ln_before->data)->size;
+               minfo->size += ((mem_info *)ln_before->data)->size;
+               ln_list_remove_nth_deep(mem_pool->mem_blocks, i - 1,
+                                       mem_info_free_wrapper);
           }
           minfo->flag = HOLE;
           break;
      }
-     if (!l) {
+     if (!ln) {
           ln_error *error = ln_error_create(LN_ERROR,
                                             "ln_mem_free(): invalid address: 0x%012lx",
                                             addr);
@@ -185,11 +182,9 @@ void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
 
 void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp)
 {
-     ln_list *l;
      mem_info *minfo;
 
-     for (l = mem_pool->mem_blocks; l; l = l->next) {
-          minfo = l->data;
+     LN_LIST_FOR_EACH(minfo, mem_pool->mem_blocks) {
           fprintf(fp, "0x%012lx-0x%012lx %s\n", minfo->start,
                   minfo->start+minfo->size-1, minfo->flag==HOLE?"H":"S");
      }

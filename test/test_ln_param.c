@@ -33,10 +33,10 @@ static void teardown(void)
 
 START_TEST(test_ln_param_table_append_string)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
 
-     params = ln_param_table_append_string(NULL, "test_arg_name_1", "test_string_1");
+     params = ln_param_table_append_string(params, "test_arg_name_1", "test_string_1");
      params = ln_param_table_append_string(params, "test_arg_name_2", "test_string_2");
      ck_assert_int_eq(ln_param_table_length(params), 2);
      entry = ln_param_table_find_by_arg_name(params, "test_arg_name_1");
@@ -51,10 +51,10 @@ END_TEST
 
 START_TEST(test_ln_param_table_append_number)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
 
-     params = ln_param_table_append_number(NULL, "test_arg_name_1", 1);
+     params = ln_param_table_append_number(params, "test_arg_name_1", 1);
      params = ln_param_table_append_number(params, "test_arg_name_2", 2);
      ck_assert_int_eq(ln_param_table_length(params), 2);
      entry = ln_param_table_find_by_arg_name(params, "test_arg_name_1");
@@ -65,7 +65,8 @@ START_TEST(test_ln_param_table_append_number)
      ck_assert_int_eq(entry->value_int, 2);
      ln_param_table_free(params);
 
-     params = ln_param_table_append_number(NULL, "test_arg_name_1", 1.1);
+     params = ln_param_table_create();
+     params = ln_param_table_append_number(params, "test_arg_name_1", 1.1);
      params = ln_param_table_append_number(params, "test_arg_name_2", 2.2);
      ck_assert_int_eq(ln_param_table_length(params), 2);
      entry = ln_param_table_find_by_arg_name(params, "test_arg_name_1");
@@ -80,10 +81,10 @@ END_TEST
 
 START_TEST(test_ln_param_table_append_bool)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
 
-     params = ln_param_table_append_bool(NULL, "test_arg_name_1", LN_FALSE);
+     params = ln_param_table_append_bool(params, "test_arg_name_1", LN_FALSE);
      params = ln_param_table_append_bool(params, "test_arg_name_2", LN_TRUE);
      ck_assert_int_eq(ln_param_table_length(params), 2);
      entry = ln_param_table_find_by_arg_name(params, "test_arg_name_1");
@@ -99,10 +100,10 @@ END_TEST
 
 START_TEST(test_ln_param_table_append_null)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
 
-     params = ln_param_table_append_null(NULL, "test_arg_name_1");
+     params = ln_param_table_append_null(params, "test_arg_name_1");
      params = ln_param_table_append_null(params, "test_arg_name_2");
      ck_assert_int_eq(ln_param_table_length(params), 2);
      entry = ln_param_table_find_by_arg_name(params, "test_arg_name_1");
@@ -115,13 +116,13 @@ END_TEST
 
 START_TEST(test_ln_param_table_append_array_string)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
      int array_len1 = 2, array_len2 = 2;
      char *array_string1[] = {"test_array1_str1", "test_array1_str2"};
      char *array_string2[] = {"test_array2_str1", "test_array2_str2"};
 
-     params = ln_param_table_append_array_string(NULL, "test_arg_name_1",
+     params = ln_param_table_append_array_string(params, "test_arg_name_1",
 						 array_len1, array_string1);
      params = ln_param_table_append_array_string(params, "test_arg_name_2",
 						 array_len2, array_string2);
@@ -140,7 +141,7 @@ END_TEST
 
 START_TEST(test_ln_param_table_append_array_number)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
      int array_len1 = 2, array_len2 = 2;
      double array_int1[] = {0, 1};
@@ -148,7 +149,7 @@ START_TEST(test_ln_param_table_append_array_number)
      double array_double1[] = {0.0, 1.1};
      double array_double2[] = {2.2, 3.3};
 
-     params = ln_param_table_append_array_number(NULL, "test_arg_name_1",
+     params = ln_param_table_append_array_number(params, "test_arg_name_1",
 						 array_len1, array_int1);
      params = ln_param_table_append_array_number(params, "test_arg_name_2",
 						 array_len2, array_int2);
@@ -163,7 +164,8 @@ START_TEST(test_ln_param_table_append_array_number)
      ck_assert_int_eq(entry->value_array_int[1], (int)array_int2[1]);
      ln_param_table_free(params);
 
-     params = ln_param_table_append_array_number(NULL, "test_arg_name_1",
+     params = ln_param_table_create();
+     params = ln_param_table_append_array_number(params, "test_arg_name_1",
 						 array_len1, array_double1);
      params = ln_param_table_append_array_number(params, "test_arg_name_2",
 						 array_len2, array_double2);
@@ -182,13 +184,13 @@ END_TEST
 
 START_TEST(test_ln_param_table_append_array_bool)
 {
-     ln_param_table *params;
+     ln_param_table *params = ln_param_table_create();
      ln_param_entry *entry;
      int array_len1 = 2, array_len2 = 2;
      ln_bool array_bool1[] = {LN_FALSE, LN_TRUE};
      ln_bool array_bool2[] = {LN_TRUE, LN_FALSE};
 
-     params = ln_param_table_append_array_bool(NULL, "test_arg_name_1",
+     params = ln_param_table_append_array_bool(params, "test_arg_name_1",
 						 array_len1, array_bool1);
      params = ln_param_table_append_array_bool(params, "test_arg_name_2",
 						 array_len2, array_bool2);

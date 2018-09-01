@@ -51,8 +51,8 @@ static void ln_op_arg_free(ln_op_arg *op_arg)
 
 ln_op *ln_op_create(const char *name, const char *optype,
                     ln_tensor_table *tensors_in, ln_tensor_table *tensors_out,
-                    ln_param_table *params,
-                    ln_op_func pre_run, ln_op_func run, ln_op_func post_run)
+                    ln_param_table *params, ln_op_func pre_run, ln_op_func run,
+                    ln_op_func post_run)
 {
      ln_op *op;
 
@@ -101,20 +101,23 @@ void ln_op_list_free_tables_too(ln_list *ops)
 
 tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
 {
-     ln_list *l;
      ln_op *op;
      ln_tensor_entry *entry;
+     int found = 0;
 
-     for (l = ops; l; l = l->next) {
-	  op = (ln_op *)l->data;
+     LN_LIST_FOR_EACH(op, ops) {
 	  entry = ln_tensor_table_find_by_name(op->op_arg->tensors_in, name);
-	  if (entry)
+	  if (entry) {
+               found = 1;
 	       break;
+          }
           entry = ln_tensor_table_find_by_name(op->op_arg->tensors_out, name);
-	  if (entry)
+	  if (entry) {
+               found = 1;
 	       break;
+          }
      }
-     if (!l)
+     if (!found)
 	  return NULL;
 
      return entry->tensor;
@@ -164,11 +167,9 @@ ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
 
 void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
 {
-     ln_list *l;
      ln_op *op;
 
-     for (l = ops; l; l = l->next) {
-          op = (ln_op *)l->data;
+     LN_LIST_FOR_EACH(op, ops) {
           op->pre_run(op->op_arg, error);
           if (*error)
                return;
@@ -177,11 +178,9 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
 
 void ln_op_list_do_run(ln_list *ops, ln_error **error)
 {
-     ln_list *l;
      ln_op *op;
 
-     for (l = ops; l; l = l->next) {
-          op = (ln_op *)l->data;
+     LN_LIST_FOR_EACH(op, ops) {
           op->run(op->op_arg, error);
           if (*error)
                return;
@@ -190,11 +189,9 @@ void ln_op_list_do_run(ln_list *ops, ln_error **error)
 
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
 {
-     ln_list *l;
      ln_op *op;
 
-     for (l = ops; l; l = l->next) {
-          op = (ln_op *)l->data;
+     LN_LIST_FOR_EACH(op, ops) {
           op->post_run(op->op_arg, error);
           if (*error)
                return;

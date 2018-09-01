@@ -51,6 +51,8 @@ static ln_param_entry *ln_param_entry_create(const char *arg_name,
 
 static void ln_param_entry_free(ln_param_entry *entry)
 {
+     if (!entry)
+          return;
      ln_free(entry->arg_name);
      ln_free(entry->value_string);
      if (entry->type == LN_PARAM_ARRAY_STRING) {
@@ -63,6 +65,11 @@ static void ln_param_entry_free(ln_param_entry *entry)
      ln_free(entry->value_array_int);
      ln_free(entry->value_array_bool);
      ln_free(entry);
+}
+
+ln_param_table *ln_param_table_create(void)
+{
+     return ln_list_create();
 }
 
 ln_param_table *ln_param_table_append_string(ln_param_table *table,

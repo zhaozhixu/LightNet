@@ -23,18 +23,42 @@
 #include "ln_list.h"
 #include "ln_util.h"
 
-/* return the list with appended element (a new list if list == NULL) */
-ln_list *ln_list_append(ln_list *list, void *data)
+static inline ln_list_node *ln_list_node_create(void *data, ln_list_node *next)
+{
+     ln_list_node *node;
+
+     node = ln_alloc(sizeof(ln_list_node));
+     node->data = data;
+     node->next = next;
+     return node;
+}
+
+static inline void ln_list_node_free(ln_list_node *node)
+{
+     ln_free(node);
+}
+
+ln_list *ln_list_create(void)
 {
      ln_list *l;
 
-     if (!list) {
-          l = (ln_list *)ln_alloc(sizeof(ln_list));
-          l->data = data;
-          l->next = NULL;
-          return l;
+     l = ln_alloc(sizeof(ln_list));
+     l->len = 0;
+     l->head = NULL;
+     return l;
+}
+
+/* return the list with appended element */
+ln_list *ln_list_append(ln_list *list, void *data)
+{
+     ln_list_node *ln;
+
+     if (!list->head) {
+          list->head = ln_list_node_create(data, NULL);
+          list->len++;
+          return list;
      }
-     for (l = list; l->next; l = l->next)
+     for (ln = list->head; ln->next; ln = ln->next)
           ;
      l->next = (ln_list *)ln_alloc(sizeof(ln_list));
      l->next->data = data;
@@ -202,16 +226,16 @@ void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)
      return NULL;
 }
 
-int ln_list_position(ln_list *list, ln_list *llink)
-{
-     ln_list *l;
-     int i;
-
-     for (i = 0, l = list; l; l = l->next, i++)
-          if (l == llink)
-               return i;
-     return -1;
-}
+/* not used */
+/* static int ln_list_position(ln_list *list, ln_list_node *llink) */
+/* { */
+/*      ln_list_node *ln; */
+/*      int i; */
+/*      for (i = 0, ln = list->head; ln; ln = ln->next, i++) */
+/*           if (ln == llink) */
+/*                return i; */
+/*      return -1; */
+/* } */
 
 int ln_list_index(ln_list *list, void *data)
 {
@@ -250,9 +274,9 @@ ln_list *ln_list_from_array_size_t(size_t *array, size_t n)
      ln_list *res;
      size_t i;
 
-     res = NULL;
+     res = ln_list_create();
      for (i = 0; i < n; i++)
-          res = ln_list_append(res, (void *)array[i]);
+          ln_list_append(res, (void *)array[i]);
      return res;
 }
 
@@ -261,9 +285,9 @@ ln_list *ln_list_copy_size_t(ln_list *list)
      ln_list *list_cpy;
      ln_list *l;
 
-     list_cpy = NULL;
-     for (l = list; l; l = l->next)
-          list_cpy = ln_list_append(list_cpy, l->data);
+     list_cpy = ln_list_create();
+     for (ln = list->head; ln; ln = ln->next)
+          ln_list_append(list_cpy, ln->data);
 
      return list_cpy;
 }

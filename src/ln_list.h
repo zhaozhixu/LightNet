@@ -31,6 +31,18 @@ struct ln_list {
      ln_list  *next;
 };
 
+/*
+ * the iteration through the list:
+ *
+ * my_data_t *data;
+ * LN_LIST_FOR_EACH(data, list) {
+ *      ... data ...
+ * }
+ */
+#define LN_LIST_FOR_EACH(my_data, list)                                 \
+     for (ln_list_node *ln = (list ? list->head : NULL);                \
+          ln && (((my_data) = ln->data) ? 1 : 1); ln = ln->next)
+
 #ifdef __cplusplus
 LN_CPPSTART
 #endif

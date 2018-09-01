@@ -39,6 +39,7 @@ typedef ln_list ln_tensor_table;
 LN_CPPSTART
 #endif
 
+ln_tensor_table *ln_tensor_table_create(void);
 ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
 					const char *name, tl_tensor *tensor);
 void ln_tensor_table_free(ln_tensor_table *table);

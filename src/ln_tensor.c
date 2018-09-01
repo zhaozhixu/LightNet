@@ -40,9 +40,16 @@ static ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg
 
 static void ln_tensor_entry_free(ln_tensor_entry *entry)
 {
+     if (!entry)
+          return;
      ln_free(entry->name);
      ln_free(entry->arg_name);
      ln_free(entry);
+}
+
+ln_tensor_table *ln_tensor_table_create(void)
+{
+     return ln_list_create();
 }
 
 ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
@@ -92,6 +99,7 @@ static int find_by_name(void *data1, void *data2)
 
      t1 = (ln_tensor_entry *)data1;
      t2 = (ln_tensor_entry *)data2;
+
      return strcmp(t1->name, t2->name);
 }
 
