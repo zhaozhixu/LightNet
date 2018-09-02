@@ -259,6 +259,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 	  tensors_in = ln_tensor_table_append(tensors_in,
                                               tensor_arg_name_json->valuestring,
                                               tensor_name_json->valuestring,
+                                              LN_MEM_UNDEFINED,
                                               tensor);
 	  i++;
      }
@@ -297,6 +298,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 	  tensors_out = ln_tensor_table_append(tensors_out,
                                                tensor_arg_name_json->valuestring,
                                                tensor_name_json->valuestring,
+                                               LN_MEM_UNDEFINED,
                                                tensor);
 	  i++;
      }

@@ -25,12 +25,14 @@
 
 #include "tl_tensor.h"
 #include "ln_list.h"
+#include "ln_mem.h"
 
 typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_entry {
      char       *name;
      char       *arg_name;
      tl_tensor  *tensor;
+     ln_mem_type mtype;
 };
 
 typedef ln_list ln_tensor_table;
@@ -40,7 +42,8 @@ LN_CPPSTART
 #endif
 
 ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
-					const char *name, tl_tensor *tensor);
+					const char *name, ln_mem_type mtype,
+                                        tl_tensor *tensor);
 void ln_tensor_table_free(ln_tensor_table *table);
 ln_tensor_entry *ln_tensor_table_find_by_arg_name(ln_tensor_table *table,
 						  char *arg_name);

@@ -24,7 +24,7 @@
 #include "ln_util.h"
 
 static ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg_name,
-                                               tl_tensor *tensor)
+                                               ln_mem_type mtype, tl_tensor *tensor)
 {
      ln_tensor_entry *entry;
 
@@ -33,6 +33,7 @@ static ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg
      strcpy(entry->name, name);
      entry->arg_name = ln_alloc(sizeof(char)*(strlen(arg_name)+1));
      strcpy(entry->arg_name, arg_name);
+     entry->mtype = mtype;
      entry->tensor = tensor;
 
      return entry;
@@ -46,11 +47,12 @@ static void ln_tensor_entry_free(ln_tensor_entry *entry)
 }
 
 ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
-					const char *name, tl_tensor *tensor)
+					const char *name, ln_mem_type mtype,
+                                        tl_tensor *tensor)
 {
      ln_tensor_entry *entry;
 
-     entry = ln_tensor_entry_create(name, arg_name, tensor);
+     entry = ln_tensor_entry_create(name, arg_name, mtype, tensor);
      table = ln_list_append(table, entry);
      return table;
 }

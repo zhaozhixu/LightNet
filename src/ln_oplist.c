@@ -42,7 +42,9 @@ ln_op *ln_init_ops[] = {
      &ln_opimpl_transpose,
      &ln_opimpl_zeros,
      &ln_opimpl_create,
+#ifdef LN_CUDA
      &ln_opimpl_create_cuda,
      &ln_opimpl_elew_cuda,
+#endif
      NULL /* end of init ops */
 };

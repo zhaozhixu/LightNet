@@ -20,46 +20,12 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_UTIL_H_
-#define _LN_UTIL_H_
+#ifndef _LN_HASH_H_
+#define _LN_HASH_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include "ln_util.h"
 
-typedef enum ln_bool ln_bool;
-enum ln_bool {
-     LN_FALSE = 0,
-     LN_TRUE = 1
-};
+typedef struct ln_hash ln_hash;
+typedef uint32_t (*ln_hash_func)(void *key);
 
-typedef int (*ln_cmp_func)(void *, void *);
-typedef void (*ln_free_func)(void *);
-
-#define ln_free free
-
-#define LN_MAXLINE 4096
-
-#ifdef __cplusplus
-#define LN_CPPSTART extern "C" {
-#define LN_CPPEND }
-LN_CPPSTART
-#endif
-
-void *ln_alloc(size_t size);
-char *ln_path_alloc(size_t *sizep);
-void *ln_clone(const void *src, size_t size);
-void *ln_repeat(void *data, size_t size, int times);
-void ln_err_msg(const char *fmt, ...);
-void ln_err_cont(int error, const char *fmt, ...);
-void ln_err_ret(const char *fmt, ...);
-void ln_err_quit(const char *fmt, ...);
-void ln_err_exit(int error, const char *fmt, ...);
-void ln_err_sys(const char *fmt, ...);
-void ln_err_dump(const char *fmt, ...);
-
-#ifdef __cplusplus
-LN_CPPEND
-#endif
-
-#endif	/* _LN_UTIL_H_ */
+#endif  /* _LN_HASH_H_ */

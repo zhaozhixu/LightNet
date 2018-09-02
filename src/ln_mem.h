@@ -26,6 +26,13 @@
 #include <stdlib.h>
 #include "ln_list.h"
 
+typedef enum ln_mem_type ln_mem_type;
+enum ln_mem_type {
+     LN_MEM_UNDEFINED,
+     LN_MEM_CPU,
+     LN_MEM_CUDA
+};
+
 typedef struct ln_mem_pool ln_mem_pool;
 struct ln_mem_pool {
      size_t   size;
