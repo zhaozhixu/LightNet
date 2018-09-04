@@ -222,7 +222,12 @@ int ln_hash_size(ln_hash *hash)
 
 uint32_t ln_direct_hash(void *key)
 {
-     return (uint32_t)key;
+     return (uint32_t)(long)key;
+}
+
+int ln_direct_cmp(void *p1, void *p2)
+{
+     return (long)p1 - (long)p2;
 }
 
 uint32_t ln_str_hash(void *key)

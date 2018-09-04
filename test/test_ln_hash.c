@@ -42,13 +42,9 @@ static void test_object_free(void *to)
      ln_free((test_object *)to);
 }
 
-static int cmp_int(void *data1, void *data2)
-{
-     return (int)data1 - (int)data2;
-}
-
 static void setup(void)
 {
+
 }
 
 static void teardown(void)
@@ -68,8 +64,19 @@ END_TEST
 START_TEST(test_ln_hash_insert)
 {
      ln_hash *hash;
+     test_object *to1, *to2, *res;
 
-     hash = ln_hash_create(ln_direct_hash, cmp_int, NULL, test_object_free);
+     hash = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, test_object_free);
+     to1 = test_object_create(1, 2);
+     to2 = test_object_create(3, 4);
+     ln_hash_insert(hash, (void *)1, to1);
+     ln_hash_insert(hash, (void *)3, to2);
+     res = ln_hash_find(hash, (void *)1);
+     ck_assert_int_eq(res->a, 1);
+     ck_assert_int_eq(res->b, 2);
+     res = ln_hash_find(hash, (void *)3);
+     ck_assert_int_eq(res->a, 3);
+     ck_assert_int_eq(res->b, 4);
 }
 END_TEST
 

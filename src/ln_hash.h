@@ -42,6 +42,7 @@ int ln_hash_remove(ln_hash *hash, void *key);
 int ln_hash_size(ln_hash *hash);
 uint32_t ln_direct_hash(void *key);
 uint32_t ln_str_hash(void *key);
+int ln_direct_cmp(void *p1, void *p2);
 
 #ifdef __cplusplus
 LN_CPPEND
