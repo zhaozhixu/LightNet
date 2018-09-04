@@ -26,7 +26,7 @@
 #include "ln_util.h"
 
 typedef struct ln_hash ln_hash;
-typedef int (*ln_hash_func)(void *key);
+typedef uint32_t (*ln_hash_func)(void *key);
 
 #ifdef __cplusplus
 LN_CPPSTART
@@ -40,6 +40,8 @@ void *ln_hash_find(ln_hash *hash, void *key);
 int ln_hash_find_extended(ln_hash *hash, void *key, void **value);
 int ln_hash_remove(ln_hash *hash, void *key);
 int ln_hash_size(ln_hash *hash);
+uint32_t ln_direct_hash(void *key);
+uint32_t ln_str_hash(void *key);
 
 #ifdef __cplusplus
 LN_CPPEND

@@ -41,6 +41,7 @@ Suite *make_tensor_suite(void);
 Suite *make_op_suite(void);
 Suite *make_parse_suite(void);
 Suite *make_mem_suite(void);
+Suite *make_hash_suite(void);
 /* end of declarations */
 
 #ifdef __cplusplus

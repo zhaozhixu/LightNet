@@ -154,9 +154,9 @@ START_TEST(test_ln_op_create)
      tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor2 = tl_tensor_zeros(2, (int[]){3, 4}, TL_INT32);
      tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name1",
-                                      "test_tensor_name1", tensor1);
+                                      "test_tensor_name1", LN_MEM_CPU, tensor1);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name2",
-                                      "test_tensor_name2", tensor2);
+                                      "test_tensor_name2", LN_MEM_CPU, tensor2);
 
      op = ln_op_create("test_name", "test_optype", tensors, NULL,
                        params, pre_run, run, post_run);
@@ -197,22 +197,22 @@ START_TEST(test_ln_op_list_find_tensor_by_name)
      tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor2 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name1",
-                                      "test_tensor_name1", tensor1);
+                                      "test_tensor_name1", LN_MEM_CPU, tensor1);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name2",
-                                      "test_tensor_name2", tensor2);
+                                      "test_tensor_name2", LN_MEM_CPU, tensor2);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name5",
-                                      "test_tensor_name5", NULL);
+                                      "test_tensor_name5", LN_MEM_CPU, NULL);
      op1 = ln_op_create("test_name1", "test_optype1", tensors, NULL,
                         NULL, pre_run1, run1, post_run1);
 
      tensor3 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor4 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensors = ln_tensor_table_append(NULL, "test_tensor_arg_name3",
-                                      "test_tensor_name3", tensor3);
+                                      "test_tensor_name3", LN_MEM_CPU, tensor3);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name4",
-                                      "test_tensor_name4", tensor4);
+                                      "test_tensor_name4", LN_MEM_CPU, tensor4);
      tensors = ln_tensor_table_append(tensors, "test_tensor_arg_name6",
-                                      "test_tensor_name6", NULL);
+                                      "test_tensor_name6", LN_MEM_CPU, NULL);
      op2 = ln_op_create("test_name2", "test_optype2", NULL,
                         tensors, NULL, pre_run2, run2, post_run2);
 

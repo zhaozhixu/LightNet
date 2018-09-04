@@ -39,8 +39,8 @@ START_TEST(test_ln_tensor_table_append)
 
      tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
      tensor2 = tl_tensor_zeros(2, (int[]){3, 4}, TL_INT32);
-     tensors = ln_tensor_table_append(NULL, "test_arg_name1", "test_name1", tensor1);
-     tensors = ln_tensor_table_append(tensors, "test_arg_name2", "test_name2", tensor2);
+     tensors = ln_tensor_table_append(NULL, "test_arg_name1", "test_name1", LN_MEM_CPU, tensor1);
+     tensors = ln_tensor_table_append(tensors, "test_arg_name2", "test_name2", LN_MEM_CPU, tensor2);
      ck_assert_int_eq(ln_tensor_table_length(tensors), 2);
 
      entry = ln_tensor_table_find_by_arg_name(tensors, "test_arg_name1");

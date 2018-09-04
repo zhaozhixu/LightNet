@@ -34,11 +34,11 @@ struct hash_entry {
      void       *key;
      void       *value;
      hash_entry *next;
-     int         hash_value;
+     uint32_t    hash_value;
 };
 
 static hash_entry *hash_entry_create(void *key, void *value,
-                                            int hash_value, hash_entry *next)
+                                     uint32_t hash_value, hash_entry *next)
 {
      hash_entry *entry = ln_alloc(sizeof(hash_entry));
      entry->key = key;
@@ -49,8 +49,8 @@ static hash_entry *hash_entry_create(void *key, void *value,
 }
 
 static void hash_entry_free_kv_too(hash_entry *entry,
-                                          ln_free_func free_k,
-                                          ln_free_func free_v)
+                                   ln_free_func free_k,
+                                   ln_free_func free_v)
 {
      free_k(entry->key);
      free_v(entry->value);
@@ -58,8 +58,8 @@ static void hash_entry_free_kv_too(hash_entry *entry,
 }
 
 static void hash_entry_list_free_kv_too(hash_entry *list,
-                                               ln_free_func free_k,
-                                               ln_free_func free_v)
+                                        ln_free_func free_k,
+                                        ln_free_func free_v)
 {
      hash_entry *l, *tmp;
      for (l = list; l;) {
@@ -109,14 +109,14 @@ void ln_hash_free(ln_hash *hash)
 {
      for (int i = 0; i < hash->capacity; i++)
           hash_entry_list_free_kv_too(hash->table[i],
-                                   hash->free_k_func, hash->free_v_func);
+                                      hash->free_k_func, hash->free_v_func);
      ln_free(hash->table);
      ln_free(hash);
 }
 
-static inline int index_of(int h, int len)
+static inline int index_of(uint32_t h, int capacity)
 {
-     return h & (len - 1);
+     return (int)(h & ((uint32_t)capacity - 1));
 }
 
 static void hash_transfer(ln_hash *hash, hash_entry **new_table,
@@ -128,7 +128,7 @@ static void hash_transfer(ln_hash *hash, hash_entry **new_table,
      int idx;
 
      for (int i = 0; i < old_capacity; i++) {
-          for (hash_entry *e = hash->table[i]; e;) {
+          for (hash_entry *e = old_table[i]; e;) {
                next = e->next;
                idx = index_of(e->hash_value, new_capacity);
                e->next = new_table[idx];
@@ -165,7 +165,7 @@ int ln_hash_insert(ln_hash *hash, void *key, void *value)
                hash->free_v_func(e->value);
                e->key = key;
                e->value = value;
-               return 1;
+               return 0;
           }
      }
 
@@ -173,6 +173,7 @@ int ln_hash_insert(ln_hash *hash, void *key, void *value)
                                           hash->table[idx]);
      if (hash->size++ >= hash->thresh)
           hash_resize(hash, 2*hash->capacity);
+     return 1;
 }
 
 void *ln_hash_find(ln_hash *hash, void *key)
@@ -193,7 +194,7 @@ int ln_hash_find_extended(ln_hash *hash, void *key, void **value)
      for (hash_entry *e = hash->table[idx]; e; e = e->next) {
           if (e->hash_value == hash_value && !hash->cmp_func(key, e->key))
                *value = e->value;
-               return 1;
+          return 1;
      }
      return 0;
 }
@@ -217,4 +218,20 @@ int ln_hash_remove(ln_hash *hash, void *key)
 int ln_hash_size(ln_hash *hash)
 {
      return hash->size;
+}
+
+uint32_t ln_direct_hash(void *key)
+{
+     return (uint32_t)key;
+}
+
+uint32_t ln_str_hash(void *key)
+{
+     const char *p;
+     uint32_t h = 5381;
+
+     for (p = key; *p != '\0'; p++)
+          h = (h << 5) + h + *p;
+
+     return h;
 }
