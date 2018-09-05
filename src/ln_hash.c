@@ -62,6 +62,7 @@ static void hash_entry_list_free_kv_too(hash_entry *list,
                                         ln_free_func free_v)
 {
      hash_entry *l, *tmp;
+
      for (l = list; l;) {
           tmp = l->next;
           hash_entry_free_kv_too(l, free_k, free_v);
@@ -75,6 +76,7 @@ struct ln_hash {
      ln_free_func  free_k_func;
      ln_free_func  free_v_func;
      hash_entry  **table;
+     float         load_factor;
      int           capacity;
      int           thresh;
      int           size;
@@ -84,8 +86,9 @@ static void empty_free(void *data)
 {
 }
 
-ln_hash *ln_hash_create(ln_hash_func hash_func, ln_cmp_func cmp_func,
-                        ln_free_func free_k_func, ln_free_func free_v_func)
+ln_hash *ln_hash_create_full(ln_hash_func hash_func, ln_cmp_func cmp_func,
+                             ln_free_func free_k_func, ln_free_func free_v_func,
+                             int init_capacity, float load_factor)
 {
      ln_hash *hash = ln_alloc(sizeof(ln_hash));
      hash->hash_func = hash_func;
@@ -94,15 +97,23 @@ ln_hash *ln_hash_create(ln_hash_func hash_func, ln_cmp_func cmp_func,
      hash->free_v_func = free_v_func ? free_v_func : empty_free;
 
      int capacity = 1;
-     while (capacity < DEFAULT_INIT_CAPACITY)
+     while (capacity < init_capacity)
           capacity <<= 1;
      hash->capacity = capacity;
-     hash->thresh = (int)DEFAULT_LOAD_FACTOR * capacity;
+     hash->load_factor = load_factor;
+     hash->thresh = (int)(load_factor * capacity);
      hash->table = ln_alloc(sizeof(hash_entry *) * capacity);
      memset(hash->table, 0, sizeof(hash_entry *) * capacity);
      hash->size = 0;
 
      return hash;
+}
+
+ln_hash *ln_hash_create(ln_hash_func hash_func, ln_cmp_func cmp_func,
+                        ln_free_func free_k_func, ln_free_func free_v_func)
+{
+     return ln_hash_create_full(hash_func, cmp_func, free_k_func, free_v_func,
+                                DEFAULT_INIT_CAPACITY, DEFAULT_LOAD_FACTOR);
 }
 
 void ln_hash_free(ln_hash *hash)
@@ -146,19 +157,19 @@ static void hash_resize(ln_hash *hash, int new_capacity)
      }
 
      hash_entry **new_table = ln_alloc(sizeof(hash_entry *) * new_capacity);
+     memset(new_table, 0, sizeof(hash_entry *) * new_capacity);
      hash_transfer(hash, new_table, new_capacity);
-     for (int i = 0; i < hash->capacity; i++)
-          hash_entry_list_free_kv_too(hash->table[i],
-                                      hash->free_k_func, hash->free_v_func);
+     ln_free(hash->table);
      hash->table = new_table;
      hash->capacity = new_capacity;
-     hash->thresh = (int)new_capacity * DEFAULT_LOAD_FACTOR;
+     hash->thresh = (int)(new_capacity * DEFAULT_LOAD_FACTOR);
 }
 
 int ln_hash_insert(ln_hash *hash, void *key, void *value)
 {
      int hash_value = hash->hash_func(key);
      int idx = index_of(hash_value, hash->capacity);
+
      for (hash_entry *e = hash->table[idx]; e; e = e->next) {
           if (e->hash_value == hash_value && !hash->cmp_func(key, e->key)) {
                hash->free_k_func(e->key);
@@ -171,6 +182,7 @@ int ln_hash_insert(ln_hash *hash, void *key, void *value)
 
      hash->table[idx] = hash_entry_create(key, value, hash_value,
                                           hash->table[idx]);
+
      if (hash->size++ >= hash->thresh)
           hash_resize(hash, 2*hash->capacity);
      return 1;
@@ -187,17 +199,18 @@ void *ln_hash_find(ln_hash *hash, void *key)
      return NULL;
 }
 
-int ln_hash_find_extended(ln_hash *hash, void *key, void **value)
-{
-     int hash_value = hash->hash_func(key);
-     int idx = index_of(hash_value, hash->capacity);
-     for (hash_entry *e = hash->table[idx]; e; e = e->next) {
-          if (e->hash_value == hash_value && !hash->cmp_func(key, e->key))
-               *value = e->value;
-          return 1;
-     }
-     return 0;
-}
+/* in case of NULL key */
+/* int ln_hash_find_extended(ln_hash *hash, void *key, void **value) */
+/* { */
+/*      int hash_value = hash->hash_func(key); */
+/*      int idx = index_of(hash_value, hash->capacity); */
+/*      for (hash_entry *e = hash->table[idx]; e; e = e->next) { */
+/*           if (e->hash_value == hash_value && !hash->cmp_func(key, e->key)) */
+/*                *value = e->value; */
+/*           return 1; */
+/*      } */
+/*      return 0; */
+/* } */
 
 int ln_hash_remove(ln_hash *hash, void *key)
 {
