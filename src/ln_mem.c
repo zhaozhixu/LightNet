@@ -183,6 +183,17 @@ void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
      }
 }
 
+int ln_mem_exist(ln_mem_pool *mem_pool, size_t addr)
+{
+     mem_info *minfo;
+
+     LN_LIST_FOREACH(minfo, mem_pool->mem_blocks) {
+          if (minfo->flag == SYMBOL && minfo->start == addr)
+               return 1;
+     }
+     return 0;
+}
+
 void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp)
 {
      ln_list *l;

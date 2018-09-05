@@ -24,12 +24,13 @@
 #define _LN_OPTIMIZE_H_
 
 #include "ln_list.h"
+#include "ln_hash.h"
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_list *ln_optimize_mem(ln_list *ops);
+ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools);
 
 #ifdef __cplusplus
 LN_CPPEND

@@ -55,6 +55,7 @@ START_TEST(test_ln_mem_alloc)
 
      mem_pool = ln_mem_pool_create(4096, 1);
      addr1 = ln_mem_alloc(mem_pool, 10);
+     ck_assert_int_eq(ln_mem_exist(mem_pool, addr1), 1);
      ck_assert_int_eq(addr1, 0);
      addr2 = ln_mem_alloc(mem_pool, 8);
      ck_assert_int_eq(addr2, 10);
@@ -65,6 +66,7 @@ START_TEST(test_ln_mem_alloc)
      addr5 = ln_mem_alloc(mem_pool, 6);
      ck_assert_int_eq(addr5, 24);
      ln_mem_free(mem_pool, addr2);
+     ck_assert_int_eq(ln_mem_exist(mem_pool, addr2), 0);
      ln_mem_free(mem_pool, addr4);
      addr6 = ln_mem_alloc(mem_pool, 2);
      ck_assert_int_eq(addr6, 20);

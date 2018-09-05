@@ -31,10 +31,14 @@ struct ln_list {
      ln_list  *next;
 };
 
+#define LN_LIST_FOREACH(my_data, list)          \
+     for (ln_list *l = (list); l && (((my_data) = l->data) ? 1:1); l = l->next)
+
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
+ln_list *ln_list_prepend(ln_list *list, void *data);
 ln_list *ln_list_append(ln_list *list, void *data);
 void ln_list_free(ln_list *list);
 void ln_list_free_deep(ln_list *list, void (*free_func)(void *));

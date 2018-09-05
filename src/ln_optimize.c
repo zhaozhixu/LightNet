@@ -20,10 +20,86 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "ln_optimize.h"
 #include "ln_mem.h"
+#include "ln_op.h"
 
-ln_list *ln_optimize_mem(ln_list *ops)
+static inline void use_count_zero(ln_hash *use_counts, char *name)
 {
+     ln_hash_insert(use_counts, name, (void *)0);
+}
 
+static inline ssize_t use_count_inc(ln_hash *use_counts, char *name)
+{
+     int found;
+     ssize_t uc;
+
+     found = ln_hash_find_extended(use_counts, name, (void **)&uc);
+     assert(found);
+     ln_hash_insert(use_counts, name, (void *)(uc+1));
+     return uc;
+}
+
+static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
+{
+     int found;
+     ssize_t uc;
+
+     found = ln_hash_find_extended(use_counts, name, (void **)&uc);
+     assert(found);
+     ln_hash_insert(use_counts, name, (void *)(uc-1));
+     assert(uc >= 0);
+     return uc;
+}
+
+ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
+{
+     ln_op *op;
+     ln_hash *use_counts;
+     ln_tensor_entry *te;
+     tl_tensor *t;
+     ln_mem_pool *mp;
+     ln_list *unused_te;
+
+     use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+     LN_LIST_FOREACH(op, ops) {
+          LN_LIST_FOREACH(te, op->op_arg->tensors_out) {
+               if (ln_hash_find_extended(use_counts, te->name, NULL))
+                    use_count_inc(use_counts, te->name);
+               else
+                    use_count_zero(use_counts, te->name);
+          }
+          LN_LIST_FOREACH(te, op->op_arg->tensors_in) {
+               use_count_inc(use_counts, te->name);
+          }
+     }
+
+     LN_LIST_FOREACH(op, ops) {
+          unused_te = NULL;
+          LN_LIST_FOREACH(te, op->op_arg->tensors_out) {
+               mp = ln_hash_find(mem_pools, (void *)te->mtype);
+               t = te->tensor;
+               if (ln_mem_exist(mp, (size_t)t->data)) {
+                    if (use_count_dec(use_counts, te->name) == 0)
+                         unused_te = ln_list_prepend(unused_te, te);
+               } else {
+                    t->data = (void *)ln_mem_alloc(mp, tl_tensor_size(t));
+               }
+          }
+          LN_LIST_FOREACH(te, op->op_arg->tensors_in) {
+               if (use_count_dec(use_counts, te->name) == 0) {
+                    mp = ln_hash_find(mem_pools, (void *)te->mtype);
+                    ln_mem_free(mp, (size_t)te->tensor->data);
+               }
+          }
+          LN_LIST_FOREACH(te, unused_te) {
+               mp = ln_hash_find(mem_pools, (void *)te->mtype);
+               ln_mem_free(mp, (size_t)te->tensor->data);
+          }
+          ln_list_free(unused_te);
+     }
+
+     ln_hash_free(use_counts);
+     return ops;
 }

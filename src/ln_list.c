@@ -42,6 +42,24 @@ ln_list *ln_list_append(ln_list *list, void *data)
      return list;
 }
 
+/* return the list with prepended element (a new list if list == NULL) */
+ln_list *ln_list_prepend(ln_list *list, void *data)
+{
+     ln_list *l;
+
+     if (!list) {
+          l = (ln_list *)ln_alloc(sizeof(ln_list));
+          l->data = data;
+          l->next = NULL;
+          return l;
+     }
+
+     l = (ln_list *)ln_alloc(sizeof(ln_list));
+     l->data = data;
+     l->next = list;
+     return l;
+}
+
 void ln_list_free(ln_list *list)
 {
      ln_list *tmp, *l;

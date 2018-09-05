@@ -200,17 +200,19 @@ void *ln_hash_find(ln_hash *hash, void *key)
 }
 
 /* in case of NULL key */
-/* int ln_hash_find_extended(ln_hash *hash, void *key, void **value) */
-/* { */
-/*      int hash_value = hash->hash_func(key); */
-/*      int idx = index_of(hash_value, hash->capacity); */
-/*      for (hash_entry *e = hash->table[idx]; e; e = e->next) { */
-/*           if (e->hash_value == hash_value && !hash->cmp_func(key, e->key)) */
-/*                *value = e->value; */
-/*           return 1; */
-/*      } */
-/*      return 0; */
-/* } */
+int ln_hash_find_extended(ln_hash *hash, void *key, void **value)
+{
+     int hash_value = hash->hash_func(key);
+     int idx = index_of(hash_value, hash->capacity);
+     for (hash_entry *e = hash->table[idx]; e; e = e->next) {
+          if (e->hash_value == hash_value && !hash->cmp_func(key, e->key)) {
+               if (value)
+                    *value = e->value;
+               return 1;
+          }
+     }
+     return 0;
+}
 
 int ln_hash_remove(ln_hash *hash, void *key)
 {
@@ -252,4 +254,9 @@ uint32_t ln_str_hash(void *key)
           h = (h << 5) + h + *p;
 
      return h;
+}
+
+int ln_str_cmp(void *p1, void *p2)
+{
+     return strcmp(p1, p2);
 }
