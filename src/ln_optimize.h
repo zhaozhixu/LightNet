@@ -25,12 +25,15 @@
 
 #include "ln_list.h"
 #include "ln_hash.h"
+#include "ln_mem.h"
+#include "ln_op.h"
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
 ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools);
+ln_list *ln_optimize_mtype(ln_list *ops, ln_mem_type mtype);
 
 #ifdef __cplusplus
 LN_CPPEND

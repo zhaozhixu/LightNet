@@ -20,33 +20,47 @@
  * SOFTWARE.
  */
 
-#ifndef _TEST_LIGHTNET_H_
-#define _TEST_LIGHTNET_H_
+#include "test_lightnet.h"
+#include "../src/ln_optimize.h"
 
-#include <stdio.h>
-#include <check.h>
-#include <math.h>
-#include <tl_check.h>
+static void setup(void)
+{
+}
 
-#ifdef __cplusplus
-#define CPPSTART extern "C" {
-#define CPPEND }
-#endif
+static void teardown(void)
+{
+}
 
-Suite *make_master_suite(void);
-Suite *make_list_suite(void);
-Suite *make_error_suite(void);
-Suite *make_param_suite(void);
-Suite *make_tensor_suite(void);
-Suite *make_op_suite(void);
-Suite *make_parse_suite(void);
-Suite *make_mem_suite(void);
-Suite *make_hash_suite(void);
-Suite *make_optimize_suite(void);
-/* end of declarations */
+START_TEST(test_ln_optimize_mem)
+{
+     ln_hash *mem_pools;
+     ln_mem_pool *mp_cpu, *mp_cuda;
 
-#ifdef __cplusplus
-CPPEND
-#endif
+     mp_cpu = ln_mem_pool_create(4096, 1);
+     mp_cuda = ln_mem_pool_create(4096, 1);
+     mem_pools = ln_hash_create(ln_direct_hash, ln_direct_cmp,
+                                NULL, ln_mem_pool_free);
+     ln_hash_insert(mem_pools, (void *)LN_MEM_CPU, mp_cpu);
+     ln_hash_insert(mem_pools, (void *)LN_MEM_CUDA, mp_cuda);
 
-#endif /* _TEST_LIGHTNET_H_ */
+     ln_hash_free(mem_pools);
+}
+END_TEST
+/* end of tests */
+
+Suite *make_optimize_suite(void)
+{
+     Suite *s;
+     TCase *tc_optimize;
+
+     s = suite_create("optimize");
+     tc_optimize = tcase_create("optimize");
+     tcase_add_checked_fixture(tc_optimize, setup, teardown);
+
+     tcase_add_test(tc_optimize, test_ln_optimize_mem);
+     /* end of adding tests */
+
+     suite_add_tcase(s, tc_optimize);
+
+     return s;
+}

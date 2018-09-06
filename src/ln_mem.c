@@ -196,11 +196,9 @@ int ln_mem_exist(ln_mem_pool *mem_pool, size_t addr)
 
 void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp)
 {
-     ln_list *l;
      mem_info *minfo;
 
-     for (l = mem_pool->mem_blocks; l; l = l->next) {
-          minfo = l->data;
+     LN_LIST_FOREACH(minfo, mem_pool->mem_blocks) {
           fprintf(fp, "0x%012lx-0x%012lx %s\n", minfo->start,
                   minfo->start+minfo->size-1, minfo->flag==HOLE?"H":"S");
      }

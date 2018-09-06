@@ -31,7 +31,7 @@ struct ln_list {
      ln_list  *next;
 };
 
-#define LN_LIST_FOREACH(my_data, list)          \
+#define LN_LIST_FOREACH(my_data, list)                                  \
      for (ln_list *l = (list); l && (((my_data) = l->data) ? 1:1); l = l->next)
 
 #ifdef __cplusplus
