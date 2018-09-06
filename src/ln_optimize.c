@@ -51,6 +51,16 @@ static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
      return uc;
 }
 
+static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
+{
+     int found;
+     ssize_t uc;
+
+     found = ln_hash_find_extended(use_counts, name, (void **)&uc);
+     assert(found);
+     return uc;
+}
+
 ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
 {
      ln_op *op;
@@ -79,11 +89,12 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
                mp = ln_hash_find(mem_pools, (void *)te->mtype);
                t = te->tensor;
                if (ln_mem_exist(mp, (size_t)t->data)) {
-                    if (use_count_dec(use_counts, te->name) == 0)
-                         unused_tes = ln_list_prepend(unused_tes, te);
+                    use_count_dec(use_counts, te->name);
                } else {
                     t->data = (void *)ln_mem_alloc(mp, tl_tensor_size(t));
                }
+               if (use_count_of(use_counts, te->name) == 0)
+                    unused_tes = ln_list_prepend(unused_tes, te);
           }
           LN_LIST_FOREACH(te, op->op_arg->tensors_in) {
                if (use_count_dec(use_counts, te->name) == 0) {

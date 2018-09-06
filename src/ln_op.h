@@ -85,7 +85,7 @@ LN_CPPEND
                *error = ln_error_create((level), (msg_fmt), ##varg);	\
                return;                                                  \
           }                                                             \
-     } while(0)
+     } while (0)
 
 #define ln_op_check_param_satisfy_msg(level, condition, msg)    \
      ln_op_check(level, condition,                              \

@@ -101,12 +101,10 @@ void ln_op_list_free_tables_too(ln_list *ops)
 
 tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
 {
-     ln_list *l;
      ln_op *op;
      ln_tensor_entry *entry;
 
-     for (l = ops; l; l = l->next) {
-	  op = (ln_op *)l->data;
+     LN_LIST_FOREACH(op, ops) {
 	  entry = ln_tensor_table_find_by_name(op->op_arg->tensors_in, name);
 	  if (entry)
 	       break;
@@ -164,11 +162,9 @@ ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
 
 void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
 {
-     ln_list *l;
      ln_op *op;
 
-     for (l = ops; l; l = l->next) {
-          op = (ln_op *)l->data;
+     LN_LIST_FOREACH(op, ops) {
           op->pre_run(op->op_arg, error);
           if (*error)
                return;
@@ -177,11 +173,9 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
 
 void ln_op_list_do_run(ln_list *ops, ln_error **error)
 {
-     ln_list *l;
      ln_op *op;
 
-     for (l = ops; l; l = l->next) {
-          op = (ln_op *)l->data;
+     LN_LIST_FOREACH(op, ops) {
           op->run(op->op_arg, error);
           if (*error)
                return;
@@ -190,11 +184,9 @@ void ln_op_list_do_run(ln_list *ops, ln_error **error)
 
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
 {
-     ln_list *l;
      ln_op *op;
 
-     for (l = ops; l; l = l->next) {
-          op = (ln_op *)l->data;
+     LN_LIST_FOREACH(op, ops) {
           op->post_run(op->op_arg, error);
           if (*error)
                return;

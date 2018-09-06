@@ -38,6 +38,13 @@ struct ln_error {
      ln_error_level   level;
 };
 
+#define ln_error_emit(level, fmt, varg...)                              \
+     do {                                                               \
+          ln_error *err = ln_error_create((level), (fmt), ##varg);      \
+          ln_error_handle(&err);                                        \
+          ln_error_free(err);                                           \
+     } while (0)
+
 #ifdef __cplusplus
 LN_CPPSTART
 #endif

@@ -63,7 +63,7 @@ void ln_error_handle(ln_error **error)
      if (!*error)
           return;
 
-     fflush(stdout);
+     fflush(NULL);
      switch ((*error)->level) {
      case LN_ERROR:
           fprintf(stderr, "ERROR: %s\n", (*error)->err_str);
