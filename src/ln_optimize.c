@@ -67,14 +67,17 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
      ln_op_arg *arg;
      ln_hash *use_counts;
      ln_tensor_entry *te;
-     tl_tensor *t;
      ln_mem_pool *mp;
      ln_list *unused_tes;
 
      use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
      LN_LIST_FOREACH(op, ops) {
           arg = op->op_arg;
+          mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
           LN_LIST_FOREACH(te, arg->tensors_out) {
+               te = ln_tensor_table_find(arg->tensor_table, te->name);
+               if (te->tensor->data)
+                    te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
                if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
                     use_count_inc(use_counts, te->name);
                else
@@ -91,28 +94,26 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
           LN_LIST_FOREACH(te, arg->tensors_out) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
-               t = te->tensor;
-               if (ln_mem_exist(mp, (size_t)t->data)) {
+               if (ln_mem_exist(mp, te->offset)) {
                     use_count_dec(use_counts, te->name);
                } else {
-                    t->data = (void *)ln_mem_alloc(mp, tl_tensor_size(t));
+                    te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
                }
                if (use_count_of(use_counts, te->name) == 0)
                     unused_tes = ln_list_prepend(unused_tes, te);
           }
+          LN_LIST_FOREACH(te, unused_tes) {
+               te = ln_tensor_table_find(arg->tensor_table, te->name);
+               ln_mem_free(mp, te->offset);
+          }
+          ln_list_free(unused_tes);
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_in);
           LN_LIST_FOREACH(te, arg->tensors_in) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
                if (use_count_dec(use_counts, te->name) == 0) {
-                    ln_mem_free(mp, (size_t)te->tensor->data);
+                    ln_mem_free(mp, te->offset);
                }
           }
-          mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
-          LN_LIST_FOREACH(te, unused_tes) {
-               te = ln_tensor_table_find(arg->tensor_table, te->name);
-               ln_mem_free(mp, (size_t)te->tensor->data);
-          }
-          ln_list_free(unused_tes);
      }
 
      ln_hash_free(use_counts);

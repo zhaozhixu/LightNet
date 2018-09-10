@@ -35,6 +35,7 @@ static ln_tensor_entry *ln_tensor_entry_create(const char *name,
      entry->arg_name = ln_alloc(sizeof(char)*(strlen(arg_name)+1));
      strcpy(entry->arg_name, arg_name);
      entry->tensor = tensor;
+     entry->offset = 0;
 
      return entry;
 }

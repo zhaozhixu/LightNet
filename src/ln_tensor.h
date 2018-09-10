@@ -32,6 +32,7 @@ struct ln_tensor_entry {
      char       *name;
      char       *arg_name;
      tl_tensor  *tensor;
+     size_t      offset;
 };
 
 #ifdef __cplusplus
