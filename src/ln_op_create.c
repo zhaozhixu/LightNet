@@ -53,40 +53,48 @@ static int compute_length(int ndim, const int *dims)
      return len;
 }
 
+struct priv_s {
+     tl_tensor *dst;
+     char      *dst_name;
+};
+
 /*
- * This function should do tensor and parameter checking and memory allocation.
+ * This function should do the parameter checking and tensor shape inference.
  */
 static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
+     char *dst_name;
      ln_tensor_entry *dst_entry;
+     tl_tensor *dst_tensor;
      ln_param_entry *dims_entry, *dtype_entry, *data_entry;
      int tensors_n, params_n, dtype, i;
      void *data;
+     struct priv_s *priv;
 
      /* check tensors and parameters */
-     tensors_n = ln_tensor_table_length(op_arg->tensors_in);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
      ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 0);
 
-     tensors_n = ln_tensor_table_length(op_arg->tensors_out);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
+     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
+     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
-     params_n = ln_param_table_length(op_arg->params);
+     params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 3);
 
-     dtype_entry = ln_param_table_find_by_arg_name(op_arg->params, "dtype");
+     dtype_entry = ln_param_list_find(op_arg->params, "dtype");
      ln_op_check_param_exist(LN_ERROR, dtype_entry, "dtype");
      ln_op_check_param_type(LN_ERROR, dtype_entry, LN_PARAM_STRING);
 
      dtype = k2v(dtype_entry->value_string);
-     ln_op_check_param_satisfy_msg(LN_ERROR,
-                                   dtype != -1,
+     ln_op_check_param_satisfy_msg(LN_ERROR, dtype != -1,
                                    "\"dtype\" param should be a supported tl_dtype");
 
-     dims_entry = ln_param_table_find_by_arg_name(op_arg->params, "dims");
+     dims_entry = ln_param_list_find(op_arg->params, "dims");
      ln_op_check_param_exist(LN_ERROR, dims_entry, "dims");
      ln_op_check_param_type(LN_ERROR, dims_entry, LN_PARAM_ARRAY_NUMBER);
      for (i = 0; i < dtype_entry->array_len; i++)
@@ -94,7 +102,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                                         dims_entry->value_array_int[i] > 0,
                                         "\"dims\" array elements should be positive");
 
-     data_entry = ln_param_table_find_by_arg_name(op_arg->params, "data");
+     data_entry = ln_param_list_find(op_arg->params, "data");
      ln_op_check_param_exist(LN_ERROR, data_entry, "data");
      ln_op_check(LN_ERROR,
                  data_entry->type == LN_PARAM_ARRAY_NUMBER
@@ -105,7 +113,9 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                  ln_param_type_name(LN_PARAM_NULL),
                  ln_param_type_name(data_entry->type));
 
-     /* allocate memory in need */
+     /* Define output tensor shape. Assign tensor data to NULL if it's dynamic,
+        or allocate and initialize tensor data if it's static. */
+     dst_tensor = NULL;
      if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
           ln_op_check_param_satisfy_msg(LN_ERROR,
                                         compute_length(dims_entry->array_len,
@@ -117,43 +127,50 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
                           &data_entry->value_array_double[i], TL_DOUBLE);
           }
-          dst_entry->tensor = tl_tensor_create(data, dims_entry->array_len,
-                                               dims_entry->value_array_int,
-                                               dtype);
+          dst_tensor = tl_tensor_create(data, dims_entry->array_len,
+                                        dims_entry->value_array_int,
+                                        dtype);
      }
      if (data_entry->type == LN_PARAM_NULL)
-          dst_entry->tensor = tl_tensor_create(NULL, dims_entry->array_len,
-                                               dims_entry->value_array_int,
-                                               dtype);
-     op_arg->priv = dst_entry->tensor;
+          dst_tensor = tl_tensor_create(NULL, dims_entry->array_len,
+                                        dims_entry->value_array_int,
+                                        dtype);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_tensor);
+
+     /* use op_arg->priv to store private data to be used in other functions */
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->dst = dst_tensor;
+     priv->dst_name = dst_name;
+     op_arg->priv = priv;
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations here.
  */
 static void create_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* Get tensors and parameters, which should have been checked in pre_run().
-        Further errors should be considered as bugs, so we use asserts to catch
-        return value. */
-     /* ...... */
 
-     /* do the real work */
-     /* ...... */
 }
 
 /*
- * This function should free all tensor memory pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
 static void create_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* free the tensor memory allocated in pre_run() */
-     tl_tensor_free_data_too(op_arg->priv);
+     struct priv_s *priv;
+
+     priv = op_arg->priv;
+     tl_tensor_free_data_too(priv->dst);
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
+     ln_free(op_arg->priv);
 }
 
+/* specify other ln_op_arg fields */
 static ln_op_arg op_arg_create = {
      .optype = "create",
+     .mtype_major = LN_MEM_CPU,
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
 };
 
 /* struct used for op registration in ln_oplist.c */

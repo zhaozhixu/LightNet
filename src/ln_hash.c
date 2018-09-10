@@ -199,13 +199,16 @@ void *ln_hash_find(ln_hash *hash, void *key)
      return NULL;
 }
 
-/* in case of NULL key */
-int ln_hash_find_extended(ln_hash *hash, void *key, void **value)
+/* in case of NULL value */
+int ln_hash_find_extended(ln_hash *hash, void *key,
+                          void **origin_key, void **value)
 {
      int hash_value = hash->hash_func(key);
      int idx = index_of(hash_value, hash->capacity);
      for (hash_entry *e = hash->table[idx]; e; e = e->next) {
           if (e->hash_value == hash_value && !hash->cmp_func(key, e->key)) {
+               if (origin_key)
+                    *origin_key = e->key;
                if (value)
                     *value = e->value;
                return 1;

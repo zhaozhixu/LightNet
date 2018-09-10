@@ -43,32 +43,32 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
      struct priv_s *priv;
 
      /* check tensors and parameters */
-     tensors_n = ln_tensor_table_length(op_arg->tensors_in);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
      ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 1);
 
-     tensors_n = ln_tensor_table_length(op_arg->tensors_out);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
 
-     src_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_in, "src");
+     src_entry = ln_tensor_list_find_name(op_arg->tensors_in, "src");
      ln_op_check_tensor_in_exist(LN_ERROR, src_entry, "src");
      ln_op_check_tensor_defined(LN_ERROR, src_entry);
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_out, "dst");
+     dst_entry = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
      ln_op_check_tensor_not_defined(LN_WARNING, dst_entry);
 
-     params_n = ln_param_table_length(op_arg->params);
+     params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 3);
 
-     axis_entry = ln_param_table_find_by_arg_name(op_arg->params, "axis");
+     axis_entry = ln_param_list_find(op_arg->params, "axis");
      ln_op_check_param_exist(LN_ERROR, axis_entry, "axis");
      ln_op_check_param_type(LN_ERROR, axis_entry, LN_PARAM_NUMBER);
 
-     start_entry = ln_param_table_find_by_arg_name(op_arg->params, "start");
+     start_entry = ln_param_list_find(op_arg->params, "start");
      ln_op_check_param_exist(LN_ERROR, start_entry, "start");
      ln_op_check_param_type(LN_ERROR, start_entry, LN_PARAM_NUMBER);
 
-     len_entry = ln_param_table_find_by_arg_name(op_arg->params, "len");
+     len_entry = ln_param_list_find(op_arg->params, "len");
      ln_op_check_param_exist(LN_ERROR, len_entry, "len");
      ln_op_check_param_type(LN_ERROR, len_entry, LN_PARAM_NUMBER);
 

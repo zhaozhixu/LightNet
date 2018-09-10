@@ -55,20 +55,20 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
      int dtype, i;
 
      /* check tensors and parameters */
-     tensors_n = ln_tensor_table_length(op_arg->tensors_in);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
      ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 0);
 
-     tensors_n = ln_tensor_table_length(op_arg->tensors_out);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_out, "dst");
+     dst_entry = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
-     params_n = ln_param_table_length(op_arg->params);
+     params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 2);
 
-     dtype_entry = ln_param_table_find_by_arg_name(op_arg->params, "dtype");
+     dtype_entry = ln_param_list_find(op_arg->params, "dtype");
      ln_op_check_param_exist(LN_ERROR, dtype_entry, "dtype");
      ln_op_check_param_type(LN_ERROR, dtype_entry, LN_PARAM_STRING);
 
@@ -77,7 +77,7 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
                                    dtype != -1,
                                    "\"dtype\" param should be a supported tl_dtype");
 
-     dims_entry = ln_param_table_find_by_arg_name(op_arg->params, "dims");
+     dims_entry = ln_param_list_find(op_arg->params, "dims");
      ln_op_check_param_exist(LN_ERROR, dims_entry, "dims");
      ln_op_check_param_type(LN_ERROR, dims_entry, LN_PARAM_ARRAY_NUMBER);
      for (i = 0; i < dtype_entry->array_len; i++)

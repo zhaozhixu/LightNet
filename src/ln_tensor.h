@@ -25,31 +25,29 @@
 
 #include "tl_tensor.h"
 #include "ln_list.h"
-#include "ln_mem.h"
+#include "ln_hash.h"
 
 typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_entry {
      char       *name;
      char       *arg_name;
      tl_tensor  *tensor;
-     ln_mem_type mtype;
 };
-
-typedef ln_list ln_tensor_table;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
-					const char *name, ln_mem_type mtype,
-                                        tl_tensor *tensor);
-void ln_tensor_table_free(ln_tensor_table *table);
-ln_tensor_entry *ln_tensor_table_find_by_arg_name(ln_tensor_table *table,
-						  char *arg_name);
-ln_tensor_entry *ln_tensor_table_find_by_name(ln_tensor_table *table,
-					      char *name);
-int ln_tensor_table_length(ln_tensor_table *table);
+ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
+                               const char *name);
+void ln_tensor_list_free(ln_list *list);
+char *ln_tensor_list_find_name(ln_list *list, char *arg_name);
+int ln_tensor_list_length(ln_list *list);
+ln_hash *ln_tensor_table_create(void);
+int ln_tensor_table_insert(ln_hash *table, char *name, tl_tensor *tensor);
+int ln_tensor_table_remove(ln_hash *table, char *name);
+ln_tensor_entry *ln_tensor_table_find(ln_hash *table, char *name);
+void ln_tensor_table_free(ln_hash *table);
 
 #ifdef __cplusplus
 LN_CPPEND

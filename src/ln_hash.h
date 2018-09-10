@@ -40,7 +40,8 @@ ln_hash *ln_hash_create(ln_hash_func hash_func, ln_cmp_func cmp_func,
 void ln_hash_free(ln_hash *hash);
 int ln_hash_insert(ln_hash *hash, void *key, void *value);
 void *ln_hash_find(ln_hash *hash, void *key);
-int ln_hash_find_extended(ln_hash *hash, void *key, void **value);
+int ln_hash_find_extended(ln_hash *hash, void *key,
+                          void **origin_key, void **value);
 int ln_hash_remove(ln_hash *hash, void *key);
 int ln_hash_size(ln_hash *hash);
 uint32_t ln_direct_hash(void *key);

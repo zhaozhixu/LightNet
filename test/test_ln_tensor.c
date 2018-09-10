@@ -31,58 +31,57 @@ static void teardown(void)
 {
 }
 
-START_TEST(test_ln_tensor_table_append)
+START_TEST(test_ln_tensor_list_append)
 {
-     ln_tensor_table *tensors;
+     ln_list *tensors;
      ln_tensor_entry *entry;
-     tl_tensor *tensor1, *tensor2;
 
-     tensor1 = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
-     tensor2 = tl_tensor_zeros(2, (int[]){3, 4}, TL_INT32);
-     tensors = ln_tensor_table_append(NULL, "test_arg_name1", "test_name1", LN_MEM_CPU, tensor1);
-     tensors = ln_tensor_table_append(tensors, "test_arg_name2", "test_name2", LN_MEM_CPU, tensor2);
-     ck_assert_int_eq(ln_tensor_table_length(tensors), 2);
+     tensors = ln_tensor_list_append(NULL, "test_arg_name1", "test_name1");
+     tensors = ln_tensor_list_append(tensors, "test_arg_name2", "test_name2");
+     ck_assert_int_eq(ln_tensor_list_length(tensors), 2);
 
-     entry = ln_tensor_table_find_by_arg_name(tensors, "test_arg_name1");
+     entry = ln_tensor_list_find_by_arg_name(tensors, "test_arg_name1");
      ck_assert_str_eq(entry->arg_name, "test_arg_name1");
      ck_assert_str_eq(entry->name, "test_name1");
-     ck_assert_ptr_eq(entry->tensor, tensor1);
-     entry = ln_tensor_table_find_by_arg_name(tensors, "test_arg_name2");
+     ck_assert_int_eq(entry->mtype, LN_MEM_UNDEFINED);
+     ck_assert_ptr_eq(entry->tensor, NULL);
+     entry = ln_tensor_list_find_by_arg_name(tensors, "test_arg_name2");
      ck_assert_str_eq(entry->arg_name, "test_arg_name2");
      ck_assert_str_eq(entry->name, "test_name2");
-     ck_assert_ptr_eq(entry->tensor, tensor2);
+     ck_assert_int_eq(entry->mtype, LN_MEM_UNDEFINED);
+     ck_assert_ptr_eq(entry->tensor, NULL);
 
-     entry = ln_tensor_table_find_by_name(tensors, "test_name1");
+     entry = ln_tensor_list_find_by_name(tensors, "test_name1");
      ck_assert_str_eq(entry->arg_name, "test_arg_name1");
      ck_assert_str_eq(entry->name, "test_name1");
-     ck_assert_ptr_eq(entry->tensor, tensor1);
-     entry = ln_tensor_table_find_by_name(tensors, "test_name2");
+     ck_assert_int_eq(entry->mtype, LN_MEM_UNDEFINED);
+     ck_assert_ptr_eq(entry->tensor, NULL);
+     entry = ln_tensor_list_find_by_name(tensors, "test_name2");
      ck_assert_str_eq(entry->arg_name, "test_arg_name2");
      ck_assert_str_eq(entry->name, "test_name2");
-     ck_assert_ptr_eq(entry->tensor, tensor2);
+     ck_assert_int_eq(entry->mtype, LN_MEM_UNDEFINED);
+     ck_assert_ptr_eq(entry->tensor, NULL);
 
-     tl_tensor_free_data_too(tensor1);
-     tl_tensor_free_data_too(tensor2);
-     ln_tensor_table_free(tensors);
+     ln_tensor_list_free(tensors);
 }
 END_TEST
 
-START_TEST(test_ln_tensor_table_free)
+START_TEST(test_ln_tensor_list_free)
 {
 }
 END_TEST
 
-START_TEST(test_ln_tensor_table_find_by_arg_name)
+START_TEST(test_ln_tensor_list_find_by_arg_name)
 {
 }
 END_TEST
 
-START_TEST(test_ln_tensor_table_find_by_name)
+START_TEST(test_ln_tensor_list_find_by_name)
 {
 }
 END_TEST
 
-START_TEST(test_ln_tensor_table_length)
+START_TEST(test_ln_tensor_list_length)
 {
 }
 END_TEST
@@ -97,11 +96,11 @@ Suite *make_tensor_suite(void)
      tc_tensor = tcase_create("tensor");
      tcase_add_checked_fixture(tc_tensor, setup, teardown);
 
-     tcase_add_test(tc_tensor, test_ln_tensor_table_append);
-     tcase_add_test(tc_tensor, test_ln_tensor_table_free);
-     tcase_add_test(tc_tensor, test_ln_tensor_table_find_by_arg_name);
-     tcase_add_test(tc_tensor, test_ln_tensor_table_find_by_name);
-     tcase_add_test(tc_tensor, test_ln_tensor_table_length);
+     tcase_add_test(tc_tensor, test_ln_tensor_list_append);
+     tcase_add_test(tc_tensor, test_ln_tensor_list_free);
+     tcase_add_test(tc_tensor, test_ln_tensor_list_find_by_arg_name);
+     tcase_add_test(tc_tensor, test_ln_tensor_list_find_by_name);
+     tcase_add_test(tc_tensor, test_ln_tensor_list_length);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_tensor);

@@ -46,45 +46,51 @@ struct priv_s {
      tl_tensor  *src1;
      tl_tensor  *src2;
      tl_tensor  *dst;
+     char       *dst_name;
      tl_elew_op  elew_op;
 };
 
 /*
- * This function should do the parameter checking and tensor memory allocation.
+ * This function should do the parameter checking and tensor shape inference.
  */
 static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
+     char *src1_name, *src2_name, *dst_name;
      ln_tensor_entry *src1_entry, *src2_entry, *dst_entry;
      ln_param_entry *elew_op_entry;
      int tensors_n, params_n;
      tl_elew_op elew_op;
+     tl_tensor *dst_tensor;
      struct priv_s *priv;
 
      /* check tensors and parameters */
-     tensors_n = ln_tensor_table_length(op_arg->tensors_in);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
      ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 2);
 
-     tensors_n = ln_tensor_table_length(op_arg->tensors_out);
+     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
 
-     src1_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_in, "src1");
-     ln_op_check_tensor_in_exist(LN_ERROR, src1_entry, "src1");
+     src1_name = ln_tensor_list_find_name(op_arg->tensors_in, "src1");
+     ln_op_check_tensor_in_exist(LN_ERROR, src1_name, "src1");
+     src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
      ln_op_check_tensor_defined(LN_ERROR, src1_entry);
 
-     src2_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_in, "src2");
-     ln_op_check_tensor_in_exist(LN_ERROR, src2_entry, "src2");
+     src2_name = ln_tensor_list_find_name(op_arg->tensors_in, "src2");
+     ln_op_check_tensor_in_exist(LN_ERROR, src2_name, "src2");
+     src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
      ln_op_check_tensor_defined(LN_ERROR, src2_entry);
      ln_op_check_tensor_issameshape(LN_ERROR, src1_entry, src2_entry);
      ln_op_check_tensor_issametype(LN_ERROR, src1_entry, src2_entry);
 
-     dst_entry = ln_tensor_table_find_by_arg_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
+     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
+     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
-     params_n = ln_param_table_length(op_arg->params);
+     params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
 
-     elew_op_entry = ln_param_table_find_by_arg_name(op_arg->params, "elew_op");
+     elew_op_entry = ln_param_list_find(op_arg->params, "elew_op");
      ln_op_check_param_exist(LN_ERROR, elew_op_entry, "elew_op");
      ln_op_check_param_type(LN_ERROR, elew_op_entry, LN_PARAM_STRING);
 
@@ -93,49 +99,53 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
                                    elew_op != -1,
                                    "\"elew_op\" param should be a supported tl_elew_op");
 
-     /* allocate tensor memory in need */
-     dst_entry->tensor = tl_tensor_zeros(src1_entry->tensor->ndim,
-                                         src2_entry->tensor->dims,
-                                         src1_entry->tensor->dtype);
+     /* Define output tensor shape. Assign tensor data to NULL if it's dynamic,
+        or allocate and initialize tensor data if it's static. */
+     dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim,
+                                   src2_entry->tensor->dims,
+                                   src1_entry->tensor->dtype);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_tensor);
 
-     /* use op_arg->priv to store private data
-        to be used directly in elew_run() */
+     /* use op_arg->priv to store private data to be used in other functions */
      priv = ln_alloc(sizeof(struct priv_s));
      priv->src1 = src1_entry->tensor;
      priv->src2 = src2_entry->tensor;
-     priv->dst = dst_entry->tensor;
+     priv->dst = dst_tensor;
+     priv->dst_name = dst_name;
      priv->elew_op = elew_op;
      op_arg->priv = priv;
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations here.
  */
 static void elew_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* do the real work */
      priv = op_arg->priv;
      tl_tensor_elew(priv->src1, priv->src2, priv->dst, priv->elew_op);
 }
 
 /*
- * This function should free all tensor memory pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
 static void elew_post_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* free the memory allocated in pre_run() */
      priv = op_arg->priv;
-     tl_tensor_free_data_too(priv->dst);
+     tl_tensor_free(priv->dst);
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
 
+/* specify other ln_op_arg fields */
 static ln_op_arg op_arg_elew = {
      .optype = "elew",
+     .mtype_major = LN_MEM_CPU,
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
 };
 
 /* struct used for op registration in ln_oplist.c */

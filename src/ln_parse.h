@@ -32,6 +32,7 @@ LN_CPPSTART
 
 ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
                       ln_error **error);
+
 #ifdef __cplusplus
 LN_CPPEND
 #endif

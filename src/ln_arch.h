@@ -20,40 +20,21 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_MEM_H_
-#define _LN_MEM_H_
+#ifndef _LN_ARCH_H_
+#define _LN_ARCH_H_
 
-#include <stdlib.h>
-#include "ln_list.h"
+#include "ln_mem.h"
 
-typedef enum ln_mem_type ln_mem_type;
-enum ln_mem_type {
-     LN_MEM_UNDEF,
-     LN_MEM_DIFF,
-     LN_MEM_CPU,
-     LN_MEM_CUDA,
+typedef enum ln_arch_type ln_arch_type;
+enum ln_arch_type {
+     LN_ARCH_PC_CUDA,
+     LN_ARCH_TX2,
 };
 
-typedef struct ln_mem_pool ln_mem_pool;
-struct ln_mem_pool {
-     size_t   size;
-     size_t   align_size;
-     ln_list *mem_blocks;
+typedef struct ln_arch ln_arch;
+struct ln_arch {
+     ln_mem_type  *mtype_order; /* end with LN_MEM_UNDEF */
+     ln_arch_type  atype;
 };
 
-#ifdef __cplusplus
-LN_CPPSTART
-#endif
-
-ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size);
-void ln_mem_pool_free(ln_mem_pool *mem_pool);
-size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size);
-void ln_mem_free(ln_mem_pool *mem_pool, size_t addr);
-int ln_mem_exist(ln_mem_pool *mem_pool, size_t addr);
-void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp);
-
-#ifdef __cplusplus
-LN_CPPEND
-#endif
-
-#endif  /* _LN_MEM_H_ */
+#endif  /* _LN_ARCH_H_ */

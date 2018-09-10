@@ -65,22 +65,20 @@ static void ln_param_entry_free(ln_param_entry *entry)
      ln_free(entry);
 }
 
-ln_param_table *ln_param_table_append_string(ln_param_table *table,
-					     const char *arg_name,
-					     const char *string)
+ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
+                                     const char *string)
 {
      ln_param_entry *entry;
 
      entry = ln_param_entry_create(arg_name, LN_PARAM_STRING);
      entry->value_string = ln_alloc(sizeof(char)*(strlen(string)+1));
      strcpy(entry->value_string, string);
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
-ln_param_table *ln_param_table_append_number(ln_param_table *table,
-					     const char *arg_name,
-					     double number)
+ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,
+                                     double number)
 {
      ln_param_entry *entry;
 
@@ -94,36 +92,32 @@ ln_param_table *ln_param_table_append_number(ln_param_table *table,
      else
           entry->value_int = (int)number;
 
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
-ln_param_table *ln_param_table_append_bool(ln_param_table *table,
-					   const char *arg_name,
-					   ln_bool bool)
+ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name,
+                                   ln_bool bool)
 {
      ln_param_entry *entry;
 
      entry = ln_param_entry_create(arg_name, LN_PARAM_BOOL);
      entry->value_bool = bool;
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
-ln_param_table *ln_param_table_append_null(ln_param_table *table,
-					   const char *arg_name)
+ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name)
 {
      ln_param_entry *entry;
 
      entry = ln_param_entry_create(arg_name, LN_PARAM_NULL);
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
-ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
-						   const char *arg_name,
-						   int array_len,
-						   char **array_string)
+ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
+                                           int array_len, char **array_string)
 {
      ln_param_entry *entry;
      int i;
@@ -137,14 +131,12 @@ ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
                ln_alloc(sizeof(char)*(strlen(array_string[i])+1));
           strcpy(entry->value_array_string[i], array_string[i]);
      }
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
-ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
-						   const char *arg_name,
-						   int array_len,
-						   double *array_number)
+ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
+                                           int array_len, double *array_number)
 {
      ln_param_entry *entry;
      int i;
@@ -165,14 +157,12 @@ ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
                entry->value_array_int[i] = (int)array_number[i];
      }
 
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
-ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
-						 const char *arg_name,
-						 int array_len,
-						 ln_bool *array_bool)
+ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
+                                         int array_len, ln_bool *array_bool)
 {
      ln_param_entry *entry;
 
@@ -181,8 +171,8 @@ ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
      entry->array_len = array_len;
      entry->value_array_bool = ln_alloc(sizeof(ln_bool)*array_len);
      memmove(entry->value_array_bool, array_bool, sizeof(ln_bool)*array_len);
-     table = ln_list_append(table, entry);
-     return table;
+     list = ln_list_append(list, entry);
+     return list;
 }
 
 
@@ -191,9 +181,9 @@ static void param_entry_free_wrapper(void *p)
      ln_param_entry_free(p);
 }
 
-void ln_param_table_free(ln_param_table *table)
+void ln_param_list_free(ln_list *list)
 {
-     ln_list_free_deep(table, param_entry_free_wrapper);
+     ln_list_free_deep(list, param_entry_free_wrapper);
 }
 
 static int find_by_arg_name(void *data1, void *data2)
@@ -205,21 +195,20 @@ static int find_by_arg_name(void *data1, void *data2)
      return strcmp(p1->arg_name, p2->arg_name);
 }
 
-ln_param_entry *ln_param_table_find_by_arg_name(ln_param_table *table,
-						char *arg_name)
+ln_param_entry *ln_param_list_find(ln_list *list, char *arg_name)
 {
      ln_param_entry cmp_entry;
      ln_param_entry *result_entry;
 
      cmp_entry.arg_name = arg_name;
-     result_entry = ln_list_find_custom(table, &cmp_entry, find_by_arg_name);
+     result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);
 
      return result_entry;
 }
 
-int ln_param_table_length(ln_param_table *table)
+int ln_param_list_length(ln_list *list)
 {
-     return ln_list_length(table);
+     return ln_list_length(list);
 }
 
 const char *ln_param_type_name(ln_param_type type)

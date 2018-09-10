@@ -26,11 +26,11 @@
 #include "ln_op.h"
 #include "cJSON.h"
 
-static ln_param_table *parse_array_value(const cJSON *array_json,
-					 const cJSON *name_json,
-					 const cJSON *param_arg_name_json,
-					 ln_param_table *param_table,
-					 ln_error **error)
+static ln_list *parse_array_value(const cJSON *array_json,
+                                  const cJSON *name_json,
+                                  const cJSON *param_arg_name_json,
+                                  ln_list *param_list,
+                                  ln_error **error)
 {
      ln_param_type first_type = LN_PARAM_INVALID;
      ln_param_type type;
@@ -109,19 +109,19 @@ static ln_param_table *parse_array_value(const cJSON *array_json,
      assert(idx == array_len);
      switch (first_type) {
      case LN_PARAM_STRING:
-	  param_table = ln_param_table_append_array_string(param_table,
-							   param_arg_name_json->valuestring,
-							   array_len, array_string);
+	  param_list = ln_param_list_append_array_string(param_list,
+                                                          param_arg_name_json->valuestring,
+                                                          array_len, array_string);
 	  break;
      case LN_PARAM_NUMBER:
-	  param_table = ln_param_table_append_array_number(param_table,
-							   param_arg_name_json->valuestring,
-							   array_len, array_number);
+	  param_list = ln_param_list_append_array_number(param_list,
+                                                          param_arg_name_json->valuestring,
+                                                          array_len, array_number);
 	  break;
      case LN_PARAM_BOOL:
-	  param_table = ln_param_table_append_array_bool(param_table,
-							 param_arg_name_json->valuestring,
-							 array_len, array_bool);
+	  param_list = ln_param_list_append_array_bool(param_list,
+                                                        param_arg_name_json->valuestring,
+                                                        array_len, array_bool);
 	  break;
      case LN_PARAM_INVALID:
 	  assert(array_len == 0);
@@ -143,16 +143,16 @@ end:
      ln_free(array_string);
      ln_free(array_number);
      ln_free(array_bool);
-     return param_table;
+     return param_list;
 }
 
-static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
-		       ln_list *registered_ops, int idx, ln_error **error)
+static ln_op *parse_op(const cJSON *op_json, ln_list *registered_ops,
+                       ln_hash *tensor_table, int idx, ln_error **error)
 {
      ln_op *op, *proto_op;
-     ln_tensor_table *tensors_in = NULL;
-     ln_tensor_table *tensors_out = NULL;
-     ln_param_table *params = NULL;
+     ln_list *tensors_in = NULL;
+     ln_list *tensors_out = NULL;
+     ln_list *params = NULL;
 
      cJSON *name_json = cJSON_GetObjectItem(op_json, "name");
      cJSON *optype_json = cJSON_GetObjectItem(op_json, "optype");
@@ -223,7 +223,6 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
      cJSON *tensor_json, *param_json;
      cJSON *tensor_arg_name_json, *tensor_name_json;
      cJSON *param_arg_name_json, *param_value_json;
-     tl_tensor *tensor;
      int i = 0;
      cJSON_ArrayForEach(tensor_json, tensors_in_json) {
 	  tensor_arg_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
@@ -254,13 +253,9 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 					tensor_arg_name_json->valuestring);
 	       goto err;
 	  }
-	  tensor = ln_op_list_find_tensor_by_name(ops,
-						  tensor_name_json->valuestring);
-	  tensors_in = ln_tensor_table_append(tensors_in,
-                                              tensor_arg_name_json->valuestring,
-                                              tensor_name_json->valuestring,
-                                              LN_MEM_UNDEFINED,
-                                              tensor);
+	  tensors_in = ln_tensor_list_append(tensors_in,
+                                             tensor_arg_name_json->valuestring,
+                                             tensor_name_json->valuestring);
 	  i++;
      }
      i = 0;
@@ -293,13 +288,9 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 					tensor_arg_name_json->valuestring);
 	       goto err;
 	  }
-	  tensor = ln_op_list_find_tensor_by_name(ops,
-						  tensor_name_json->valuestring);
-	  tensors_out = ln_tensor_table_append(tensors_out,
-                                               tensor_arg_name_json->valuestring,
-                                               tensor_name_json->valuestring,
-                                               LN_MEM_UNDEFINED,
-                                               tensor);
+	  tensors_out = ln_tensor_list_append(tensors_out,
+                                              tensor_arg_name_json->valuestring,
+                                              tensor_name_json->valuestring);
 	  i++;
      }
      i = 0;
@@ -326,28 +317,28 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 	       goto err;
 	  }
 	  if (cJSON_IsNumber(param_value_json)) {
-	       params = ln_param_table_append_number(params,
-						     param_arg_name_json->valuestring,
-						     param_value_json->valuedouble);
+	       params = ln_param_list_append_number(params,
+                                                    param_arg_name_json->valuestring,
+                                                    param_value_json->valuedouble);
 	  }
 	  else if (cJSON_IsString(param_value_json)) {
-	       params = ln_param_table_append_string(params,
-						     param_arg_name_json->valuestring,
-						     param_value_json->valuestring);
+	       params = ln_param_list_append_string(params,
+                                                    param_arg_name_json->valuestring,
+                                                    param_value_json->valuestring);
 	  }
 	  else if (cJSON_IsTrue(param_value_json)) {
-	       params = ln_param_table_append_bool(params,
-						   param_arg_name_json->valuestring,
-						   LN_TRUE);
+	       params = ln_param_list_append_bool(params,
+                                                  param_arg_name_json->valuestring,
+                                                  LN_TRUE);
 	  }
 	  else if (cJSON_IsFalse(param_value_json)) {
-	       params = ln_param_table_append_bool(params,
-						   param_arg_name_json->valuestring,
-						   LN_FALSE);
+	       params = ln_param_list_append_bool(params,
+                                                  param_arg_name_json->valuestring,
+                                                  LN_FALSE);
 	  }
 	  else if (cJSON_IsNull(param_value_json)) {
-	       params = ln_param_table_append_null(params,
-						   param_arg_name_json->valuestring);
+	       params = ln_param_list_append_null(params,
+                                                  param_arg_name_json->valuestring);
 	  }
 	  else if (cJSON_IsArray(param_value_json)) {
 	       params = parse_array_value(param_value_json, name_json,
@@ -390,9 +381,9 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *ops,
 err_pre_run:
      ln_op_free(op);
 err:
-     ln_param_table_free(params);
-     ln_tensor_table_free(tensors_in);
-     ln_tensor_table_free(tensors_out);
+     ln_param_list_free(params);
+     ln_tensor_list_free(tensors_in);
+     ln_tensor_list_free(tensors_out);
      return NULL;
 }
 
@@ -408,7 +399,7 @@ ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
      json = cJSON_Parse(json_str);
      if (!json) {
 	  *error = ln_error_create(LN_ERROR, "parsing JSON before: %s",
-				  cJSON_GetErrorPtr());
+                                   cJSON_GetErrorPtr());
 	  goto err_json;
      }
 
@@ -444,7 +435,7 @@ err_op:
       * param tables.
       */
      ln_op_list_do_post_run(ops, error);
-     ln_op_list_free_tables_too(ops);
+     ln_op_list_free_lists_too(ops);
 err_json:
      cJSON_Delete(json);
      return NULL;

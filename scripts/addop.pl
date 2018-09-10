@@ -52,7 +52,7 @@ my $op_tpl = <<EOF;
 #include "ln_op.h"
 
 /*
- * This function should do the parameter checking and memory allocation.
+ * This function should do the parameter checking and tensor shape inference.
  */
 static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
@@ -60,33 +60,38 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
      /* check tensors and parameters */
      /* ...... */
 
-     /* allocate memory in need */
+     /* Define output tensor shape. Assign tensor data to NULL if it's dynamic,
+        or allocate and initialize tensor data if it's static. */
+     /* ...... */
+
+     /* use op_arg->priv to store private data to be used in other functions */
      /* ...... */
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations.
  */
 static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* do the real work */
      /* ...... */
 }
 
 /*
- * This function should free all tensor memory pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
 static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* free memory allocated in pre_run() */
      /* ..... */
 }
 
+/* specify other ln_op_arg fields */
 static ln_op_arg op_arg_${op_name} = {
      .optype = "${op_name}",
+     .mtype_major = ,
+     .mtype_in = ,
+     .mtype_out = ,
 };
 
 /* struct used for op registration in ln_oplist.c */

@@ -23,9 +23,10 @@
 #include "ln_op.h"
 
 static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
-                                   ln_tensor_table *tensors_in,
-                                   ln_tensor_table *tensors_out,
-                                   ln_param_table *params)
+                                   ln_list *tensors_in, ln_list *tensors_out,
+                                   ln_list *params, ln_hash *tensor_table,
+                                   ln_mem_type mtype_major, ln_mem_type mtype_in,
+                                   ln_mem_type mtype_out)
 {
      ln_op_arg *op_arg;
 
@@ -38,6 +39,10 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
      op_arg->tensors_out = tensors_out;
      op_arg->params = params;
      op_arg->priv = NULL;
+     op_arg->tensor_table = tensor_table;
+     op_arg->mtype_major = mtype_major;
+     op_arg->mtype_in = mtype_in;
+     op_arg->mtype_out = mtype_out;
 
      return op_arg;
 }
@@ -49,25 +54,41 @@ static void ln_op_arg_free(ln_op_arg *op_arg)
      ln_free(op_arg);
 }
 
-ln_op *ln_op_create(const char *name, const char *optype,
-                    ln_tensor_table *tensors_in, ln_tensor_table *tensors_out,
-                    ln_param_table *params,
-                    ln_op_func pre_run, ln_op_func run, ln_op_func post_run)
+ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
+                               ln_list *tensors_in, ln_list *tensors_out,
+                               ln_list *params, ln_hash *tensor_table)
 {
      ln_op *op;
+     ln_op_arg *arg_proto;
 
+     arg_proto = op_proto->op_arg;
      op = ln_alloc(sizeof(ln_op));
-     op->op_arg = ln_op_arg_create(name, optype,
-                                   tensors_in, tensors_out, params);
-     op->pre_run = pre_run;
-     op->run = run;
-     op->post_run = post_run;
+     op->op_arg = ln_arg_create(name, arg_proto->optype, tensors_in,
+                                tensors_out, params, tensor_table,
+                                arg_proto->mtype_major, arg_proto->mtype_in,
+                                arg_proto->mtype_out);
+     op->pre_run = op_proto->pre_run;
+     op->run = op_proto->run;
+     op->post_run = op_proto->post_run;
 
      return op;
 }
 
 void ln_op_free(ln_op *op)
 {
+     if (!op)
+          return;
+     ln_op_arg_free(op->op_arg);
+     ln_free(op);
+}
+
+void ln_op_free_lists_too(ln_op *op)
+{
+     if (!op)
+          return;
+     ln_tensor_list_free(op->op_arg->tensors_in);
+     ln_tensor_list_free(op->op_arg->tensors_out);
+     ln_param_list_free(op->op_arg->params);
      ln_op_arg_free(op->op_arg);
      ln_free(op);
 }
@@ -83,39 +104,20 @@ ln_list *ln_op_list_create_from_array(ln_op **op_array)
      return ops;
 }
 
-static void op_free_tables_too_wrapper(void *p)
+static void op_free_lists_too_wrapper(void *p)
 {
      ln_op *op;
 
      op = (ln_op *)p;
-     ln_tensor_table_free(op->op_arg->tensors_in);
-     ln_tensor_table_free(op->op_arg->tensors_out);
-     ln_param_table_free(op->op_arg->params);
+     ln_tensor_list_free(op->op_arg->tensors_in);
+     ln_tensor_list_free(op->op_arg->tensors_out);
+     ln_param_list_free(op->op_arg->params);
      ln_op_free(p);
 }
 
-void ln_op_list_free_tables_too(ln_list *ops)
+void ln_op_list_free_lists_too(ln_list *ops)
 {
-     ln_list_free_deep(ops, op_free_tables_too_wrapper);
-}
-
-tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name)
-{
-     ln_op *op;
-     ln_tensor_entry *entry;
-
-     LN_LIST_FOREACH(op, ops) {
-	  entry = ln_tensor_table_find_by_name(op->op_arg->tensors_in, name);
-	  if (entry)
-	       break;
-          entry = ln_tensor_table_find_by_name(op->op_arg->tensors_out, name);
-	  if (entry)
-	       break;
-     }
-     if (!l)
-	  return NULL;
-
-     return entry->tensor;
+     ln_list_free_deep(ops, op_free_lists_too_wrapper);
 }
 
 static int cmp_by_optype(void *data1, void *data2)

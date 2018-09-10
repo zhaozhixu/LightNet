@@ -23,6 +23,7 @@
 #ifndef _LN_OP_H_
 #define _LN_OP_H_
 
+#include "ln_mem.h"
 #include "ln_tensor.h"
 #include "ln_param.h"
 #include "ln_error.h"
@@ -31,10 +32,14 @@ typedef struct ln_op_arg ln_op_arg;
 struct ln_op_arg {
      char            *name;
      char            *optype;
-     ln_tensor_table *tensors_in;
-     ln_tensor_table *tensors_out;
-     ln_param_table  *params;
+     ln_list         *tensors_in;
+     ln_list         *tensors_out;
+     ln_list         *params;
      void            *priv;     /* for other private data storage */
+     ln_hash         *tensor_table;
+     ln_mem_type      mtype_major;
+     ln_mem_type      mtype_in;
+     ln_mem_type      mtype_out;
 };
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
@@ -51,14 +56,13 @@ struct ln_op {
 LN_CPPSTART
 #endif
 
-ln_op *ln_op_create(const char *name, const char *optype,
-                    ln_tensor_table *tensors_in, ln_tensor_table *tensors_out,
-                    ln_param_table *params,
-                    ln_op_func pre_run, ln_op_func run, ln_op_func post_run);
+ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
+                               ln_list *tensors_in, ln_list *tensors_out,
+                               ln_list *params, ln_hash *tensor_table);
 void ln_op_free(ln_op *op);
+void ln_op_free_lists_too(ln_op *op);
 ln_list *ln_op_list_create_from_array(ln_op **op_array);
-void ln_op_list_free_tables_too(ln_list *ops);
-tl_tensor *ln_op_list_find_tensor_by_name(ln_list *ops, char *name);
+void ln_op_list_free_lists_too(ln_list *ops);
 ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
 ln_op *ln_op_list_find_by_name(ln_list *ops, char *name);
 void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
@@ -97,7 +101,7 @@ LN_CPPEND
      ln_op_check_param_satisfy_msg(level, condition, #condition)
 
 /* entry should be returned by
-   ln_param_table_find_by_arg_name(op_arg->params, arg_name) */
+   ln_param_list_find(op_arg->params, arg_name) */
 #define ln_op_check_param_exist(level, entry, arg_name)         \
      ln_op_check(level, entry,                                  \
                  "%s: \"%s\" needs a \"%s\" param",		\
@@ -113,35 +117,35 @@ LN_CPPEND
                  op_arg->optype, op_arg->name, entry->arg_name,         \
                  ln_param_type_name(param_type), ln_param_type_name(entry->type))
 
-/* table_length should be returned by ln_param_table_length(op_arg->params) */
-#define ln_op_check_param_len_eq(level, table_length, num)              \
-     ln_op_check(level, table_length == num,                            \
+/* list_length should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_eq(level, list_length, num)               \
+     ln_op_check(level, list_length == num,                             \
                  "%s: \"%s\" needs %d params, but got %d params",       \
-                 op_arg->optype, op_arg->name, (num), (table_length))
+                 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_param_table_length(op_arg->params) */
-#define ln_op_check_param_len_gt(level, table_length, num)              \
-     ln_op_check(level, table_length > num,                             \
+/* list_length should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_gt(level, list_length, num)               \
+     ln_op_check(level, list_length > num,                              \
                  "%s: \"%s\" needs > %d params, but got %d params",     \
-                 op_arg->optype, op_arg->name, (num), (table_length))
+                 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_param_table_length(op_arg->params) */
-#define ln_op_check_param_len_ge(level, table_length, num)              \
-     ln_op_check(level, table_length >= num,                            \
+/* list_length should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_ge(level, list_length, num)               \
+     ln_op_check(level, list_length >= num,                             \
                  "%s: \"%s\" needs >= %d params, but got %d params",    \
-                 op_arg->optype, op_arg->name, (num), (table_length))
+                 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_param_table_length(op_arg->params) */
-#define ln_op_check_param_len_lt(level, table_length, num)              \
-     ln_op_check(level, table_length < num,                             \
+/* list_length should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_lt(level, list_length, num)               \
+     ln_op_check(level, list_length < num,                              \
                  "%s: \"%s\" needs < %d params, but got %d params",     \
-                 op_arg->optype, op_arg->name, (num), (table_length))
+                 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_param_table_length(op_arg->params) */
-#define ln_op_check_param_len_le(level, table_length, num)              \
-     ln_op_check(level, table_length <= num,                            \
+/* list_length should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_le(level, list_length, num)               \
+     ln_op_check(level, list_length <= num,                             \
                  "%s: \"%s\" needs <= %d params, but got %d params",    \
-                 op_arg->optype, op_arg->name, (num), (table_length))
+                 op_arg->optype, op_arg->name, (num), (list_length))
 
 #define ln_op_check_tensor_satisfy_msg(level, condition, msg)   \
      ln_op_check(level, condition,                              \
@@ -152,89 +156,89 @@ LN_CPPEND
 #define ln_op_check_tensor_satisfy(level, condition)                    \
      ln_op_check_tensor_satisfy_msg(level, condition, #condition)
 
-/* entry should be returned by
-   ln_tensor_table_find_by_arg_name(op_arg->tensors_in, arg_name) */
-#define ln_op_check_tensor_in_exist(level, entry, arg_name)	\
-     ln_op_check(level, entry,                                  \
-                 "%s: \"%s\" needs a \"%s\" input tensor",      \
+/* name should be returned by
+   ln_tensor_list_find_name(op_arg->tensors_in, arg_name) */
+#define ln_op_check_tensor_in_exist(level, tensor_name, arg_name)	\
+     ln_op_check(level, tensor_name,                                    \
+                 "%s: \"%s\" needs a \"%s\" input tensor",              \
                  op_arg->optype, op_arg->name, (arg_name))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_eq(level, table_length, num)          \
-     ln_op_check(level, table_length == num,                            \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
+#define ln_op_check_tensor_in_len_eq(level, list_length, num)           \
+     ln_op_check(level, list_length == num,                             \
                  "%s: \"%s\" needs %d input tensors, but got %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_gt(level, table_length, num)          \
-     ln_op_check(level, table_length > num,                             \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
+#define ln_op_check_tensor_in_len_gt(level, list_length, num)           \
+     ln_op_check(level, list_length > num,                              \
                  "%s: \"%s\" needs > %d input tensors, but got %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_ge(level, table_length, num)          \
-     ln_op_check(level, table_length >= num,                            \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
+#define ln_op_check_tensor_in_len_ge(level, list_length, num)           \
+     ln_op_check(level, list_length >= num,                             \
                  "%s: \"%s\" needs >= %d input tensors, but got %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_lt(level, table_length, num)          \
-     ln_op_check(level, table_length < num,                             \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
+#define ln_op_check_tensor_in_len_lt(level, list_length, num)           \
+     ln_op_check(level, list_length < num,                              \
                  "%s: \"%s\" needs < %d input tensors, but got %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_le(level, table_length, num)          \
-     ln_op_check(level, table_length <= num,                            \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
+#define ln_op_check_tensor_in_len_le(level, list_length, num)           \
+     ln_op_check(level, list_length <= num,                             \
                  "%s: \"%s\" needs <= %d input tensors, but got %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* entry should be returned by
-   ln_tensor_table_find_by_arg_name(op_arg->tensors_out, arg_name) */
-#define ln_op_check_tensor_out_exist(level, entry, arg_name)	\
-     ln_op_check(level, entry,                                  \
-                 "%s: \"%s\" needs a \"%s\" output tensor",     \
+/* name should be returned by
+   ln_tensor_list_find_name(op_arg->tensors_out, arg_name) */
+#define ln_op_check_tensor_out_exist(level, tensor_name, arg_name)	\
+     ln_op_check(level, tensor_name,                                    \
+                 "%s: \"%s\" needs a \"%s\" output tensor",             \
                  op_arg->optype, op_arg->name, (arg_name))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_eq(level, table_length, num)         \
-     ln_op_check(level, table_length == num,                            \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
+#define ln_op_check_tensor_out_len_eq(level, list_length, num)          \
+     ln_op_check(level, list_length == num,                             \
                  "%s: \"%s\" needs %d output tensors, but got %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_gt(level, table_length, num)         \
-     ln_op_check(level, table_length > num,                             \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
+#define ln_op_check_tensor_out_len_gt(level, list_length, num)          \
+     ln_op_check(level, list_length > num,                              \
                  "%s: \"%s\" needs > %d output tensors, but got %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_ge(level, table_length, num)         \
-     ln_op_check(level, table_length >= num,                            \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
+#define ln_op_check_tensor_out_len_ge(level, list_length, num)          \
+     ln_op_check(level, list_length >= num,                             \
                  "%s: \"%s\" needs >= %d output tensors, but got %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_lt(level, table_length, num)         \
-     ln_op_check(level, table_length < num,                             \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
+#define ln_op_check_tensor_out_len_lt(level, list_length, num)          \
+     ln_op_check(level, list_length < num,                              \
                  "%s: \"%s\" needs < %d output tensors, but got %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* table_length should be returned by ln_tensor_table_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_le(level, table_length, num)         \
-     ln_op_check(level, table_length <= num,                            \
+/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
+#define ln_op_check_tensor_out_len_le(level, list_length, num)          \
+     ln_op_check(level, list_length <= num,                             \
                  "%s: \"%s\" needs <= %d output tensors, but got %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (table_length))
+		 op_arg->optype, op_arg->name, (num), (list_length))
 
-/* entry should have been checked with ln_op_check_tensor_in/out_exist */
+/* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
 #define ln_op_check_tensor_not_defined(level, entry)                    \
-     ln_op_check(level, !entry->tensor,                                 \
+     ln_op_check(level, !entry,                                         \
 		 "%s: \"%s\"'s \"%s\" tensor \"%s\" shouldn't have been defined before", \
 		 op_arg->optype, op_arg->name, entry->arg_name, entry->name)
 
-/* entry should have been checked with ln_op_check_tensor_in/out_exist */
+/* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
 #define ln_op_check_tensor_defined(level, entry)                        \
-     ln_op_check(level, entry->tensor,					\
+     ln_op_check(level, entry,                                          \
 		 "%s: \"%s\"'s \"%s\" tensor \"%s\" should have been defined before", \
 		 op_arg->optype, op_arg->name, entry->arg_name, entry->name)
 
