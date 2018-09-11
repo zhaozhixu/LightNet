@@ -263,6 +263,22 @@ int ln_list_length(ln_list *list)
      return len;
 }
 
+ln_list *ln_list_reverse(ln_list *list)
+{
+     ln_list *l, *next, *prev;
+
+     prev = NULL;
+     next = list;
+     while (next) {
+          l = next;
+          next = l->next;
+          l->next = prev;
+          prev = l;
+     }
+
+     return l;
+}
+
 ln_list *ln_list_from_array_size_t(size_t *array, size_t n)
 {
      ln_list *res;

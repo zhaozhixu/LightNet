@@ -287,6 +287,32 @@ START_TEST(test_ln_list_free_deep)
      ln_list_free_deep(l, free_int_wrapper);
 }
 END_TEST
+
+START_TEST(test_ln_list_reverse)
+{
+     ln_list *l;
+     int *int1, *int2, *int3;
+
+     int1 = ln_alloc(sizeof(int));
+     int2 = ln_alloc(sizeof(int));
+     int3 = ln_alloc(sizeof(int));
+     *int1 = 1;
+     *int2 = 2;
+     *int3 = 3;
+     l = ln_list_prepend(NULL, int1);
+     l = ln_list_prepend(l, int2);
+     l = ln_list_prepend(l, int3);
+     l = ln_list_reverse(l);
+     ck_assert_int_eq(*(int *)l->data, 1);
+     l = l->next;
+     ck_assert_int_eq(*(int *)l->data, 2);
+     l = l->next;
+     ck_assert_int_eq(*(int *)l->data, 3);
+     l = l->next;
+     ck_assert_ptr_eq(l, NULL);
+     ln_list_free_deep(l, free_int_wrapper);
+}
+END_TEST
 /* end of tests */
 
 Suite *make_list_suite(void)
@@ -310,6 +336,7 @@ Suite *make_list_suite(void)
      tcase_add_test(tc_list, test_ln_list_length);
      tcase_add_test(tc_list, test_ln_list_from_array_size_t);
      tcase_add_test(tc_list, test_ln_list_free_deep);
+     tcase_add_test(tc_list, test_ln_list_reverse);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_list);
