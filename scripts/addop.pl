@@ -60,8 +60,7 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
      /* check tensors and parameters */
      /* ...... */
 
-     /* Define output tensor shape. Assign tensor data to NULL if it's dynamic,
-        or allocate and initialize tensor data if it's static. */
+     /* define output tensor shape, tensor data should be NULL */
      /* ...... */
 
      /* use op_arg->priv to store private data to be used in other functions */
@@ -98,6 +97,7 @@ static ln_op_arg op_arg_${op_name} = {
 ln_op ln_opimpl_${op_name} = {
      .op_arg = &op_arg_${op_name},
      .pre_run = ${op_name}_pre_run,
+     .static_run = NULL,
      .run = ${op_name}_run,
      .post_run = ${op_name}_post_run
 };

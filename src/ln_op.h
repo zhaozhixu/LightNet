@@ -48,6 +48,7 @@ typedef struct ln_op ln_op;
 struct ln_op {
      ln_op_arg   *op_arg;
      ln_op_func   pre_run;
+     ln_op_func   static_run;
      ln_op_func   run;
      ln_op_func   post_run;
 };

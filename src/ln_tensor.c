@@ -36,6 +36,7 @@ static ln_tensor_entry *ln_tensor_entry_create(const char *name,
      strcpy(entry->arg_name, arg_name);
      entry->tensor = tensor;
      entry->offset = 0;
+     entry->isstatic = 0;
 
      return entry;
 }

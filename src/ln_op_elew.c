@@ -99,8 +99,7 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
                                    elew_op != -1,
                                    "\"elew_op\" param should be a supported tl_elew_op");
 
-     /* Define output tensor shape. Assign tensor data to NULL if it's dynamic,
-        or allocate and initialize tensor data if it's static. */
+     /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim,
                                    src2_entry->tensor->dims,
                                    src1_entry->tensor->dtype);
@@ -152,6 +151,7 @@ static ln_op_arg op_arg_elew = {
 ln_op ln_opimpl_elew = {
      .op_arg = &op_arg_elew,
      .pre_run = elew_pre_run,
+     .static_run = NULL,
      .run = elew_run,
      .post_run = elew_post_run
 };

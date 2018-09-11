@@ -68,6 +68,7 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
                                 arg_proto->mtype_major, arg_proto->mtype_in,
                                 arg_proto->mtype_out);
      op->pre_run = op_proto->pre_run;
+     op->static_run = op_proto->static_run;
      op->run = op_proto->run;
      op->post_run = op_proto->post_run;
 
@@ -168,6 +169,19 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
 
      LN_LIST_FOREACH(op, ops) {
           op->pre_run(op->op_arg, error);
+          if (*error)
+               return;
+     }
+}
+
+void ln_op_list_do_static_run(ln_list *ops, ln_error **error)
+{
+     ln_op *op;
+
+     LN_LIST_FOREACH(op, ops) {
+          if (!op->static_run)
+               continue;
+          op->static_run(op->op_arg, error);
           if (*error)
                return;
      }

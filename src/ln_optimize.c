@@ -76,14 +76,19 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
           LN_LIST_FOREACH(te, arg->tensors_out) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
-               if (te->tensor->data)
+               if (te->isstatic) {
                     te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
+                    continue;
+               }
                if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
                     use_count_inc(use_counts, te->name);
                else
                     use_count_zero(use_counts, te->name);
           }
           LN_LIST_FOREACH(te, arg->tensors_in) {
+               te = ln_tensor_table_find(arg->tensor_table, te->name);
+               if (te->isstatic)
+                    continue;
                use_count_inc(use_counts, te->name);
           }
      }
@@ -94,11 +99,12 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
           LN_LIST_FOREACH(te, arg->tensors_out) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
-               if (ln_mem_exist(mp, te->offset)) {
+               if (te->isstatic)
+                    continue;
+               if (ln_mem_exist(mp, te->offset))
                     use_count_dec(use_counts, te->name);
-               } else {
+               else
                     te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
-               }
                if (use_count_of(use_counts, te->name) == 0)
                     unused_tes = ln_list_prepend(unused_tes, te);
           }
@@ -110,9 +116,10 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_in);
           LN_LIST_FOREACH(te, arg->tensors_in) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
-               if (use_count_dec(use_counts, te->name) == 0) {
+               if (te->isstatic)
+                    continue;
+               if (use_count_dec(use_counts, te->name) == 0)
                     ln_mem_free(mp, te->offset);
-               }
           }
      }
 

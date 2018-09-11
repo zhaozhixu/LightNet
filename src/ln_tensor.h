@@ -33,6 +33,7 @@ struct ln_tensor_entry {
      char       *arg_name;
      tl_tensor  *tensor;
      size_t      offset;
+     int         isstatic;
 };
 
 #ifdef __cplusplus

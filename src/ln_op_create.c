@@ -54,8 +54,10 @@ static int compute_length(int ndim, const int *dims)
 }
 
 struct priv_s {
-     tl_tensor *dst;
-     char      *dst_name;
+     tl_tensor      *dst;
+     char           *dst_name;
+     ln_param_entry *data_entry;
+     int             dtype;
 };
 
 /*
@@ -68,7 +70,6 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
      tl_tensor *dst_tensor;
      ln_param_entry *dims_entry, *dtype_entry, *data_entry;
      int tensors_n, params_n, dtype, i;
-     void *data;
      struct priv_s *priv;
 
      /* check tensors and parameters */
@@ -113,39 +114,62 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                  ln_param_type_name(LN_PARAM_NULL),
                  ln_param_type_name(data_entry->type));
 
-     /* Define output tensor shape. Assign tensor data to NULL if it's dynamic,
-        or allocate and initialize tensor data if it's static. */
-     dst_tensor = NULL;
      if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
           ln_op_check_param_satisfy_msg(LN_ERROR,
                                         compute_length(dims_entry->array_len,
                                                        dims_entry->value_array_int)
                                         == data_entry->array_len,
                                         "\"data\" array length should match with \"dims\"");
-          data = ln_alloc(tl_size_of(dtype) * data_entry->array_len);
-          for (i = 0; i < data_entry->array_len; i++) {
-               tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
-                          &data_entry->value_array_double[i], TL_DOUBLE);
-          }
-          dst_tensor = tl_tensor_create(data, dims_entry->array_len,
-                                        dims_entry->value_array_int,
-                                        dtype);
      }
-     if (data_entry->type == LN_PARAM_NULL)
-          dst_tensor = tl_tensor_create(NULL, dims_entry->array_len,
-                                        dims_entry->value_array_int,
-                                        dtype);
+
+     /* define output tensor shape, tensor data should be NULL */
+     dst_tensor = tl_tensor_create(NULL, dims_entry->array_len,
+                                   dims_entry->value_array_int,
+                                   dtype);
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_tensor);
+
+     /* set dst static if data is given */
+     if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
+          dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
+          dst_entry->isstatic = 1;
+     }
 
      /* use op_arg->priv to store private data to be used in other functions */
      priv = ln_alloc(sizeof(struct priv_s));
      priv->dst = dst_tensor;
      priv->dst_name = dst_name;
+     priv->data_entry = data_entry;
+     priv->dtype = dtype;
      op_arg->priv = priv;
 }
 
+/* This function runs only once per instance in the begining of runtime. */
+static void create_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+     struct priv_s *priv;
+     ln_param_entry *data_entry;
+     int dtype;
+     size_t size;
+     void *data;
+
+     priv = op_arg->priv;
+     data_entry = priv->data_entry;
+     if (data_entry->type == LN_PARAM_NULL) /* not static */
+          return;
+
+     dtype = priv->dtype;
+     size = tl_size_of(dtype) * data_entry->array_len;
+     data = ln_alloc(size);
+     for (int i = 0; i < data_entry->array_len; i++) {
+          tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
+                     &data_entry->value_array_double[i], TL_DOUBLE);
+     }
+     memmove(priv->dst->data, data, size);
+     ln_free(data);
+}
+
 /*
- * This function should only do the calculations here.
+ * This function should only do the calculations.
  */
 static void create_run(ln_op_arg *op_arg, ln_error **error)
 {
@@ -160,7 +184,7 @@ static void create_post_run(ln_op_arg *op_arg, ln_error **error)
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     tl_tensor_free_data_too(priv->dst);
+     tl_tensor_free(priv->dst);
      ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
@@ -177,6 +201,7 @@ static ln_op_arg op_arg_create = {
 ln_op ln_opimpl_create = {
      .op_arg = &op_arg_create,
      .pre_run = create_pre_run,
+     .static_run = create_static_run,
      .run = create_run,
      .post_run = create_post_run
 };
