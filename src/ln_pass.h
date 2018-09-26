@@ -20,20 +20,20 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_OPTIMIZE_H_
-#define _LN_OPTIMIZE_H_
+#ifndef _LN_PASS_H_
+#define _LN_PASS_H_
 
 #include "ln_list.h"
 #include "ln_hash.h"
 #include "ln_mem.h"
 #include "ln_op.h"
+#include "ln_arch.h"
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools);
-ln_list *ln_optimize_mtype(ln_list *ops, ln_mem_type mtype);
+ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools);
 
 #ifdef __cplusplus
 LN_CPPEND

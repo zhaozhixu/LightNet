@@ -170,6 +170,12 @@ ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
      return list;
 }
 
+ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *l)
+{
+     if (!l)
+          return ln_list_append(list, data);
+}
+
 /*
  * Return the list with inserted element, or NULL if list == NULL.
  * If the position n is negative or larger or equal than the length

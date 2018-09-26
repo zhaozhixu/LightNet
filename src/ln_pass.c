@@ -21,7 +21,7 @@
  */
 
 #include <assert.h>
-#include "ln_optimize.h"
+#include "ln_pass.h"
 
 static inline void use_count_zero(ln_hash *use_counts, char *name)
 {
@@ -61,7 +61,7 @@ static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
      return uc;
 }
 
-ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
+ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
 {
      ln_op *op;
      ln_op_arg *arg;
@@ -127,9 +127,44 @@ ln_list *ln_optimize_mem(ln_list *ops, ln_hash *mem_pools)
      return ops;
 }
 
-ln_list *ln_optimize_mtype(ln_list *ops, ln_mem_type mtype)
+ln_list *ln_pass_peephole(ln_list *ops, ln_peephole_func **ph_funcs)
 {
+     ln_peephole_func *pf;
+     ln_op *op;
+     ln_list *win_in, *win_out;
+     ln_list *l_in, *l_out, *l_ops, *l;
+     int stable = 0;
+     int win_size = 3;
+     int i, j, k;
 
-
-     return ops;
+     while (!stable) {
+          for (l_ops = ops; l_ops;) {
+               win_in = NULL;
+               for (i = 0, l = l_ops; i < win_size && l; i++, l = l->next)
+                    win_in = ln_list_append(win_in, l->data);
+               for (j = 0; pf = ph_funcs[j]; j++) {
+                    win_out = pf(win_in);
+                    if (win_out) {
+                         l = l_ops, l_in = win_in, l_out = win_out;
+                         while (l_in && l_out) {
+                              l->data = l_out->data;
+                              l = l->next;
+                              l_in = l_in->next;
+                              l_out = l_out->next;
+                         }
+                         if (l_in && !l_out) {
+                              for (; l_in; l_in = l_in->next)
+                                   l_ops = ln_list_remove(l_ops, l_in->data);
+                              continue;
+                         }
+                         if (!l_in && l_out) {
+                              for (; l_out; l_out = l_out->next)
+                                   l_ops = ln_list_
+                              continue;
+                         }
+                    }
+               }
+               ln_list_free(win_in);
+          }
+     }
 }
