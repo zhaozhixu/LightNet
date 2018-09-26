@@ -170,10 +170,23 @@ ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
      return list;
 }
 
-ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *l)
+ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *llink)
 {
-     if (!l)
+     ln_list **lp;
+
+     if (!llink)
           return ln_list_append(list, data);
+
+     for (lp = &list; *lp; lp = &(*lp)->next) {
+          if (*lp == llink) {
+               *lp = ln_alloc(sizeof(ln_list));
+               (*lp)->data = data;
+               (*lp)->next = llink;
+               break;
+          }
+     }
+
+     return list;
 }
 
 /*
@@ -193,7 +206,7 @@ ln_list *ln_list_insert_nth(ln_list *list, void *data, int n)
      for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
           if (i == n) {
                tmp = *lp;
-               *lp = (ln_list *)ln_alloc(sizeof(ln_list));
+               *lp = ln_alloc(sizeof(ln_list));
                (*lp)->data = data;
                (*lp)->next = tmp;
                break;
