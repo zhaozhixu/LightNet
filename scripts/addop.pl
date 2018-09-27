@@ -88,7 +88,6 @@ static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_${op_name} = {
      .optype = "${op_name}",
-     .mtype_major = ,
      .mtype_in = ,
      .mtype_out = ,
 };

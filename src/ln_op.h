@@ -37,7 +37,6 @@ struct ln_op_arg {
      ln_list         *params;
      void            *priv;     /* for other private data storage */
      ln_hash         *tensor_table;
-     ln_mem_type      mtype_major;
      ln_mem_type      mtype_in;
      ln_mem_type      mtype_out;
 };
@@ -88,6 +87,9 @@ LN_CPPEND
      do {                                                               \
           if (!(condition)) {                                           \
                *error = ln_error_create((level), (msg_fmt), ##varg);	\
+               if (level == LN_WARNING || level == LN_WARNING_SYS ||    \
+                   level == LN_INFO)                                    \
+                    break;                                              \
                return;                                                  \
           }                                                             \
      } while (0)

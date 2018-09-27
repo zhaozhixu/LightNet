@@ -365,12 +365,10 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *registered_ops,
 	  goto err;
      }
 
-     op = ln_op_create(name_json->valuestring, optype_json->valuestring,
-		       tensors_in, tensors_out, params, proto_op->pre_run,
-                       proto_op->run, proto_op->post_run);
+     op = ln_op_create_from_proto(proto_op, name_json->valuestring, tensors_in,
+                                  tensors_out, params, tensor_table);
      /*
-      * op->pre_run() runs here, because we need it to allocate tensors
-      * for following ops to reference to them.
+      * op->pre_run() runs here, because we need it to register tensors
       */
      op->pre_run(op->op_arg, error);
      if (*error)
@@ -388,7 +386,7 @@ err:
 }
 
 ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
-                      ln_error **error)
+                      ln_hash *tensor_table, ln_error **error)
 {
      const cJSON *ops_json;
      const cJSON *op_json;
@@ -415,7 +413,7 @@ ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
 
      int i = 0;
      cJSON_ArrayForEach(op_json, ops_json) {
-	  op = parse_op(op_json, ops, registered_ops, i, error);
+	  op = parse_op(op_json, registered_ops, tensor_table, i, error);
 	  if (*error) {
 	       assert(!op);
 	       goto err_op;

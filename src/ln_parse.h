@@ -25,14 +25,14 @@
 
 #include "ln_list.h"
 #include "ln_error.h"
+#include "ln_hash.h"
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
 ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
-                      ln_error **error);
-
+                      ln_hash *tensor_table, ln_error **error);
 #ifdef __cplusplus
 LN_CPPEND
 #endif

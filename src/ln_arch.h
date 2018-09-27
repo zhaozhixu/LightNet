@@ -32,12 +32,12 @@ enum ln_arch_type {
      LN_ARCH_CUDA,
 };
 
-typedef ln_list *(*ln_peephole_func) (ln_list *ops);
+typedef ln_list *(*ln_peephole_func) (ln_list *ops, int *match);
 
 typedef struct ln_arch ln_arch;
 struct ln_arch {
      ln_op            **ops;       /* NULL terminated */
-     ln_peephole_func **ph_funcs;  /* NULL terminated */
+     ln_peephole_func  *ph_funcs;  /* NULL terminated */
      ln_arch_type       atype;
 };
 
