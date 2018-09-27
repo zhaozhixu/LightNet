@@ -24,155 +24,149 @@
 #include "test_lightnet.h"
 #include "../src/ln_op.h"
 
-static void setup(void)
+static int pre_run_count = 0;
+static int static_run_count = 0;
+static int run_count = 0;
+static int post_run_count = 0;
+
+static void pre_run0 (ln_op_arg *op_arg, ln_error **error)
 {
+     pre_run_count++;
 }
 
-static void teardown(void)
+static void static_run0 (ln_op_arg *op_arg, ln_error **error)
 {
+     static_run_count++;
+     *error = ln_error_create(LN_WARNING, "static_run0");
 }
 
-static void pre_run (ln_op_arg *op_arg, ln_error **error)
+static void run0 (ln_op_arg *op_arg, ln_error **error)
 {
+     run_count++;
 }
 
-static void run (ln_op_arg *op_arg, ln_error **error)
+static void post_run0 (ln_op_arg *op_arg, ln_error **error)
 {
-}
-
-static void post_run (ln_op_arg *op_arg, ln_error **error)
-{
+     post_run_count++;
 }
 
 static void pre_run1 (ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *tensor_entry;
-     int tensors_n, params_n;
-
-     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 3);
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "test_tensor_arg_name1");
-     ln_op_check_tensor_in_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name1");
-     ln_op_check_tensor_defined(LN_ERROR, tensor_entry);
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "test_tensor_arg_name2");
-     ln_op_check_tensor_in_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name2");
-     ln_op_check_tensor_defined(LN_ERROR, tensor_entry);
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "test_tensor_arg_name5");
-     ln_op_check_tensor_in_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name5");
-     ln_op_check_tensor_not_defined(LN_WARNING, tensor_entry);
-
-     params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 0);
-
-     tensor_entry->tensor = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
+     pre_run_count++;
+     *error = ln_error_create(LN_INFO, "pre_run1");
 }
 
 static void run1 (ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *tensor_entry;
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "test_tensor_arg_name5");
-     assert(tensor_entry);
-
-     ((int32_t *)tensor_entry->tensor->data)[0] = 1;
-     ((int32_t *)tensor_entry->tensor->data)[1] = 1;
+     run_count++;
 }
 
 static void post_run1 (ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *tensor_entry;
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "test_tensor_arg_name5");
-     assert(tensor_entry);
-
-     tl_tensor_free_data_too(tensor_entry->tensor);
-     tensor_entry->tensor = NULL;
+     post_run_count++;
 }
 
 static void pre_run2 (ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *tensor_entry;
-     int tensors_n, params_n;
-
-     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 3);
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "test_tensor_arg_name3");
-     ln_op_check_tensor_out_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name3");
-     ln_op_check_tensor_defined(LN_ERROR, tensor_entry);
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "test_tensor_arg_name4");
-     ln_op_check_tensor_out_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name4");
-     ln_op_check_tensor_defined(LN_ERROR, tensor_entry);
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "test_tensor_arg_name6");
-     ln_op_check_tensor_out_exist(LN_ERROR, tensor_entry, "test_tensor_arg_name6");
-     ln_op_check_tensor_not_defined(LN_WARNING, tensor_entry);
-
-     params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 0);
-
-     tensor_entry->tensor = tl_tensor_zeros(2, (int[]){1, 2}, TL_INT32);
+     pre_run_count++;
 }
 
 static void run2 (ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *tensor_entry;
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "test_tensor_arg_name6");
-     assert(tensor_entry);
-
-     ((int32_t *)tensor_entry->tensor->data)[0] = 1;
-     ((int32_t *)tensor_entry->tensor->data)[1] = 1;
+     run_count++;
 }
 
 static void post_run2 (ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_entry *tensor_entry;
-
-     tensor_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "test_tensor_arg_name6");
-     assert(tensor_entry);
-
-     tl_tensor_free_data_too(tensor_entry->tensor);
-     tensor_entry->tensor = NULL;
+     post_run_count++;
 }
 
-START_TEST(test_ln_op_create)
+static ln_op_arg op_arg0 = {
+     .optype = "test_optype0",
+     .name = "test_opname0",
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
+};
+
+static ln_op opimpl0 = {
+     .op_arg = &op_arg0,
+     .pre_run = pre_run0,
+     .static_run = static_run0,
+     .run = run0,
+     .post_run = post_run0,
+};
+
+static ln_op_arg op_arg1 = {
+     .optype = "test_optype1",
+     .name = "test_opname1",
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
+};
+
+static ln_op opimpl1 = {
+     .op_arg = &op_arg1,
+     .pre_run = pre_run1,
+     .static_run = NULL,
+     .run = run1,
+     .post_run = post_run1,
+};
+
+static ln_op_arg op_arg2 = {
+     .optype = "test_optype2",
+     .name = "test_opname2",
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
+};
+
+static ln_op opimpl2 = {
+     .op_arg = &op_arg2,
+     .pre_run = pre_run2,
+     .static_run = NULL,
+     .run = run2,
+     .post_run = post_run2,
+};
+
+static ln_op *op_array[] = {
+     &opimpl0,
+     &opimpl1,
+     &opimpl2,
+};
+
+static ln_list *test_op_list;
+
+static void setup(void)
 {
+     test_op_list = ln_op_list_create_from_array(op_array);
+}
+
+static void teardown(void)
+{
+     ln_op_list_free(test_op_list);
+}
+
+START_TEST(test_ln_op_list_create_from_array)
+{
+     ln_list *oplist;
      ln_op *op;
-     ln_list *tensors;
-     ln_list *params;
 
-     params = ln_param_list_append_string(NULL, "test_params_arg_name1",
-                                          "test_params_string1");
-     params = ln_param_list_append_string(params, "test_params_arg_name2",
-                                          "test_params_string2");
-     tensors = ln_tensor_list_append(NULL, "test_tensor_arg_name1",
-                                     "test_tensor_name1");
-     tensors = ln_tensor_list_append(tensors, "test_tensor_arg_name2",
-                                     "test_tensor_name2");
+     oplist = ln_op_list_create_from_array(op_array);
 
-     op = ln_op_create("test_name", "test_optype", tensors, NULL,
-                       params, pre_run, run, post_run);
-     ck_assert_ptr_eq(op->pre_run, pre_run);
-     ck_assert_ptr_eq(op->run, run);
-     ck_assert_ptr_eq(op->post_run, post_run);
-     ck_assert_str_eq(op->op_arg->name, "test_name");
-     ck_assert_str_eq(op->op_arg->optype, "test_optype");
-     ck_assert_ptr_eq(op->op_arg->params, params);
-     ck_assert_ptr_eq(op->op_arg->tensors_in, tensors);
-     ck_assert_ptr_eq(op->op_arg->tensors_out, NULL);
+     op = oplist->data;
+     ck_assert_ptr_eq(op, &opimpl0);
+     oplist = oplist->next;
+     op = oplist->data;
+     ck_assert_ptr_eq(op, &opimpl1);
+     oplist = oplist->next;
+     op = oplist->data;
+     ck_assert_ptr_eq(op, &opimpl2);
+     oplist = oplist->next;
+     ck_assert_ptr_eq(oplist, NULL);
 
-     ln_tensor_list_free(tensors);
-     ln_param_list_free(params);
-     ln_op_free(op);
+     ln_op_list_free(oplist);
 }
 END_TEST
 
-START_TEST(test_ln_op_free)
+START_TEST(test_ln_op_list_free)
 {
 }
 END_TEST
@@ -184,21 +178,119 @@ END_TEST
 
 START_TEST(test_ln_op_list_find_by_optype)
 {
+     ln_op *op;
+
+     op = ln_op_list_find_by_optype(test_op_list, op_arg0.optype);
+     ck_assert_ptr_eq(op, &opimpl0);
+     op = ln_op_list_find_by_optype(test_op_list, op_arg1.optype);
+     ck_assert_ptr_eq(op, &opimpl1);
+     op = ln_op_list_find_by_optype(test_op_list, op_arg2.optype);
+     ck_assert_ptr_eq(op, &opimpl2);
+     op = ln_op_list_find_by_optype(test_op_list, "not_exist");
+     ck_assert_ptr_eq(op, NULL);
+}
+END_TEST
+
+START_TEST(test_ln_op_list_find_by_name)
+{
+     ln_op *op;
+
+     op = ln_op_list_find_by_name(test_op_list, op_arg0.name);
+     ck_assert_ptr_eq(op, &opimpl0);
+     op = ln_op_list_find_by_name(test_op_list, op_arg1.name);
+     ck_assert_ptr_eq(op, &opimpl1);
+     op = ln_op_list_find_by_name(test_op_list, op_arg2.name);
+     ck_assert_ptr_eq(op, &opimpl2);
+     op = ln_op_list_find_by_name(test_op_list, "not_exist");
+     ck_assert_ptr_eq(op, NULL);
+}
+END_TEST
+
+START_TEST(test_ln_op_create_from_proto)
+{
+     ln_op *op;
+     ln_list *tensors;
+     ln_list *params;
+     ln_hash *tensor_table;
+
+     tensors = ln_tensor_list_append(NULL, "tensor1", "name1");
+     params = ln_param_list_append_string(NULL, "param1", "string1");
+     tensor_table = ln_tensor_table_create();
+
+     op = ln_op_create_from_proto(&opimpl0, "opname", NULL,
+                                  tensors, params, tensor_table);
+
+     ck_assert_ptr_eq(op->pre_run, pre_run0);
+     ck_assert_ptr_eq(op->static_run, static_run0);
+     ck_assert_ptr_eq(op->run, run0);
+     ck_assert_ptr_eq(op->post_run, post_run0);
+     ck_assert_str_eq(op->op_arg->name, "opname");
+     ck_assert_str_eq(op->op_arg->optype, op_arg0.optype);
+     ck_assert_ptr_eq(op->op_arg->params, params);
+     ck_assert_ptr_eq(op->op_arg->tensors_in, NULL);
+     ck_assert_ptr_eq(op->op_arg->tensors_out, tensors);
+     ck_assert_ptr_eq(op->op_arg->priv, NULL);
+     ck_assert_int_eq(op->op_arg->mtype_in, op_arg0.mtype_in);
+     ck_assert_int_eq(op->op_arg->mtype_out, op_arg0.mtype_out);
+
+     ln_tensor_list_free(tensors);
+     ln_param_list_free(params);
+     ln_tensor_table_free(tensor_table);
+     ln_op_free(op);
+}
+END_TEST
+
+START_TEST(test_ln_op_free)
+{
+}
+END_TEST
+
+START_TEST(test_ln_op_free_lists_too)
+{
 }
 END_TEST
 
 START_TEST(test_ln_op_list_do_pre_run)
 {
+     ln_error *error = NULL;
+
+     ln_op_list_do_pre_run(test_op_list, &error);
+     ck_assert_int_eq(error->level, LN_INFO);
+     ck_assert_str_eq(error->err_str, "pre_run1");
+     ln_error_free(error);
+     ck_assert_int_eq(pre_run_count, 2);
+}
+END_TEST
+
+START_TEST(test_ln_op_list_do_static_run)
+{
+     ln_error *error = NULL;
+
+     ln_op_list_do_static_run(test_op_list, &error);
+     ck_assert_int_eq(error->level, LN_WARNING);
+     ck_assert_str_eq(error->err_str, "static_run0");
+     ln_error_free(error);
+     ck_assert_int_eq(static_run_count, 1);
 }
 END_TEST
 
 START_TEST(test_ln_op_list_do_run)
 {
+     ln_error *error = NULL;
+
+     ln_op_list_do_run(test_op_list, &error);
+     ck_assert_ptr_eq(error, NULL);
+     ck_assert_int_eq(run_count, 3);
 }
 END_TEST
 
 START_TEST(test_ln_op_list_do_post_run)
 {
+     ln_error *error = NULL;
+
+     ln_op_list_do_post_run(test_op_list, &error);
+     ck_assert_ptr_eq(error, NULL);
+     ck_assert_int_eq(post_run_count, 3);
 }
 END_TEST
 /* end of tests */
@@ -212,11 +304,16 @@ Suite *make_op_suite(void)
      tc_op = tcase_create("op");
      tcase_add_checked_fixture(tc_op, setup, teardown);
 
-     tcase_add_test(tc_op, test_ln_op_create);
-     tcase_add_test(tc_op, test_ln_op_free);
+     tcase_add_test(tc_op, test_ln_op_list_create_from_array);
+     tcase_add_test(tc_op, test_ln_op_list_free);
      tcase_add_test(tc_op, test_ln_op_list_free_lists_too);
      tcase_add_test(tc_op, test_ln_op_list_find_by_optype);
+     tcase_add_test(tc_op, test_ln_op_list_find_by_name);
+     tcase_add_test(tc_op, test_ln_op_create_from_proto);
+     tcase_add_test(tc_op, test_ln_op_free);
+     tcase_add_test(tc_op, test_ln_op_free_lists_too);
      tcase_add_test(tc_op, test_ln_op_list_do_pre_run);
+     tcase_add_test(tc_op, test_ln_op_list_do_static_run);
      tcase_add_test(tc_op, test_ln_op_list_do_run);
      tcase_add_test(tc_op, test_ln_op_list_do_post_run);
      /* end of adding tests */

@@ -38,6 +38,7 @@ static inline int compute_length(int ndim, const int *dims)
  */
 static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
+     char *dst_name, *src_name;
      ln_tensor_entry *dst_entry, *src_entry;
      ln_param_entry *dims_entry;
      int tensors_n, params_n;
@@ -50,12 +51,14 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
 
-     src_entry = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(LN_ERROR, src_entry, "src");
+     src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
+     ln_op_check_tensor_in_exist(LN_ERROR, src_name, "src");
+     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
      ln_op_check_tensor_defined(LN_ERROR, src_entry);
 
-     dst_entry = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
+     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
+     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
      params_n = ln_param_list_length(op_arg->params);
@@ -106,11 +109,14 @@ static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
 
 static ln_op_arg op_arg_reshape = {
      .optype = "reshape",
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
 };
 
 ln_op ln_opimpl_reshape = {
      .op_arg = &op_arg_reshape,
      .pre_run = reshape_pre_run,
+     .static_run = NULL,
      .run = reshape_run,
      .post_run = reshape_post_run
 };

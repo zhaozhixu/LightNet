@@ -47,6 +47,7 @@ LN_CPPSTART
 #endif
 
 void *ln_alloc(size_t size);
+char *ln_strdup(const char *s);
 char *ln_path_alloc(size_t *sizep);
 void *ln_clone(const void *src, size_t size);
 void *ln_repeat(void *data, size_t size, int times);

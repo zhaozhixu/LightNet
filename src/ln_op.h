@@ -62,10 +62,12 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
 void ln_op_free(ln_op *op);
 void ln_op_free_lists_too(ln_op *op);
 ln_list *ln_op_list_create_from_array(ln_op **op_array);
+void ln_op_list_free(ln_list *op_list);
 void ln_op_list_free_lists_too(ln_list *ops);
 ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
 ln_op *ln_op_list_find_by_name(ln_list *ops, char *name);
 void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
+void ln_op_list_do_static_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 

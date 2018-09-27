@@ -53,15 +53,24 @@ static int compute_length(int ndim, const int *dims)
      return len;
 }
 
+struct priv_s {
+     tl_tensor      *dst;
+     char           *dst_name;
+     ln_param_entry *data_entry;
+     int             dtype;
+};
+
 /*
  * This function should do the parameter checking and tensor memory allocation.
  */
 static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
+     char *dst_name;
      ln_tensor_entry *dst_entry;
+     tl_tensor *dst_tensor;
      ln_param_entry *dims_entry, *dtype_entry, *data_entry;
      int tensors_n, params_n, dtype, i;
-     void *data;
+     struct priv_s *priv;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
@@ -70,8 +79,9 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
 
-     dst_entry = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_entry, "dst");
+     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
+     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
      ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
 
      params_n = ln_param_list_length(op_arg->params);
@@ -105,61 +115,93 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
                  ln_param_type_name(LN_PARAM_NULL),
                  ln_param_type_name(data_entry->type));
 
-     /* allocate memory in need */
-     if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
+    if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
           ln_op_check_param_satisfy_msg(LN_ERROR,
                                         compute_length(dims_entry->array_len,
                                                        dims_entry->value_array_int)
                                         == data_entry->array_len,
                                         "\"data\" array length should match with \"dims\"");
-          data = ln_alloc(tl_size_of(dtype) * data_entry->array_len);
-          for (i = 0; i < data_entry->array_len; i++) {
-               tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
-                          &data_entry->value_array_double[i], TL_DOUBLE);
-          }
-          dst_entry->tensor = tl_tensor_create_cuda(data, dims_entry->array_len,
-                                                    dims_entry->value_array_int,
-                                                    dtype);
      }
-     if (data_entry->type == LN_PARAM_NULL)
-          dst_entry->tensor = tl_tensor_create_cuda(NULL, dims_entry->array_len,
-                                                    dims_entry->value_array_int,
-                                                    dtype);
-     op_arg->priv = dst_entry->tensor;
+
+     /* define output tensor shape, tensor data should be NULL */
+     dst_tensor = tl_tensor_create(NULL, dims_entry->array_len,
+                                   dims_entry->value_array_int,
+                                   dtype);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_tensor);
+
+     /* set dst static if data is given */
+     if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
+          dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
+          dst_entry->isstatic = 1;
+     }
+
+     /* use op_arg->priv to store private data to be used in other functions */
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->dst = dst_tensor;
+     priv->dst_name = dst_name;
+     priv->data_entry = data_entry;
+     priv->dtype = dtype;
+     op_arg->priv = priv;
+}
+
+/* This function runs only once per instance in the begining of runtime. */
+static void create_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+     struct priv_s *priv;
+     ln_param_entry *data_entry;
+     int dtype;
+     size_t size;
+     void *data;
+
+     priv = op_arg->priv;
+     data_entry = priv->data_entry;
+     if (data_entry->type == LN_PARAM_NULL) /* not static */
+          return;
+
+     dtype = priv->dtype;
+     size = tl_size_of(dtype) * data_entry->array_len;
+     data = ln_alloc(size);
+     for (int i = 0; i < data_entry->array_len; i++) {
+          tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
+                     &data_entry->value_array_double[i], TL_DOUBLE);
+     }
+
+     memmove(priv->dst->data, data, size);
+     ln_free(data);
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations.
  */
 static void create_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* Get tensors and parameters */
-     /* ...... */
-
-     /* do the real work */
-     /* ...... */
 }
 
 /*
- * This function should free all tensor memory pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
 static void create_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
+     struct priv_s *priv;
 
-     /* free memory allocated in pre_run() */
-     tl_tensor_free_data_too_cuda(op_arg->priv);
+     priv = op_arg->priv;
+     tl_tensor_free(priv->dst);
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
+     ln_free(op_arg->priv);
 }
 
 static ln_op_arg op_arg_create_cuda = {
      .optype = "create_cuda",
+     .mtype_in = LN_MEM_CUDA,
+     .mtype_out = LN_MEM_CUDA,
 };
 
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_create_cuda = {
      .op_arg = &op_arg_create_cuda,
      .pre_run = create_cuda_pre_run,
+     .static_run = create_cuda_static_run,
      .run = create_cuda_run,
      .post_run = create_cuda_post_run
 };

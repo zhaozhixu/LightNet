@@ -23,7 +23,7 @@
 #include <sys/stat.h>
 #include "test_lightnet.h"
 #include "../src/ln_op.h"
-#include "../src/ln_parse.h"
+#include "../src/ln_pass.h"
 
 static char *json_str;
 static ln_list *registered_ops;
@@ -63,16 +63,16 @@ static void teardown(void)
      ln_free(json_str);
 }
 
-START_TEST(test_ln_parse_ops)
+START_TEST(test_ln_pass_parse)
 {
      ln_list *ops;
      ln_op *op, *op_proto;
      ln_param_entry *param_entry;
      ln_tensor_entry *tensor_entry;
+     ln_hash *tensor_table;
      tl_tensor *tensor1, *tensor2, *tensor_true;
 
-     ops = ln_parse_ops(json_str, registered_ops, &error);
-     ln_error_handle(&error);
+     ops = ln_pass_parse(json_str, registered_ops, tensor_table);
 
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");
@@ -284,7 +284,7 @@ Suite *make_parse_suite(void)
      tc_parse = tcase_create("parse");
      tcase_add_checked_fixture(tc_parse, setup, teardown);
 
-     tcase_add_test(tc_parse, test_ln_parse_ops);
+     tcase_add_test(tc_parse, test_ln_pass_parse);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_parse);

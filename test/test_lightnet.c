@@ -34,14 +34,14 @@ int main(int argc, char **argv)
 
      sr = srunner_create(make_master_suite());
      srunner_add_suite(sr, make_list_suite());
+     srunner_add_suite(sr, make_hash_suite());
      srunner_add_suite(sr, make_error_suite());
      srunner_add_suite(sr, make_param_suite());
      srunner_add_suite(sr, make_tensor_suite());
      srunner_add_suite(sr, make_op_suite());
      srunner_add_suite(sr, make_parse_suite());
      srunner_add_suite(sr, make_mem_suite());
-     srunner_add_suite(sr, make_hash_suite());
-     srunner_add_suite(sr, make_optimize_suite());
+     srunner_add_suite(sr, make_pass_suite());
      /* end of adding suites */
 
      srunner_set_xml (sr, "result/check_output.xml");

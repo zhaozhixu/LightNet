@@ -21,7 +21,7 @@
  */
 
 #include "test_lightnet.h"
-#include "../src/ln_optimize.h"
+#include "../src/ln_pass.h"
 
 static void setup(void)
 {
@@ -31,7 +31,7 @@ static void teardown(void)
 {
 }
 
-START_TEST(test_ln_optimize_mem)
+START_TEST(test_ln_pass_mem)
 {
      ln_hash *mem_pools;
      ln_mem_pool *mp_cpu, *mp_cuda;
@@ -48,19 +48,19 @@ START_TEST(test_ln_optimize_mem)
 END_TEST
 /* end of tests */
 
-Suite *make_optimize_suite(void)
+Suite *make_pass_suite(void)
 {
      Suite *s;
-     TCase *tc_optimize;
+     TCase *tc_pass;
 
-     s = suite_create("optimize");
-     tc_optimize = tcase_create("optimize");
-     tcase_add_checked_fixture(tc_optimize, setup, teardown);
+     s = suite_create("pass");
+     tc_pass = tcase_create("pass");
+     tcase_add_checked_fixture(tc_pass, setup, teardown);
 
-     tcase_add_test(tc_optimize, test_ln_optimize_mem);
+     tcase_add_test(tc_pass, test_ln_pass_mem);
      /* end of adding tests */
 
-     suite_add_tcase(s, tc_optimize);
+     suite_add_tcase(s, tc_pass);
 
      return s;
 }

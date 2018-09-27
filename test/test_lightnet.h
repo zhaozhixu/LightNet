@@ -35,14 +35,14 @@
 
 Suite *make_master_suite(void);
 Suite *make_list_suite(void);
+Suite *make_hash_suite(void);
 Suite *make_error_suite(void);
 Suite *make_param_suite(void);
 Suite *make_tensor_suite(void);
 Suite *make_op_suite(void);
 Suite *make_parse_suite(void);
 Suite *make_mem_suite(void);
-Suite *make_hash_suite(void);
-Suite *make_optimize_suite(void);
+Suite *make_pass_suite(void);
 /* end of declarations */
 
 #ifdef __cplusplus

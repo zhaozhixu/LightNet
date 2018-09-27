@@ -39,6 +39,7 @@ START_TEST(test_ln_param_list_append_string)
      params = ln_param_list_append_string(NULL, "test_arg_name_1", "test_string_1");
      params = ln_param_list_append_string(params, "test_arg_name_2", "test_string_2");
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_STRING);
      ck_assert_str_eq(entry->value_string, "test_string_1");
@@ -57,6 +58,7 @@ START_TEST(test_ln_param_list_append_number)
      params = ln_param_list_append_number(NULL, "test_arg_name_1", 1);
      params = ln_param_list_append_number(params, "test_arg_name_2", 2);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_NUMBER);
      ck_assert_int_eq(entry->value_int, 1);
@@ -68,6 +70,7 @@ START_TEST(test_ln_param_list_append_number)
      params = ln_param_list_append_number(NULL, "test_arg_name_1", 1.1);
      params = ln_param_list_append_number(params, "test_arg_name_2", 2.2);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_NUMBER);
      ck_assert(entry->value_double == 1.1);
@@ -86,6 +89,7 @@ START_TEST(test_ln_param_list_append_bool)
      params = ln_param_list_append_bool(NULL, "test_arg_name_1", LN_FALSE);
      params = ln_param_list_append_bool(params, "test_arg_name_2", LN_TRUE);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_BOOL);
      ck_assert_int_eq(entry->value_bool, LN_FALSE);
@@ -105,6 +109,7 @@ START_TEST(test_ln_param_list_append_null)
      params = ln_param_list_append_null(NULL, "test_arg_name_1");
      params = ln_param_list_append_null(params, "test_arg_name_2");
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_NULL);
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_2");
@@ -126,6 +131,7 @@ START_TEST(test_ln_param_list_append_array_string)
      params = ln_param_list_append_array_string(params, "test_arg_name_2",
 						 array_len2, array_string2);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_ARRAY_STRING);
      ck_assert_str_eq(entry->value_array_string[0], array_string1[0]);
@@ -153,6 +159,7 @@ START_TEST(test_ln_param_list_append_array_number)
      params = ln_param_list_append_array_number(params, "test_arg_name_2",
 						 array_len2, array_int2);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_ARRAY_NUMBER);
      ck_assert_int_eq(entry->value_array_int[0], (int)array_int1[0]);
@@ -168,6 +175,7 @@ START_TEST(test_ln_param_list_append_array_number)
      params = ln_param_list_append_array_number(params, "test_arg_name_2",
 						 array_len2, array_double2);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_ARRAY_NUMBER);
      ck_assert(entry->value_array_double[0] == array_double1[0]);
@@ -193,6 +201,7 @@ START_TEST(test_ln_param_list_append_array_bool)
      params = ln_param_list_append_array_bool(params, "test_arg_name_2",
 						 array_len2, array_bool2);
      ck_assert_int_eq(ln_param_list_length(params), 2);
+
      entry = ln_param_list_find_by_arg_name(params, "test_arg_name_1");
      ck_assert_int_eq(entry->type, LN_PARAM_ARRAY_BOOL);
      ck_assert_int_eq(entry->value_array_bool[0], array_bool1[0]);

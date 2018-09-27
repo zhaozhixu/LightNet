@@ -43,6 +43,18 @@ void *ln_alloc(size_t size)
      return p;
 }
 
+char *ln_strdup(const char *s)
+{
+     char *new_s;
+
+     new_s = strdup(s);
+     if (new_s == NULL) {
+          err(EXIT_FAILURE, "ln_strdup: strdup(%s) failed", s);
+     }
+
+     return new_s;
+}
+
 void *ln_clone(const void *src, size_t size)
 {
      assert(src);

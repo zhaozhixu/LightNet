@@ -59,12 +59,15 @@ static void elew_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 
 static ln_op_arg op_arg_elew_cuda = {
      .optype = "elew_cuda",
+     .mtype_in = LN_MEM_CUDA,
+     .mtype_out = LN_MEM_CUDA,
 };
 
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_elew_cuda = {
      .op_arg = &op_arg_elew_cuda,
      .pre_run = elew_cuda_pre_run,
+     .static_run = NULL,
      .run = elew_cuda_run,
      .post_run = elew_cuda_post_run
 };

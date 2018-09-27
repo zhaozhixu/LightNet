@@ -30,10 +30,8 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
      ln_op_arg *op_arg;
 
      op_arg = ln_alloc(sizeof(ln_op_arg));
-     op_arg->name = ln_alloc(sizeof(char)*(strlen(name)+1));
-     strcpy(op_arg->name, name);
-     op_arg->optype = ln_alloc(sizeof(char)*(strlen(optype)+1));
-     strcpy(op_arg->optype, optype);
+     op_arg->name = ln_strdup(name);
+     op_arg->optype = ln_strdup(optype);
      op_arg->tensors_in = tensors_in;
      op_arg->tensors_out = tensors_out;
      op_arg->params = params;
@@ -102,11 +100,15 @@ ln_list *ln_op_list_create_from_array(ln_op **op_array)
      return ops;
 }
 
+void ln_op_list_free(ln_list *op_list)
+{
+     ln_list_free(op_list);
+}
+
 static void op_free_lists_too_wrapper(void *p)
 {
-     ln_op *op;
+     ln_op *op = p;
 
-     op = (ln_op *)p;
      ln_tensor_list_free(op->op_arg->tensors_in);
      ln_tensor_list_free(op->op_arg->tensors_out);
      ln_param_list_free(op->op_arg->params);

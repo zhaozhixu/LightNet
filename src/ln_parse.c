@@ -22,7 +22,6 @@
 
 #include <string.h>
 #include <assert.h>
-#include "ln_parse.h"
 #include "ln_op.h"
 #include "cJSON.h"
 
@@ -385,36 +384,37 @@ err:
      return NULL;
 }
 
-ln_list *ln_parse_ops(const char *json_str, ln_list *registered_ops,
-                      ln_hash *tensor_table, ln_error **error)
+ln_list *ln_pass_parse(const char *json_str, ln_list *registered_ops,
+                       ln_hash *tensor_table)
 {
      const cJSON *ops_json;
      const cJSON *op_json;
      cJSON *json;
      ln_list *ops = NULL;
      ln_op *op;
+     ln_error *error = NULL;
 
      json = cJSON_Parse(json_str);
      if (!json) {
-	  *error = ln_error_create(LN_ERROR, "parsing JSON before: %s",
+	  error = ln_error_create(LN_ERROR, "parsing JSON before: %s",
                                    cJSON_GetErrorPtr());
 	  goto err_json;
      }
 
      ops_json = cJSON_GetObjectItem(json, "ops");
      if (!ops_json) {
-	  *error = ln_error_create(LN_ERROR, "top object should have an \"ops\" item");
+	  error = ln_error_create(LN_ERROR, "top object should have an \"ops\" item");
 	  goto err_json;
      }
      if (!cJSON_IsArray(ops_json)) {
-	  *error = ln_error_create(LN_ERROR, "item \"ops\" has to be an Array");
+	  error = ln_error_create(LN_ERROR, "item \"ops\" has to be an Array");
 	  goto err_json;
      }
 
      int i = 0;
      cJSON_ArrayForEach(op_json, ops_json) {
-	  op = parse_op(op_json, registered_ops, tensor_table, i, error);
-	  if (*error) {
+	  op = parse_op(op_json, registered_ops, tensor_table, i, &error);
+	  if (error) {
 	       assert(!op);
 	       goto err_op;
 	  }
@@ -432,9 +432,13 @@ err_op:
       * their post_run()s, then free the ops and their tensor tables and
       * param tables.
       */
-     ln_op_list_do_post_run(ops, error);
+     ln_error_handle(&error);
+     ln_op_list_do_post_run(ops, &error);
+     ln_error_handle(&error);
      ln_op_list_free_lists_too(ops);
+
 err_json:
+     ln_error_handle(&error);
      cJSON_Delete(json);
      return NULL;
 }
