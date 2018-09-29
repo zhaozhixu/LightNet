@@ -238,27 +238,25 @@ LN_CPPEND
 /* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
 #define ln_op_check_tensor_not_defined(level, entry)                    \
      ln_op_check(level, !entry,                                         \
-		 "%s: \"%s\"'s \"%s\" tensor \"%s\" shouldn't have been defined before", \
-		 op_arg->optype, op_arg->name, entry->arg_name, entry->name)
+		 "%s: \"%s\"'s tensor \"%s\" shouldn't have been defined before", \
+		 op_arg->optype, op_arg->name, entry->name)
 
 /* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
 #define ln_op_check_tensor_defined(level, entry)                        \
      ln_op_check(level, entry,                                          \
-		 "%s: \"%s\"'s \"%s\" tensor \"%s\" should have been defined before", \
-		 op_arg->optype, op_arg->name, entry->arg_name, entry->name)
+		 "%s: \"%s\"'s tensor \"%s\" should have been defined before", \
+		 op_arg->optype, op_arg->name, entry->name)
 
 /* entry1 and entry2 should have been checked with ln_op_check_tensor_defined */
 #define ln_op_check_tensor_issameshape(level, entry1, entry2)           \
-     ln_op_check(level, tl_tensor_issameshape(entry1->tensor, entry2->tensor), \
-                 "%s: \"%s\"'s \"%s\" tensor \"%s\" and \"%s\" tensor \"%s\" should be the same shape", \
-                 op_arg->optype, op_arg->name, entry1->arg_name, entry1->name, \
-                 entry2->arg_name, entry2->name)
+                 ln_op_check(level, tl_tensor_issameshape(entry1->tensor, entry2->tensor), \
+                 "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should have the same shape", \
+                 op_arg->optype, op_arg->name, entry1->name, entry2->name)
 
 /* entry1 and entry2 should have been checked with ln_op_check_tensor_defined */
 #define ln_op_check_tensor_issametype(level, entry1, entry2)            \
      ln_op_check(level, entry1->tensor->dtype == entry2->tensor->dtype, \
-                 "%s: \"%s\"'s \"%s\" tensor \"%s\" and \"%s\" tensor \"%s\" should be the same data type", \
-                 op_arg->optype, op_arg->name, entry1->arg_name, entry1->name, \
-                 entry2->arg_name, entry2->name)
+                 "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should be the same data type", \
+                 op_arg->optype, op_arg->name, entry1->name, entry2->name)
 
 #endif  /* _LN_OP_H_ */

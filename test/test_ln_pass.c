@@ -33,17 +33,6 @@ static void teardown(void)
 
 START_TEST(test_ln_pass_mem)
 {
-     ln_hash *mem_pools;
-     ln_mem_pool *mp_cpu, *mp_cuda;
-
-     mp_cpu = ln_mem_pool_create(4096, 1);
-     mp_cuda = ln_mem_pool_create(4096, 1);
-     mem_pools = ln_hash_create(ln_direct_hash, ln_direct_cmp,
-                                NULL, ln_mem_pool_free);
-     ln_hash_insert(mem_pools, (void *)LN_MEM_CPU, mp_cpu);
-     ln_hash_insert(mem_pools, (void *)LN_MEM_CUDA, mp_cuda);
-
-     ln_hash_free(mem_pools);
 }
 END_TEST
 /* end of tests */

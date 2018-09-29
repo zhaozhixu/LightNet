@@ -172,6 +172,8 @@ int ln_hash_insert(ln_hash *hash, void *key, void *value)
 
      for (hash_entry *e = hash->table[idx]; e; e = e->next) {
           if (e->hash_value == hash_value && !hash->cmp_func(key, e->key)) {
+               if (value == e->value)
+                    return 1;
                hash->free_k_func(e->key);
                hash->free_v_func(e->value);
                e->key = key;

@@ -51,7 +51,8 @@ static void teardown(void)
 START_TEST(test_ln_hash)
 {
      ln_hash *hash;
-     test_object *to0, *to2, *to3, *to4, *res;
+     test_object *to0, *to2, *to3, *to4, *to6, *res;
+     int ret;
 
      hash = ln_hash_create_full(ln_direct_hash, ln_direct_cmp,
                                 NULL, test_object_free, 4, 0.75);
@@ -59,10 +60,23 @@ START_TEST(test_ln_hash)
      to2 = test_object_create(2);
      to3 = test_object_create(3);
      to4 = test_object_create(4);
-     ln_hash_insert(hash, (void *)0, to0);
-     ln_hash_insert(hash, (void *)2, to2);
-     ln_hash_insert(hash, (void *)3, to3);
-     ln_hash_insert(hash, (void *)4, to4);
+     to6 = test_object_create(6);
+     ret = ln_hash_insert(hash, (void *)0, to0);
+     ck_assert_int_eq(ret, 1);
+     ret = ln_hash_insert(hash, (void *)2, to2);
+     ck_assert_int_eq(ret, 1);
+     ret = ln_hash_insert(hash, (void *)3, to3);
+     ck_assert_int_eq(ret, 1);
+     ret = ln_hash_insert(hash, (void *)4, to6);
+     ck_assert_int_eq(ret, 1);
+     res = ln_hash_find(hash, (void *)4);
+     ck_assert_int_eq(res->a, 6);
+     ret = ln_hash_insert(hash, (void *)4, to4);
+     ck_assert_int_eq(ret, 0);
+     res = ln_hash_find(hash, (void *)4);
+     ck_assert_int_eq(res->a, 4);
+     ret = ln_hash_insert(hash, (void *)4, to4);
+     ck_assert_int_eq(ret, 1);
      ck_assert_int_eq(ln_hash_size(hash), 4);
 
      res = ln_hash_find(hash, (void *)0);
@@ -76,21 +90,26 @@ START_TEST(test_ln_hash)
      res = ln_hash_find(hash, (void *)5);
      ck_assert_ptr_eq(res, NULL);
 
-     ck_assert_int_eq(ln_hash_remove(hash, (void *)4), 1);
+     ret = ln_hash_remove(hash, (void *)4);
+     ck_assert_int_eq(ret, 1);
      res = ln_hash_find(hash, (void *)4);
      ck_assert_ptr_eq(res, NULL);
      ck_assert_int_eq(ln_hash_size(hash), 3);
-     ck_assert_int_eq(ln_hash_remove(hash, (void *)0), 1);
+     ret = ln_hash_remove(hash, (void *)0);
+     ck_assert_int_eq(ret, 1);
      res = ln_hash_find(hash, (void *)0);
      ck_assert_ptr_eq(res, NULL);
      ck_assert_int_eq(ln_hash_size(hash), 2);
-     ck_assert_int_eq(ln_hash_remove(hash, (void *)2), 1);
+     ret = ln_hash_remove(hash, (void *)2);
+     ck_assert_int_eq(ret, 1);
      res = ln_hash_find(hash, (void *)2);
      ck_assert_ptr_eq(res, NULL);
      ck_assert_int_eq(ln_hash_size(hash), 1);
-     ck_assert_int_eq(ln_hash_remove(hash, (void *)5), 0);
+     ret = ln_hash_remove(hash, (void *)5);
+     ck_assert_int_eq(ret, 0);
      ck_assert_int_eq(ln_hash_size(hash), 1);
-     ck_assert_int_eq(ln_hash_remove(hash, (void *)3), 1);
+     ret = ln_hash_remove(hash, (void *)3);
+     ck_assert_int_eq(ret, 1);
      res = ln_hash_find(hash, (void *)3);
      ck_assert_ptr_eq(res, NULL);
      ck_assert_int_eq(ln_hash_size(hash), 0);
@@ -103,21 +122,10 @@ START_TEST(test_ln_hash)
      ln_hash_insert(hash, (void *)2, to2);
      ln_hash_insert(hash, (void *)3, to3);
      ln_hash_insert(hash, (void *)4, to4);
-     ln_hash_insert(hash, (void *)4, to4);
-
      ck_assert_int_eq(ln_hash_size(hash), 4);
-     res = ln_hash_find(hash, (void *)0);
-     ck_assert_int_eq(res->a, 0);
-     res = ln_hash_find(hash, (void *)2);
-     ck_assert_int_eq(res->a, 2);
-     res = ln_hash_find(hash, (void *)3);
-     ck_assert_int_eq(res->a, 3);
-     res = ln_hash_find(hash, (void *)4);
-     ck_assert_int_eq(res->a, 4);
 
      void *origin_key;
      void *void_res;
-     int ret;
      ret = ln_hash_find_extended(hash, (void *)0, &origin_key, &void_res);
      ck_assert_int_eq(ret, 1);
      ck_assert_int_eq(((test_object *)void_res)->a, 0);

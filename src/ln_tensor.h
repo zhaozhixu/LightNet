@@ -30,7 +30,6 @@
 typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_entry {
      char       *name;
-     char       *arg_name;
      tl_tensor  *tensor;
      size_t      offset;
      int         isstatic;
@@ -45,8 +44,17 @@ ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
 void ln_tensor_list_free(ln_list *list);
 char *ln_tensor_list_find_name(ln_list *list, char *arg_name);
 int ln_tensor_list_length(ln_list *list);
+
+ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);
+void ln_tensor_entry_free(ln_tensor_entry *entry);
+void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry);
+/*
+ * When removes or deconstructions or insert-different-tensor-with-same-names
+ * happen, this table will free the table entry and the tensor,
+ * but not the tensor->data. So we should always insert tensors with NULL data.
+ */
 ln_hash *ln_tensor_table_create(void);
-int ln_tensor_table_insert(ln_hash *table, char *name, tl_tensor *tensor);
+int ln_tensor_table_insert(ln_hash *table, char *name, ln_tensor_entry *entry);
 int ln_tensor_table_remove(ln_hash *table, char *name);
 ln_tensor_entry *ln_tensor_table_find(ln_hash *table, char *name);
 void ln_tensor_table_free(ln_hash *table);

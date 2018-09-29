@@ -103,7 +103,8 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
      dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim,
                                    src2_entry->tensor->dims,
                                    src1_entry->tensor->dtype);
-     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_tensor);
+     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
      /* use op_arg->priv to store private data to be used in other functions */
      priv = ln_alloc(sizeof(struct priv_s));
@@ -134,7 +135,6 @@ static void elew_post_run(ln_op_arg *op_arg, ln_error **error)
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     tl_tensor_free(priv->dst);
      ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
