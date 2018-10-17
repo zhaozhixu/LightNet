@@ -366,17 +366,9 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *registered_ops,
 
      op = ln_op_create_from_proto(proto_op, name_json->valuestring, tensors_in,
                                   tensors_out, params, tensor_table);
-     /*
-      * op->pre_run() runs here, because we need it to register tensors
-      */
-     op->pre_run(op->op_arg, error);
-     if (*error)
-	  goto err_pre_run;
 
      return op;
 
-err_pre_run:
-     ln_op_free(op);
 err:
      ln_param_list_free(params);
      ln_tensor_list_free(tensors_in);
@@ -426,14 +418,6 @@ ln_list *ln_pass_parse(const char *json_str, ln_list *registered_ops,
      return ops;
 
 err_op:
-     /*
-      * If error occurs in the middle of parsing an op, we should undo
-      * everything done by previous ops' successful pre_run()s, by calling
-      * their post_run()s, then free the ops and their tensor tables and
-      * param tables.
-      */
-     ln_error_handle(&error);
-     ln_op_list_do_post_run(ops, &error);
      ln_error_handle(&error);
      ln_op_list_free_lists_too(ops);
 

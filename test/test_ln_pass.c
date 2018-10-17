@@ -268,8 +268,6 @@ START_TEST(test_ln_pass_parse)
      ck_assert_int_eq(param_entry->type, LN_PARAM_ARRAY_NUMBER);
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,2,4), 2);
 
-     ln_op_list_do_post_run(ops, &error);
-     ln_error_handle(&error);
      ln_op_list_free_lists_too(ops);
      ln_tensor_table_free(table);
 }
@@ -286,13 +284,14 @@ START_TEST(test_ln_pass_mem)
      ln_list *ops;
      ln_mem_pool *mem_pool_cpu;
      ln_hash *mem_pools;
-     ln_error *error = NULL;
 
      mem_pool_cpu = ln_mem_pool_create(4096, 1);
      mem_pools = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, mem_pool_free_wrapper);
      ln_hash_insert(mem_pools, (void *)LN_MEM_CPU, mem_pool_cpu);
      table = ln_tensor_table_create();
+
      ops = ln_pass_parse(json_str, reg_ops, table);
+     ln_op_list_do_pre_run(ops, &error);
 
      ops = ln_pass_mem(ops, mem_pools);
 

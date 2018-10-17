@@ -62,7 +62,7 @@ ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)
      mem_pool = ln_alloc(sizeof(ln_mem_pool));
      mem_pool->size = size;
      mem_pool->align_size = align_size;
-     minfo = mem_info_create(HOLE, 0, size);
+     minfo = mem_info_create(HOLE, 1, size);
      mem_pool->mem_blocks = ln_list_append(NULL, minfo);
 
      return mem_pool;
@@ -145,7 +145,6 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
                                                hole_minfo, fit_idx);
      new_minfo->start = align_start;
      new_minfo->size -= hole_size;
-     best_fit(mem_pool, 8);
      return align_start;
 }
 

@@ -24,8 +24,8 @@
 #include "ln_util.h"
 
 struct list_entry {
-     char *arg_name;
      char *name;
+     char *arg_name;
 };
 
 static struct list_entry *list_entry_create(const char *arg_name,
