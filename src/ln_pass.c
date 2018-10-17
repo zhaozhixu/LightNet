@@ -76,6 +76,8 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
           LN_LIST_FOREACH(te, arg->tensors_out) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
+               if (te->owner)
+                    continue;
                if (te->isstatic) {
                     te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
                     continue;
@@ -87,6 +89,10 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
           }
           LN_LIST_FOREACH(te, arg->tensors_in) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
+               if (te->owner) {
+                    use_count_inc(use_counts, te->owner);
+                    continue;
+               }
                if (te->isstatic)
                     continue;
                use_count_inc(use_counts, te->name);
@@ -99,6 +105,8 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
           LN_LIST_FOREACH(te, arg->tensors_out) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
+               if (te->owner)
+                    continue;
                if (te->isstatic)
                     continue;
                if (ln_mem_exist(mp, te->offset))
@@ -116,6 +124,12 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
           mp = ln_hash_find(mem_pools, (void *)arg->mtype_in);
           LN_LIST_FOREACH(te, arg->tensors_in) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
+               if (te->owner) {
+                    if (use_count_dec(use_counts, te->owner) == 0)
+                         ln_mem_free(mp, ln_tensor_table_find(arg->tensor_table,
+                                                              te->owner)->offset);
+                    continue;
+               }
                if (te->isstatic)
                     continue;
                if (use_count_dec(use_counts, te->name) == 0)

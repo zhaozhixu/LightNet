@@ -27,6 +27,8 @@ struct priv_s {
      tl_tensor *src;
      tl_tensor *dst;
      tl_tensor *arg;
+     char      *dst_name;
+     char      *arg_name;
      int        axis;
 };
 
@@ -37,6 +39,7 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      char *src_name, *dst_name, *arg_name;
      ln_tensor_entry *src_entry, *dst_entry, *arg_entry;
+     tl_tensor *dst_tensor, *arg_tensor;
      ln_param_entry *axis_entry;
      int tensors_n, params_n;
      int axis;
@@ -78,17 +81,24 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_satisfy(LN_ERROR,
                                axis >= 0 && axis < src_entry->tensor->ndim);
 
-     /* allocate memory in need */
-     dst_entry->tensor = tl_tensor_create_slice(src_entry->tensor, axis, 1,
-                                                src_entry->tensor->dtype);
-     if (arg_entry)
-          arg_entry->tensor = tl_tensor_create_slice(src_entry->tensor, axis, 1,
-                                                     src_entry->tensor->dtype);
+     /* define output tensor shape, tensor data should be NULL */
+     dst_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, 1,
+                                         src_entry->tensor->dtype);
+     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
+     if (arg_name) {
+          arg_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, 1,
+                                              src_entry->tensor->dtype);
+          arg_entry = ln_tensor_entry_create(arg_name, arg_tensor);
+          ln_tensor_table_insert(op_arg->tensor_table, arg_name, arg_entry);
+     }
 
      priv = ln_alloc(sizeof(struct priv_s));
      priv->src = src_entry->tensor;
      priv->dst = dst_entry->tensor;
-     priv->arg = arg_entry ? arg_entry->tensor : NULL;
+     priv->arg = arg_name ? arg_entry->tensor : NULL;
+     priv->dst_name = dst_name;
+     priv->arg_name = arg_name;
      priv->axis = axis;
      op_arg->priv = priv;
 }
@@ -115,8 +125,9 @@ static void maxreduce_post_run(ln_op_arg *op_arg, ln_error **error)
 
      /* free the tensor memory allocated in pre_run() */
      priv = op_arg->priv;
-     tl_tensor_free_data_too(priv->dst);
-     tl_tensor_free_data_too(priv->arg);
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
+     if (priv->arg_name)
+          ln_tensor_table_remove(op_arg->tensor_table, priv->arg_name);
      ln_free(op_arg->priv);
 }
 

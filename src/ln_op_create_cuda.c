@@ -145,7 +145,7 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      op_arg->priv = priv;
 }
 
-/* This function runs only once per instance in the begining of runtime. */
+/* This function runs only once per instance right after memory allocation. */
 static void create_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;

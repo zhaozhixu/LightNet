@@ -39,7 +39,6 @@ int main(int argc, char **argv)
      srunner_add_suite(sr, make_param_suite());
      srunner_add_suite(sr, make_tensor_suite());
      srunner_add_suite(sr, make_op_suite());
-     srunner_add_suite(sr, make_parse_suite());
      srunner_add_suite(sr, make_mem_suite());
      srunner_add_suite(sr, make_pass_suite());
      /* end of adding suites */

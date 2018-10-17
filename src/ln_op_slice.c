@@ -26,6 +26,7 @@
 struct priv_s {
      tl_tensor *src;
      tl_tensor *dst;
+     char      *dst_name;
      int        axis;
      int        start;
      int        len;
@@ -38,6 +39,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      char *dst_name, *src_name;
      ln_tensor_entry *dst_entry, *src_entry;
+     tl_tensor *dst_tensor;
      ln_param_entry *axis_entry, *start_entry, *len_entry;
      int tensors_n, params_n;
      int axis, start, len;
@@ -87,13 +89,16 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_satisfy(LN_ERROR,
 			      len + start <= src_entry->tensor->dims[axis]);
 
-     /* allocate memory in need */
-     dst_entry->tensor = tl_tensor_create_slice(src_entry->tensor, axis, len,
-						src_entry->tensor->dtype);
+     /* define output tensor shape, tensor data should be NULL */
+     dst_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, len,
+                                         src_entry->tensor->dtype);
+     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
      priv = ln_alloc(sizeof(struct priv_s));
      priv->src = src_entry->tensor;
      priv->dst = dst_entry->tensor;
+     priv->dst_name = dst_name;
      priv->axis = axis;
      priv->start = start;
      priv->len = len;
@@ -101,14 +106,12 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations.
  */
 static void slice_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* do the real work */
      priv = op_arg->priv;
      tl_tensor_slice(priv->src, priv->dst, priv->axis, priv->start, priv->len);
 }
@@ -120,9 +123,8 @@ static void slice_post_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* free the tensor memory allocated in pre_run() */
      priv = op_arg->priv;
-     tl_tensor_free_data_too(priv->dst);
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
 

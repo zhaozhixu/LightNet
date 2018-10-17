@@ -117,7 +117,7 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * This function should only do the calculations here.
+ * This function should only do the calculations.
  */
 static void elew_run(ln_op_arg *op_arg, ln_error **error)
 {

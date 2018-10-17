@@ -26,6 +26,7 @@
 struct priv_s {
      tl_tensor *src;
      tl_tensor *dst;
+     char      *dst_name;
      int       *axes;
      tl_tensor *workspace;
 };
@@ -37,6 +38,7 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      char *src_name, *dst_name;
      ln_tensor_entry *src_entry, *dst_entry;
+     tl_tensor *dst_tensor;
      ln_param_entry *axes_entry;
      int tensors_n, params_n;
      int *axes;
@@ -77,34 +79,40 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
                                         "\"axes\" should match \"src\" tensor's shape");
      ln_free(tmp);
 
-     /* allocate memory in need */
      int *d_dims = ln_alloc(src_entry->tensor->ndim * sizeof(int));
      for (i = 0; i < src_entry->tensor->ndim; i++)
           d_dims[i] = src_entry->tensor->dims[axes[i]];
-     dst_entry->tensor = tl_tensor_zeros(src_entry->tensor->ndim, d_dims,
-                                         src_entry->tensor->dtype);
+     dst_tensor = tl_tensor_create(NULL, src_entry->tensor->ndim, d_dims,
+                                   src_entry->tensor->dtype);
+     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
      ln_free(d_dims);
-
-     /* allocate workspace */
-     tl_tensor *workspace = tl_tensor_zeros(1, (int[]){dst_entry->tensor->ndim*dst_entry->tensor->len*2}, TL_INT32);
 
      priv = ln_alloc(sizeof(struct priv_s));
      priv->src = src_entry->tensor;
      priv->dst = dst_entry->tensor;
+     priv->dst_name = dst_name;
      priv->axes = axes;
-     priv->workspace = workspace;
+     priv->workspace = NULL;
      op_arg->priv = priv;
 }
 
+/* This function runs only once per instance right after memory allocation. */
+static void transpose_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+     struct priv_s *priv;
+
+     priv = op_arg->priv;
+     priv->workspace = tl_tensor_zeros(1, (int[]){priv->dst->ndim*priv->dst->len*2}, TL_INT32);
+}
+
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations.
  */
 static void transpose_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* do the real work */
      priv = op_arg->priv;
      tl_tensor_transpose(priv->src, priv->dst, priv->axes, priv->workspace);
 }
@@ -116,13 +124,13 @@ static void transpose_post_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* free the tensor memory allocated in pre_run() */
      priv = op_arg->priv;
-     tl_tensor_free_data_too(priv->dst);
      tl_tensor_free_data_too(priv->workspace);
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
 
+/* specify other ln_op_arg fields */
 static ln_op_arg op_arg_transpose = {
      .optype = "transpose",
      .mtype_in = LN_MEM_CPU,
@@ -133,7 +141,7 @@ static ln_op_arg op_arg_transpose = {
 ln_op ln_opimpl_transpose = {
      .op_arg = &op_arg_transpose,
      .pre_run = transpose_pre_run,
-     .static_run = NULL,
+     .static_run = transpose_static_run,
      .run = transpose_run,
      .post_run = transpose_post_run
 };

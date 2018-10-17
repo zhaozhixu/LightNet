@@ -31,6 +31,7 @@ typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_entry {
      char       *name;
      tl_tensor  *tensor;
+     char       *owner;         /* owner of the tensor data */
      size_t      offset;
      int         isstatic;
 };
@@ -48,6 +49,9 @@ int ln_tensor_list_length(ln_list *list);
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);
 void ln_tensor_entry_free(ln_tensor_entry *entry);
 void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry);
+void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
+                               char *direct_owner);
+
 /*
  * When removes or deconstructions or insert-different-tensor-with-same-names
  * happen, this table will free the table entry and the tensor,

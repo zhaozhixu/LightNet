@@ -33,6 +33,12 @@ static inline int compute_length(int ndim, const int *dims)
      return len;
 }
 
+struct priv_s {
+     char      *dst_name;
+     tl_tensor *dst_tensor;
+     tl_tensor *src_tensor;
+};
+
 /*
  * This function should do the parameter checking and memory allocation.
  */
@@ -40,9 +46,11 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      char *dst_name, *src_name;
      ln_tensor_entry *dst_entry, *src_entry;
+     tl_tensor *dst_tensor;
      ln_param_entry *dims_entry;
      int tensors_n, params_n;
      int *dims, ndim, i;
+     struct priv_s *priv;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
@@ -79,34 +87,50 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
                                    src_entry->tensor->len == compute_length(ndim, dims),
                                    "\"src\" tensor length is not equal with requested length");
 
-     /* Allocate memory in need. */
-     dst_entry->tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
+     /* define output tensor shape, tensor data should be NULL */
+     dst_tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
+     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, src_name);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
-     op_arg->priv = dst_entry->tensor;
+     /* use op_arg->priv to store private data to be used in other functions */
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->dst_name = dst_name;
+     priv->dst_tensor = dst_tensor;
+     priv->src_tensor = src_entry->tensor;
+     op_arg->priv = priv;
+}
+
+/* This function runs only once per instance right after memory allocation. */
+static void reshape_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+     struct priv_s *priv;
+
+     priv = op_arg->priv;
+     priv->dst_tensor->data = priv->src_tensor->data;
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run(). But since this is an "in-place" reshape,
- * operation don't need to allocate data memory for "dst" tensor.
+ * This function should only do the calculations.
  */
 static void reshape_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* do the real work */
 }
 
 /*
- * This function should free all memory that pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
 static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /*
-      * Only free the tensor struct, not its data shared with src.
-      */
-     tl_tensor_free(op_arg->priv);
+     struct priv_s *priv;
+
+     priv = op_arg->priv;
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
+     ln_free(op_arg->priv);
 }
 
+/* specify other ln_op_arg fields */
 static ln_op_arg op_arg_reshape = {
      .optype = "reshape",
      .mtype_in = LN_MEM_CPU,
@@ -116,7 +140,7 @@ static ln_op_arg op_arg_reshape = {
 ln_op ln_opimpl_reshape = {
      .op_arg = &op_arg_reshape,
      .pre_run = reshape_pre_run,
-     .static_run = NULL,
+     .static_run = reshape_static_run,
      .run = reshape_run,
      .post_run = reshape_post_run
 };

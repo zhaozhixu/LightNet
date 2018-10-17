@@ -99,6 +99,7 @@ ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)
      entry = ln_alloc(sizeof(ln_tensor_entry));
      entry->name = ln_strdup(name);
      entry->tensor = tensor;
+     entry->owner = NULL;
      entry->offset = 0;
      entry->isstatic = 0;
 
@@ -121,6 +122,19 @@ void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)
 static void tensor_entry_free_tensor_too_wrapper(void *p)
 {
      ln_tensor_entry_free_tensor_too(p);
+}
+
+void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
+                               char *direct_owner)
+{
+     ln_tensor_entry *te;
+
+     assert(entry->name != direct_owner);
+
+     te = ln_tensor_table_find(tensor_table, direct_owner);
+     while (te->owner)
+          te = ln_tensor_table_find(tensor_table, te->owner);
+     entry->owner = te->name;
 }
 
 ln_hash *ln_tensor_table_create(void)
