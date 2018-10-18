@@ -376,8 +376,39 @@ err:
      return NULL;
 }
 
-/* the first element of returned array is the number of newlines */
-static int *get_newline_indices(char *json_str)
+#define RECORD_NEWLINE                                                  \
+     do {                                                               \
+          if (i >= array_size) {                                        \
+               array_size *= 2;                                         \
+               array = ln_realloc(array, sizeof(int)*array_size);       \
+          }                                                             \
+          array[0] = i;                                                 \
+          array[i++] = p - json_str;                                    \
+     } while (0)
+
+static int line_num(int index, int *newline_indices)
+{
+     int *array = newline_indices + 1;
+     int len = newline_indices[0];
+     int low = 0, high = len - 1, mid;
+
+     while (low <= high) {
+          mid = (high - low) / 2 + low;
+          if (array[mid] < index)
+               low = mid + 1;
+          else if (array[mid] > index)
+               high = mid - 1;
+          else
+               break;
+     }
+
+     return array[mid] <= index ? mid + 1 : mid;
+}
+
+/* Replace comments to blanks, and record newlines' positions.
+   The first element of returned array is the number of newlines,
+   and others are positions of newlines. */
+static int *preprocess(char *json_str)
 {
      int *array;
      char *p;
@@ -386,23 +417,16 @@ static int *get_newline_indices(char *json_str)
 
      array = ln_realloc(NULL, sizeof(int)*array_size);
 
-     for (p = json_str; *p; p++) {
-          if (*p == '\n') {
-               if (i >= array_size) {
-                    array_size *= 2;
-               }
-               array[i++] = p - json_str;
-          }
-     }
-
-     return array;
-}
-
-static void comment_to_blank(char *json_str)
-{
      for (char *p = json_str; *p; p++) {
+          if (*p == '\n') {
+               RECORD_NEWLINE;
+               continue;
+          }
           if (*p == '\"') {
-               for (p++; *p && *p != '\"'; p++)
+               for (p++; *p && *p != '\"'; p++) {
+                    if (*p == '\n')
+                         RECORD_NEWLINE;
+               }
                     ;
                if (!*p)
                     break;
@@ -413,13 +437,16 @@ static void comment_to_blank(char *json_str)
                     *p = ' ';
                if (!*p)
                     break;
+               RECORD_NEWLINE;
                continue;
           }
           if (*p == '/' && *(p+1) == '*') {
                char *mark = p;  /* TODO: strdup */
                for (; *p && !(*p == '*' && *(p+1) == '/'); p++) {
-                    if (*p == '\n')
+                    if (*p == '\n') {
+                         RECORD_NEWLINE;
                          continue;
+                    }
                     *p = ' ';
                }
                if (!*p)
@@ -429,6 +456,8 @@ static void comment_to_blank(char *json_str)
                continue;
           }
      }
+
+     return array;
 }
 
 ln_list *ln_parse(char *json_str, ln_list *registered_ops,
@@ -442,11 +471,10 @@ ln_list *ln_parse(char *json_str, ln_list *registered_ops,
      ln_op *op;
      ln_error *error = NULL;
 
-     newline_indices = get_newline_indices(json_str);
-     comment_to_blank(json_str);
+     newline_indices = preprocess(json_str);
      json = cJSON_Parse(json_str);
      if (!json) {
-	  error = ln_error_create(LN_ERROR, "parsing JSON before: %s",
+	  error = ln_error_create(LN_ERROR, "%s",
                                    cJSON_GetErrorPtr());
 	  goto err_json;
      }

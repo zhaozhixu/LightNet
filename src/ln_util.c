@@ -44,11 +44,11 @@ void *ln_alloc(size_t size)
      return p;
 }
 
-void *ln_realloc(void *p, size_t size)
+void *ln_realloc(void *ptr, size_t size)
 {
      void *p;
 
-     p = realloc(p, size);
+     p = realloc(ptr, size);
      if (p == NULL && size != 0) {
           err(EXIT_FAILURE, "ln_realloc: realloc() failed");
      }
