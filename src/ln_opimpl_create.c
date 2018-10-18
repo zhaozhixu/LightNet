@@ -108,7 +108,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check(LN_ERROR,
                  data_entry->type == LN_PARAM_ARRAY_NUMBER
                  || data_entry->type == LN_PARAM_NULL,
-                 "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but got a %s",
+                 "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but gets a %s",
                  op_arg->optype, op_arg->name, data_entry->arg_name,
                  ln_param_type_name(LN_PARAM_ARRAY_NUMBER),
                  ln_param_type_name(LN_PARAM_NULL),

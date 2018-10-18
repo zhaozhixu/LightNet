@@ -26,7 +26,6 @@
 
 static char *json_str;
 static ln_list *reg_ops;
-static ln_error *error = NULL;
 
 extern ln_op *ln_init_ops[];
 

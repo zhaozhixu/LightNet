@@ -60,7 +60,7 @@ START_TEST(test_ln_pass_mem)
 
      mem_pools = ln_hash_create(ln_direct_hash , ln_direct_cmp, NULL, mem_pools_free_wrapper);
      mem_pool_cpu = ln_mem_pool_create(4096, 1);
-     ln_hash_insert(mem_pools, LN_MEM_CPU, mem_pool_cpu);
+     ln_hash_insert(mem_pools, (void *)LN_MEM_CPU, mem_pool_cpu);
 
      ln_op_list_do_pre_run(ops, &error);
      ln_error_handle(&error);
@@ -86,6 +86,11 @@ START_TEST(test_ln_pass_mem)
      ln_hash_free(mem_pools);
 }
 END_TEST
+
+START_TEST(test_ln_pass_peephole)
+{
+}
+END_TEST
 /* end of tests */
 
 Suite *make_pass_suite(void)
@@ -98,6 +103,7 @@ Suite *make_pass_suite(void)
      tcase_add_checked_fixture(tc_pass, checked_setup, checked_teardown);
 
      tcase_add_test(tc_pass, test_ln_pass_mem);
+     tcase_add_test(tc_pass, test_ln_pass_peephole);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_pass);

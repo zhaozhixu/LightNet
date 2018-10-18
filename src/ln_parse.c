@@ -160,13 +160,13 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *registered_ops,
      cJSON *params_json = cJSON_GetObjectItem(op_json, "params");
      if (!name_json) {
 	  *error = ln_error_create(LN_ERROR,
-				   "one of the ops doesn't have a \"name\" key at op index %d",
+                                   "ops[%d] doesn't have a \"name\" key",
 				   idx);
 	  goto err;
      }
      if (!cJSON_IsString(name_json)) {
 	  *error = ln_error_create(LN_ERROR,
-				   "one of the ops's name is not a String at op index %d",
+                                   "ops[%d]'s name is not a String",
 				   idx);
 	  goto err;
      }
@@ -376,9 +376,65 @@ err:
      return NULL;
 }
 
-ln_list *ln_parse(const char *json_str, ln_list *registered_ops,
-                       ln_hash *tensor_table)
+/* the first element of returned array is the number of newlines */
+static int *get_newline_indices(char *json_str)
 {
+     int *array;
+     char *p;
+     int array_size = 256;
+     int i = 1;
+
+     array = ln_realloc(NULL, sizeof(int)*array_size);
+
+     for (p = json_str; *p; p++) {
+          if (*p == '\n') {
+               if (i >= array_size) {
+                    array_size *= 2;
+               }
+               array[i++] = p - json_str;
+          }
+     }
+
+     return array;
+}
+
+static void comment_to_blank(char *json_str)
+{
+     for (char *p = json_str; *p; p++) {
+          if (*p == '\"') {
+               for (p++; *p && *p != '\"'; p++)
+                    ;
+               if (!*p)
+                    break;
+               continue;
+          }
+          if (*p == '/' && *(p+1) == '/') {
+               for (; *p && *p != '\n'; p++)
+                    *p = ' ';
+               if (!*p)
+                    break;
+               continue;
+          }
+          if (*p == '/' && *(p+1) == '*') {
+               char *mark = p;  /* TODO: strdup */
+               for (; *p && !(*p == '*' && *(p+1) == '/'); p++) {
+                    if (*p == '\n')
+                         continue;
+                    *p = ' ';
+               }
+               if (!*p)
+                    ln_error_emit(LN_ERROR, "unterminated comment: %s", mark);
+               *p++ = ' ';
+               *p = ' ';
+               continue;
+          }
+     }
+}
+
+ln_list *ln_parse(char *json_str, ln_list *registered_ops,
+                  ln_hash *tensor_table)
+{
+     int *newline_indices;
      const cJSON *ops_json;
      const cJSON *op_json;
      cJSON *json;
@@ -386,6 +442,8 @@ ln_list *ln_parse(const char *json_str, ln_list *registered_ops,
      ln_op *op;
      ln_error *error = NULL;
 
+     newline_indices = get_newline_indices(json_str);
+     comment_to_blank(json_str);
      json = cJSON_Parse(json_str);
      if (!json) {
 	  error = ln_error_create(LN_ERROR, "parsing JSON before: %s",

@@ -35,8 +35,8 @@ static inline ssize_t use_count_inc(ln_hash *use_counts, char *name)
 
      found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
      assert(found);
-     ln_hash_insert(use_counts, name, (void *)(uc+1));
-     return uc + 1;
+     ln_hash_insert(use_counts, name, (void *)(++uc));
+     return uc;
 }
 
 static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
@@ -46,9 +46,9 @@ static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
 
      found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
      assert(found);
-     ln_hash_insert(use_counts, name, (void *)(uc-1));
+     ln_hash_insert(use_counts, name, (void *)(--uc));
      assert(uc >= 0);
-     return uc - 1;
+     return uc;
 }
 
 static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
