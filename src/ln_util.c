@@ -28,6 +28,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <sys/stat.h>
 
 #include "ln_util.h"
 
@@ -73,6 +74,28 @@ void *ln_repeat(void *data, size_t size, int times)
      for (i = 0; i < times; i++, p = (char *)p + size * times)
           memmove(p, data, size);
      return dst;
+}
+
+char *ln_read_text(const char *file_name)
+{
+     struct stat buf;
+     FILE *fp;
+     size_t n;
+     char *str;
+
+     if (stat(file_name, &buf) < 0)
+          err(EXIT_FAILURE, "ln_read_text: cannot stat %s", file_name);
+
+     if (!(fp = fopen(file_name, "rb")))
+          err(EXIT_FAILURE, "ln_read_text: cannot open %s", file_name);
+
+     str = ln_alloc(buf.st_size+1);
+     n = fread(str, buf.st_size, 1, fp);
+     if (n < 1 && ferror(fp))
+          err(EXIT_FAILURE, "ln_read_text: cannot read %s", file_name);
+
+     fclose(fp);
+     return str;
 }
 
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)

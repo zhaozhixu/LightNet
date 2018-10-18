@@ -23,11 +23,11 @@
 #include "test_lightnet.h"
 #include "../src/ln_mem.h"
 
-static void setup(void)
+static void checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 
@@ -116,7 +116,7 @@ Suite *make_mem_suite(void)
 
      s = suite_create("mem");
      tc_mem = tcase_create("mem");
-     tcase_add_checked_fixture(tc_mem, setup, teardown);
+     tcase_add_checked_fixture(tc_mem, checked_setup, checked_teardown);
 
      tcase_add_test(tc_mem, test_ln_mem_pool_create);
      tcase_add_test(tc_mem, test_ln_mem_pool_free);

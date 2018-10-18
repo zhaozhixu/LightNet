@@ -35,11 +35,9 @@ LN_CPPSTART
 
 ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools);
 ln_list *ln_pass_peephole(ln_list *ops, ln_peephole_func *ph_funcs);
-ln_list *ln_pass_parse(const char *json_str, ln_list *registered_ops,
-                       ln_hash *tensor_table);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif  /* _LN_OPTIMIZE_H_ */
+#endif  /* _LN_PASS_H_ */

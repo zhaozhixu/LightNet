@@ -51,6 +51,7 @@ char *ln_strdup(const char *s);
 char *ln_path_alloc(size_t *sizep);
 void *ln_clone(const void *src, size_t size);
 void *ln_repeat(void *data, size_t size, int times);
+char *ln_read_text(const char *file_name);
 void ln_err_msg(const char *fmt, ...);
 void ln_err_cont(int error, const char *fmt, ...);
 void ln_err_ret(const char *fmt, ...);

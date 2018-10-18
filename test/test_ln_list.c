@@ -38,7 +38,7 @@ static void free_int_wrapper(void *p)
      free_int(p);
 }
 
-static void setup(void)
+static void checked_setup(void)
 {
      int i;
      list = NULL;
@@ -50,7 +50,7 @@ static void setup(void)
      }
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
      ln_free(data);
      ln_list_free(list);
@@ -296,7 +296,7 @@ Suite *make_list_suite(void)
 
      TCase *tc_list;
      tc_list = tcase_create("tc_list");
-     tcase_add_checked_fixture(tc_list, setup, teardown);
+     tcase_add_checked_fixture(tc_list, checked_setup, checked_teardown);
 
      tcase_add_test(tc_list, test_ln_list_append_nth);
      tcase_add_test(tc_list, test_ln_list_remove);

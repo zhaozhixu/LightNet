@@ -25,11 +25,11 @@
 
 #define ARR(type, varg...) (type[]){varg}
 
-static void setup(void)
+static void checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 
@@ -105,7 +105,7 @@ Suite *make_tensor_suite(void)
 
      s = suite_create("tensor");
      tc_tensor = tcase_create("tensor");
-     tcase_add_checked_fixture(tc_tensor, setup, teardown);
+     tcase_add_checked_fixture(tc_tensor, checked_setup, checked_teardown);
 
      tcase_add_test(tc_tensor, test_ln_tensor_list);
      tcase_add_test(tc_tensor, test_ln_tensor_table);

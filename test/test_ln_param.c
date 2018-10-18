@@ -23,11 +23,11 @@
 #include "test_lightnet.h"
 #include "../src/ln_param.h"
 
-static void setup(void)
+static void checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 
@@ -248,7 +248,7 @@ Suite *make_param_suite(void)
 
      s = suite_create("param");
      tc_param = tcase_create("param");
-     tcase_add_checked_fixture(tc_param, setup, teardown);
+     tcase_add_checked_fixture(tc_param, checked_setup, checked_teardown);
 
      tcase_add_test(tc_param, test_ln_param_list_append_string);
      tcase_add_test(tc_param, test_ln_param_list_append_number);

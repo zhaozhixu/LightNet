@@ -20,31 +20,21 @@
  * SOFTWARE.
  */
 
-#include "test_lightnet.h"
+#ifndef _LN_PARSE_H_
+#define _LN_PARSE_H_
 
-static void checked_setup(void)
-{
-}
+#include "ln_list.h"
+#include "ln_hash.h"
 
-static void checked_teardown(void)
-{
-}
+#ifdef __cplusplus
+LN_CPPSTART
+#endif
 
-/* end of tests */
+ln_list *ln_parse(const char *json_str, ln_list *registered_ops,
+                  ln_hash *tensor_table);
 
-Suite *make_master_suite(void)
-{
-     Suite *s;
-     TCase *tc_master;
+#ifdef __cplusplus
+LN_CPPEND
+#endif
 
-     s = suite_create("master");
-     tc_master = tcase_create("master");
-     tcase_add_checked_fixture(tc_master, checked_setup, checked_teardown);
-
-
-     /* end of adding tests */
-
-     suite_add_tcase(s, tc_master);
-
-     return s;
-}
+#endif  /* _LN_PARSE_H_ */

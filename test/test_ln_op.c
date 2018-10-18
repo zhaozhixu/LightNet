@@ -134,12 +134,12 @@ static ln_op *op_array[] = {
 
 static ln_list *test_op_list;
 
-static void setup(void)
+static void checked_setup(void)
 {
      test_op_list = ln_op_list_create_from_array(op_array);
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
      ln_op_list_free(test_op_list);
 }
@@ -302,7 +302,7 @@ Suite *make_op_suite(void)
 
      s = suite_create("op");
      tc_op = tcase_create("op");
-     tcase_add_checked_fixture(tc_op, setup, teardown);
+     tcase_add_checked_fixture(tc_op, checked_setup, checked_teardown);
 
      tcase_add_test(tc_op, test_ln_op_list_create_from_array);
      tcase_add_test(tc_op, test_ln_op_list_free);

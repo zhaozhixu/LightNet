@@ -376,7 +376,7 @@ err:
      return NULL;
 }
 
-ln_list *ln_pass_parse(const char *json_str, ln_list *registered_ops,
+ln_list *ln_parse(const char *json_str, ln_list *registered_ops,
                        ln_hash *tensor_table)
 {
      const cJSON *ops_json;

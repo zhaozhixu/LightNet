@@ -24,11 +24,11 @@
 #include "test_lightnet.h"
 #include "../src/ln_error.h"
 
-static void setup(void)
+static void checked_checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 
@@ -97,7 +97,7 @@ Suite *make_error_suite(void)
 
      s = suite_create("error");
      tc_error = tcase_create("error");
-     tcase_add_checked_fixture(tc_error, setup, teardown);
+     tcase_add_checked_fixture(tc_error, checked_checked_setup, checked_teardown);
 
      tcase_add_test(tc_error, test_ln_error_create);
      tcase_add_test(tc_error, test_ln_error_handle);

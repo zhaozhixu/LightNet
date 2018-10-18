@@ -20,31 +20,54 @@
  * SOFTWARE.
  */
 
+#include <sys/stat.h>
+#include <errno.h>
 #include "test_lightnet.h"
+#include "../src/ln_op.h"
+#include "../src/ln_pass.h"
+
+static ln_list *reg_ops;
+static ln_error *error = NULL;
+static ln_hash *tensor_table;
+
+extern ln_op *ln_init_ops[];
 
 static void checked_setup(void)
 {
+     reg_ops = ln_op_list_create_from_array(ln_init_ops);
+     tensor_table = ln_tensor_table_create();
 }
 
 static void checked_teardown(void)
 {
+     ln_tensor_table_free(tensor_table);
+     ln_op_list_free(reg_ops);
 }
 
+START_TEST(test_ln_opimpl_create)
+{
+     ln_op *op;
+     ln_list *ops;
+     char *json_str;
+
+     json_str = ln_read_text("test_ops.json");
+}
+END_TEST
 /* end of tests */
 
-Suite *make_master_suite(void)
+Suite *make_opimpl_suite(void)
 {
      Suite *s;
-     TCase *tc_master;
+     TCase *tc_opimpl;
 
-     s = suite_create("master");
-     tc_master = tcase_create("master");
-     tcase_add_checked_fixture(tc_master, checked_setup, checked_teardown);
+     s = suite_create("opimpl");
+     tc_opimpl = tcase_create("opimpl");
+     tcase_add_checked_fixture(tc_opimpl, checked_setup, checked_teardown);
 
-
+     tcase_add_test(tc_opimpl, test_ln_opimpl_create);
      /* end of adding tests */
 
-     suite_add_tcase(s, tc_master);
+     suite_add_tcase(s, tc_opimpl);
 
      return s;
 }

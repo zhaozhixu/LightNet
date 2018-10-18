@@ -197,6 +197,7 @@ void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp)
 {
      mem_info *minfo;
 
+     fprintf(fp, "======= Lightnet Memory map: =======\n");
      LN_LIST_FOREACH(minfo, mem_pool->mem_blocks) {
           fprintf(fp, "0x%012lx-0x%012lx %s\n", minfo->start,
                   minfo->start+minfo->size-1, minfo->flag==HOLE?"H":"S");

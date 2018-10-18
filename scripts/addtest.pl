@@ -71,11 +71,11 @@ my $suite_tpl = <<EOF;
 #include "test_lightnet.h"
 #include "../src/ln_${suite_name}.h"
 
-static void setup(void)
+static void checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 $tests_str
@@ -88,7 +88,7 @@ Suite *make_${suite_name}_suite(void)
 
      s = suite_create("${suite_name}");
      tc_${suite_name} = tcase_create("${suite_name}");
-     tcase_add_checked_fixture(tc_${suite_name}, setup, teardown);
+     tcase_add_checked_fixture(tc_${suite_name}, checked_setup, checked_teardown);
 
 $test_add_str
      /* end of adding tests */

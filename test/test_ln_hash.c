@@ -40,11 +40,11 @@ static void test_object_free(void *to)
      ln_free((test_object *)to);
 }
 
-static void setup(void)
+static void checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 
@@ -157,7 +157,7 @@ Suite *make_hash_suite(void)
 
      s = suite_create("hash");
      tc_hash = tcase_create("hash");
-     tcase_add_checked_fixture(tc_hash, setup, teardown);
+     tcase_add_checked_fixture(tc_hash, checked_setup, checked_teardown);
 
      tcase_add_test(tc_hash, test_ln_hash);
      /* end of adding tests */

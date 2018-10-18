@@ -36,7 +36,7 @@ static inline ssize_t use_count_inc(ln_hash *use_counts, char *name)
      found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
      assert(found);
      ln_hash_insert(use_counts, name, (void *)(uc+1));
-     return uc;
+     return uc + 1;
 }
 
 static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
@@ -48,7 +48,7 @@ static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
      assert(found);
      ln_hash_insert(use_counts, name, (void *)(uc-1));
      assert(uc >= 0);
-     return uc;
+     return uc - 1;
 }
 
 static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
@@ -116,8 +116,9 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
                if (ln_mem_exist(mp, te->offset)) {
                     use_count_dec(use_counts, te->name);
                }
-               else
+               else {
                     te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
+               }
                if (use_count_of(use_counts, te->name) == 0)
                     unused_tes = ln_list_prepend(unused_tes, te);
           }
@@ -130,15 +131,17 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
           LN_LIST_FOREACH(te, arg->tensors_in) {
                te = ln_tensor_table_find(arg->tensor_table, te->name);
                if (te->owner) {
-                    if (use_count_dec(use_counts, te->owner) == 0)
-                         ln_mem_free(mp, ln_tensor_table_find(arg->tensor_table,
-                                                              te->owner)->offset);
+                    if (use_count_dec(use_counts, te->owner) == 0) {
+                         te = ln_tensor_table_find(arg->tensor_table, te->owner);
+                         ln_mem_free(mp, te->offset);
+                    }
                     continue;
                }
                if (te->isstatic)
                     continue;
-               if (use_count_dec(use_counts, te->name) == 0)
+               if (use_count_dec(use_counts, te->name) == 0) {
                     ln_mem_free(mp, te->offset);
+               }
           }
      }
 
