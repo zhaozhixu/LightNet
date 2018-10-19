@@ -56,18 +56,18 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
      ln_op_check_tensor_in_exist(LN_ERROR, src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(LN_ERROR, src_entry);
+     ln_op_check_tensor_defined(LN_ERROR, src_entry, src_name);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
+     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
 
      /* "arg" is an optional parameter */
      arg_name = ln_tensor_list_find_name(op_arg->tensors_out, "arg");
      if (arg_name) {
           arg_entry = ln_tensor_table_find(op_arg->tensor_table, arg_name);
-          ln_op_check_tensor_not_defined(LN_ERROR, arg_entry);
+          ln_op_check_tensor_not_defined(LN_ERROR, arg_entry, arg_name);
      }
 
      params_n = ln_param_list_length(op_arg->params);

@@ -236,16 +236,16 @@ LN_CPPEND
 		 op_arg->optype, op_arg->name, (num), (list_length))
 
 /* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
-#define ln_op_check_tensor_not_defined(level, entry)                    \
+#define ln_op_check_tensor_not_defined(level, entry, entry_name)        \
      ln_op_check(level, !entry,                                         \
 		 "%s: \"%s\"'s tensor \"%s\" shouldn't have been defined before", \
-		 op_arg->optype, op_arg->name, entry->name)
+		 op_arg->optype, op_arg->name, (entry_name))
 
 /* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
-#define ln_op_check_tensor_defined(level, entry)                        \
+#define ln_op_check_tensor_defined(level, entry, entry_name)            \
      ln_op_check(level, entry,                                          \
 		 "%s: \"%s\"'s tensor \"%s\" should have been defined before", \
-		 op_arg->optype, op_arg->name, entry->name)
+		 op_arg->optype, op_arg->name, (entry_name))
 
 /* entry1 and entry2 should have been checked with ln_op_check_tensor_defined */
 #define ln_op_check_tensor_issameshape(level, entry1, entry2)           \

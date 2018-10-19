@@ -66,7 +66,7 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
+     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 2);

@@ -376,16 +376,6 @@ err:
      return NULL;
 }
 
-#define RECORD_NEWLINE                                                  \
-     do {                                                               \
-          if (i >= array_size) {                                        \
-               array_size *= 2;                                         \
-               array = ln_realloc(array, sizeof(int)*array_size);       \
-          }                                                             \
-          array[0] = i;                                                 \
-          array[i++] = p - json_str;                                    \
-     } while (0)
-
 static int line_num(int index, int *newline_indices)
 {
      int *array = newline_indices + 1;
@@ -404,6 +394,16 @@ static int line_num(int index, int *newline_indices)
 
      return array[mid] <= index ? mid + 1 : mid;
 }
+
+#define RECORD_NEWLINE                                                  \
+     do {                                                               \
+          if (i >= array_size) {                                        \
+               array_size *= 2;                                         \
+               array = ln_realloc(array, sizeof(int)*array_size);       \
+          }                                                             \
+          array[0] = i;                                                 \
+          array[i++] = p - json_str;                                    \
+     } while (0)
 
 /* Replace comments to blanks, and record newlines' positions.
    The first element of returned array is the number of newlines,
@@ -427,7 +427,6 @@ static int *preprocess(char *json_str)
                     if (*p == '\n')
                          RECORD_NEWLINE;
                }
-                    ;
                if (!*p)
                     break;
                continue;

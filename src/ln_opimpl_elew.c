@@ -73,19 +73,19 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
      src1_name = ln_tensor_list_find_name(op_arg->tensors_in, "src1");
      ln_op_check_tensor_in_exist(LN_ERROR, src1_name, "src1");
      src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
-     ln_op_check_tensor_defined(LN_ERROR, src1_entry);
+     ln_op_check_tensor_defined(LN_ERROR, src1_entry, src1_name);
 
      src2_name = ln_tensor_list_find_name(op_arg->tensors_in, "src2");
      ln_op_check_tensor_in_exist(LN_ERROR, src2_name, "src2");
      src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
-     ln_op_check_tensor_defined(LN_ERROR, src2_entry);
+     ln_op_check_tensor_defined(LN_ERROR, src2_entry, src2_name);
      ln_op_check_tensor_issameshape(LN_ERROR, src1_entry, src2_entry);
      ln_op_check_tensor_issametype(LN_ERROR, src1_entry, src2_entry);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
+     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 1);

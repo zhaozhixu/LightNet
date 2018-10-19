@@ -61,7 +61,7 @@ struct priv_s {
 };
 
 /*
- * This function should do the parameter checking and tensor memory allocation.
+ * This function should do the parameter checking and tensor shape inference.
  */
 static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
@@ -82,7 +82,7 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry);
+     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(LN_ERROR, params_n, 3);
@@ -92,8 +92,7 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_type(LN_ERROR, dtype_entry, LN_PARAM_STRING);
 
      dtype = k2v(dtype_entry->value_string);
-     ln_op_check_param_satisfy_msg(LN_ERROR,
-                                   dtype != -1,
+     ln_op_check_param_satisfy_msg(LN_ERROR, dtype != -1,
                                    "\"dtype\" param should be a supported tl_dtype");
 
      dims_entry = ln_param_list_find(op_arg->params, "dims");
@@ -109,13 +108,13 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check(LN_ERROR,
                  data_entry->type == LN_PARAM_ARRAY_NUMBER
                  || data_entry->type == LN_PARAM_NULL,
-                 "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but got a %s",
+                 "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but gets a %s",
                  op_arg->optype, op_arg->name, data_entry->arg_name,
                  ln_param_type_name(LN_PARAM_ARRAY_NUMBER),
                  ln_param_type_name(LN_PARAM_NULL),
                  ln_param_type_name(data_entry->type));
 
-    if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
+     if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
           ln_op_check_param_satisfy_msg(LN_ERROR,
                                         compute_length(dims_entry->array_len,
                                                        dims_entry->value_array_int)
@@ -166,7 +165,6 @@ static void create_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
           tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
                      &data_entry->value_array_double[i], TL_DOUBLE);
      }
-     /* TODO: no */
      memmove(priv->dst->data, data, size);
      ln_free(data);
 }
@@ -191,10 +189,11 @@ static void create_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
      ln_free(op_arg->priv);
 }
 
+/* specify other ln_op_arg fields */
 static ln_op_arg op_arg_create_cuda = {
      .optype = "create_cuda",
-     .mtype_in = LN_MEM_CUDA,
-     .mtype_out = LN_MEM_CUDA,
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
 };
 
 /* struct used for op registration in ln_oplist.c */

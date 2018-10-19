@@ -178,46 +178,42 @@ ln_list *ln_pass_peephole(ln_list *ops, ln_peephole_func *ph_funcs)
                     win_in = ln_list_append(win_in, l->data);
                for (j = 0; (pf = ph_funcs[j]); j++) {
                     win_out = pf(win_in, &match);
-                    if (match) {
-                         stable = 0;
-                         l = l_ops;
-                         l_in = win_in;
-                         l_out = win_out;
-                         while (l_in && l_out) {
-                              op = l->data;
-                              op->post_run(op->op_arg, &error);
-                              error_handle(&error);
-                              ln_op_free_lists_too(op);
-                              l->data = l_out->data;
-                              op = l->data;
+                    if (!match)
+                         continue;
+                    stable = 0;
+                    for (l = l_ops, l_in = win_in, l_out = win_out;
+                         l_in && l_out;
+                         l = l->next, l_in = l_in->next, l_out = l_out->next) {
+                         op = l->data;
+                         op->post_run(op->op_arg, &error);
+                         error_handle(&error);
+                         ln_op_free_lists_too(op);
+                         l->data = l_out->data;
+                         op = l->data;
+                         op->pre_run(op->op_arg, &error);
+                         error_handle(&error);
+                    }
+                    if (!l_in && l_out) {
+                         for (; l_out; l_out = l_out->next) {
+                              l_ops = ln_list_insert_before(l_ops, l_out->data, l);
+                              op = l_out->data;
                               op->pre_run(op->op_arg, &error);
                               error_handle(&error);
-                              l = l->next;
-                              l_in = l_in->next;
-                              l_out = l_out->next;
                          }
-                         if (!l_in && l_out) {
-                              for (; l_out; l_out = l_out->next) {
-                                   l_ops = ln_list_insert_before(l_ops, l_out->data, l);
-                                   op = l_out->data;
-                                   op->pre_run(op->op_arg, &error);
-                                   error_handle(&error);
-                              }
-                         } else if (l_in && !l_out) {
-                              for (; l_in; l_in = l_in->next) {
-                                   op = l_in->data;
-                                   op->post_run(op->op_arg, &error);
-                                   error_handle(&error);
-                                   l_ops = ln_list_remove(l_ops, op);
-                                   ln_op_free_lists_too(op);
-                                   if (!l_ops_pre)
-                                        ops = l_ops;
-                                   else
-                                        l_ops_pre->next = l_ops;
-                              }
+                    } else if (l_in && !l_out) {
+                         for (; l_in; l_in = l_in->next) {
+                              op = l_in->data;
+                              op->post_run(op->op_arg, &error);
+                              error_handle(&error);
+                              l_ops = ln_list_remove(l_ops, op);
+                              ln_op_free_lists_too(op);
+                              if (!l_ops_pre)
+                                   ops = l_ops;
+                              else
+                                   l_ops_pre->next = l_ops;
                          }
-                         break;
                     }
+                    break;
                }
                ln_list_free(win_in);
           }
