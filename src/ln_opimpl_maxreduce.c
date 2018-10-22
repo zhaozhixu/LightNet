@@ -47,39 +47,38 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 1);
+     ln_op_check_tensor_in_len_eq(tensors_n, 1);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_ge(LN_ERROR, tensors_n, 1);
-     ln_op_check_tensor_out_len_le(LN_ERROR, tensors_n, 2);
+     ln_op_check_tensor_out_len_ge(tensors_n, 1);
+     ln_op_check_tensor_out_len_le(tensors_n, 2);
 
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(LN_ERROR, src_name, "src");
+     ln_op_check_tensor_in_exist(src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(LN_ERROR, src_entry, src_name);
+     ln_op_check_tensor_defined(src_entry, src_name);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     ln_op_check_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
+     ln_op_check_tensor_not_defined(dst_entry, dst_name);
 
      /* "arg" is an optional parameter */
      arg_name = ln_tensor_list_find_name(op_arg->tensors_out, "arg");
      if (arg_name) {
           arg_entry = ln_tensor_table_find(op_arg->tensor_table, arg_name);
-          ln_op_check_tensor_not_defined(LN_ERROR, arg_entry, arg_name);
+          ln_op_check_tensor_not_defined(arg_entry, arg_name);
      }
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
+     ln_op_check_param_len_eq(params_n, 1);
 
      axis_entry = ln_param_list_find(op_arg->params, "axis");
-     ln_op_check_param_exist(LN_ERROR, axis_entry, "axis");
-     ln_op_check_param_type(LN_ERROR, axis_entry, LN_PARAM_NUMBER);
+     ln_op_check_param_exist(axis_entry, "axis");
+     ln_op_check_param_type(axis_entry, LN_PARAM_NUMBER);
 
      axis = axis_entry->value_int;
-     ln_op_check_param_satisfy(LN_ERROR,
-                               axis >= 0 && axis < src_entry->tensor->ndim);
+     ln_op_check_param_satisfy(axis >= 0 && axis < src_entry->tensor->ndim);
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, 1,

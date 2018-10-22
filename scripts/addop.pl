@@ -6,16 +6,16 @@ use File::Copy;
 use Cwd 'abs_path';
 
 my $usage = <<EOF;
-Usage: $0 ROOT OP_NAME
-Generate code templates for a new op.
+Usage: $0 ROOT OP_NAME [SUBFIX]
 ROOT is the path of the project root.
 OP_NAME is the name of the new op.
+SUBFIX is the subfix of OP_NAME, often used to distinguish architectures.
 
 Example:
-	scripts/addtest.pl . slice
+	scripts/addtest.pl . slice_cuda cuda
 
-	Executing this example from project root will generate code templates
-	in file ROOT/src/ln_op_slice.c, and add associated init ops in
+	Executing this from project root will generate code templates
+	in file ROOT/src/ln_opimpl_slice_cuda.c, and add associated init ops in
 	ROOT/src/ln_oplist.c.
 EOF
 if (@ARGV < 2) {
@@ -24,6 +24,22 @@ if (@ARGV < 2) {
 }
 my $root = abs_path($ARGV[0]);
 my $op_name = $ARGV[1];
+
+my $subfix = "";
+$subfix = $ARGV[2] if @ARGV == 3;
+if ($subfix ne "" and not $op_name =~ /\w+_$subfix/) {
+  err_exit("OP_NAME \"$op_name\" doesn't match SUBFIX \"$subfix\"");
+}
+if ($subfix ne "" && $subfix ne "cuda") {
+  err_exit("unsupported SUBFIX \"$subfix\"");
+}
+
+my $mem_type = "";
+if ($subfix eq "") {
+  $mem_type = "LN_MEM_CPU";
+} elsif ($subfix eq "cuda") {
+  $mem_type = "LN_MEM_CUDA";
+}
 
 my $op_tpl = <<EOF;
 /*
@@ -58,13 +74,10 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
 
      /* check tensors and parameters */
-     /* ...... */
 
      /* define output tensor shape, tensor data should be NULL */
-     /* ...... */
 
      /* use op_arg->priv to store private data to be used in other functions */
-     /* ...... */
 }
 
 /*
@@ -73,7 +86,6 @@ static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* ...... */
 }
 
 /*
@@ -82,14 +94,13 @@ static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 {
 
-     /* ..... */
 }
 
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_${op_name} = {
      .optype = "${op_name}",
-     .mtype_in = ,
-     .mtype_out = ,
+     .mtype_in = $mem_type,
+     .mtype_out = $mem_type,
 };
 
 /* struct used for op registration in ln_oplist.c */
@@ -102,7 +113,7 @@ ln_op ln_opimpl_${op_name} = {
 };
 EOF
 
-my $op_file = "$root/src/ln_op_${op_name}.c";
+my $op_file = "$root/src/ln_opimpl_${op_name}.c";
 if (-e $op_file) {
   copy($op_file, "$op_file.bak")
     or die "Cannot backup file $op_file: $!";
@@ -121,10 +132,26 @@ open OPLIST_BAK, '<', "$oplist_file.bak"
   or die "Cannot open $oplist_file.bak: $!";
 open OPLIST, '>', $oplist_file
   or die "Cannot open $oplist_file: $!";
-while (<OPLIST_BAK>) {
-  s|/\* end of declarations \*/|$declare\n/* end of declarations */|;
-  s|NULL /\* end of init ops \*/|$item\n     NULL /* end of init ops */|;
-  print OPLIST;
+
+if ($subfix eq "") {
+  while (<OPLIST_BAK>) {
+    s|/\* end of declare normal ops \*/|$declare\n/* end of declare normal ops */|;
+    s|/\* end of init normal ops \*/|     $item\n/* end of init normal ops */|;
+    print OPLIST;
+  }
+}
+elsif ($subfix eq "cuda") {
+  while (<OPLIST_BAK>) {
+    s|/\* end of declare CUDA ops \*/|$declare\n/* end of declare CUDA ops */|;
+    s|/\* end of init CUDA ops \*/|     $item\n/* end of init CUDA ops */|;
+    print OPLIST;
+  }
 }
 close OPLIST;
 close OPLIST_BAK;
+
+sub err_exit {
+  my $msg = $_[0];
+  print STDERR "Error: $msg\n";
+  exit 1;
+}

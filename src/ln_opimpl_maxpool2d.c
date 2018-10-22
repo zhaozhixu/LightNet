@@ -20,43 +20,50 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "ln_op.h"
-#include "ln_list.h"
 
-extern ln_op ln_opimpl_slice;
-extern ln_op ln_opimpl_reshape;
-extern ln_op ln_opimpl_maxreduce;
-extern ln_op ln_opimpl_elew;
-extern ln_op ln_opimpl_transpose;
-extern ln_op ln_opimpl_zeros;
-extern ln_op ln_opimpl_create;
-extern ln_op ln_opimpl_conv2d;
-extern ln_op ln_opimpl_relu;
-extern ln_op ln_opimpl_maxpool2d;
-/* end of declare normal ops */
+/*
+ * This function should do the parameter checking and tensor shape inference.
+ */
+static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
+{
 
-#ifdef LN_CUDA
-extern ln_op ln_opimpl_create_cuda;
-extern ln_op ln_opimpl_elew_cuda;
-/* end of declare CUDA ops */
-#endif
+     /* check tensors and parameters */
 
-ln_op *ln_init_ops[] = {
-     &ln_opimpl_slice,
-     &ln_opimpl_reshape,
-     &ln_opimpl_maxreduce,
-     &ln_opimpl_elew,
-     &ln_opimpl_transpose,
-     &ln_opimpl_zeros,
-     &ln_opimpl_create,
-     &ln_opimpl_conv2d,
-     &ln_opimpl_relu,
-     &ln_opimpl_maxpool2d,
-/* end of init normal ops */
-#ifdef LN_CUDA
-     &ln_opimpl_create_cuda,
-     &ln_opimpl_elew_cuda,
-/* end of init CUDA ops */
-#endif
-     NULL /* end of init ops */
+     /* define output tensor shape, tensor data should be NULL */
+
+     /* use op_arg->priv to store private data to be used in other functions */
+}
+
+/*
+ * This function should only do the calculations.
+ */
+static void maxpool2d_run(ln_op_arg *op_arg, ln_error **error)
+{
+
+}
+
+/*
+ * This function should undo everything done by pre_run().
+ */
+static void maxpool2d_post_run(ln_op_arg *op_arg, ln_error **error)
+{
+
+}
+
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_maxpool2d = {
+     .optype = "maxpool2d",
+     .mtype_in = LN_MEM_CPU,
+     .mtype_out = LN_MEM_CPU,
+};
+
+/* struct used for op registration in ln_oplist.c */
+ln_op ln_opimpl_maxpool2d = {
+     .op_arg = &op_arg_maxpool2d,
+     .pre_run = maxpool2d_pre_run,
+     .static_run = NULL,
+     .run = maxpool2d_run,
+     .post_run = maxpool2d_post_run
 };

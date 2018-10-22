@@ -65,38 +65,37 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 2);
+     ln_op_check_tensor_in_len_eq(tensors_n, 2);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
+     ln_op_check_tensor_out_len_eq(tensors_n, 1);
 
      src1_name = ln_tensor_list_find_name(op_arg->tensors_in, "src1");
-     ln_op_check_tensor_in_exist(LN_ERROR, src1_name, "src1");
+     ln_op_check_tensor_in_exist(src1_name, "src1");
      src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
-     ln_op_check_tensor_defined(LN_ERROR, src1_entry, src1_name);
+     ln_op_check_tensor_defined(src1_entry, src1_name);
 
      src2_name = ln_tensor_list_find_name(op_arg->tensors_in, "src2");
-     ln_op_check_tensor_in_exist(LN_ERROR, src2_name, "src2");
+     ln_op_check_tensor_in_exist(src2_name, "src2");
      src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
-     ln_op_check_tensor_defined(LN_ERROR, src2_entry, src2_name);
-     ln_op_check_tensor_issameshape(LN_ERROR, src1_entry, src2_entry);
-     ln_op_check_tensor_issametype(LN_ERROR, src1_entry, src2_entry);
+     ln_op_check_tensor_defined(src2_entry, src2_name);
+     ln_op_check_tensor_issameshape(src1_entry, src2_entry);
+     ln_op_check_tensor_issametype(src1_entry, src2_entry);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     ln_op_check_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
+     ln_op_check_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
+     ln_op_check_param_len_eq(params_n, 1);
 
      elew_op_entry = ln_param_list_find(op_arg->params, "elew_op");
-     ln_op_check_param_exist(LN_ERROR, elew_op_entry, "elew_op");
-     ln_op_check_param_type(LN_ERROR, elew_op_entry, LN_PARAM_STRING);
+     ln_op_check_param_exist(elew_op_entry, "elew_op");
+     ln_op_check_param_type(elew_op_entry, LN_PARAM_STRING);
 
      elew_op = k2v(elew_op_entry->value_string);
-     ln_op_check_param_satisfy_msg(LN_ERROR,
-                                   elew_op != -1,
+     ln_op_check_param_satisfy_msg(elew_op != -1,
                                    "\"elew_op\" param should be a supported tl_elew_op");
 
      /* define output tensor shape, tensor data should be NULL */

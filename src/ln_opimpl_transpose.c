@@ -46,27 +46,27 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 1);
+     ln_op_check_tensor_in_len_eq(tensors_n, 1);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
+     ln_op_check_tensor_out_len_eq(tensors_n, 1);
 
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(LN_ERROR, src_name, "src");
+     ln_op_check_tensor_in_exist(src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(LN_ERROR, src_entry, src_name);
+     ln_op_check_tensor_defined(src_entry, src_name);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     ln_op_check_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
+     ln_op_check_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 1);
+     ln_op_check_param_len_eq(params_n, 1);
 
      axes_entry = ln_param_list_find(op_arg->params, "axes");
-     ln_op_check_param_exist(LN_ERROR, axes_entry, "axes");
-     ln_op_check_param_type(LN_ERROR, axes_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_op_check_param_exist(axes_entry, "axes");
+     ln_op_check_param_type(axes_entry, LN_PARAM_ARRAY_NUMBER);
 
      axes = axes_entry->value_array_int;
      int *tmp = ln_alloc(src_entry->tensor->ndim * sizeof(int));
@@ -75,7 +75,7 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
      for (i = 0; i < src_entry->tensor->ndim; i++)
           tmp[axes[i]] = 1;
      for (i = 0; i < src_entry->tensor->ndim; i++)
-          ln_op_check_param_satisfy_msg(LN_ERROR, tmp[i],
+          ln_op_check_param_satisfy_msg(tmp[i],
                                         "\"axes\" should match \"src\" tensor's shape");
      ln_free(tmp);
 

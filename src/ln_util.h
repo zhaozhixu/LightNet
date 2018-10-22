@@ -57,9 +57,39 @@ void ln_err_msg(const char *fmt, ...);
 void ln_err_cont(int error, const char *fmt, ...);
 void ln_err_ret(const char *fmt, ...);
 void ln_err_quit(const char *fmt, ...);
+void ln_err_bt(const char *fmt, ...);
 void ln_err_exit(int error, const char *fmt, ...);
 void ln_err_sys(const char *fmt, ...);
 void ln_err_dump(const char *fmt, ...);
+
+#ifdef LN_CUDA
+#include <cuda_runtime.h>
+
+#define LN_MAX_CUDA_DEVICE 15
+
+#define LN_CUDA_CK(status)                                              \
+     do {                                                               \
+          if (status != cudaSuccess)                                    \
+               ln_err_bt("CUDA_ERROR(%d) %s: %s", status,               \
+                         cudaGetErrorName(status), cudaGetErrorString(status)); \
+     } while(0)
+
+void ln_cuda_set_device(int n);
+int ln_cuda_get_device();
+int ln_is_device_mem(const void *ptr);
+void *ln_alloc_cuda(size_t size);
+void ln_memcpy_h2d(void *dst, const void *src, size_t size);
+void ln_memcpy_d2h(void *dst, const void *src, size_t size);
+void ln_memcpy_d2d(void *dst, const void *src, size_t size);
+void ln_free_cuda(void *p);
+void *ln_clone_h2d(const void *src, size_t size);
+void *ln_clone_d2h(const void *src, size_t size);
+void *ln_clone_d2d(const void *src, size_t size);
+void *ln_repeat_h2d(void *data, size_t size, int times);
+void *ln_repeat_d2h(void *data, size_t size, int times);
+void *ln_repeat_d2d(void *data, size_t size, int times);
+
+#endif  /* LN_CUDA */
 
 #ifdef __cplusplus
 LN_CPPEND

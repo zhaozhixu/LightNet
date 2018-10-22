@@ -96,19 +96,19 @@ LN_CPPEND
           }                                                             \
      } while (0)
 
-#define ln_op_check_param_satisfy_msg(level, condition, msg)    \
-     ln_op_check(level, condition,                              \
+#define ln_op_check_param_satisfy_msg(condition, msg)           \
+     ln_op_check(LN_ERROR, (condition),                         \
                  "%s: \"%s\"'s params should satisfy \"%s\"",   \
                  op_arg->optype, op_arg->name, (msg))
 
 /* condition is appended as the message */
-#define ln_op_check_param_satisfy(level, condition)                     \
-     ln_op_check_param_satisfy_msg(level, condition, #condition)
+#define ln_op_check_param_satisfy(condition)                    \
+     ln_op_check_param_satisfy_msg((condition), #condition)
 
 /* entry should be returned by
    ln_param_list_find(op_arg->params, arg_name) */
-#define ln_op_check_param_exist(level, entry, arg_name)         \
-     ln_op_check(level, entry,                                  \
+#define ln_op_check_param_exist(entry, arg_name)                \
+     ln_op_check(LN_ERROR, (entry),                             \
                  "%s: \"%s\" needs a \"%s\" param",		\
                  op_arg->optype, op_arg->name, (arg_name))
 
@@ -116,147 +116,165 @@ LN_CPPEND
  * entry should have been checked with ln_op_check_param_exist
  * type is an enum defined in ln_param.h
  */
-#define ln_op_check_param_type(level, entry, param_type)                \
-     ln_op_check(level, entry->type == param_type,                      \
+#define ln_op_check_param_type(entry, param_type)                       \
+     ln_op_check(LN_ERROR, (entry)->type == (param_type),               \
                  "%s: \"%s\"'s \"%s\" param's value should be of type %s, but gets a %s", \
-                 op_arg->optype, op_arg->name, entry->arg_name,         \
-                 ln_param_type_name(param_type), ln_param_type_name(entry->type))
+                 op_arg->optype, op_arg->name, (entry)->arg_name,       \
+                 ln_param_type_name((param_type)), ln_param_type_name((entry)->type))
 
-/* list_length should be returned by ln_param_list_length(op_arg->params) */
-#define ln_op_check_param_len_eq(level, list_length, num)               \
-     ln_op_check(level, list_length == num,                             \
-                 "%s: \"%s\" needs %d params, but gets %d params",       \
-                 op_arg->optype, op_arg->name, (num), (list_length))
+/* entry should have been checked with ln_op_check_param_exist */
+#define ln_op_check_param_array_len_eq(entry, expect_len)               \
+     ln_op_check(LN_ERROR, (entry)->array_len == (expect_len),          \
+                 "%s: \"%s\"'s \"%s\" param needs %d elements, but gets %d elements", \
+                 op_arg->optype, op_arg->name, (entry)->arg_name,       \
+                 (expect_len), (entry)->array_len)
 
-/* list_length should be returned by ln_param_list_length(op_arg->params) */
-#define ln_op_check_param_len_gt(level, list_length, num)               \
-     ln_op_check(level, list_length > num,                              \
-                 "%s: \"%s\" needs > %d params, but gets %d params",     \
-                 op_arg->optype, op_arg->name, (num), (list_length))
+#define ln_op_check_param_array_len_gt(entry, expect_len)               \
+     ln_op_check(LN_ERROR, (entry)->array_len > (expect_len),           \
+                 "%s: \"%s\"'s \"%s\" param needs > %d elements, but gets %d elements", \
+                 op_arg->optype, op_arg->name, (entry)->arg_name,       \
+                 (expect_len), (entry)->array_len)
 
-/* list_length should be returned by ln_param_list_length(op_arg->params) */
-#define ln_op_check_param_len_ge(level, list_length, num)               \
-     ln_op_check(level, list_length >= num,                             \
-                 "%s: \"%s\" needs >= %d params, but gets %d params",    \
-                 op_arg->optype, op_arg->name, (num), (list_length))
+#define ln_op_check_param_array_len_ge(entry, expect_len)               \
+     ln_op_check(LN_ERROR, (entry)->array_len >= (expect_len),          \
+                 "%s: \"%s\"'s \"%s\" param needs >= %d elements, but gets %d elements", \
+                 op_arg->optype, op_arg->name, (entry)->arg_name,       \
+                 (expect_len), (entry)->array_len)
 
-/* list_length should be returned by ln_param_list_length(op_arg->params) */
-#define ln_op_check_param_len_lt(level, list_length, num)               \
-     ln_op_check(level, list_length < num,                              \
-                 "%s: \"%s\" needs < %d params, but gets %d params",     \
-                 op_arg->optype, op_arg->name, (num), (list_length))
+#define ln_op_check_param_array_len_lt(entry, expect_len)               \
+     ln_op_check(LN_ERROR, (entry)->array_len < (expect_len),           \
+                 "%s: \"%s\"'s \"%s\" param needs < %d elements, but gets %d elements", \
+                 op_arg->optype, op_arg->name, (entry)->arg_name,       \
+                 (expect_len), (entry)->array_len)
 
-/* list_length should be returned by ln_param_list_length(op_arg->params) */
-#define ln_op_check_param_len_le(level, list_length, num)               \
-     ln_op_check(level, list_length <= num,                             \
-                 "%s: \"%s\" needs <= %d params, but gets %d params",    \
-                 op_arg->optype, op_arg->name, (num), (list_length))
+#define ln_op_check_param_array_len_le(entry, expect_len)               \
+     ln_op_check(LN_ERROR, (entry)->array_len <= (expect_len),          \
+                 "%s: \"%s\"'s \"%s\" param needs <= %d elements, but gets %d elements", \
+                 op_arg->optype, op_arg->name, (entry)->arg_name,       \
+                 (expect_len), (entry)->array_len)
 
-#define ln_op_check_tensor_satisfy_msg(level, condition, msg)   \
-     ln_op_check(level, condition,                              \
+/* list_len should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_eq(list_len, expect_len)                  \
+     ln_op_check(LN_ERROR, (list_len) == (expect_len),                  \
+                 "%s: \"%s\" needs %d params, but gets %d params",      \
+                 op_arg->optype, op_arg->name, (expect_len), (list_len))
+
+/* list_len should be returned by ln_param_list_length(op_arg->params) */
+#define ln_op_check_param_len_gt(list_len, expect_len)                  \
+     ln_op_check(LN_ERROR, (list_len) > (expect_len),                   \
+                 "%s: \"%s\" needs > %d params, but gets %d params",    \
+                 op_arg->optype, op_arg->name, (expect_len), (list_len))
+
+#define ln_op_check_param_len_ge(list_len, expect_len)                  \
+     ln_op_check(LN_ERROR, (list_len) >= (expect_len),                  \
+                 "%s: \"%s\" needs >= %d params, but gets %d params",   \
+                 op_arg->optype, op_arg->name, (expect_len), (list_len))
+
+#define ln_op_check_param_len_lt(list_len, expect_len)                  \
+     ln_op_check(LN_ERROR, (list_len) < (expect_len),                   \
+                 "%s: \"%s\" needs < %d params, but gets %d params",    \
+                 op_arg->optype, op_arg->name, (expect_len), (list_len))
+
+#define ln_op_check_param_len_le(list_len, expect_len)                  \
+     ln_op_check(LN_ERROR, (list_len) <= (expect_len),                  \
+                 "%s: \"%s\" needs <= %d params, but gets %d params",   \
+                 op_arg->optype, op_arg->name, (expect_len), (list_len))
+
+#define ln_op_check_tensor_satisfy_msg(condition, msg)          \
+     ln_op_check(LN_ERROR, (condition),                         \
                  "%s: \"%s\"'s tensors should satisfy \"%s\"",  \
                  op_arg->optype, op_arg->name, (msg))
 
 /* condition is appended as the message */
-#define ln_op_check_tensor_satisfy(level, condition)                    \
-     ln_op_check_tensor_satisfy_msg(level, condition, #condition)
+#define ln_op_check_tensor_satisfy(condition)                   \
+     ln_op_check_tensor_satisfy_msg((condition), #condition)
 
 /* name should be returned by
    ln_tensor_list_find_name(op_arg->tensors_in, arg_name) */
-#define ln_op_check_tensor_in_exist(level, tensor_name, arg_name)	\
-     ln_op_check(level, tensor_name,                                    \
-                 "%s: \"%s\" needs a \"%s\" input tensor",              \
+#define ln_op_check_tensor_in_exist(tensor_name, arg_name)	\
+     ln_op_check(LN_ERROR, (tensor_name),                       \
+                 "%s: \"%s\" needs a \"%s\" input tensor",      \
                  op_arg->optype, op_arg->name, (arg_name))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_eq(level, list_length, num)           \
-     ln_op_check(level, list_length == num,                             \
+/* list_len should be returned by ln_tensor_list_length(op_arg->tensors_in) */
+#define ln_op_check_tensor_in_len_eq(list_len, expect_len)              \
+     ln_op_check(LN_ERROR, (list_len) == (expect_len),                  \
                  "%s: \"%s\" needs %d input tensors, but gets %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_gt(level, list_length, num)           \
-     ln_op_check(level, list_length > num,                              \
+#define ln_op_check_tensor_in_len_gt(list_len, expect_len)              \
+     ln_op_check(LN_ERROR, (list_len) > (expect_len),                   \
                  "%s: \"%s\" needs > %d input tensors, but gets %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_ge(level, list_length, num)           \
-     ln_op_check(level, list_length >= num,                             \
+#define ln_op_check_tensor_in_len_ge(list_len, expect_len)              \
+     ln_op_check(LN_ERROR, (list_len) >= (expect_len),                  \
                  "%s: \"%s\" needs >= %d input tensors, but gets %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_lt(level, list_length, num)           \
-     ln_op_check(level, list_length < num,                              \
+#define ln_op_check_tensor_in_len_lt(list_len, expect_len)              \
+     ln_op_check(LN_ERROR, (list_len) < (expect_len),                   \
                  "%s: \"%s\" needs < %d input tensors, but gets %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_in) */
-#define ln_op_check_tensor_in_len_le(level, list_length, num)           \
-     ln_op_check(level, list_length <= num,                             \
+#define ln_op_check_tensor_in_len_le(list_len, expect_len)              \
+     ln_op_check(LN_ERROR, (list_len) <= (expect_len),                  \
                  "%s: \"%s\" needs <= %d input tensors, but gets %d input tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 /* name should be returned by
    ln_tensor_list_find_name(op_arg->tensors_out, arg_name) */
-#define ln_op_check_tensor_out_exist(level, tensor_name, arg_name)	\
-     ln_op_check(level, tensor_name,                                    \
-                 "%s: \"%s\" needs a \"%s\" output tensor",             \
+#define ln_op_check_tensor_out_exist(tensor_name, arg_name)	\
+     ln_op_check(LN_ERROR, (tensor_name),                       \
+                 "%s: \"%s\" needs a \"%s\" output tensor",     \
                  op_arg->optype, op_arg->name, (arg_name))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_eq(level, list_length, num)          \
-     ln_op_check(level, list_length == num,                             \
+/* list_len should be returned by ln_tensor_list_length(op_arg->tensors_out) */
+#define ln_op_check_tensor_out_len_eq(list_len, expect_len)             \
+     ln_op_check(LN_ERROR, (list_len) == (expect_len),                  \
                  "%s: \"%s\" needs %d output tensors, but gets %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_gt(level, list_length, num)          \
-     ln_op_check(level, list_length > num,                              \
+#define ln_op_check_tensor_out_len_gt(list_len, expect_len)             \
+     ln_op_check(LN_ERROR, (list_len) > (expect_len),                   \
                  "%s: \"%s\" needs > %d output tensors, but gets %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_ge(level, list_length, num)          \
-     ln_op_check(level, list_length >= num,                             \
+#define ln_op_check_tensor_out_len_ge(list_len, expect_len)             \
+     ln_op_check(LN_ERROR, (list_len) >= (expect_len),                  \
                  "%s: \"%s\" needs >= %d output tensors, but gets %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_lt(level, list_length, num)          \
-     ln_op_check(level, list_length < num,                              \
+#define ln_op_check_tensor_out_len_lt(list_len, expect_len)             \
+     ln_op_check(LN_ERROR, (list_len) < (expect_len),                   \
                  "%s: \"%s\" needs < %d output tensors, but gets %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* list_length should be returned by ln_tensor_list_length(op_arg->tensors_out) */
-#define ln_op_check_tensor_out_len_le(level, list_length, num)          \
-     ln_op_check(level, list_length <= num,                             \
+#define ln_op_check_tensor_out_len_le(list_len, expect_len)             \
+     ln_op_check(LN_ERROR, (list_len) <= (expect_len),                  \
                  "%s: \"%s\" needs <= %d output tensors, but gets %d output tensors", \
-		 op_arg->optype, op_arg->name, (num), (list_length))
+		 op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 /* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
-#define ln_op_check_tensor_not_defined(level, entry, entry_name)        \
-     ln_op_check(level, !entry,                                         \
+#define ln_op_check_tensor_not_defined(entry, entry_name)               \
+     ln_op_check(LN_ERROR, !(entry),                                    \
 		 "%s: \"%s\"'s tensor \"%s\" shouldn't have been defined before", \
 		 op_arg->optype, op_arg->name, (entry_name))
 
-/* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
-#define ln_op_check_tensor_defined(level, entry, entry_name)            \
-     ln_op_check(level, entry,                                          \
+#define ln_op_check_tensor_defined(entry, entry_name)                   \
+     ln_op_check(LN_ERROR, (entry),                                     \
 		 "%s: \"%s\"'s tensor \"%s\" should have been defined before", \
 		 op_arg->optype, op_arg->name, (entry_name))
 
 /* entry1 and entry2 should have been checked with ln_op_check_tensor_defined */
-#define ln_op_check_tensor_issameshape(level, entry1, entry2)           \
-                 ln_op_check(level, tl_tensor_issameshape(entry1->tensor, entry2->tensor), \
+#define ln_op_check_tensor_issameshape(entry1, entry2)                  \
+     ln_op_check(LN_ERROR, tl_tensor_issameshape((entry1)->tensor, (entry2)->tensor), \
                  "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should have the same shape", \
-                 op_arg->optype, op_arg->name, entry1->name, entry2->name)
+                 op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
 
-/* entry1 and entry2 should have been checked with ln_op_check_tensor_defined */
-#define ln_op_check_tensor_issametype(level, entry1, entry2)            \
-     ln_op_check(level, entry1->tensor->dtype == entry2->tensor->dtype, \
+#define ln_op_check_tensor_issametype(entry1, entry2)                   \
+     ln_op_check(LN_ERROR, (entry1)->tensor->dtype == (entry2)->tensor->dtype, \
                  "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should be the same data type", \
-                 op_arg->optype, op_arg->name, entry1->name, entry2->name)
+                 op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
 
 #endif  /* _LN_OP_H_ */

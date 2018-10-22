@@ -58,34 +58,32 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(LN_ERROR, tensors_n, 0);
+     ln_op_check_tensor_in_len_eq(tensors_n, 0);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(LN_ERROR, tensors_n, 1);
+     ln_op_check_tensor_out_len_eq(tensors_n, 1);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(LN_ERROR, dst_name, "dst");
+     ln_op_check_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(LN_ERROR, dst_entry, dst_name);
+     ln_op_check_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(LN_ERROR, params_n, 2);
+     ln_op_check_param_len_eq(params_n, 2);
 
      dtype_entry = ln_param_list_find(op_arg->params, "dtype");
-     ln_op_check_param_exist(LN_ERROR, dtype_entry, "dtype");
-     ln_op_check_param_type(LN_ERROR, dtype_entry, LN_PARAM_STRING);
+     ln_op_check_param_exist(dtype_entry, "dtype");
+     ln_op_check_param_type(dtype_entry, LN_PARAM_STRING);
 
      dtype = k2v(dtype_entry->value_string);
-     ln_op_check_param_satisfy_msg(LN_ERROR,
-                                   dtype != -1,
+     ln_op_check_param_satisfy_msg(dtype != -1,
                                    "\"dtype\" param should be a supported tl_dtype");
 
      dims_entry = ln_param_list_find(op_arg->params, "dims");
-     ln_op_check_param_exist(LN_ERROR, dims_entry, "dims");
-     ln_op_check_param_type(LN_ERROR, dims_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_op_check_param_exist(dims_entry, "dims");
+     ln_op_check_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
      for (i = 0; i < dtype_entry->array_len; i++)
-          ln_op_check_param_satisfy_msg(LN_ERROR,
-                                        dims_entry->value_array_int[i] > 0,
+          ln_op_check_param_satisfy_msg(dims_entry->value_array_int[i] > 0,
                                         "\"dims\" array elements should be positive");
 
      /* define output tensor shape, tensor data should be NULL */

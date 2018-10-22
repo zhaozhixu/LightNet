@@ -176,6 +176,20 @@ void ln_err_quit(const char *fmt, ...)
 
 /*
  * Fatal error unrelated to a system call.
+ * Print a message, dump core, and terminate.
+ */
+void ln_err_bt(const char *fmt, ...)
+{
+     va_list ap;
+     va_start(ap, fmt);
+     err_doit(0, 0, fmt, ap);
+     va_end(ap);
+     abort();
+     exit(1);
+}
+
+/*
+ * Fatal error unrelated to a system call.
  * Error code passed as explict parameter.
  * Print a message and terminate.
  */

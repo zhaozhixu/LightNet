@@ -16,6 +16,20 @@
             ]
         },
         {
+            "name": "concat1",
+            "optype": "concat",
+            "tensors_in": [
+                {"arg_name": "src1", "name": ""},
+                {"arg_name": "src2", "name": ""},
+            ],
+            "tensors_out":[
+                {"arg_name": "dst", "name": ""}
+            ],
+            "params": [
+                {"arg_name": "axis", "value": 1}
+            ]
+        },
+        {
             "name": "reshape1",
             "optype": "reshape",
             "tensors": [
@@ -62,42 +76,44 @@
             ]
         },
         {
-            "name": "conv1",
-            "optype": "convolution",
-            "tensors": [
+            "name": "conv2d1",
+            "optype": "conv2d",
+            "tensors_in": [
                 {"arg_name": "src", "name": "transpose1"},
-                {"arg_name": "dst", "name": "conv1"}
+                {"arg_name": "weight", "name": "weight1"},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "conv2d1"}
             ],
             "params": [
-                {"arg_name": "channel", "value": 64},
+                {"arg_name": "group", "value": 1},
                 {"arg_name": "size", "value": [3, 3]},
                 {"arg_name": "stride", "value": [2, 2]},
-                {"arg_name": "padding", "value": [1, 1]}
+                {"arg_name": "padding", "value": [1, 1, 1, 1]},
+                {"arg_name": "dilation", "value": [1, 1]}
             ]
         },
         {
             "name": "relu1",
-            "optype": "activation",
+            "optype": "relu",
             "tensors": [
-                {"arg_name": "src", "name": "conv1"},
+                {"arg_name": "src", "name": "conv2d1"},
                 {"arg_name": "dst", "name": "relu1"}
             ],
             "params": [
-                {"arg_name": "type", "value": "relu"}
             ]
         },
         {
-            "name": "pool1",
-            "optype": "pooling",
+            "name": "maxpool2d1",
+            "optype": "maxpool2d",
             "tensors": [
                 {"arg_name": "src", "name": "relu1"},
                 {"arg_name": "dst", "name": "pool1"}
             ],
             "params": [
-                {"arg_name": "type", "value": "max"},
                 {"arg_name": "size", "value": [3, 3]},
                 {"arg_name": "stride", "value": [2, 2]},
-                {"arg_name": "padding", "value": [1, 1]}
+                {"arg_name": "padding", "value": [1, 1, 1, 1]}
             ]
         }
     ]
