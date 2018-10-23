@@ -96,8 +96,10 @@
         {
             "name": "relu1",
             "optype": "relu",
-            "tensors": [
+            "tensors_in": [
                 {"arg_name": "src", "name": "conv2d1"},
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "relu1"}
             ],
             "params": [
@@ -106,8 +108,10 @@
         {
             "name": "maxpool2d1",
             "optype": "maxpool2d",
-            "tensors": [
-                {"arg_name": "src", "name": "relu1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "relu1"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "pool1"}
             ],
             "params": [

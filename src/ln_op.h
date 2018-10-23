@@ -90,15 +90,17 @@ LN_CPPEND
           if (!(condition)) {                                           \
                *error = ln_error_create((level), (msg_fmt), ##varg);	\
                if (level == LN_WARNING || level == LN_WARNING_SYS ||    \
-                   level == LN_INFO)                                    \
+                   level == LN_INFO) {                                  \
+                    ln_error_handle(error);                             \
                     break;                                              \
+               }                                                        \
                return;                                                  \
           }                                                             \
      } while (0)
 
 #define ln_op_check_param_satisfy_msg(condition, msg)           \
      ln_op_check(LN_ERROR, (condition),                         \
-                 "%s: \"%s\"'s params should satisfy \"%s\"",   \
+                 "%s: \"%s\"'s params should satisfy: %s",   \
                  op_arg->optype, op_arg->name, (msg))
 
 /* condition is appended as the message */
@@ -182,7 +184,7 @@ LN_CPPEND
 
 #define ln_op_check_tensor_satisfy_msg(condition, msg)          \
      ln_op_check(LN_ERROR, (condition),                         \
-                 "%s: \"%s\"'s tensors should satisfy \"%s\"",  \
+                 "%s: \"%s\"'s tensors should satisfy: %s",  \
                  op_arg->optype, op_arg->name, (msg))
 
 /* condition is appended as the message */

@@ -35,6 +35,11 @@ struct priv_s {
      int        group;
 };
 
+static int compute_output_dim(int input_dim, int size, int stride, int padding)
+{
+     return ((input_dim + padding) - size) / stride + 1;
+}
+
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
@@ -82,6 +87,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      params_n = ln_param_list_length(op_arg->params);
      ln_op_check_param_len_eq(params_n, 5);
 
+     /* TODO: check the group */
      group_entry = ln_param_list_find(op_arg->params, "group");
      ln_op_check_param_exist(group_entry, "group");
      ln_op_check_param_type(group_entry, LN_PARAM_NUMBER);
@@ -114,9 +120,34 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_array_len_eq(dilation_entry, 2);
      dilation = dilation_entry->value_array_int;
 
+     ln_op_check_param_satisfy_msg(size[0] == weight_entry->tensor->dims[3] &&
+                                   size[1] == weight_entry->tensor->dims[4],
+                                   "\"size\" should match the last two dimensions of \"weight\"");
+
      /* define output tensor shape, tensor data should be NULL */
+     int dims[4];
+     dims[0] = src_entry->tensor->dims[0];
+     dims[1] = weight_entry->tensor->dims[1];
+     dims[2] = compute_output_dim(src_entry->tensor->dims[2], size[0],
+                                  stride[0], padding[0] + padding[1]);
+     dims[3] = compute_output_dim(src_entry->tensor->dims[3], size[1],
+                                  stride[1], padding[2] + padding[3]);
+     dst_tensor = tl_tensor_create(NULL, 4, dims, src_entry->tensor->dtype);
+     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
      /* use op_arg->priv to store private data to be used in other functions */
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->dilation = dilation;
+     priv->dst = dst_tensor;
+     priv->dst_name = dst_name;
+     priv->group = group;
+     priv->padding = padding;
+     priv->size = size;
+     priv->src = src_entry->tensor;
+     priv->stride = stride;
+     priv->weight = weight_entry->tensor;
+     op_arg->priv = priv;
 }
 
 /*
@@ -132,7 +163,11 @@ static void conv2d_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void conv2d_post_run(ln_op_arg *op_arg, ln_error **error)
 {
+     struct priv_s *priv;
 
+     priv = op_arg->priv;
+     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
+     ln_free(op_arg->priv);
 }
 
 /* specify other ln_op_arg fields */
