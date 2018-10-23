@@ -23,22 +23,15 @@
 #ifndef _LN_ARCH_H_
 #define _LN_ARCH_H_
 
-#include "ln_mem.h"
 #include "ln_op.h"
 
-typedef enum ln_arch_type ln_arch_type;
-enum ln_arch_type {
-     LN_ARCH_CPU,
-     LN_ARCH_CUDA,
-};
-
-typedef ln_list *(*ln_peephole_func) (ln_list *ops, int *match);
+typedef ln_list *(*ln_peephole_func) (ln_list *ops, int win_size, int *match);
 
 typedef struct ln_arch ln_arch;
 struct ln_arch {
      ln_op            **ops;       /* NULL terminated */
      ln_peephole_func  *ph_funcs;  /* NULL terminated */
-     ln_arch_type       atype;
+     char              *arch_name;
 };
 
 #endif  /* _LN_ARCH_H_ */

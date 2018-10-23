@@ -177,7 +177,7 @@ ln_list *ln_pass_peephole(ln_list *ops, ln_peephole_func *ph_funcs)
                for (i = 0, l = l_ops; i < win_size && l; i++, l = l->next)
                     win_in = ln_list_append(win_in, l->data);
                for (j = 0; (pf = ph_funcs[j]); j++) {
-                    win_out = pf(win_in, &match);
+                    win_out = pf(win_in, win_size, &match);
                     if (!match)
                          continue;
                     stable = 0;
