@@ -111,7 +111,8 @@ static void zeros_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void zeros_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_tensor_table_remove(op_arg->tensor_table, ((ln_tensor_entry *)op_arg->priv)->name);
+     ln_tensor_table_remove(op_arg->tensor_table,
+                            ((ln_tensor_entry *)op_arg->priv)->name);
 }
 
 /* specify other ln_op_arg fields */

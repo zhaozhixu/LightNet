@@ -37,6 +37,14 @@ extern ln_op ln_opimpl_maxpool2d;
 
 #ifdef LN_CUDA
 extern ln_op ln_opimpl_create_cuda;
+extern ln_op ln_opimpl_conv2d_cuda;
+extern ln_op ln_opimpl_maxpool2d_cuda;
+extern ln_op ln_opimpl_maxreduce_cuda;
+extern ln_op ln_opimpl_relu_cuda;
+extern ln_op ln_opimpl_reshape_cuda;
+extern ln_op ln_opimpl_slice_cuda;
+extern ln_op ln_opimpl_transpose_cuda;
+extern ln_op ln_opimpl_zeros_cuda;
 extern ln_op ln_opimpl_elew_cuda;
 /* end of declare CUDA ops */
 #endif
@@ -55,6 +63,14 @@ ln_op *ln_init_ops[] = {
 /* end of init normal ops */
 #ifdef LN_CUDA
      &ln_opimpl_create_cuda,
+     &ln_opimpl_conv2d_cuda,
+     &ln_opimpl_maxpool2d_cuda,
+     &ln_opimpl_maxreduce_cuda,
+     &ln_opimpl_relu_cuda,
+     &ln_opimpl_reshape_cuda,
+     &ln_opimpl_slice_cuda,
+     &ln_opimpl_transpose_cuda,
+     &ln_opimpl_zeros_cuda,
      &ln_opimpl_elew_cuda,
 /* end of init CUDA ops */
 #endif

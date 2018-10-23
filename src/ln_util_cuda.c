@@ -66,6 +66,12 @@ void *ln_alloc_cuda(size_t size)
      return p;
 }
 
+void ln_memset_cuda(void *dst, int c, size_t n)
+{
+     assert(ln_is_device_mem(dst));
+     LN_CUDA_CK(cudaMemset(dst, c, n));
+}
+
 void ln_memcpy_h2d(void *dst, const void *src, size_t size)
 {
      assert(!ln_is_device_mem(src));

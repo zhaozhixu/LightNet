@@ -104,7 +104,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      data_entry = ln_param_list_find(op_arg->params, "data");
      ln_op_check_param_exist(data_entry, "data");
-     ln_op_check(data_entry->type == LN_PARAM_ARRAY_NUMBER
+     ln_op_check(LN_ERROR, data_entry->type == LN_PARAM_ARRAY_NUMBER
                  || data_entry->type == LN_PARAM_NULL,
                  "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but gets a %s",
                  op_arg->optype, op_arg->name, data_entry->arg_name,
@@ -167,14 +167,6 @@ static void create_static_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * This function should only do the calculations.
- */
-static void create_run(ln_op_arg *op_arg, ln_error **error)
-{
-
-}
-
-/*
  * This function should undo everything done by pre_run().
  */
 static void create_post_run(ln_op_arg *op_arg, ln_error **error)
@@ -198,6 +190,6 @@ ln_op ln_opimpl_create = {
      .op_arg = &op_arg_create,
      .pre_run = create_pre_run,
      .static_run = create_static_run,
-     .run = create_run,
+     .run = NULL,
      .post_run = create_post_run
 };

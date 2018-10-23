@@ -78,6 +78,7 @@ void ln_cuda_set_device(int n);
 int ln_cuda_get_device();
 int ln_is_device_mem(const void *ptr);
 void *ln_alloc_cuda(size_t size);
+void ln_memset_cuda(void *dst, int c, size_t n);
 void ln_memcpy_h2d(void *dst, const void *src, size_t size);
 void ln_memcpy_d2h(void *dst, const void *src, size_t size);
 void ln_memcpy_d2d(void *dst, const void *src, size_t size);

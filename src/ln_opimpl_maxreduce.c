@@ -103,26 +103,23 @@ static void maxreduce_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * Normally we should only do the calculations here. Operations with memory
- * and such should go in pre_run().
+ * This function should only do the calculations.
  */
 static void maxreduce_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* do the real work */
      priv = op_arg->priv;
      tl_tensor_maxreduce(priv->src, priv->dst, priv->arg, priv->axis);
 }
 
 /*
- * This function should free all tensor memory pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
 static void maxreduce_post_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
-     /* free the tensor memory allocated in pre_run() */
      priv = op_arg->priv;
      ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      if (priv->arg_name)

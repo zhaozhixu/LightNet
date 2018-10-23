@@ -110,14 +110,6 @@ static void reshape_static_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * This function should only do the calculations.
- */
-static void reshape_run(ln_op_arg *op_arg, ln_error **error)
-{
-
-}
-
-/*
  * This function should undo everything done by pre_run().
  */
 static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
@@ -140,6 +132,6 @@ ln_op ln_opimpl_reshape = {
      .op_arg = &op_arg_reshape,
      .pre_run = reshape_pre_run,
      .static_run = reshape_static_run,
-     .run = reshape_run,
+     .run = NULL,
      .post_run = reshape_post_run
 };

@@ -89,8 +89,8 @@ LN_CPPEND
      do {                                                               \
           if (!(condition)) {                                           \
                *error = ln_error_create((level), (msg_fmt), ##varg);	\
-               if (level == LN_WARNING || level == LN_WARNING_SYS ||    \
-                   level == LN_INFO) {                                  \
+               if ((level) == LN_WARNING || (level) == LN_WARNING_SYS || \
+                   (level) == LN_INFO) {                                \
                     ln_error_handle(error);                             \
                     break;                                              \
                }                                                        \

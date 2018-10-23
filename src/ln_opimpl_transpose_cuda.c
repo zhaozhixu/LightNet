@@ -32,9 +32,9 @@ struct priv_s {
 };
 
 /*
- * This function should do the parameter checking and tensor memory allocation.
+ * This function should do the parameter checking and tensor shape inference.
  */
-static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
      char *src_name, *dst_name;
      ln_tensor_entry *src_entry, *dst_entry;
@@ -97,53 +97,52 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
      op_arg->priv = priv;
 }
 
-/* TODO: make this dynamic */
 /* This function runs only once per instance right after memory allocation. */
-static void transpose_static_run(ln_op_arg *op_arg, ln_error **error)
+static void transpose_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     priv->workspace = tl_tensor_zeros(1, (int[]){priv->dst->ndim*priv->dst->len*2},
-                                       TL_INT32);
+     priv->workspace = tl_tensor_zeros_cuda(1, (int[]){priv->dst->ndim*priv->dst->len*2},
+                                            TL_INT32);
 }
 
 /*
  * This function should only do the calculations.
  */
-static void transpose_run(ln_op_arg *op_arg, ln_error **error)
+static void transpose_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     tl_tensor_transpose(priv->src, priv->dst, priv->axes, priv->workspace);
+     tl_tensor_transpose_cuda(priv->src, priv->dst, priv->axes, priv->workspace);
 }
 
 /*
- * This function should free all tensor memory pre_run() allocated.
+ * This function should undo everything done by pre_run().
  */
-static void transpose_post_run(ln_op_arg *op_arg, ln_error **error)
+static void transpose_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     tl_tensor_free_data_too(priv->workspace);
+     tl_tensor_free_data_too_cuda(priv->workspace);
      ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_transpose = {
-     .optype = "transpose",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
+static ln_op_arg op_arg_transpose_cuda = {
+     .optype = "transpose_cuda",
+     .mtype_in = LN_MEM_CUDA,
+     .mtype_out = LN_MEM_CUDA,
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_transpose = {
-     .op_arg = &op_arg_transpose,
-     .pre_run = transpose_pre_run,
-     .static_run = transpose_static_run,
-     .run = transpose_run,
-     .post_run = transpose_post_run
+ln_op ln_opimpl_transpose_cuda = {
+     .op_arg = &op_arg_transpose_cuda,
+     .pre_run = transpose_cuda_pre_run,
+     .static_run = transpose_cuda_static_run,
+     .run = transpose_cuda_run,
+     .post_run = transpose_cuda_post_run
 };
