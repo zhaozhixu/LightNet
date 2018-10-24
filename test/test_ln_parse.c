@@ -59,20 +59,20 @@ static void assert_op_eq(ln_list *registered_ops, ln_op *op,
      ck_assert_str_eq(op->op_arg->name, opname);
 }
 
-static void assert_tensor_eq(ln_list *tlist, ln_hash *table, char *arg_name,
-                            char *name, tl_tensor *true_tensor,
-                            tl_tensor **find_tensor)
-{
-     char *find_name;
-     ln_tensor_entry *entry;
+/* static void assert_tensor_eq(ln_list *tlist, ln_hash *table, char *arg_name, */
+/*                             char *name, tl_tensor *true_tensor, */
+/*                             tl_tensor **find_tensor) */
+/* { */
+/*      char *find_name; */
+/*      ln_tensor_entry *entry; */
 
-     find_name = ln_tensor_list_find_name(tlist, arg_name);
-     ck_assert_str_eq(find_name, name);
-     entry = ln_tensor_table_find(table, find_name);
-     tl_assert_tensor_eq(true_tensor, entry->tensor);
-     if (find_tensor)
-          *find_tensor = entry->tensor;
-}
+/*      find_name = ln_tensor_list_find_name(tlist, arg_name); */
+/*      ck_assert_str_eq(find_name, name); */
+/*      entry = ln_tensor_table_find(table, find_name); */
+/*      tl_assert_tensor_eq(true_tensor, entry->tensor); */
+/*      if (find_tensor) */
+/*           *find_tensor = entry->tensor; */
+/* } */
 
 #define TENSORS_OUT (op->op_arg->tensors_out)
 #define TENSORS_IN (op->op_arg->tensors_in)
@@ -235,7 +235,6 @@ START_TEST(test_ln_parse)
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);
      ck_assert_str_eq(tensor_name, "zeros1");
-
 
      param_entry = ln_param_list_find(op->op_arg->params, "dtype");
      ck_assert_ptr_ne(param_entry, NULL);

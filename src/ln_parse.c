@@ -376,24 +376,24 @@ err:
      return NULL;
 }
 
-static int line_num(int index, int *newline_indices)
-{
-     int *array = newline_indices + 1;
-     int len = newline_indices[0];
-     int low = 0, high = len - 1, mid;
+/* static int line_num(int index, int *newline_indices) */
+/* { */
+/*      int *array = newline_indices + 1; */
+/*      int len = newline_indices[0]; */
+/*      int low = 0, high = len - 1, mid; */
 
-     while (low <= high) {
-          mid = (high - low) / 2 + low;
-          if (array[mid] < index)
-               low = mid + 1;
-          else if (array[mid] > index)
-               high = mid - 1;
-          else
-               break;
-     }
+/*      while (low <= high) { */
+/*           mid = (high - low) / 2 + low; */
+/*           if (array[mid] < index) */
+/*                low = mid + 1; */
+/*           else if (array[mid] > index) */
+/*                high = mid - 1; */
+/*           else */
+/*                break; */
+/*      } */
 
-     return array[mid] <= index ? mid + 1 : mid;
-}
+/*      return array[mid] <= index ? mid + 1 : mid; */
+/* } */
 
 #define RECORD_NEWLINE                                                  \
      do {                                                               \
@@ -411,7 +411,6 @@ static int line_num(int index, int *newline_indices)
 static int *preprocess(char *json_str)
 {
      int *array;
-     char *p;
      int array_size = 256;
      int i = 1;
 

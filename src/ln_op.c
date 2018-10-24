@@ -142,6 +142,25 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
      return result_op;
 }
 
+ln_op *ln_op_array_find_by_optype(ln_op *ops[], char *optype)
+{
+     ln_op cmp_op;
+     ln_op *result_op = NULL;
+     int i;
+
+     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL,
+                                      LN_MEM_UNDEF, LN_MEM_UNDEF);
+     for (i = 0; ops[i]; i++) {
+          if (!cmp_by_optype(ops[i], &cmp_op)) {
+               result_op = ops[i];
+               break;
+          }
+     }
+     ln_op_arg_free(cmp_op.op_arg);
+
+     return result_op;
+}
+
 static int cmp_by_name(void *data1, void *data2)
 {
      ln_op *op1, *op2;

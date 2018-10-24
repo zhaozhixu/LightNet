@@ -28,7 +28,6 @@
 #include "../src/ln_arch.h"
 
 static ln_list *reg_ops;
-static ln_error *error = NULL;
 static ln_hash *tensor_table;
 
 extern ln_arch *ln_archs[];
@@ -47,11 +46,11 @@ static void checked_teardown(void)
 
 START_TEST(test_ln_opimpl_create)
 {
-     ln_op *op;
-     ln_list *ops;
-     char *json_str;
+     /* ln_op *op; */
+     /* ln_list *ops; */
+     /* char *json_str; */
 
-     json_str = ln_read_text("test_ops.json");
+     /* json_str = ln_read_text("test_ops.json"); */
 }
 END_TEST
 /* end of tests */

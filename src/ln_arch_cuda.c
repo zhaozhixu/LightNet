@@ -68,9 +68,10 @@ static inline int can_replace(const char *optype)
 
 static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
 {
-     ln_op *op, *new_op;
+     ln_op *op, *new_op, *op_proto;
      ln_op_arg *op_arg;
-     ln_list *new_list;
+     ln_list *new_ops;
+     char *optype_cuda;
      int *replace_index;
      int i;
 
@@ -90,7 +91,7 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
           return NULL;
      }
 
-     new_list = NULL;
+     new_ops = NULL;
      i = 0;
      LN_LIST_FOREACH(op, ops) {
           op_arg = op->op_arg;
@@ -101,15 +102,26 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
                                                 op_arg->params,
                                                 op_arg->tensor_table);
           } else {
-
+               optype_cuda = ln_alloc(sizeof(char)*(strlen(op_arg->optype)+10));
+               strcpy(optype_cuda, op_arg->optype);
+               strcat(optype_cuda, "_cuda");
+               op_proto = ln_op_array_find_by_optype(ops_cuda, optype_cuda);
+               assert(op_proto && "optype_cuda not found");
+               new_op = ln_op_create_from_proto(op_proto, op_arg->name,
+                                                op_arg->tensors_in,
+                                                op_arg->tensors_out,
+                                                op_arg->params,
+                                                op_arg->tensor_table);
+               ln_free(optype_cuda);
           }
-          new_list = ln_list_append(new_list, new_op);
+          new_ops = ln_list_append(new_ops, new_op);
      }
 
-     return new_list;
+     return new_ops;
 }
 
 ln_peephole_func ph_funcs_cuda[] = {
+     ph_func_single_replace,
      NULL
 };
 

@@ -157,14 +157,13 @@ static inline void error_handle(ln_error **error)
      }
 }
 
-ln_list *ln_pass_peephole(ln_list *ops, ln_peephole_func *ph_funcs)
+ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs)
 {
      ln_peephole_func pf;
      ln_op *op;
      ln_list *win_in, *win_out;
      ln_list *l_in, *l_out, *l_ops, *l_ops_pre, *l;
      int stable = 0;
-     int win_size = 3;
      int match;
      int i, j;
      ln_error *error = NULL;
@@ -187,7 +186,7 @@ ln_list *ln_pass_peephole(ln_list *ops, ln_peephole_func *ph_funcs)
                          op = l->data;
                          op->post_run(op->op_arg, &error);
                          error_handle(&error);
-                         ln_op_free_lists_too(op);
+                         ln_op_free(op); /* don't free tensor & param list */
                          l->data = l_out->data;
                          op = l->data;
                          op->pre_run(op->op_arg, &error);
