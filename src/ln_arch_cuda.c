@@ -34,7 +34,7 @@ extern ln_op ln_opimpl_zeros_cuda;
 extern ln_op ln_opimpl_elew_cuda;
 /* end of declare CUDA ops */
 
-ln_op *ops_cuda[] = {
+static ln_op *ops_cuda[] = {
      &ln_opimpl_create_cuda,
      &ln_opimpl_conv2d_cuda,
      &ln_opimpl_maxpool2d_cuda,
@@ -113,7 +113,7 @@ ln_peephole_func ph_funcs_cuda[] = {
      NULL
 };
 
-struct ln_arch ln_arch_cuda = {
+ln_arch ln_arch_cuda = {
      .ops = ops_cuda,
      .ph_funcs = ph_funcs_cuda,
      .arch_name = "cuda",

@@ -23,16 +23,17 @@
 #include "test_lightnet.h"
 #include "../src/ln_op.h"
 #include "../src/ln_parse.h"
+#include "../src/ln_arch.h"
 
 static char *json_str;
-static ln_list *reg_ops;
+static ln_list *reg_ops = NULL;
 
-extern ln_op *ln_init_ops[];
+extern ln_arch *ln_archs[];
 
 static void checked_setup(void)
 {
      json_str = ln_read_text("test_ops.json");
-     reg_ops = ln_op_list_create_from_array(ln_init_ops);
+     reg_ops = ln_arch_create_oplist(ln_archs);
 }
 
 static void checked_teardown(void)

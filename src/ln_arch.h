@@ -34,4 +34,14 @@ struct ln_arch {
      char              *arch_name;
 };
 
+#ifdef __cplusplus
+LN_CPPSTART
+#endif
+
+ln_list *ln_arch_create_oplist(ln_arch *archs[]);
+
+#ifdef __cplusplus
+LN_CPPEND
+#endif
+
 #endif  /* _LN_ARCH_H_ */

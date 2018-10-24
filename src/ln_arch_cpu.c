@@ -20,8 +20,7 @@
  * SOFTWARE.
  */
 
-#include "ln_op.h"
-#include "ln_list.h"
+#include "ln_arch.h"
 
 extern ln_op ln_opimpl_slice;
 extern ln_op ln_opimpl_reshape;
@@ -33,23 +32,9 @@ extern ln_op ln_opimpl_create;
 extern ln_op ln_opimpl_conv2d;
 extern ln_op ln_opimpl_relu;
 extern ln_op ln_opimpl_maxpool2d;
-/* end of declare normal ops */
+/* end of declare cpu ops */
 
-#ifdef LN_CUDA
-extern ln_op ln_opimpl_create_cuda;
-extern ln_op ln_opimpl_conv2d_cuda;
-extern ln_op ln_opimpl_maxpool2d_cuda;
-extern ln_op ln_opimpl_maxreduce_cuda;
-extern ln_op ln_opimpl_relu_cuda;
-extern ln_op ln_opimpl_reshape_cuda;
-extern ln_op ln_opimpl_slice_cuda;
-extern ln_op ln_opimpl_transpose_cuda;
-extern ln_op ln_opimpl_zeros_cuda;
-extern ln_op ln_opimpl_elew_cuda;
-/* end of declare CUDA ops */
-#endif
-
-ln_op *ln_init_ops[] = {
+static ln_op *ops_cpu[] = {
      &ln_opimpl_slice,
      &ln_opimpl_reshape,
      &ln_opimpl_maxreduce,
@@ -60,19 +45,16 @@ ln_op *ln_init_ops[] = {
      &ln_opimpl_conv2d,
      &ln_opimpl_relu,
      &ln_opimpl_maxpool2d,
-/* end of init normal ops */
-#ifdef LN_CUDA
-     &ln_opimpl_create_cuda,
-     &ln_opimpl_conv2d_cuda,
-     &ln_opimpl_maxpool2d_cuda,
-     &ln_opimpl_maxreduce_cuda,
-     &ln_opimpl_relu_cuda,
-     &ln_opimpl_reshape_cuda,
-     &ln_opimpl_slice_cuda,
-     &ln_opimpl_transpose_cuda,
-     &ln_opimpl_zeros_cuda,
-     &ln_opimpl_elew_cuda,
-/* end of init CUDA ops */
-#endif
-     NULL /* end of init ops */
+/* end of init cpu ops */
+     NULL
+};
+
+ln_peephole_func ph_funcs_cpu[] = {
+     NULL
+};
+
+ln_arch ln_arch_cpu = {
+     .ops = ops_cpu,
+     .ph_funcs = ph_funcs_cpu,
+     .arch_name = "cpu",
 };

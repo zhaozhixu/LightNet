@@ -23,8 +23,9 @@
 #include "test_lightnet.h"
 #include "../src/ln_pass.h"
 #include "../src/ln_parse.h"
+#include "../src/ln_arch.h"
 
-extern ln_op *ln_init_ops[];
+extern ln_arch *ln_archs[];
 static ln_list *reg_ops;
 static ln_list *ops;
 static char *json_str;
@@ -33,7 +34,7 @@ static ln_error *error = NULL;
 
 static void checked_setup(void)
 {
-     reg_ops = ln_op_list_create_from_array(ln_init_ops);
+     reg_ops = ln_arch_create_oplist(ln_archs);
      json_str = ln_read_text("test_ops.json");
      tensor_table = ln_tensor_table_create();
      ops = ln_parse(json_str, reg_ops, tensor_table);
