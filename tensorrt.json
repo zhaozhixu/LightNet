@@ -1,0 +1,56 @@
+{
+    "ops": [
+        {
+            "name": "tensorrt1",
+            "optype": "tensorrt",
+            "tensors_in": [
+                {"arg_name": "src1", "name": "st1"},
+                {"arg_name": "src2", "name": "st2"},
+                {"arg_name": "weight1", "name": "wt1"},
+                {"arg_name": "weight2", "name": "wt2"},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst1", "name": "dt1"},
+                {"arg_name": "dst2", "name": "dt2"},
+            ],
+            "params": [
+                {"arg_name": "op1", "value": "conv"},
+                {"arg_name": "op1_src", "value": "st1"},
+                {"arg_name": "op1_weight", "value": "wt1"},
+                {"arg_name": "op1_dst", "value": "conv_dst1"},
+                {"arg_name": "op1_group", "value": 1},
+                {"arg_name": "op1_size", "value": [3, 3]},
+                {"arg_name": "op1_stride", "value": [2, 2]},
+                {"arg_name": "op1_padding", "value": [1, 1]},
+                {"arg_name": "op1_dilation", "value": [1, 1]},
+                {"arg_name": "op2", "value": "relu"},
+                {"arg_name": "op2_src", "value": "conv_dst1"},
+                {"arg_name": "op2_dst", "value": "relu_dst1"},
+                {"arg_name": "op3", "value": "maxpool2d"},
+                {"arg_name": "op3_src", "value": "relu_dst1"},
+                {"arg_name": "op3_dst", "value": "dt1"},
+                {"arg_name": "op3_size", "value": [3, 3]},
+                {"arg_name": "op3_stride", "value": [2, 2]},
+                {"arg_name": "op3_padding", "value": [1, 1]},
+                {"arg_name": "op4", "value": "conv"},
+                {"arg_name": "op4_src", "value": "st2"},
+                {"arg_name": "op4_weight", "value": "wt2"},
+                {"arg_name": "op4_dst", "value": "conv_dst2"},
+                {"arg_name": "op4_group", "value": 1},
+                {"arg_name": "op4_size", "value": [3, 3]},
+                {"arg_name": "op4_stride", "value": [2, 2]},
+                {"arg_name": "op4_padding", "value": [1, 1]},
+                {"arg_name": "op4_dilation", "value": [1, 1]},
+                {"arg_name": "op5", "value": "relu"},
+                {"arg_name": "op5_src", "value": "conv_dst2"},
+                {"arg_name": "op5_dst", "value": "relu_dst2"},
+                {"arg_name": "op6", "value": "maxpool2d"},
+                {"arg_name": "op6_src", "value": "relu_dst2"},
+                {"arg_name": "op6_dst", "value": "dt2"},
+                {"arg_name": "op6_size", "value": [3, 3]},
+                {"arg_name": "op6_stride", "value": [2, 2]},
+                {"arg_name": "op6_padding", "value": [1, 1]},
+            ]
+        }
+    ]
+}

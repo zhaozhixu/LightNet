@@ -27,6 +27,12 @@
 #include "ln_list.h"
 #include "ln_hash.h"
 
+typedef struct ln_tensor_list_entry ln_tensor_list_entry;
+struct ln_tensor_list_entry {
+     char *name;
+     char *arg_name;
+};
+
 typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_entry {
      char       *name;

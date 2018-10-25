@@ -32,7 +32,8 @@ extern ln_op ln_opimpl_slice_cuda;
 extern ln_op ln_opimpl_transpose_cuda;
 extern ln_op ln_opimpl_zeros_cuda;
 extern ln_op ln_opimpl_elew_cuda;
-/* end of declare CUDA ops */
+extern ln_op ln_opimpl_tensorrt_cuda;
+/* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
      &ln_opimpl_create_cuda,
@@ -45,7 +46,8 @@ static ln_op *ops_cuda[] = {
      &ln_opimpl_transpose_cuda,
      &ln_opimpl_zeros_cuda,
      &ln_opimpl_elew_cuda,
-/* end of init CUDA ops */
+     &ln_opimpl_tensorrt_cuda,
+/* end of init cuda ops */
      NULL
 };
 
@@ -120,8 +122,13 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
      return new_ops;
 }
 
+static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
+{
+}
+
 ln_peephole_func ph_funcs_cuda[] = {
      ph_func_single_replace,
+     ph_func_tensorrt,
      NULL
 };
 

@@ -23,23 +23,18 @@
 #include "ln_tensor.h"
 #include "ln_util.h"
 
-struct list_entry {
-     char *name;
-     char *arg_name;
-};
-
-static struct list_entry *list_entry_create(const char *arg_name,
+static ln_tensor_list_entry *list_entry_create(const char *arg_name,
                                             const char *name)
 {
-     struct list_entry *entry;
+     ln_tensor_list_entry *entry;
 
-     entry = ln_alloc(sizeof(struct list_entry));
+     entry = ln_alloc(sizeof(ln_tensor_list_entry));
      entry->arg_name = ln_strdup(arg_name);
      entry->name = ln_strdup(name);
      return entry;
 }
 
-static void list_entry_free(struct list_entry *entry)
+static void list_entry_free(ln_tensor_list_entry *entry)
 {
      ln_free(entry->arg_name);
      ln_free(entry->name);
@@ -54,7 +49,7 @@ static void list_entry_free_wrapper(void *entry)
 ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
                                const char *name)
 {
-     struct list_entry *entry;
+     ln_tensor_list_entry *entry;
 
      entry = list_entry_create(arg_name, name);
      list = ln_list_append(list, entry);
@@ -68,7 +63,7 @@ void ln_tensor_list_free(ln_list *list)
 
 static int find_by_arg_name(void *data1, void *data2)
 {
-     struct list_entry *e1, *e2;
+     ln_tensor_list_entry *e1, *e2;
 
      e1 = data1;
      e2 = data2;
@@ -77,8 +72,8 @@ static int find_by_arg_name(void *data1, void *data2)
 
 char *ln_tensor_list_find_name(ln_list *list, char *arg_name)
 {
-     struct list_entry cmp_entry;
-     struct list_entry *result_entry;
+     ln_tensor_list_entry cmp_entry;
+     ln_tensor_list_entry *result_entry;
 
      cmp_entry.arg_name = arg_name;
      result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);

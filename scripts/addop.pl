@@ -33,12 +33,18 @@ if ($subfix ne "" and not $op_name =~ /\w+_$subfix/) {
 if ($subfix ne "" && $subfix ne "cuda") {
   err_exit("unsupported SUBFIX \"$subfix\"");
 }
+if ($subfix eq "") {
+  $subfix = "cpu";
+}
 
 my $mem_type = "";
-if ($subfix eq "") {
+my $arch_file = "";
+if ($subfix eq "cpu") {
   $mem_type = "LN_MEM_CPU";
+  $arch_file = "$root/src/ln_arch_cpu.c";
 } elsif ($subfix eq "cuda") {
   $mem_type = "LN_MEM_CUDA";
+  $arch_file = "$root/src/ln_arch_cuda.c";
 }
 
 my $op_tpl = <<EOF;
@@ -125,30 +131,21 @@ close OP;
 
 my $declare = "extern ln_op ln_opimpl_${op_name};";
 my $item = "&ln_opimpl_${op_name},";
-my $oplist_file = "$root/src/ln_oplist.c";
-copy($oplist_file, "$oplist_file.bak")
-  or die "Cannot backup file $oplist_file: $!";
-open OPLIST_BAK, '<', "$oplist_file.bak"
-  or die "Cannot open $oplist_file.bak: $!";
-open OPLIST, '>', $oplist_file
-  or die "Cannot open $oplist_file: $!";
+copy($arch_file, "$arch_file.bak")
+  or die "Cannot backup file $arch_file: $!";
+open ARCH_FILE_BAK, '<', "$arch_file.bak"
+  or die "Cannot open $arch_file.bak: $!";
+open ARCH_FILE, '>', $arch_file
+  or die "Cannot open $arch_file: $!";
 
-if ($subfix eq "") {
-  while (<OPLIST_BAK>) {
-    s|/\* end of declare normal ops \*/|$declare\n/* end of declare normal ops */|;
-    s|/\* end of init normal ops \*/|     $item\n/* end of init normal ops */|;
-    print OPLIST;
-  }
+while (<ARCH_FILE_BAK>) {
+  s|/\* end of declare $subfix ops \*/|$declare\n/* end of declare $subfix ops */|;
+  s|/\* end of init $subfix ops \*/|     $item\n/* end of init $subfix ops */|;
+  print ARCH_FILE;
 }
-elsif ($subfix eq "cuda") {
-  while (<OPLIST_BAK>) {
-    s|/\* end of declare CUDA ops \*/|$declare\n/* end of declare CUDA ops */|;
-    s|/\* end of init CUDA ops \*/|     $item\n/* end of init CUDA ops */|;
-    print OPLIST;
-  }
-}
-close OPLIST;
-close OPLIST_BAK;
+
+close ARCH_FILE;
+close ARCH_FILE_BAK;
 
 sub err_exit {
   my $msg = $_[0];
