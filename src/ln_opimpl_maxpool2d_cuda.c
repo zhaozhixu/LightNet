@@ -32,11 +32,6 @@ struct priv_s {
      int       *padding;
 };
 
-static int compute_output_dim(int input_dim, int size, int stride, int padding)
-{
-     return ((input_dim + padding) - size) / stride + 1;
-}
-
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
@@ -96,10 +91,10 @@ static void maxpool2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      int dims[4];
      dims[0] = src_entry->tensor->dims[0];
      dims[1] = src_entry->tensor->dims[1];
-     dims[2] = compute_output_dim(src_entry->tensor->dims[2], size[0],
-                                  stride[0], padding[0] + padding[1]);
-     dims[3] = compute_output_dim(src_entry->tensor->dims[3], size[1],
-                                  stride[1], padding[2] + padding[3]);
+     dims[2] = ln_compute_output_dim(src_entry->tensor->dims[2], size[0],
+                                     stride[0], padding[0] + padding[1]);
+     dims[3] = ln_compute_output_dim(src_entry->tensor->dims[3], size[1],
+                                     stride[1], padding[2] + padding[3]);
      dst_tensor = tl_tensor_create(NULL, 4, dims, src_entry->tensor->dtype);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);

@@ -110,6 +110,55 @@ char *ln_read_text(const char *file_name)
      return str;
 }
 
+char *ln_next_token(const char *s, int c)
+{
+     char *c_pos;
+
+     c_pos = strchr(s, c);
+     if (!c_pos || !*(c_pos+1))
+          return NULL;
+     return c_pos + 1;
+}
+
+char *ln_strcat_alloc(const char *s1, const char *s2)
+{
+     char *dst;
+
+     dst = ln_alloc(sizeof(char) * (strlen(s1)+strlen(s2)+1));
+     strcpy(dst, s1);
+     strcat(dst, s2);
+     return dst;
+}
+
+char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim)
+{
+     char *dst;
+     size_t s1_len, s2_len;
+
+     s1_len = strlen(s1);
+     s2_len = strlen(s2);
+     dst = ln_alloc(sizeof(char) * (s2_len+s2_len+2));
+     strcpy(dst, s1);
+     dst[s1_len] = delim;
+     dst[s1_len+1] = '\0';
+     strcat(dst, s2);
+     return dst;
+}
+
+int ln_compute_output_dim(int input_dim, int size, int stride, int padding)
+{
+     return ((input_dim + padding) - size) / stride + 1;
+}
+
+int ln_compute_length(int ndim, const int *dims)
+{
+     int i, len;
+
+     for (i = 0, len = 1; i < ndim; i++)
+          len *= dims[i];
+     return len;
+}
+
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
      char buf[LN_MAXLINE];

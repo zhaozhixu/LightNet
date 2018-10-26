@@ -50,6 +50,10 @@
                 {"arg_name": "op6_size", "value": [3, 3]},
                 {"arg_name": "op6_stride", "value": [2, 2]},
                 {"arg_name": "op6_padding", "value": [1, 1]},
+                {"arg_name": "dst1_shape", "value": [1, 2, 3, 4]},
+                {"arg_name": "dst2_shape", "value": [1, 2, 3, 4]},
+                {"arg_name": "dst1_dtype", "value": "TL_FLOAT"},
+                {"arg_name": "dst2_dtype", "value": "TL_FLOAT"},
             ]
         }
     ]

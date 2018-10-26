@@ -23,16 +23,6 @@
 #include <assert.h>
 #include "ln_op.h"
 
-
-static inline int compute_length(int ndim, const int *dims)
-{
-     int i, len;
-
-     for (i = 0, len = 1; i < ndim; i++)
-          len *= dims[i];
-     return len;
-}
-
 struct priv_s {
      char      *dst_name;
      tl_tensor *dst_tensor;
@@ -83,7 +73,7 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      for (i = 0; i < ndim; i++)
           ln_op_check_param_satisfy_msg(dims[i] > 0,
                                         "\"dims\" array elements should be positive");
-     ln_op_check_param_satisfy_msg(src_entry->tensor->len == compute_length(ndim, dims),
+     ln_op_check_param_satisfy_msg(src_entry->tensor->len == ln_compute_length(ndim, dims),
                                    "\"src\" tensor length is not equal with requested length");
 
      /* define output tensor shape, tensor data should be NULL */

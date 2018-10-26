@@ -23,47 +23,127 @@
 #include <assert.h>
 #include "ln_op.h"
 
+static void check_param(char *name1, char *name2, ln_param_type ptype,
+                        int plen ,ln_op_arg *op_arg, ln_error **error)
+{
+     char *full_name;
+     ln_param_entry *pe;
+
+     if (name2)
+          full_name = ln_strcat_delim_alloc(name1, name2, '_');
+     else
+          full_name = ln_strdup(name1);
+     pe = ln_param_list_find(op_arg->params, full_name);
+     ln_op_check_param_exist(pe, full_name);
+     ln_op_check_param_type(pe, ptype);
+     if (plen > 0)
+          ln_op_check_param_array_len_eq(pe, plen);
+
+     ln_free(full_name);
+}
+
+/* TODO: check params throughly */
+static void check_conv(char *opname, ln_op_arg *op_arg, ln_error **error)
+{
+     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "weight", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "group", LN_PARAM_NUMBER, 0, op_arg, error);
+     check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+     check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+     check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+     check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+}
+
+static void check_relu(char *opname, ln_op_arg *op_arg, ln_error **error)
+{
+     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+}
+
+static void check_maxpool2d(char *opname, ln_op_arg *op_arg, ln_error **error)
+{
+     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+     check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+     check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+}
+
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
 static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-     char *src_name, *dst_name, *arg_name;
-     ln_tensor_entry *src_entry, *dst_entry, *arg_entry;
-     tl_tensor *dst_tensor, *arg_tensor;
-     ln_param_entry *axis_entry;
-     int tensors_n, params_n;
-     int axis;
-     struct priv_s *priv;
+     int tensors_n;
+     ln_param_entry *pe;
+     ln_tensor_list_entry *tle;
+     ln_tensor_entry *te;
+     ln_tensor_entry *dst_entry;
+     tl_tensor *dst_tensor;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
      ln_op_check_tensor_in_len_gt(tensors_n, 0);
 
+     LN_LIST_FOREACH(tle, op_arg->tensors_in) {
+          if (!strncmp(tle->arg_name, "src", 3)) {
+               te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+               ln_op_check_tensor_defined(te, tle->name);
+          } else if (!strncmp(tle->arg_name, "weight", 6)) {
+               te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+               ln_op_check_tensor_defined(te, tle->name);
+               ln_op_check_tensor_isstatic(te);
+          }
+     }
+
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
      ln_op_check_tensor_out_len_gt(tensors_n, 0);
 
-     src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(src_name, "src");
-     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(src_entry, src_name);
-
-     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(dst_name, "dst");
-     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(dst_entry, dst_name);
-
-     /* "arg" is an optional parameter */
-     arg_name = ln_tensor_list_find_name(op_arg->tensors_out, "arg");
-     if (arg_name) {
-          arg_entry = ln_tensor_table_find(op_arg->tensor_table, arg_name);
-          ln_op_check_tensor_not_defined(arg_entry, arg_name);
+     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
+          if (!strncmp(tle->arg_name, "dst", 3)) {
+               te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+               ln_op_check_tensor_defined(te, tle->name);
+          }
      }
 
-     params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(params_n, 1);
+     char *attr;
+     int shape_n = 0, dtype_n = 0;
+     LN_LIST_FOREACH(pe, op_arg->params) {
+          if (!strncmp(pe->arg_name, "dst", 3)) {
+                    attr = ln_next_token(pe->arg_name, '_');
+                    if (!strcmp(attr, "shape")) {
+                         check_param(pe->arg_name, NULL, LN_PARAM_ARRAY_NUMBER,
+                                     0, op_arg, error);
+                         shape_n++;
+                    } else if (!strcmp(attr, "dtype")) {
+                         check_param(pe->arg_name, NULL, LN_PARAM_STRING,
+                                     0, op_arg, error);
+                         dtype_n++;
+                    } else {
+                         ln_op_check_param_warning(0, "unused param");
+                    }
+               continue;
+          }
+          if (ln_next_token(pe->arg_name, '_'))
+               continue;
+          ln_op_check_param_type(pe, LN_PARAM_STRING);
+          if (!strcmp(pe->value_string, "conv"))
+               check_conv(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "relu"))
+               check_relu(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "maxpool2d"))
+               check_maxpool2d(pe->arg_name, op_arg, error);
+          else
+               ln_op_check_param_error(0, "unsupported TensorRT operator");
+     }
+     ln_op_check_param_error(tensors_n == shape_n, "the length of \"tensors_out\" doesn't match the number of \"dst*_shape\"");
+     ln_op_check_param_error(tensors_n == dtype_n, "the length of \"tensors_out\" doesn't match the number of \"dst*_dtype\"");
 
      /* define output tensor shape, tensor data should be NULL */
+     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
+          /* dst_tensor */
+     }
 
      /* use op_arg->priv to store private data to be used in other functions */
 }

@@ -23,25 +23,6 @@
 #include <assert.h>
 #include "ln_op.h"
 
-static tl_elew_op k2v(char *str)
-{
-     if (!strcmp(str, "TL_MUL"))
-          return TL_MUL;
-     if (!strcmp(str, "TL_DIV"))
-          return TL_DIV;
-     if (!strcmp(str, "TL_SUM"))
-          return TL_SUM;
-     if (!strcmp(str, "TL_SUB"))
-          return TL_SUB;
-     if (!strcmp(str, "TL_MAX"))
-          return TL_MAX;
-     if (!strcmp(str, "TL_MIN"))
-          return TL_MIN;
-     if (!strcmp(str, "TL_POW"))
-          return TL_POW;
-     return -1;
-}
-
 struct priv_s {
      tl_tensor  *src1;
      tl_tensor  *src2;
@@ -94,7 +75,7 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_exist(elew_op_entry, "elew_op");
      ln_op_check_param_type(elew_op_entry, LN_PARAM_STRING);
 
-     elew_op = k2v(elew_op_entry->value_string);
+     elew_op = tl_elew_op_from_str(elew_op_entry->value_string);
      ln_op_check_param_satisfy_msg(elew_op != -1,
                                    "\"elew_op\" param should be a supported tl_elew_op");
 

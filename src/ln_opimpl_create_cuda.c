@@ -23,27 +23,6 @@
 #include <assert.h>
 #include "ln_op.h"
 
-static int k2v(char *str)
-{
-     if (!strcmp(str, "TL_FLOAT"))
-          return TL_FLOAT;
-     if (!strcmp(str, "TL_INT32"))
-          return TL_INT32;
-     if (!strcmp(str, "TL_INT16"))
-          return TL_INT16;
-     if (!strcmp(str, "TL_INT8"))
-          return TL_INT8;
-     if (!strcmp(str, "TL_UINT32"))
-          return TL_UINT32;
-     if (!strcmp(str, "TL_UINT16"))
-          return TL_UINT16;
-     if (!strcmp(str, "TL_UINT8"))
-          return TL_UINT8;
-     if (!strcmp(str, "TL_BOOL"))
-          return TL_BOOL;
-     return -1;
-}
-
 static int compute_length(int ndim, const int *dims)
 {
      int i, len;
@@ -91,7 +70,7 @@ static void create_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_op_check_param_exist(dtype_entry, "dtype");
      ln_op_check_param_type(dtype_entry, LN_PARAM_STRING);
 
-     dtype = k2v(dtype_entry->value_string);
+     dtype = tl_dtype_from_str(dtype_entry->value_string);
      ln_op_check_param_satisfy_msg(dtype != -1,
                                    "\"dtype\" param should be a supported tl_dtype");
 

@@ -108,6 +108,16 @@ LN_CPPEND
 #define ln_op_check_param_satisfy(condition)                    \
      ln_op_check_param_satisfy_msg((condition), #condition)
 
+#define ln_op_check_param_error(condition, msg)         \
+     ln_op_check(LN_ERROR, (condition),                 \
+                 "%s: \"%s\"'s param error: %s",        \
+                 op_arg->optype, op_arg->name, (msg))
+
+#define ln_op_check_param_warning(condition, msg)         \
+     ln_op_check(LN_WARNING, (condition),                 \
+                 "%s: \"%s\"'s param warning: %s",        \
+                 op_arg->optype, op_arg->name, (msg))
+
 /* entry should be returned by
    ln_param_list_find(op_arg->params, arg_name) */
 #define ln_op_check_param_exist(entry, arg_name)                \
@@ -279,5 +289,10 @@ LN_CPPEND
      ln_op_check(LN_ERROR, (entry1)->tensor->dtype == (entry2)->tensor->dtype, \
                  "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should be the same data type", \
                  op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
+
+#define ln_op_check_tensor_isstatic(entry)                             \
+     ln_op_check(LN_ERROR, (entry)->isstatic,                          \
+                 "%s: \"%s\"'s tensor \"%s\" should be static",        \
+                 op_arg->optype, op_arg->name, (entry)->name)
 
 #endif  /* _LN_OP_H_ */
