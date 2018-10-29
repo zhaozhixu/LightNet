@@ -117,8 +117,6 @@ static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_reshape = {
      .optype = "reshape",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
 };
 
 ln_op ln_opimpl_reshape = {

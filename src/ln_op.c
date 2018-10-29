@@ -24,8 +24,7 @@
 
 static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
                                    ln_list *tensors_in, ln_list *tensors_out,
-                                   ln_list *params, ln_hash *tensor_table,
-                                   ln_mem_type mtype_in, ln_mem_type mtype_out)
+                                   ln_list *params, ln_hash *tensor_table)
 {
      ln_op_arg *op_arg;
 
@@ -37,8 +36,7 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
      op_arg->params = params;
      op_arg->priv = NULL;
      op_arg->tensor_table = tensor_table;
-     op_arg->mtype_in = mtype_in;
-     op_arg->mtype_out = mtype_out;
+     op_arg->fixed = 0;
 
      return op_arg;
 }
@@ -60,8 +58,7 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
      arg_proto = op_proto->op_arg;
      op = ln_alloc(sizeof(ln_op));
      op->op_arg = ln_op_arg_create(name, arg_proto->optype, tensors_in,
-                                   tensors_out, params, tensor_table,
-                                   arg_proto->mtype_in, arg_proto->mtype_out);
+                                   tensors_out, params, tensor_table);
      op->pre_run = op_proto->pre_run;
      op->static_run = op_proto->static_run;
      op->run = op_proto->run;
@@ -134,8 +131,7 @@ ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
      ln_op cmp_op;
      ln_op *result_op;
 
-     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL,
-                                      LN_MEM_UNDEF, LN_MEM_UNDEF);
+     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
      result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_optype);
      ln_op_arg_free(cmp_op.op_arg);
 
@@ -148,8 +144,7 @@ ln_op *ln_op_array_find_by_optype(ln_op *ops[], char *optype)
      ln_op *result_op = NULL;
      int i;
 
-     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL,
-                                      LN_MEM_UNDEF, LN_MEM_UNDEF);
+     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
      for (i = 0; ops[i]; i++) {
           if (!cmp_by_optype(ops[i], &cmp_op)) {
                result_op = ops[i];
@@ -175,8 +170,7 @@ ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
      ln_op cmp_op;
      ln_op *result_op;
 
-     cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL, NULL, NULL,
-                                      LN_MEM_UNDEF, LN_MEM_UNDEF);
+     cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL, NULL, NULL);
      result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_name);
      ln_op_arg_free(cmp_op.op_arg);
 

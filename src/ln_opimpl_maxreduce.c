@@ -132,8 +132,6 @@ static void maxreduce_post_run(ln_op_arg *op_arg, ln_error **error)
 
 static ln_op_arg op_arg_maxreduce = {
      .optype = "maxreduce",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
 };
 
 /* struct used for op registration in ln_oplist.c */

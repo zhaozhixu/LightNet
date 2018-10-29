@@ -84,8 +84,6 @@ static void post_run2 (ln_op_arg *op_arg, ln_error **error)
 static ln_op_arg op_arg0 = {
      .optype = "test_optype0",
      .name = "test_opname0",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
 };
 
 static ln_op opimpl0 = {
@@ -99,8 +97,6 @@ static ln_op opimpl0 = {
 static ln_op_arg op_arg1 = {
      .optype = "test_optype1",
      .name = "test_opname1",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
 };
 
 static ln_op opimpl1 = {
@@ -114,8 +110,6 @@ static ln_op opimpl1 = {
 static ln_op_arg op_arg2 = {
      .optype = "test_optype2",
      .name = "test_opname2",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
 };
 
 static ln_op opimpl2 = {
@@ -230,8 +224,6 @@ START_TEST(test_ln_op_create_from_proto)
      ck_assert_ptr_eq(op->op_arg->tensors_in, NULL);
      ck_assert_ptr_eq(op->op_arg->tensors_out, tensors);
      ck_assert_ptr_eq(op->op_arg->priv, NULL);
-     ck_assert_int_eq(op->op_arg->mtype_in, op_arg0.mtype_in);
-     ck_assert_int_eq(op->op_arg->mtype_out, op_arg0.mtype_out);
 
      ln_tensor_list_free(tensors);
      ln_param_list_free(params);

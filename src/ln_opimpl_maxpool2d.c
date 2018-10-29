@@ -135,8 +135,6 @@ static void maxpool2d_post_run(ln_op_arg *op_arg, ln_error **error)
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_maxpool2d = {
      .optype = "maxpool2d",
-     .mtype_in = LN_MEM_CPU,
-     .mtype_out = LN_MEM_CPU,
 };
 
 /* struct used for op registration in ln_oplist.c */

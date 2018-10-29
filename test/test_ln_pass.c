@@ -101,8 +101,6 @@ static void assert_op_eq(ln_list *registered_ops, ln_op *op,
      ck_assert_ptr_eq(op->run, op_proto->run);
      ck_assert_ptr_eq(op->post_run, op_proto->post_run);
      ck_assert_str_eq(op->op_arg->optype, op_proto->op_arg->optype);
-     ck_assert_int_eq(op->op_arg->mtype_in, op_proto->op_arg->mtype_in);
-     ck_assert_int_eq(op->op_arg->mtype_out, op->op_arg->mtype_out);
      ck_assert_str_eq(op->op_arg->name, opname);
 }
 

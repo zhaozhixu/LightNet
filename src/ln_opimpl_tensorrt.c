@@ -174,8 +174,6 @@ static void tensorrt_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_tensorrt_cuda = {
      .optype = "tensorrt_cuda",
-     .mtype_in = LN_MEM_CUDA,
-     .mtype_out = LN_MEM_CUDA,
 };
 
 /* struct used for op registration in ln_oplist.c */

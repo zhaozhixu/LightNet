@@ -36,8 +36,7 @@ struct ln_op_arg {
      ln_list         *params;
      void            *priv;     /* for other private data storage */
      ln_hash         *tensor_table;
-     ln_mem_type      mtype_in;
-     ln_mem_type      mtype_out;
+     int              fixed;    /* won't be replaced if set to 1 */
 };
 typedef struct ln_op_arg ln_op_arg;
 
