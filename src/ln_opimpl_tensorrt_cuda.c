@@ -79,8 +79,6 @@ static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_param_entry *pe;
      ln_tensor_list_entry *tle;
      ln_tensor_entry *te;
-     ln_tensor_entry *dst_entry;
-     tl_tensor *dst_tensor;
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
@@ -107,24 +105,7 @@ static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
           }
      }
 
-     char *attr;
-     int shape_n = 0, dtype_n = 0;
      LN_LIST_FOREACH(pe, op_arg->params) {
-          if (!strncmp(pe->arg_name, "dst", 3)) {
-                    attr = ln_next_token(pe->arg_name, '_');
-                    if (!strcmp(attr, "shape")) {
-                         check_param(pe->arg_name, NULL, LN_PARAM_ARRAY_NUMBER,
-                                     0, op_arg, error);
-                         shape_n++;
-                    } else if (!strcmp(attr, "dtype")) {
-                         check_param(pe->arg_name, NULL, LN_PARAM_STRING,
-                                     0, op_arg, error);
-                         dtype_n++;
-                    } else {
-                         ln_op_check_param_warning(0, "unused param");
-                    }
-               continue;
-          }
           if (ln_next_token(pe->arg_name, '_'))
                continue;
           ln_op_check_param_type(pe, LN_PARAM_STRING);
@@ -137,12 +118,34 @@ static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
           else
                ln_op_check_param_error(0, "unsupported TensorRT operator");
      }
-     ln_op_check_param_error(tensors_n == shape_n, "the length of \"tensors_out\" doesn't match the number of \"dst*_shape\"");
-     ln_op_check_param_error(tensors_n == dtype_n, "the length of \"tensors_out\" doesn't match the number of \"dst*_dtype\"");
 
      /* define output tensor shape, tensor data should be NULL */
+     ln_tensor_entry *dst_entry;
+     tl_tensor *dst_tensor;
+     int *dims;
+     int ndim;
+     tl_dtype dtype;
+     char *arg_name;
      LN_LIST_FOREACH(tle, op_arg->tensors_out) {
-          /* dst_tensor */
+          arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
+          pe = ln_param_list_find(op_arg->params, arg_name);
+          ln_op_check_param_exist(pe, arg_name);
+          ln_op_check_param_type(pe, LN_PARAM_ARRAY_NUMBER);
+          ln_op_check_param_array_len_gt(pe, 0);
+          dims = pe->value_array_int;
+          ndim = pe->array_len;
+          ln_free(arg_name);
+
+          arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
+          pe = ln_param_list_find(op_arg->params, arg_name);
+          ln_op_check_param_exist(pe, arg_name);
+          ln_op_check_param_type(pe, LN_PARAM_ARRAY_STRING);
+          dtype = tl_dtype_from_str(pe->value_string);
+          ln_free(arg_name);
+
+          dst_tensor = tl_tensor_create(NULL, ndim, dims, dtype);
+          dst_entry = ln_tensor_entry_create(tle->name, dst_tensor);
+          ln_tensor_table_insert(op_arg->tensor_table, tle->name, dst_entry);
      }
 
      /* use op_arg->priv to store private data to be used in other functions */
