@@ -25,7 +25,6 @@
 
 #include "ln_list.h"
 
-typedef enum ln_param_type ln_param_type;
 enum ln_param_type {
      /* NULL should always be the first type */
      LN_PARAM_NULL = 0,
@@ -38,8 +37,8 @@ enum ln_param_type {
      LN_PARAM_INVALID
      /* INVALID should always be the last type */
 };
+typedef enum ln_param_type ln_param_type;
 
-typedef struct ln_param_entry ln_param_entry;
 struct ln_param_entry {
      char          *arg_name;
      ln_param_type  type;
@@ -53,6 +52,7 @@ struct ln_param_entry {
      int           *value_array_int;
      ln_bool       *value_array_bool;
 };
+typedef struct ln_param_entry ln_param_entry;
 
 #ifdef __cplusplus
 LN_CPPSTART
@@ -63,7 +63,7 @@ ln_list *ln_param_list_append_string(ln_list *table, const char *arg_name,
 ln_list *ln_param_list_append_number(ln_list *table, const char *arg_name,
                                      double number);
 ln_list *ln_param_list_append_bool(ln_list *table, const char *arg_name,
-                                   ln_bool bool);
+                                   ln_bool bool_value);
 ln_list *ln_param_list_append_null(ln_list *table, const char *arg_name);
 ln_list *ln_param_list_append_array_string(ln_list *table, const char *arg_name,
                                            int array_len, char **array_string);

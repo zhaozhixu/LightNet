@@ -124,6 +124,7 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
 
 static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
 {
+     return NULL;
 }
 
 ln_peephole_func ph_funcs_cuda[] = {

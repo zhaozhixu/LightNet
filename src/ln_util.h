@@ -27,11 +27,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-typedef enum ln_bool ln_bool;
 enum ln_bool {
      LN_FALSE = 0,
      LN_TRUE = 1
 };
+typedef enum ln_bool ln_bool;
 
 typedef int (*ln_cmp_func)(void *, void *);
 typedef void (*ln_free_func)(void *);
@@ -68,16 +68,8 @@ void ln_err_sys(const char *fmt, ...);
 void ln_err_dump(const char *fmt, ...);
 
 #ifdef LN_CUDA
-#include <cuda_runtime.h>
 
 #define LN_MAX_CUDA_DEVICE 15
-
-#define LN_CUDA_CK(status)                                              \
-     do {                                                               \
-          if (status != cudaSuccess)                                    \
-               ln_err_bt("CUDA_ERROR(%d) %s: %s", status,               \
-                         cudaGetErrorName(status), cudaGetErrorString(status)); \
-     } while(0)
 
 void ln_cuda_set_device(int n);
 int ln_cuda_get_device();

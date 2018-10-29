@@ -55,67 +55,69 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(tensors_n, 2);
+     ln_opck_tensor_in_len_eq(tensors_n, 2);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(tensors_n, 1);
+     ln_opck_tensor_out_len_eq(tensors_n, 1);
 
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(src_name, "src");
+     ln_opck_tensor_in_exist(src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(src_entry, src_name);
-     ln_op_check_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
+     ln_opck_tensor_defined(src_entry, src_name);
+     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
+     ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
                                     "\"src\" should be a 4-dimensional tensor");
 
      weight_name = ln_tensor_list_find_name(op_arg->tensors_in, "weight");
-     ln_op_check_tensor_in_exist(weight_name, "weight");
+     ln_opck_tensor_in_exist(weight_name, "weight");
      weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
-     ln_op_check_tensor_defined(weight_entry, weight_name);
-     ln_op_check_tensor_satisfy_msg(src_entry->tensor->ndim == 5,
+     ln_opck_tensor_defined(weight_entry, weight_name);
+     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
+     ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 5,
                                     "\"weight\" should be a 5-dimensional tensor");
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(dst_name, "dst");
+     ln_opck_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(dst_entry, dst_name);
+     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(params_n, 5);
+     ln_opck_param_len_eq(params_n, 5);
 
      /* TODO: check the group */
      group_entry = ln_param_list_find(op_arg->params, "group");
-     ln_op_check_param_exist(group_entry, "group");
-     ln_op_check_param_type(group_entry, LN_PARAM_NUMBER);
+     ln_opck_param_exist(group_entry, "group");
+     ln_opck_param_type(group_entry, LN_PARAM_NUMBER);
      group = group_entry->value_int;
-     ln_op_check_param_satisfy_msg(group == weight_entry->tensor->dims[0],
+     ln_opck_param_satisfy_msg(group == weight_entry->tensor->dims[0],
                                    "\"group\" should be equal to the first dimension of \"weight\"");
 
      size_entry = ln_param_list_find(op_arg->params, "size");
-     ln_op_check_param_exist(size_entry, "size");
-     ln_op_check_param_type(size_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_op_check_param_array_len_eq(size_entry, 2);
+     ln_opck_param_exist(size_entry, "size");
+     ln_opck_param_type(size_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_opck_param_array_len_eq(size_entry, 2);
      size = size_entry->value_array_int;
 
      stride_entry = ln_param_list_find(op_arg->params, "stride");
-     ln_op_check_param_exist(stride_entry, "stride");
-     ln_op_check_param_type(stride_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_op_check_param_array_len_eq(stride_entry, 2);
+     ln_opck_param_exist(stride_entry, "stride");
+     ln_opck_param_type(stride_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_opck_param_array_len_eq(stride_entry, 2);
      stride = stride_entry->value_array_int;
 
      padding_entry = ln_param_list_find(op_arg->params, "padding");
-     ln_op_check_param_exist(padding_entry, "padding");
-     ln_op_check_param_type(padding_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_op_check_param_array_len_eq(padding_entry, 4);
+     ln_opck_param_exist(padding_entry, "padding");
+     ln_opck_param_type(padding_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_opck_param_array_len_eq(padding_entry, 4);
      padding = padding_entry->value_array_int;
 
      /* TODO: check this throughly */
      dilation_entry = ln_param_list_find(op_arg->params, "dilation");
-     ln_op_check_param_exist(dilation_entry, "dilation");
-     ln_op_check_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_op_check_param_array_len_eq(dilation_entry, 2);
+     ln_opck_param_exist(dilation_entry, "dilation");
+     ln_opck_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_opck_param_array_len_eq(dilation_entry, 2);
      dilation = dilation_entry->value_array_int;
 
-     ln_op_check_param_satisfy_msg(size[0] == weight_entry->tensor->dims[3] &&
+     ln_opck_param_satisfy_msg(size[0] == weight_entry->tensor->dims[3] &&
                                    size[1] == weight_entry->tensor->dims[4],
                                    "\"size\" should match the last two dimensions of \"weight\"");
 
@@ -129,6 +131,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
                                      stride[1], padding[2] + padding[3]);
      dst_tensor = tl_tensor_create(NULL, 4, dims, src_entry->tensor->dtype);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     dst_entry->mtype = LN_MEM_CPU;
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
      /* use op_arg->priv to store private data to be used in other functions */

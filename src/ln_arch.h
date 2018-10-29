@@ -27,12 +27,12 @@
 
 typedef ln_list *(*ln_peephole_func) (ln_list *ops, int win_size, int *match);
 
-typedef struct ln_arch ln_arch;
 struct ln_arch {
      ln_op            **ops;       /* NULL terminated */
      ln_peephole_func  *ph_funcs;  /* NULL terminated */
      char              *arch_name;
 };
+typedef struct ln_arch ln_arch;
 
 #ifdef __cplusplus
 LN_CPPSTART

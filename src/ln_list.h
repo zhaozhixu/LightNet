@@ -25,11 +25,11 @@
 
 #include "ln_util.h"
 
-typedef struct ln_list ln_list;
 struct ln_list {
-     void     *data;
-     ln_list  *next;
+     void            *data;
+     struct ln_list  *next;
 };
+typedef struct ln_list ln_list;
 
 #define LN_LIST_FOREACH(my_data, list)                                  \
      for (ln_list *l = (list); l && (((my_data) = l->data) ? 1:1); l = l->next)

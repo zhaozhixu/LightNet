@@ -26,21 +26,23 @@
 #include "tl_tensor.h"
 #include "ln_list.h"
 #include "ln_hash.h"
+#include "ln_mem.h"
 
-typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 struct ln_tensor_list_entry {
      char *name;
      char *arg_name;
 };
+typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 
-typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_entry {
-     char       *name;
-     tl_tensor  *tensor;
-     char       *owner;         /* owner of the tensor data */
-     size_t      offset;
-     int         isstatic;
+     char        *name;
+     tl_tensor   *tensor;
+     char        *owner;         /* owner of the tensor data */
+     size_t       offset;
+     int          isstatic;
+     ln_mem_type  mtype;
 };
+typedef struct ln_tensor_entry ln_tensor_entry;
 
 #ifdef __cplusplus
 LN_CPPSTART

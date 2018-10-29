@@ -23,7 +23,6 @@
 #ifndef _LN_ERROR_H_
 #define _LN_ERROR_H_
 
-typedef enum ln_error_level ln_error_level;
 enum ln_error_level {
      LN_ERROR,
      LN_ERROR_SYS,
@@ -31,12 +30,13 @@ enum ln_error_level {
      LN_WARNING_SYS,
      LN_INFO
 };
+typedef enum ln_error_level ln_error_level;
 
-typedef struct ln_error ln_error;
 struct ln_error {
      char            *err_str;
      ln_error_level   level;
 };
+typedef struct ln_error ln_error;
 
 #define ln_error_emit(level, fmt, varg...)                              \
      do {                                                               \

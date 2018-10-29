@@ -47,48 +47,50 @@ static void slice_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(tensors_n, 1);
+     ln_opck_tensor_in_len_eq(tensors_n, 1);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(tensors_n, 1);
+     ln_opck_tensor_out_len_eq(tensors_n, 1);
 
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(src_name, "src");
+     ln_opck_tensor_in_exist(src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(src_entry, src_name);
+     ln_opck_tensor_defined(src_entry, src_name);
+     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(dst_name, "dst");
+     ln_opck_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(dst_entry, dst_name);
+     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(params_n, 3);
+     ln_opck_param_len_eq(params_n, 3);
 
      axis_entry = ln_param_list_find(op_arg->params, "axis");
-     ln_op_check_param_exist(axis_entry, "axis");
-     ln_op_check_param_type(axis_entry, LN_PARAM_NUMBER);
+     ln_opck_param_exist(axis_entry, "axis");
+     ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
 
      start_entry = ln_param_list_find(op_arg->params, "start");
-     ln_op_check_param_exist(start_entry, "start");
-     ln_op_check_param_type(start_entry, LN_PARAM_NUMBER);
+     ln_opck_param_exist(start_entry, "start");
+     ln_opck_param_type(start_entry, LN_PARAM_NUMBER);
 
      len_entry = ln_param_list_find(op_arg->params, "len");
-     ln_op_check_param_exist(len_entry, "len");
-     ln_op_check_param_type(len_entry, LN_PARAM_NUMBER);
+     ln_opck_param_exist(len_entry, "len");
+     ln_opck_param_type(len_entry, LN_PARAM_NUMBER);
 
      axis = axis_entry->value_int;
      start = start_entry->value_int;
      len = len_entry->value_int;
-     ln_op_check_param_satisfy(axis >= 0 && axis < src_entry->tensor->ndim);
-     ln_op_check_param_satisfy(start >= 0 && start < src_entry->tensor->dims[axis]);
-     ln_op_check_param_satisfy(len > 0 && len <= src_entry->tensor->dims[axis]);
-     ln_op_check_param_satisfy(len + start <= src_entry->tensor->dims[axis]);
+     ln_opck_param_satisfy(axis >= 0 && axis < src_entry->tensor->ndim);
+     ln_opck_param_satisfy(start >= 0 && start < src_entry->tensor->dims[axis]);
+     ln_opck_param_satisfy(len > 0 && len <= src_entry->tensor->dims[axis]);
+     ln_opck_param_satisfy(len + start <= src_entry->tensor->dims[axis]);
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, len,
                                          src_entry->tensor->dtype);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     dst_entry->mtype = LN_MEM_CUDA;
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
      priv = ln_alloc(sizeof(struct priv_s));

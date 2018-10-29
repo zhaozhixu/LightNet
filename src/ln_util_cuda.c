@@ -25,8 +25,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <cuda_runtime.h>
 
 #include "ln_util.h"
+
+#define LN_CUDA_CK(status)                                              \
+     do {                                                               \
+          if (status != cudaSuccess)                                    \
+               ln_err_bt("CUDA_ERROR(%d) %s: %s", status,               \
+                         cudaGetErrorName(status), cudaGetErrorString(status)); \
+     } while(0)
 
 void ln_cuda_set_device(int n)
 {

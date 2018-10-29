@@ -34,10 +34,10 @@ static void check_param(char *name1, char *name2, ln_param_type ptype,
      else
           full_name = ln_strdup(name1);
      pe = ln_param_list_find(op_arg->params, full_name);
-     ln_op_check_param_exist(pe, full_name);
-     ln_op_check_param_type(pe, ptype);
+     ln_opck_param_exist(pe, full_name);
+     ln_opck_param_type(pe, ptype);
      if (plen > 0)
-          ln_op_check_param_array_len_eq(pe, plen);
+          ln_opck_param_array_len_eq(pe, plen);
 
      ln_free(full_name);
 }
@@ -55,10 +55,11 @@ static void check_conv(char *opname, ln_op_arg *op_arg, ln_error **error)
      check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
 }
 
-static void check_relu(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_activation(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
      check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "activation_type", LN_PARAM_STRING, 0, op_arg, error);
 }
 
 static void check_maxpool2d(char *opname, ln_op_arg *op_arg, ln_error **error)
@@ -82,41 +83,43 @@ static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_gt(tensors_n, 0);
+     ln_opck_tensor_in_len_gt(tensors_n, 0);
 
      LN_LIST_FOREACH(tle, op_arg->tensors_in) {
           if (!strncmp(tle->arg_name, "src", 3)) {
                te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-               ln_op_check_tensor_defined(te, tle->name);
+               ln_opck_tensor_defined(te, tle->name);
+               ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
           } else if (!strncmp(tle->arg_name, "weight", 6)) {
                te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-               ln_op_check_tensor_defined(te, tle->name);
-               ln_op_check_tensor_isstatic(te);
+               ln_opck_tensor_defined(te, tle->name);
+               ln_opck_tensor_mtype_eq(te, LN_MEM_CPU);
+               ln_opck_tensor_isstatic(te);
           }
      }
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_gt(tensors_n, 0);
+     ln_opck_tensor_out_len_gt(tensors_n, 0);
 
      LN_LIST_FOREACH(tle, op_arg->tensors_out) {
           if (!strncmp(tle->arg_name, "dst", 3)) {
                te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-               ln_op_check_tensor_defined(te, tle->name);
+               ln_opck_tensor_not_defined(te, tle->name);
           }
      }
 
      LN_LIST_FOREACH(pe, op_arg->params) {
           if (ln_next_token(pe->arg_name, '_'))
                continue;
-          ln_op_check_param_type(pe, LN_PARAM_STRING);
+          ln_opck_param_type(pe, LN_PARAM_STRING);
           if (!strcmp(pe->value_string, "conv"))
                check_conv(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "relu"))
-               check_relu(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "activation"))
+               check_activation(pe->arg_name, op_arg, error);
           else if (!strcmp(pe->value_string, "maxpool2d"))
                check_maxpool2d(pe->arg_name, op_arg, error);
           else
-               ln_op_check_param_error(0, "unsupported TensorRT operator");
+               ln_opck_param_error(0, "unsupported TensorRT operator");
      }
 
      /* define output tensor shape, tensor data should be NULL */
@@ -129,22 +132,23 @@ static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      LN_LIST_FOREACH(tle, op_arg->tensors_out) {
           arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
           pe = ln_param_list_find(op_arg->params, arg_name);
-          ln_op_check_param_exist(pe, arg_name);
-          ln_op_check_param_type(pe, LN_PARAM_ARRAY_NUMBER);
-          ln_op_check_param_array_len_gt(pe, 0);
+          ln_opck_param_exist(pe, arg_name);
+          ln_opck_param_type(pe, LN_PARAM_ARRAY_NUMBER);
+          ln_opck_param_array_len_gt(pe, 0);
           dims = pe->value_array_int;
           ndim = pe->array_len;
           ln_free(arg_name);
 
           arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
           pe = ln_param_list_find(op_arg->params, arg_name);
-          ln_op_check_param_exist(pe, arg_name);
-          ln_op_check_param_type(pe, LN_PARAM_ARRAY_STRING);
+          ln_opck_param_exist(pe, arg_name);
+          ln_opck_param_type(pe, LN_PARAM_ARRAY_STRING);
           dtype = tl_dtype_from_str(pe->value_string);
           ln_free(arg_name);
 
           dst_tensor = tl_tensor_create(NULL, ndim, dims, dtype);
           dst_entry = ln_tensor_entry_create(tle->name, dst_tensor);
+          dst_entry->mtype = LN_MEM_CUDA;
           ln_tensor_table_insert(op_arg->tensor_table, tle->name, dst_entry);
      }
 

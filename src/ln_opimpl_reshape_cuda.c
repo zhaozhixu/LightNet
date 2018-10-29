@@ -44,41 +44,43 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_op_check_tensor_in_len_eq(tensors_n, 1);
+     ln_opck_tensor_in_len_eq(tensors_n, 1);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_op_check_tensor_out_len_eq(tensors_n, 1);
+     ln_opck_tensor_out_len_eq(tensors_n, 1);
 
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_op_check_tensor_in_exist(src_name, "src");
+     ln_opck_tensor_in_exist(src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_op_check_tensor_defined(src_entry, src_name);
+     ln_opck_tensor_defined(src_entry, src_name);
+     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_op_check_tensor_out_exist(dst_name, "dst");
+     ln_opck_tensor_out_exist(dst_name, "dst");
      dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_op_check_tensor_not_defined(dst_entry, dst_name);
+     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_op_check_param_len_eq(params_n, 1);
+     ln_opck_param_len_eq(params_n, 1);
 
      dims_entry = ln_param_list_find(op_arg->params, "dims");
-     ln_op_check_param_exist(dims_entry, "dims");
-     ln_op_check_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
+     ln_opck_param_exist(dims_entry, "dims");
+     ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
 
      dims = dims_entry->value_array_int;
      ndim = dims_entry->array_len;
-     ln_op_check_param_satisfy_msg(ndim > 0,
+     ln_opck_param_satisfy_msg(ndim > 0,
                                    "\"dims\" array shouldn't be empty");
      for (i = 0; i < ndim; i++)
-          ln_op_check_param_satisfy_msg(dims[i] > 0,
+          ln_opck_param_satisfy_msg(dims[i] > 0,
                                         "\"dims\" array elements should be positive");
-     ln_op_check_param_satisfy_msg(src_entry->tensor->len == ln_compute_length(ndim, dims),
+     ln_opck_param_satisfy_msg(src_entry->tensor->len == ln_compute_length(ndim, dims),
                                    "\"src\" tensor length is not equal with requested length");
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     dst_entry->mtype = LN_MEM_CUDA;
      ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, src_name);
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 

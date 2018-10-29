@@ -95,7 +95,7 @@ static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /*
- * This function should undo everything done by pre_run().
+ * This function should free all the memory allocated by other *_run()s.
  */
 static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 {

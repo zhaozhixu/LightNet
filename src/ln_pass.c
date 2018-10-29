@@ -67,19 +67,17 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
      ln_op_arg *arg;
      ln_hash *use_counts;
      ln_tensor_entry *te;
+     ln_tensor_list_entry *tle;
      ln_mem_pool *mp;
-     ln_list *unused_tes;
+     ln_list *unused_tles;
 
      use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
      LN_LIST_FOREACH(op, ops) {
           arg = op->op_arg;
-          mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
 
-          /* Actually arg->tensors_out is not a ln_list of ln_tensor_entry.
-             But the first field of the actual structure defined in ln_tensor.c
-             is "name", the same as ln_tensor_entry. */
-          LN_LIST_FOREACH(te, arg->tensors_out) {
-               te = ln_tensor_table_find(arg->tensor_table, te->name);
+          LN_LIST_FOREACH(tle, arg->tensors_out) {
+               te = ln_tensor_table_find(arg->tensor_table, tle->name);
+               mp = ln_hash_find(mem_pools, (void *)te->mtype);
                if (te->owner)
                     continue;
                if (te->isstatic) {
@@ -91,8 +89,8 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
                else
                     use_count_zero(use_counts, te->name);
           }
-          LN_LIST_FOREACH(te, arg->tensors_in) {
-               te = ln_tensor_table_find(arg->tensor_table, te->name);
+          LN_LIST_FOREACH(tle, arg->tensors_in) {
+               te = ln_tensor_table_find(arg->tensor_table, tle->name);
                if (te->owner) {
                     use_count_inc(use_counts, te->owner);
                     continue;
@@ -105,10 +103,10 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
 
      LN_LIST_FOREACH(op, ops) {
           arg = op->op_arg;
-          unused_tes = NULL;
-          mp = ln_hash_find(mem_pools, (void *)arg->mtype_out);
-          LN_LIST_FOREACH(te, arg->tensors_out) {
-               te = ln_tensor_table_find(arg->tensor_table, te->name);
+          unused_tles = NULL;
+          LN_LIST_FOREACH(tle, arg->tensors_out) {
+               te = ln_tensor_table_find(arg->tensor_table, tle->name);
+               mp = ln_hash_find(mem_pools, (void *)te->mtype);
                if (te->owner)
                     continue;
                if (te->isstatic)
@@ -120,16 +118,17 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
                     te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
                }
                if (use_count_of(use_counts, te->name) == 0)
-                    unused_tes = ln_list_prepend(unused_tes, te);
+                    unused_tles = ln_list_prepend(unused_tles, tle);
           }
-          LN_LIST_FOREACH(te, unused_tes) {
-               te = ln_tensor_table_find(arg->tensor_table, te->name);
+          LN_LIST_FOREACH(tle, unused_tles) {
+               te = ln_tensor_table_find(arg->tensor_table, tle->name);
+               mp = ln_hash_find(mem_pools, (void *)te->mtype);
                ln_mem_free(mp, te->offset);
           }
-          ln_list_free(unused_tes);
-          mp = ln_hash_find(mem_pools, (void *)arg->mtype_in);
-          LN_LIST_FOREACH(te, arg->tensors_in) {
-               te = ln_tensor_table_find(arg->tensor_table, te->name);
+          ln_list_free(unused_tles);
+          LN_LIST_FOREACH(tle, arg->tensors_in) {
+               te = ln_tensor_table_find(arg->tensor_table, tle->name);
+               mp = ln_hash_find(mem_pools, (void *)te->mtype);
                if (te->owner) {
                     if (use_count_dec(use_counts, te->owner) == 0) {
                          te = ln_tensor_table_find(arg->tensor_table, te->owner);

@@ -44,6 +44,14 @@ CXXFLAGS += -DLN_CUDNN
 CUFLAGS += -DLN_CUDNN
 LDFLAGS += -lcudnn
 endif
+ifeq ($(WITH_TENSORRT), yes)
+CFLAGS += -DLN_TENSORRT
+CXXFLAGS += -DLN_TENSORRT
+CUFLAGS += -DLN_TENSORRT
+TENSORRT_INSTALL_DIR ?= /usr
+INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
+LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer
+endif
 endif
 
 CFLAGS += $(INCPATHS)
@@ -60,7 +68,7 @@ $(AT)$(CC) -MM -MF $3 -MP -MT $2 $(CFLAGS) $1
 endef
 
 define make-depend-cxx
-$(AT)$(CXX) -MM -MF $3 -MP -MT $2 $(CFLAGS) $1
+$(AT)$(CXX) -MM -MF $3 -MP -MT $2 $(CXXFLAGS) $1
 endef
 
 define make-depend-cu

@@ -37,6 +37,22 @@ struct mem_info {
      size_t   size;
 };
 
+static const char *mtype_name[] = {
+     "LN_MEM_UNDEF",
+     "LN_MEM_DIFF",
+     "LN_MEM_CPU",
+     "LN_MEM_CUDA"
+};
+
+#define ln_check_mem_type(mtype)                        \
+     assert(mtype >= 0 && mtype < LN_MEM_TYPE_SIZE)
+
+const char *ln_mem_type_name(ln_mem_type mtype)
+{
+     ln_check_mem_type(mtype);
+     return mtype_name[mtype];
+}
+
 static mem_info *mem_info_create(mem_flag flag, size_t start, size_t size)
 {
      mem_info *minfo;
