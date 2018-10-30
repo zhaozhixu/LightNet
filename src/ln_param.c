@@ -195,13 +195,14 @@ static int find_by_arg_name(void *data1, void *data2)
      return strcmp(p1->arg_name, p2->arg_name);
 }
 
-ln_param_entry *ln_param_list_find(ln_list *list, char *arg_name)
+ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name)
 {
      ln_param_entry cmp_entry;
      ln_param_entry *result_entry;
 
-     cmp_entry.arg_name = arg_name;
+     cmp_entry.arg_name = ln_strdup(arg_name);
      result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);
+     ln_free(cmp_entry.arg_name);
 
      return result_entry;
 }

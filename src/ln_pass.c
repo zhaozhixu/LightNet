@@ -164,7 +164,8 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
      ln_list *l_in, *l_out, *l_ops, *l_ops_pre, *l;
      int stable = 0;
      int match;
-     int i, j;
+     int i;                     /* actual window size */
+     int j;                     /* peephole function index */
      ln_error *error = NULL;
 
      while (!stable) {
@@ -172,10 +173,14 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
           l_ops_pre = NULL;
           for (l_ops = ops; l_ops; l_ops_pre = l_ops, l_ops = l_ops->next) {
                win_in = NULL;
-               for (i = 0, l = l_ops; i < win_size && l; i++, l = l->next)
+               for (i = 0, l = l_ops;
+                    i < win_size && l && !((ln_op *)l->data)->op_arg->fixed;
+                    i++, l = l->next)
                     win_in = ln_list_append(win_in, l->data);
+               if (i == 0)
+                    continue;
                for (j = 0; (pf = ph_funcs[j]); j++) {
-                    win_out = pf(win_in, win_size, &match);
+                    win_out = pf(win_in, i, &match);
                     if (!match)
                          continue;
                     stable = 0;

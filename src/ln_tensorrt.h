@@ -20,7 +20,21 @@
  * SOFTWARE.
  */
 
+#include "ln_util.h"
+
 struct ln_tensorrt_bundle {
      void *engine;
 };
 typedef struct ln_tensorrt_bundle ln_tensorrt_bundle;
+
+#ifdef __cplusplus
+LN_CPPSTART
+#endif
+
+void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error);
+ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg);
+void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle);
+
+#ifdef __cplusplus
+LN_CPPEND
+#endif
