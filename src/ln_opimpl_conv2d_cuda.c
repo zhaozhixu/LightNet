@@ -40,8 +40,8 @@ struct priv_s {
  */
 static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-     char *src_name, *weight_name, *dst_name;
-     ln_tensor_entry *src_entry, *weight_entry, *dst_entry;
+     char *src_name, *weight_name, *bias_name, *dst_name;
+     ln_tensor_entry *src_entry, *weight_entry, *bias_entry,  *dst_entry;
      ln_param_entry *group_entry, *size_entry, *stride_entry,
           *padding_entry, *dilation_entry;
      int tensors_n, params_n;
@@ -64,6 +64,7 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_in_exist(src_name, "src");
      src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
      ln_opck_tensor_defined(src_entry, src_name);
+     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
      ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
                                     "\"src\" should be a 4-dimensional tensor");
 
@@ -71,8 +72,20 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_in_exist(weight_name, "weight");
      weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
      ln_opck_tensor_defined(weight_entry, weight_name);
-     ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 5,
+     ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_CPU);
+     ln_opck_tensor_satisfy_msg(weight_entry->tensor->ndim == 5,
                                     "\"weight\" should be a 5-dimensional tensor");
+
+     bias_name = ln_tensor_list_find_name(op_arg->tensors_in, "bias");
+     ln_opck_tensor_in_exist(bias_name, "bias");
+     bias_entry = ln_tensor_table_find(op_arg->tensor_table, bias_name);
+     ln_opck_tensor_defined(bias_entry, bias_name);
+     ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CPU);
+     ln_opck_tensor_satisfy_msg(bias_entry->tensor->ndim == 1,
+                                "\"bias\" should be a 1-dimensional tensor");
+     ln_opck_tensor_satisfy_msg(bias_entry->tensor->dims[0]
+                                == weight_entry->tensor->dims[1],
+                                "\"bias\" should have the size of the number of output feature map (the second dimision of \"weight\")");
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_opck_tensor_out_exist(dst_name, "dst");

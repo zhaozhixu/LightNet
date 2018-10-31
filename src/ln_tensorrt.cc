@@ -43,6 +43,49 @@ static const char *tensorrt_version_str(void)
      return TENSORRT_VERSION_STR;
 }
 
+static int tl_dtype_to_ioTensor_DataType(tl_dtype dtype)
+{
+     // TODO: add fp16 support
+     switch (dtype) {
+     case TL_FLOAT:
+          return (int)DataType::kFLOAT;
+#if NV_TENSORRT_MAJOR >= 4
+     case TL_INT32:
+          return (int)DataType::kINT32;
+#endif
+     default:
+          return -1;
+     }
+}
+
+static int tl_dtype_to_weight_DataType(tl_dtype dtype)
+{
+     // TODO: add fp16 support
+     switch (dtype) {
+     case TL_FLOAT:
+          return (int)DataType::kFLOAT;
+#if NV_TENSORRT_MAJOR >= 4
+     case TL_INT32:
+          return (int)DataType::kINT32;
+#endif
+     case TL_INT8:
+          return (int)DataType::kINT8;
+     default:
+          return -1;
+     }
+}
+
+static int str_to_activation_type(const char *str)
+{
+     if (!strcmp(str, "kRELU"))
+          return (int)ActivationType::kRELU;
+     if (!strcmp(str, "kSIGMOID"))
+          return (int)ActivationType::kSIGMOID;
+     if (!strcmp(str, "kTANH"))
+          return (int)ActivationType::kTANH;
+     return -1;
+}
+
 static void check_param(const char *name1, const char *name2, ln_param_type ptype,
                         int plen ,ln_op_arg *op_arg, ln_error **error)
 {
@@ -67,8 +110,10 @@ static void check_conv(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
      check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "weight", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "bias", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "group", LN_PARAM_NUMBER, 0, op_arg, error);
+     check_param(opname, "output_c", LN_PARAM_NUMBER, 0, op_arg, error);
      check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
      check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
      check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
@@ -80,6 +125,11 @@ static void check_activation(char *opname, ln_op_arg *op_arg, ln_error **error)
      check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "activation_type", LN_PARAM_STRING, 0, op_arg, error);
+
+     ln_param_entry *pe;
+     pe = ln_param_list_find2(op_arg->params, opname, "activation_type");
+     ln_opck_param_satisfy_msg(str_to_activation_type(pe->value_string) != -1,
+                               "unsupported activation type");
 }
 
 static void check_maxpool2d(char *opname, ln_op_arg *op_arg, ln_error **error)
@@ -108,39 +158,21 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
                ln_opck_tensor_defined(te, tle->name);
                ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
-               // TODO: add supported for fp16
-#if NV_TENSORRT_MAJOR < 4
-               ln_opck(LN_ERROR, te->tensor->dtype == TL_FLOAT,
+               ln_opck_tensor_satisfy_msg(te->tensor->ndim == 4,
+                                          "\"src*\" should be a 4-dimensional tensor");
+               ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
                        "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
                        op_arg->optype, op_arg->name, te->name,
                        tl_dtype_name(te->tensor->dtype), tensorrt_version_str());
-#else
-               ln_opck(LN_ERROR, te->tensor->dtype == TL_FLOAT
-                       || te->tensor->dtype == TL_INT32,
-                       "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
-                       op_arg->optype, op_arg->name, te->name,
-                       tl_dtype_name(te->tensor->dtype), tensorrt_version_str());
-#endif
           } else if (!strncmp(tle->arg_name, "weight", 6)) {
                te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
                ln_opck_tensor_defined(te, tle->name);
                ln_opck_tensor_mtype_eq(te, LN_MEM_CPU);
                ln_opck_tensor_isstatic(te);
-               // TODO: add supported for fp16
-#if NV_TENSORRT_MAJOR < 4
-               ln_opck(LN_ERROR, te->tensor->dtype == TL_FLOAT
-                       || te->tensor->dtype == TL_INT8,
+               ln_opck(LN_ERROR, tl_dtype_to_weight_DataType(te->tensor->dtype) != -1,
                        "%s: \"%s\"'s tensor %s have unsupported weight tensor dtype %s for building TensorRT %s model",
                        op_arg->optype, op_arg->name, te->name,
                        tl_dtype_name(te->tensor->dtype), tensorrt_version_str());
-#else
-               ln_opck(LN_ERROR, te->tensor->dtype == TL_FLOAT
-                       || te->tensor->dtype == TL_INT32
-                       || te->tensor->dtype == TL_INT8,
-                       "%s: \"%s\"'s tensor %s have unsupported weight tensor dtype %s for building TensorRT %s model",
-                       op_arg->optype, op_arg->name, te->name,
-                       tl_dtype_name(te->tensor->dtype), tensorrt_version_str());
-#endif
           }
      }
 
@@ -157,7 +189,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
 
      for (l = op_arg->params; l; l = l->next) {
           pe = (ln_param_entry *)l->data;
-          if (ln_next_token(pe->arg_name, '_'))
+          if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
                continue;
           ln_opck_param_type(pe, LN_PARAM_STRING);
           if (!strcmp(pe->value_string, "conv"))
@@ -174,7 +206,6 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
      ln_opck_param_type(pe, LN_PARAM_NUMBER);
      ln_opck_param_satisfy_msg(pe->value_int > 0, "\"max_batch\" should be a positive integer");
 
-     /* define output tensor shape, tensor data should be NULL */
      tl_dtype dtype;
      char *arg_name;
      for (l = op_arg->tensors_out; l; l = l->next) {
@@ -191,18 +222,10 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
           ln_opck_param_exist(pe, arg_name);
           ln_opck_param_type(pe, LN_PARAM_ARRAY_STRING);
           dtype = tl_dtype_from_str(pe->value_string);
-#if NV_TENSORRT_MAJOR < 4
-          ln_opck(LN_ERROR, dtype == TL_FLOAT,
+          ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
                   "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",
                   op_arg->optype, op_arg->name, arg_name, tl_dtype_name(dtype),
                   tensorrt_version_str());
-#else
-          ln_opck(LN_ERROR, te->tensor->dtype == TL_FLOAT
-                  || te->tensor->dtype == TL_INT32,
-                  "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",
-                  op_arg->optype, op_arg->name, arg_name, tl_dtype_name(dtype),
-                  tensorrt_version_str());
-#endif
           ln_free(arg_name);
      }
 }
@@ -243,21 +266,7 @@ static std::map<std::string, Weights> create_weight_map(ln_op_arg *op_arg)
           if (strncmp(tle->arg_name, "weight", 6))
                continue;
           te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-          switch (te->tensor->dtype) {
-          case TL_FLOAT:
-               wt.type = DataType::kFLOAT;
-               break;
-#if NV_TENSORRT_MAJOR >= 4
-          case TL_INT32:
-               wt.type = DataType::kINT32;
-               break;
-#endif
-          case TL_INT8:
-               wt.type = DataType::kINT8;
-               break;
-          default:
-               assert(0 && "unsupported tensor dtype");
-          }
+          wt.type = (DataType)tl_dtype_to_weight_DataType(te->tensor->dtype);
           wt.values = te->tensor->data;
           wt.count = te->tensor->len;
           weights[te->name] = wt;
@@ -266,20 +275,136 @@ static std::map<std::string, Weights> create_weight_map(ln_op_arg *op_arg)
      return weights;
 }
 
+static void add_conv(INetworkDefinition *network,
+                     std::map<std::string, Weights> &weights,
+                     std::map<std::string, ITensor*> &tensors,
+                     char *opname, ln_op_arg *op_arg)
+{
+     char *src;
+     char *weight;
+     char *bias;
+     char *dst;
+     int group;
+     int output_c;
+     int *size;
+     int *stride;
+     int *padding;
+     int *dilation;
+     ln_param_entry *pe;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src");
+     assert(pe);
+     src = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "weight");
+     assert(pe);
+     weight = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dst");
+     assert(pe);
+     dst = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "group");
+     assert(pe);
+     group = pe->value_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "output_c");
+     assert(pe);
+     output_c = pe->value_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "size");
+     assert(pe);
+     size = pe->value_array_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "stride");
+     assert(pe);
+     stride = pe->value_array_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "padding");
+     assert(pe);
+     padding = pe->value_array_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dilation");
+     assert(pe);
+     dilation = pe->value_array_int;
+
+     IConvolutionLayer *conv;
+     conv = network->addConvolution(*tensors[src], output_c,
+                                    DimsHW(size[0], size[1]),
+                                    weights[weight],
+                                    weights[bias]);
+     assert(conv);
+     conv->setNbGroups(group);
+     conv->setStride(DimsHW(stride[0], stride[1]));
+     conv->setPadding(DimsHW(padding[0], padding[1]));
+     conv->setDilation(DimsHW(dilation[0], dilation[1]));
+     tensors[dst] = conv->getOutput(0);
+}
+
+static void add_activation(INetworkDefinition *network,
+                           std::map<std::string, ITensor*> &tensors,
+                           char *opname, ln_op_arg *op_arg)
+{
+     char *src;
+     char *dst;
+     char *activation_type;
+     ln_param_entry *pe;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src");
+     assert(pe);
+     src = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dst");
+     assert(pe);
+     dst = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "activation_type");
+     assert(pe);
+     activation_type = pe->value_string;
+
+     IActivationLayer *activation;
+     activation = network->addActivation(*tensors[src],
+                                         (ActivationType)str_to_activation_type(activation_type));
+     assert(activation);
+     tensors[dst] = activation->getOutput(0);
+}
+
 static ICudaEngine *create_engine(ln_op_arg *op_arg, IBuilder *builder)
 {
      INetworkDefinition *network = builder->createNetwork();
      std::map<std::string, Weights> weights = create_weight_map(op_arg);
+     std::map<std::string, ITensor*> tensors;
+
      ln_tensor_entry *te;
      ln_tensor_list_entry *tle;
-     ITensor *last_itensor;
      ln_list *l;
-
+     DataType dt;
      for (l = op_arg->tensors_in; l; l = l->next) {
           tle = (ln_tensor_list_entry *)l->data;
           if (strncmp(tle->arg_name, "src", 3))
                continue;
           te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+          dt = (DataType)tl_dtype_to_ioTensor_DataType(te->tensor->dtype);
+          tensors[te->name] = network->addInput(te->name, dt,
+                                                DimsNCHW(te->tensor->dims[0],
+                                                         te->tensor->dims[1],
+                                                         te->tensor->dims[2],
+                                                         te->tensor->dims[3]));
+     }
+
+     ln_param_entry *pe;
+     for (l = op_arg->params; l; l = l->next) {
+          pe = (ln_param_entry *)l->data;
+          if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+               continue;
+          if (!strcmp(pe->value_string, "conv"))
+               add_conv(network, weights, tensors, pe->arg_name, op_arg);
+          else if (!strcmp(pe->value_string, "activation"))
+               add_activation(network, tensors, pe->arg_name, op_arg);
+          // else if (!strcmp(pe->value_string, "maxpool2d"))
+          //      check_maxpool2d(pe->arg_name, op_arg, error);
+          else
+               assert(0 && "unsupported TensorRT operator");
      }
 }
 

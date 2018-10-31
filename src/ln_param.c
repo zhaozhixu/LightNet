@@ -207,6 +207,19 @@ ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name)
      return result_entry;
 }
 
+ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
+                                    const char *arg_name2)
+{
+     ln_param_entry cmp_entry;
+     ln_param_entry *result_entry;
+
+     cmp_entry.arg_name = ln_strcat_delim_alloc(arg_name1, arg_name2, '_');
+     result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);
+     ln_free(cmp_entry.arg_name);
+
+     return result_entry;
+}
+
 int ln_param_list_length(ln_list *list)
 {
      return ln_list_length(list);

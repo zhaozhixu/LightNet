@@ -81,6 +81,7 @@
             "tensors_in": [
                 {"arg_name": "src", "name": "transpose1"},
                 {"arg_name": "weight", "name": "weight1"},
+                {"arg_name": "bias", "name": "bias1"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "name": "conv2d1"}

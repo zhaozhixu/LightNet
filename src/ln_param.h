@@ -73,6 +73,8 @@ ln_list *ln_param_list_append_array_bool(ln_list *table, const char *arg_name,
                                          int array_len, ln_bool *array_bool);
 void ln_param_list_free(ln_list *table);
 ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name);
+ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
+                                    const char *arg_name2);
 int ln_param_list_length(ln_list *table);
 const char *ln_param_type_name(ln_param_type type);
 
