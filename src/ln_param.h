@@ -58,24 +58,24 @@ typedef struct ln_param_entry ln_param_entry;
 LN_CPPSTART
 #endif
 
-ln_list *ln_param_list_append_string(ln_list *table, const char *arg_name,
+ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
                                      const char *string);
-ln_list *ln_param_list_append_number(ln_list *table, const char *arg_name,
+ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,
                                      double number);
-ln_list *ln_param_list_append_bool(ln_list *table, const char *arg_name,
+ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name,
                                    ln_bool bool_value);
-ln_list *ln_param_list_append_null(ln_list *table, const char *arg_name);
-ln_list *ln_param_list_append_array_string(ln_list *table, const char *arg_name,
+ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name);
+ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
                                            int array_len, char **array_string);
-ln_list *ln_param_list_append_array_number(ln_list *table, const char *arg_name,
+ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
                                            int array_len, double *array_number);
-ln_list *ln_param_list_append_array_bool(ln_list *table, const char *arg_name,
+ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
                                          int array_len, ln_bool *array_bool);
-void ln_param_list_free(ln_list *table);
+void ln_param_list_free(ln_list *list);
 ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name);
 ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
                                     const char *arg_name2);
-int ln_param_list_length(ln_list *table);
+int ln_param_list_length(ln_list *list);
 const char *ln_param_type_name(ln_param_type type);
 
 #ifdef __cplusplus

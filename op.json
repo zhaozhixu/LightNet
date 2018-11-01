@@ -134,5 +134,19 @@
                 {"arg_name": "axis", "value": -1} // -1 is the last dimision
             ]
         }
+        {
+            "name": "concat1",
+            "optype": "concat",
+            "tensors_in": [
+                {"arg_name": "src1", "name": ""}
+                {"arg_name": "src2", "name": ""}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "concat1"}
+            ],
+            "params": [
+                {"arg_name": "axis", "value": 0}
+            ]
+        }
     ]
 }

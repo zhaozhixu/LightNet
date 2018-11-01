@@ -167,6 +167,16 @@ static void check_softmax(char *opname, ln_op_arg *op_arg, ln_error **error)
      check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
 #if NV_TENSORRT_MAJOR >= 4
+     check_param(opname, "axes", LN_PARAM_NUMBER, 0, op_arg, error);
+#endif
+}
+
+static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
+{
+     check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+#if NV_TENSORRT_MAJOR >= 4
      check_param(opname, "axis", LN_PARAM_NUMBER, 0, op_arg, error);
 #endif
 }
@@ -230,6 +240,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                check_pooling(pe->arg_name, op_arg, error);
           else if (!strcmp(pe->value_string, "softmax"))
                check_softmax(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "concat"))
+               check_concat(pe->arg_name, op_arg, error);
           else
                ln_opck_param_error(0, "unsupported TensorRT operator");
      }
@@ -480,6 +492,40 @@ static void add_softmax(INetworkDefinition *network,
      tensors[dst] = softmax->getOutput(0);
 }
 
+static void add_concat(INetworkDefinition *network,
+                       std::map<std::string, ITensor*> &tensors,
+                       char *opname, ln_op_arg *op_arg)
+{
+     ln_param_entry *pe;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src1");
+     assert(pe);
+     char *src1 = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src2");
+     assert(pe);
+     char *src2 = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dst");
+     assert(pe);
+     char *dst = pe->value_string;
+
+#if NV_TENSORRT_MAJOR >= 4
+     pe = ln_param_list_find2(op_arg->params, opname, "axis");
+     assert(pe);
+     int axis = pe->value_int;
+#endif
+
+     IConcatenationLayer *concat;
+     ITensor *concat_tensors[2] = {tensors[src1], tensors[src2]};
+     concat = network->addConcatenation(concat_tensors, 2);
+     assert(concat);
+#if NV_TENSORRT_MAJOR >= 4
+     concat->setAxis(axis);
+#endif
+     tensors[dst] = concat->getOutput(0);
+}
+
 static ICudaEngine *create_engine(ln_op_arg *op_arg)
 {
      IBuilder *builder = createInferBuilder(global_logger);
@@ -517,6 +563,8 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                add_pooling(network, tensors, pe->arg_name, op_arg);
           else if (!strcmp(pe->value_string, "softmax"))
                add_softmax(network, tensors, pe->arg_name, op_arg);
+          else if (!strcmp(pe->value_string, "concat"))
+               add_concat(network, tensors, pe->arg_name, op_arg);
           else
                assert(0 && "unsupported TensorRT operator");
      }
