@@ -22,9 +22,7 @@
 
 #include "ln_util.h"
 
-struct ln_tensorrt_bundle {
-     void *engine;
-};
+struct ln_tensorrt_bundle;
 typedef struct ln_tensorrt_bundle ln_tensorrt_bundle;
 
 #ifdef __cplusplus

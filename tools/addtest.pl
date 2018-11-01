@@ -13,7 +13,7 @@ MOD_NAME is the module name.
 TEST_NAME is the test name, usually the name of function to be tested.
 
 Example:
-	scripts/addtest.pl . mod mod_func1 mod_func2
+	tools/addtest.pl . mod mod_func1 mod_func2
 
 	Executing this example from project root will generate test templates
 	test_ln_mod_func1 and test_ln_mod_func2 for module ln_mod in file

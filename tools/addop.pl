@@ -12,7 +12,7 @@ OP_NAME is the name of the new op.
 SUBFIX is the subfix of OP_NAME, often used to distinguish architectures.
 
 Example:
-	scripts/addtest.pl . slice_cuda cuda
+	tools/addtest.pl . slice_cuda cuda
 
 	Executing this from project root will generate code templates
 	in file ROOT/src/ln_opimpl_slice_cuda.c, and add associated init ops in
@@ -37,13 +37,10 @@ if ($subfix eq "") {
   $subfix = "cpu";
 }
 
-my $mem_type = "";
 my $arch_file = "";
 if ($subfix eq "cpu") {
-  $mem_type = "LN_MEM_CPU";
   $arch_file = "$root/src/ln_arch_cpu.c";
 } elsif ($subfix eq "cuda") {
-  $mem_type = "LN_MEM_CUDA";
   $arch_file = "$root/src/ln_arch_cuda.c";
 }
 
@@ -105,8 +102,6 @@ static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_${op_name} = {
      .optype = "${op_name}",
-     .mtype_in = $mem_type,
-     .mtype_out = $mem_type,
 };
 
 /* struct used for op registration in ln_oplist.c */

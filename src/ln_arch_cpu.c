@@ -32,6 +32,7 @@ extern ln_op ln_opimpl_create;
 extern ln_op ln_opimpl_conv2d;
 extern ln_op ln_opimpl_relu;
 extern ln_op ln_opimpl_maxpool2d;
+extern ln_op ln_opimpl_softmax;
 /* end of declare cpu ops */
 
 static ln_op *ops_cpu[] = {
@@ -45,6 +46,7 @@ static ln_op *ops_cpu[] = {
      &ln_opimpl_conv2d,
      &ln_opimpl_relu,
      &ln_opimpl_maxpool2d,
+     &ln_opimpl_softmax,
 /* end of init cpu ops */
      NULL
 };

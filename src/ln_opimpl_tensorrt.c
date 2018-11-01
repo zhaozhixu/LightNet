@@ -27,12 +27,10 @@
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
-static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void tensorrt_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-     int tensors_n;
      ln_param_entry *pe;
      ln_tensor_list_entry *tle;
-     ln_tensor_entry *te;
 
      /* check tensors and parameters */
      ln_tensorrt_check_op(op_arg, error);
@@ -68,7 +66,7 @@ static void tensorrt_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 /*
  * This function should only do the calculations.
  */
-static void tensorrt_cuda_run(ln_op_arg *op_arg, ln_error **error)
+static void tensorrt_run(ln_op_arg *op_arg, ln_error **error)
 {
 
 }
@@ -76,21 +74,21 @@ static void tensorrt_cuda_run(ln_op_arg *op_arg, ln_error **error)
 /*
  * This function should undo everything done by pre_run().
  */
-static void tensorrt_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
+static void tensorrt_post_run(ln_op_arg *op_arg, ln_error **error)
 {
 
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_tensorrt_cuda = {
-     .optype = "tensorrt_cuda",
+static ln_op_arg op_arg_tensorrt = {
+     .optype = "tensorrt",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_tensorrt_cuda = {
-     .op_arg = &op_arg_tensorrt_cuda,
-     .pre_run = tensorrt_cuda_pre_run,
+ln_op ln_opimpl_tensorrt = {
+     .op_arg = &op_arg_tensorrt,
+     .pre_run = tensorrt_pre_run,
      .static_run = NULL,
-     .run = tensorrt_cuda_run,
-     .post_run = tensorrt_cuda_post_run
+     .run = tensorrt_run,
+     .post_run = tensorrt_post_run
 };

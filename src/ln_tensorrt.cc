@@ -35,6 +35,10 @@ using namespace nvinfer1;
 
 static char TENSORRT_VERSION_STR[20] = {0};
 
+struct ln_tensorrt_bundle {
+     ICudaEngine *engine;
+};
+
 static const char *tensorrt_version_str(void)
 {
      if (TENSORRT_VERSION_STR[0] == 0)
@@ -86,6 +90,17 @@ static int str_to_activation_type(const char *str)
      return -1;
 }
 
+static int str_to_pooling_type(const char *str)
+{
+     if (!strcmp(str, "kMAX"))
+          return (int)PoolingType::kMAX;
+     if (!strcmp(str, "kAVERAGE"))
+          return (int)PoolingType::kAVERAGE;
+     if (!strcmp(str, "kMAX_AVERAGE_BLEND"))
+          return (int)PoolingType::kMAX_AVERAGE_BLEND;
+     return -1;
+}
+
 static void check_param(const char *name1, const char *name2, ln_param_type ptype,
                         int plen ,ln_op_arg *op_arg, ln_error **error)
 {
@@ -132,13 +147,28 @@ static void check_activation(char *opname, ln_op_arg *op_arg, ln_error **error)
                                "unsupported activation type");
 }
 
-static void check_maxpool2d(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_pooling(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
      check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
      check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
      check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
      check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+     check_param(opname, "pooling_type", LN_PARAM_STRING, 0, op_arg, error);
+
+     ln_param_entry *pe;
+     pe = ln_param_list_find2(op_arg->params, opname, "pooling_type");
+     ln_opck_param_satisfy_msg(str_to_pooling_type(pe->value_string) != -1,
+                               "unsupported pooling type");
+}
+
+static void check_softmax(char *opname, ln_op_arg *op_arg, ln_error **error)
+{
+     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+#if NV_TENSORRT_MAJOR >= 4
+     check_param(opname, "axis", LN_PARAM_NUMBER, 0, op_arg, error);
+#endif
 }
 
 void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
@@ -196,8 +226,10 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                check_conv(pe->arg_name, op_arg, error);
           else if (!strcmp(pe->value_string, "activation"))
                check_activation(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "maxpool2d"))
-               check_maxpool2d(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "pooling"))
+               check_pooling(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "softmax"))
+               check_softmax(pe->arg_name, op_arg, error);
           else
                ln_opck_param_error(0, "unsupported TensorRT operator");
      }
@@ -300,6 +332,10 @@ static void add_conv(INetworkDefinition *network,
      assert(pe);
      weight = pe->value_string;
 
+     pe = ln_param_list_find2(op_arg->params, opname, "bias");
+     assert(pe);
+     bias = pe->value_string;
+
      pe = ln_param_list_find2(op_arg->params, opname, "dst");
      assert(pe);
      dst = pe->value_string;
@@ -369,8 +405,84 @@ static void add_activation(INetworkDefinition *network,
      tensors[dst] = activation->getOutput(0);
 }
 
-static ICudaEngine *create_engine(ln_op_arg *op_arg, IBuilder *builder)
+static void add_pooling(INetworkDefinition *network,
+                        std::map<std::string, ITensor*> &tensors,
+                        char *opname, ln_op_arg *op_arg)
 {
+     char *src;
+     char *dst;
+     char *pooling_type;
+     int *size;
+     int *stride;
+     int *padding;
+     ln_param_entry *pe;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src");
+     assert(pe);
+     src = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dst");
+     assert(pe);
+     dst = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "pooling_type");
+     assert(pe);
+     pooling_type = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "size");
+     assert(pe);
+     size = pe->value_array_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "stride");
+     assert(pe);
+     stride = pe->value_array_int;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "padding");
+     assert(pe);
+     padding = pe->value_array_int;
+
+     IPoolingLayer *pooling;
+     pooling = network->addPooling(*tensors[src],
+                                   (PoolingType)str_to_pooling_type(pooling_type),
+                                   DimsHW(size[0], size[1]));
+     assert(pooling);
+     pooling->setStride(DimsHW(stride[0], stride[1]));
+     pooling->setPadding(DimsHW(padding[0], padding[1]));
+     tensors[dst] = pooling->getOutput(0);
+}
+
+static void add_softmax(INetworkDefinition *network,
+                        std::map<std::string, ITensor*> &tensors,
+                        char *opname, ln_op_arg *op_arg)
+{
+     ln_param_entry *pe;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src");
+     assert(pe);
+     char *src = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dst");
+     assert(pe);
+     char *dst = pe->value_string;
+
+#if NV_TENSORRT_MAJOR >= 4
+     pe = ln_param_list_find2(op_arg->params, opname, "axes");
+     assert(pe);
+     uint32_t axes = (uint32_t)pe->value_int;
+#endif
+
+     ISoftMaxLayer *softmax;
+     softmax = network->addSoftMax(*tensors[src]);
+     assert(softmax);
+#if NV_TENSORRT_MAJOR >= 4
+     softmax->setAxes(axes);
+#endif
+     tensors[dst] = softmax->getOutput(0);
+}
+
+static ICudaEngine *create_engine(ln_op_arg *op_arg)
+{
+     IBuilder *builder = createInferBuilder(global_logger);
      INetworkDefinition *network = builder->createNetwork();
      std::map<std::string, Weights> weights = create_weight_map(op_arg);
      std::map<std::string, ITensor*> tensors;
@@ -401,22 +513,32 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg, IBuilder *builder)
                add_conv(network, weights, tensors, pe->arg_name, op_arg);
           else if (!strcmp(pe->value_string, "activation"))
                add_activation(network, tensors, pe->arg_name, op_arg);
-          // else if (!strcmp(pe->value_string, "maxpool2d"))
-          //      check_maxpool2d(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "pooling"))
+               add_pooling(network, tensors, pe->arg_name, op_arg);
+          else if (!strcmp(pe->value_string, "softmax"))
+               add_softmax(network, tensors, pe->arg_name, op_arg);
           else
                assert(0 && "unsupported TensorRT operator");
      }
+
+     pe = ln_param_list_find(op_arg->params, "max_batch");
+     builder->setMaxBatchSize(pe->value_int);
+     builder->setMaxWorkspaceSize(max_workspace);
+
+     ICudaEngine *engine = builder->buildCudaEngine(*network);
+     network->destroy();
+     builder->destroy();
+
+     return engine;
 }
 
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
 {
      ICudaEngine *engine;
-     IBuilder *builder;
-
-     builder = createInferBuilder(global_logger);
 
      ln_tensorrt_bundle *bundle;
      bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
+     engine = create_engine(op_arg);
      bundle->engine = engine;
 
      return bundle;
@@ -424,5 +546,6 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
 
 void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle)
 {
+     bundle->engine->destroy();
      ln_free(bundle);
 }
