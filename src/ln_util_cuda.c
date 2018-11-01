@@ -29,6 +29,11 @@
 
 #include "ln_util.h"
 
+struct ln_cuda_stream {
+     cudaStream_t stream;
+};
+typedef struct ln_cuda_stream ln_cuda_stream;
+
 #define LN_CUDA_CK(status)                                              \
      do {                                                               \
           if (status != cudaSuccess)                                    \
@@ -171,4 +176,14 @@ void *ln_repeat_d2d(void *data, size_t size, int times)
      for (i = 0; i < times; i++, p = (char *)p + size)
           LN_CUDA_CK(cudaMemcpy(p, data, size, cudaMemcpyDeviceToDevice));
      return dst;
+}
+
+void ln_cuda_stream_create(ln_cuda_stream *pstream)
+{
+     LN_CUDA_CK(cudaStreamCreate(&pstream->stream));
+}
+
+void ln_cuda_stream_sync(ln_cuda_stream stream)
+{
+     LN_CUDA_CK(cudaStreamSynchronize(stream.stream));
 }

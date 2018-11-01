@@ -24,18 +24,21 @@
 #include "ln_op.h"
 #include "ln_tensorrt.h"
 
+struct priv_s {
+     ln_tensorrt_bundle *bundle;
+};
+
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
 static void tensorrt_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-     ln_param_entry *pe;
-     ln_tensor_list_entry *tle;
-
      /* check tensors and parameters */
      ln_tensorrt_check_op(op_arg, error);
 
      /* define output tensor shape, tensor data should be NULL */
+     ln_param_entry *pe;
+     ln_tensor_list_entry *tle;
      ln_tensor_entry *dst_entry;
      tl_tensor *dst_tensor;
      int *dims;
@@ -60,7 +63,18 @@ static void tensorrt_pre_run(ln_op_arg *op_arg, ln_error **error)
           ln_tensor_table_insert(op_arg->tensor_table, tle->name, dst_entry);
      }
 
-     /* use op_arg->priv to store private data to be used in other functions */
+     struct priv_s *priv;
+     priv = ln_alloc(sizeof(struct priv_s));
+     priv->bundle = NULL;
+     op_arg->priv = priv;
+}
+
+static void tensorrt_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+     struct priv_s *priv;
+
+     priv = op_arg->priv;
+     priv->bundle = ln_tensorrt_bundle_create(op_arg);
 }
 
 /*
@@ -68,7 +82,10 @@ static void tensorrt_pre_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void tensorrt_run(ln_op_arg *op_arg, ln_error **error)
 {
+     struct priv_s *priv;
 
+     priv = op_arg->priv;
+     ln_tensorrt_bundle_execute(priv->bundle);
 }
 
 /*
@@ -76,7 +93,15 @@ static void tensorrt_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void tensorrt_post_run(ln_op_arg *op_arg, ln_error **error)
 {
+     struct priv_s *priv;
+     ln_tensor_list_entry *tle;
 
+     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
+          ln_tensor_table_remove(op_arg->tensor_table, tle->name);
+     }
+     priv = op_arg->priv;
+     ln_tensorrt_bundle_free(priv->bundle);
+     ln_free(op_arg->priv);
 }
 
 /* specify other ln_op_arg fields */
@@ -88,7 +113,7 @@ static ln_op_arg op_arg_tensorrt = {
 ln_op ln_opimpl_tensorrt = {
      .op_arg = &op_arg_tensorrt,
      .pre_run = tensorrt_pre_run,
-     .static_run = NULL,
+     .static_run = tensorrt_static_run,
      .run = tensorrt_run,
      .post_run = tensorrt_post_run
 };

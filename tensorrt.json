@@ -50,7 +50,7 @@
                 {"arg_name": "dst2_shape", "value": [1, 2, 3, 4]},
                 {"arg_name": "dst1_dtype", "value": "TL_FLOAT"},
                 {"arg_name": "dst2_dtype", "value": "TL_FLOAT"},
-                {"arg_name": "max_batch", "value": 1},
+                {"arg_name": "batch_size", "value": 1},
             ]
         }
     ]

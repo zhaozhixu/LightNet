@@ -32,6 +32,7 @@ LN_CPPSTART
 void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error);
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg);
 void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle);
+void ln_tensorrt_bundle_execute(ln_tensorrt_bundle *bundle);
 
 #ifdef __cplusplus
 LN_CPPEND

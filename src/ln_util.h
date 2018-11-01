@@ -69,6 +69,8 @@ void ln_err_dump(const char *fmt, ...);
 
 #ifdef LN_CUDA
 
+typedef struct ln_cuda_stream ln_cuda_stream;
+
 #define LN_MAX_CUDA_DEVICE 15
 
 void ln_cuda_set_device(int n);
@@ -86,6 +88,8 @@ void *ln_clone_d2d(const void *src, size_t size);
 void *ln_repeat_h2d(void *data, size_t size, int times);
 void *ln_repeat_d2h(void *data, size_t size, int times);
 void *ln_repeat_d2d(void *data, size_t size, int times);
+void ln_cuda_stream_create(ln_cuda_stream *pstream);
+void ln_cuda_stream_sync(ln_cuda_stream stream);
 
 #endif  /* LN_CUDA */
 

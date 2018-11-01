@@ -35,8 +35,12 @@ using namespace nvinfer1;
 
 static char TENSORRT_VERSION_STR[20] = {0};
 
+// TODO: add async support
 struct ln_tensorrt_bundle {
-     ICudaEngine *engine;
+     ICudaEngine        *engine;
+     IExecutionContext  *context;
+     void              **bindings;
+     int                 batch_size;
 };
 
 static const char *tensorrt_version_str(void)
@@ -245,10 +249,10 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
           else
                ln_opck_param_error(0, "unsupported TensorRT operator");
      }
-     pe = ln_param_list_find(op_arg->params, "max_batch");
-     ln_opck_param_exist(pe, "max_batch");
+     pe = ln_param_list_find(op_arg->params, "batch_size");
+     ln_opck_param_exist(pe, "batch_size");
      ln_opck_param_type(pe, LN_PARAM_NUMBER);
-     ln_opck_param_satisfy_msg(pe->value_int > 0, "\"max_batch\" should be a positive integer");
+     ln_opck_param_satisfy_msg(pe->value_int > 0, "\"batch_size\" should be a positive integer");
 
      tl_dtype dtype;
      char *arg_name;
@@ -569,7 +573,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                assert(0 && "unsupported TensorRT operator");
      }
 
-     pe = ln_param_list_find(op_arg->params, "max_batch");
+     pe = ln_param_list_find(op_arg->params, "batch_size");
      builder->setMaxBatchSize(pe->value_int);
      builder->setMaxWorkspaceSize(max_workspace);
 
@@ -583,17 +587,59 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
 {
      ICudaEngine *engine;
-
+     IExecutionContext *context;
+     void **bindings;
+     int batch_size;
      ln_tensorrt_bundle *bundle;
-     bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
+
+     ln_list *l;
+     ln_tensor_list_entry *tle;
+     ln_tensor_entry *te;
+     int index;
+
      engine = create_engine(op_arg);
+     context = engine->createExecutionContext();
+     bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
+     for (l = op_arg->tensors_in; l; l = l->next) {
+          tle = (ln_tensor_list_entry *)l->data;
+          if (strncmp(tle->arg_name, "src", 3))
+               continue;
+          index = engine->getBindingIndex(tle->name);
+          te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+          bindings[index] = te->tensor->data;
+     }
+     for (l = op_arg->tensors_out; l; l = l->next) {
+          tle = (ln_tensor_list_entry *)l->data;
+          if (strncmp(tle->arg_name, "dst", 3))
+               continue;
+          index = engine->getBindingIndex(tle->name);
+          te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+          bindings[index] = te->tensor->data;
+     }
+     batch_size = engine->getMaxBatchSize(); // TODO: make batch_size flexible?
+
+     bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
      bundle->engine = engine;
+     bundle->context = context;
+     bundle->bindings = bindings;
+     bundle->batch_size = batch_size;
 
      return bundle;
 }
 
 void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle)
 {
-     bundle->engine->destroy();
+     if (!bundle)
+          return;
+     if (bundle->engine) {
+          bundle->context->destroy();
+          bundle->engine->destroy();
+          ln_free(bundle->bindings);
+     }
      ln_free(bundle);
+}
+
+void ln_tensorrt_bundle_execute(ln_tensorrt_bundle *bundle)
+{
+     bundle->context->execute(bundle->batch_size, bundle->bindings);
 }
