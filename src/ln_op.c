@@ -53,11 +53,9 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
                                ln_list *params, ln_hash *tensor_table)
 {
      ln_op *op;
-     ln_op_arg *arg_proto;
 
-     arg_proto = op_proto->op_arg;
      op = ln_alloc(sizeof(ln_op));
-     op->op_arg = ln_op_arg_create(name, arg_proto->optype, tensors_in,
+     op->op_arg = ln_op_arg_create(name, op_proto->op_arg->optype, tensors_in,
                                    tensors_out, params, tensor_table);
      op->pre_run = op_proto->pre_run;
      op->static_run = op_proto->static_run;

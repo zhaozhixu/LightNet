@@ -43,7 +43,7 @@ struct ln_tensorrt_bundle {
      int                 batch_size;
 };
 
-static const char *tensorrt_version_str(void)
+const char *ln_tensorrt_version_str(void)
 {
      if (TENSORRT_VERSION_STR[0] == 0)
           snprintf(TENSORRT_VERSION_STR, 20, "%d.%d.%d",
@@ -207,7 +207,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
                        "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
                        op_arg->optype, op_arg->name, te->name,
-                       tl_dtype_name(te->tensor->dtype), tensorrt_version_str());
+                       tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
           } else if (!strncmp(tle->arg_name, "weight", 6)) {
                te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
                ln_opck_tensor_defined(te, tle->name);
@@ -216,7 +216,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                ln_opck(LN_ERROR, tl_dtype_to_weight_DataType(te->tensor->dtype) != -1,
                        "%s: \"%s\"'s tensor %s have unsupported weight tensor dtype %s for building TensorRT %s model",
                        op_arg->optype, op_arg->name, te->name,
-                       tl_dtype_name(te->tensor->dtype), tensorrt_version_str());
+                       tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
           }
      }
 
@@ -273,7 +273,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
           ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
                   "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",
                   op_arg->optype, op_arg->name, arg_name, tl_dtype_name(dtype),
-                  tensorrt_version_str());
+                  ln_tensorrt_version_str());
           ln_free(arg_name);
      }
 }
@@ -571,6 +571,12 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                add_concat(network, tensors, pe->arg_name, op_arg);
           else
                assert(0 && "unsupported TensorRT operator");
+     }
+
+     for (l = op_arg->tensors_out; l; l = l->next) {
+          tle = (ln_tensor_list_entry *)l->data;
+          tensors[tle->name]->setName(tle->name);
+          network->markOutput(*tensors[tle->name]);
      }
 
      pe = ln_param_list_find(op_arg->params, "batch_size");

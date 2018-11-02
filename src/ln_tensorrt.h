@@ -29,6 +29,7 @@ typedef struct ln_tensorrt_bundle ln_tensorrt_bundle;
 LN_CPPSTART
 #endif
 
+const char *ln_tensorrt_version_str(void);
 void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error);
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg);
 void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle);

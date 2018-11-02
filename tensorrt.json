@@ -15,6 +15,11 @@
                 {"arg_name": "dst2", "name": "dt2"},
             ],
             "params": [
+                {"arg_name": "dst1_shape", "value": [1, 2, 3, 4]},
+                {"arg_name": "dst2_shape", "value": [1, 2, 3, 4]},
+                {"arg_name": "dst1_dtype", "value": "TL_FLOAT"},
+                {"arg_name": "dst2_dtype", "value": "TL_FLOAT"},
+                {"arg_name": "batch_size", "value": 1},
                 {"arg_name": "op1", "value": "conv"},
                 {"arg_name": "op1_src", "value": "st1"},
                 {"arg_name": "op1_weight", "value": "wt1"},
@@ -46,11 +51,6 @@
                 {"arg_name": "op5_src2", "value": "pooling_dst1"},
                 {"arg_name": "op5_dst", "value": "concat_dst1"},
                 // {"arg_name": "op5_axis", "value": 0}, // excluding N
-                {"arg_name": "dst1_shape", "value": [1, 2, 3, 4]},
-                {"arg_name": "dst2_shape", "value": [1, 2, 3, 4]},
-                {"arg_name": "dst1_dtype", "value": "TL_FLOAT"},
-                {"arg_name": "dst2_dtype", "value": "TL_FLOAT"},
-                {"arg_name": "batch_size", "value": 1},
             ]
         }
     ]
