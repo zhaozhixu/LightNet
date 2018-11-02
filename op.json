@@ -138,7 +138,7 @@
             "name": "concat1",
             "optype": "concat",
             "tensors_in": [
-                {"arg_name": "src1", "name": ""}
+                {"arg_name": "src1", "name": ""},
                 {"arg_name": "src2", "name": ""}
             ],
             "tensors_out": [
@@ -146,6 +146,23 @@
             ],
             "params": [
                 {"arg_name": "axis", "value": 0}
+            ]
+        }
+        {
+            "name": "batchnorm1",
+            "optype": "batchnorm",
+            "tensors_in": [
+                {"arg_name": "src", "name": ""}
+                {"arg_name": "scale", "name": ""},
+                {"arg_name": "offset", "name": ""},
+                {"arg_name": "mean", "name": ""},
+                {"arg_name": "var", "name": ""},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": ""},
+            ],
+            "params": [
+                {"arg_name": "epsilon", "value": 1e-5},
             ]
         }
     ]
