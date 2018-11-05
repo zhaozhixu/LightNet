@@ -105,6 +105,17 @@ static int str_to_pooling_type(const char *str)
      return -1;
 }
 
+static int str_to_scale_mode(const char *str)
+{
+     if (!strcmp(str, "kUNIFORM"))
+          return (int)ScaleMode::kUNIFORM;
+     if (!strcmp(str, "kCHANNEL"))
+          return (int)ScaleMode::kCHANNEL;
+     if (!strcmp(str, "kELEMENTWISE"))
+          return (int)ScaleMode::kELEMENTWISE;
+     return -1;
+}
+
 static void check_param(const char *name1, const char *name2, ln_param_type ptype,
                         int plen ,ln_op_arg *op_arg, ln_error **error)
 {
@@ -185,6 +196,21 @@ static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
 #endif
 }
 
+static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)
+{
+     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "shift", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "scale", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "power", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+     check_param(opname, "scale_mode", LN_PARAM_NUMBER, 0, op_arg, error);
+
+     ln_param_entry *pe;
+     pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
+     ln_opck_param_satisfy_msg(str_to_scale_mode(pe->value_string) != -1,
+                               "unsupported scale mode");
+}
+
 void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
 {
      int tensors_n;
@@ -246,6 +272,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                check_softmax(pe->arg_name, op_arg, error);
           else if (!strcmp(pe->value_string, "concat"))
                check_concat(pe->arg_name, op_arg, error);
+          else if (!strcmp(pe->value_string, "scale"))
+               check_scale(pe->arg_name, op_arg, error);
           else
                ln_opck_param_error(0, "unsupported TensorRT operator");
      }
@@ -324,8 +352,8 @@ static std::map<std::string, Weights> create_weight_map(ln_op_arg *op_arg)
 }
 
 static void add_conv(INetworkDefinition *network,
-                     std::map<std::string, Weights> &weights,
                      std::map<std::string, ITensor*> &tensors,
+                     std::map<std::string, Weights> &weights,
                      char *opname, ln_op_arg *op_arg)
 {
      char *src;
@@ -530,6 +558,49 @@ static void add_concat(INetworkDefinition *network,
      tensors[dst] = concat->getOutput(0);
 }
 
+static void add_scale(INetworkDefinition *network,
+                      std::map<std::string, ITensor*> &tensors,
+                      std::map<std::string, Weights> &weights,
+                      char *opname, ln_op_arg *op_arg)
+{
+     char *src;
+     char *shift;
+     char *scale;
+     char *power;
+     char *dst;
+     char *scale_mode;
+     ln_param_entry *pe;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "src");
+     assert(pe);
+     src = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "dst");
+     assert(pe);
+     dst = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "shift");
+     assert(pe);
+     shift = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "scale");
+     assert(pe);
+     scale = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "power");
+     assert(pe);
+     power = pe->value_string;
+
+     pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
+     assert(pe);
+     scale_mode = pe->value_string;
+
+     IScaleLayer *scale_layer;
+     scale_layer = network->addScale(*tensors[src], (ScaleMode)str_to_scale_mode(scale_mode), weights[shift], weights[scale], weights[power]);
+     assert(scale_layer);
+     tensors[dst] = scale_layer->getOutput(0);
+}
+
 static ICudaEngine *create_engine(ln_op_arg *op_arg)
 {
      IBuilder *builder = createInferBuilder(global_logger);
@@ -560,7 +631,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
           if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
                continue;
           if (!strcmp(pe->value_string, "conv"))
-               add_conv(network, weights, tensors, pe->arg_name, op_arg);
+               add_conv(network, tensors, weights, pe->arg_name, op_arg);
           else if (!strcmp(pe->value_string, "activation"))
                add_activation(network, tensors, pe->arg_name, op_arg);
           else if (!strcmp(pe->value_string, "pooling"))
@@ -569,6 +640,8 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                add_softmax(network, tensors, pe->arg_name, op_arg);
           else if (!strcmp(pe->value_string, "concat"))
                add_concat(network, tensors, pe->arg_name, op_arg);
+          else if (!strcmp(pe->value_string, "scale"))
+               add_scale(network, tensors, weights, pe->arg_name, op_arg);
           else
                assert(0 && "unsupported TensorRT operator");
      }

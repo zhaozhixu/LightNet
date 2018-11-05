@@ -151,7 +151,7 @@ static inline int can_replace_tensorrt(const char *optype)
      return 0;
 }
 
-static void add_conv(ln_op_arg *trt_op_arg, ln_op_arg *op_arg)
+static void convert_conv(ln_op_arg *trt_op_arg, ln_op_arg *op_arg)
 {
      ln_param_entry *pe;
 

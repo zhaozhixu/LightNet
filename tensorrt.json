@@ -51,6 +51,13 @@
                 {"arg_name": "op5_src2", "value": "pooling_dst1"},
                 {"arg_name": "op5_dst", "value": "concat_dst1"},
                 // {"arg_name": "op5_axis", "value": 0}, // excluding N
+                {"arg_name": "op5", "value": "scale"},
+                {"arg_name": "op5_src", "value": "pooling_dst1"},
+                {"arg_name": "op5_shift", "value": "pooling_dst1"},
+                {"arg_name": "op5_scale", "value": "pooling_dst1"},
+                {"arg_name": "op5_power", "value": "pooling_dst1"},
+                {"arg_name": "op5_dst", "value": "scalse_dst1"},
+                {"arg_name": "op5_scale_mode", "value": "kCHANNEL"},
             ]
         }
     ]
