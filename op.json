@@ -131,7 +131,7 @@
                 {"arg_name": "dst", "name": "softmax1"}
             ],
             "params": [
-                {"arg_name": "axis", "value": -1} // -1 is the last dimision
+                {"arg_name": "axis", "value": -1}
             ]
         }
         {
@@ -165,5 +165,20 @@
                 {"arg_name": "epsilon", "value": 1e-5},
             ]
         }
+        {
+            "name": "upsample1",
+            "optype": "upsample",
+            "tensors_in": [
+                {"arg_name": "src", "name": ""}
+                {"arg_name": "scales", "name": ""},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": ""},
+            ],
+            "params": [
+                {"arg_name": "mode", "value": "nearest"},
+            ]
+        }
     ]
 }
+
