@@ -7,45 +7,49 @@ use File::Copy;
 use Cwd 'abs_path';
 
 my $usage = <<EOF;
-Usage: $0 ROOT OP_NAME [SUBFIX]
+Usage: $0 ROOT OP_JSON_FILE;
 ROOT is the path of the project root.
-OP_NAME is the name of the new op.
-SUBFIX is the subfix of OP_NAME, often used to distinguish architectures.
+OP_JSON_FILE is the location of op defination file.
 
 Example:
-	tools/addop.pl . slice_cuda cuda
+	tools/addop_extend.pl . slice.json
 
 	Executing this from project root will generate code templates
-	in file ROOT/src/ln_opimpl_slice_cuda.c, and add associated init ops in
-	ROOT/src/ln_oplist.c.
+	in file ROOT/src/ln_opimpl_slice_cuda.c from slice.json, and add
+    associated init ops in ROOT/src/ln_arch_cpu.c.
 EOF
 if (@ARGV < 2) {
   print $usage;
   exit;
 }
 my $root = abs_path($ARGV[0]);
-my $op_name = $ARGV[1];
+my $json_file = $ARGV[1];
+open JSON_FILE, '<', $json_file or die "Cannot open $json_file: $!";
+my $json_text = join '', <JSON_FILE>;
+close JSON_FILE;
 
-my $subfix = "";
-$subfix = $ARGV[2] if @ARGV == 3;
-if ($subfix ne "" and not $op_name =~ /\w+_$subfix/) {
-  err_exit("OP_NAME \"$op_name\" doesn't match SUBFIX \"$subfix\"");
-}
-if ($subfix ne "" && $subfix ne "cuda") {
-  err_exit("unsupported SUBFIX \"$subfix\"");
-}
-if ($subfix eq "") {
-  $subfix = "cpu";
-}
+my $json = decode_json $json_text;
 
-my $arch_file = "";
-if ($subfix eq "cpu") {
-  $arch_file = "$root/src/ln_arch_cpu.c";
-} elsif ($subfix eq "cuda") {
-  $arch_file = "$root/src/ln_arch_cuda.c";
-}
+sub generate_op {
+  my $op = $_[0];
+  my $optype = $op->{optype};
+  my $subfix = "";
+  $subfix = $op->{subfix} if exists $op->{subfix};
+  my $tensors_in = $op->{tensors_in};
+  my $tensors_out = $op->{tensors_out};
+  my $params = $op->{params};
 
-my $op_tpl = <<EOF;
+  if ($subfix ne "" and not $optype =~ /\w+_$subfix/) {
+    &err_exit("optype \"$optype\" doesn't match subfix \"$subfix\"");
+  }
+  if ($subfix ne "" && $subfix ne "cuda") {
+    &err_exit("unsupported subfix \"$subfix\"");
+  }
+  if ($subfix eq "") {
+    $subfix = "cpu";
+  }
+
+  my $op_tpl = <<EOF;
 /*
  * Copyright (c) 2018 Zhao Zhixu
  *
@@ -71,77 +75,57 @@ my $op_tpl = <<EOF;
 #include <assert.h>
 #include "ln_op.h"
 
+${struct_def}
+
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
-static void ${op_name}_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void ${optype}_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
+${pre_run_local_vars}
 
      /* check tensors and parameters */
+${pre_run_checks}
 
      /* define output tensor shape, tensor data should be NULL */
+${output_tensor_def}
 
      /* use op_arg->priv to store private data to be used in other functions */
+${priv_assigns}
 }
 
 /*
  * This function should only do the calculations.
  */
-static void ${op_name}_run(ln_op_arg *op_arg, ln_error **error)
+static void ${optype}_run(ln_op_arg *op_arg, ln_error **error)
 {
-
+     /* TODO: add ${optype}_run */
 }
 
 /*
  * This function should free all the memory allocated by other *_run()s.
  */
-static void ${op_name}_post_run(ln_op_arg *op_arg, ln_error **error)
+static void ${optype}_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-
+${post_run_code}
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_${op_name} = {
-     .optype = "${op_name}",
+static ln_op_arg op_arg_${optype} = {
+     .optype = "${optype}",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_${op_name} = {
-     .op_arg = &op_arg_${op_name},
-     .pre_run = ${op_name}_pre_run,
+ln_op ln_opimpl_${optype} = {
+     .op_arg = &op_arg_${optype},
+     .pre_run = ${optype}_pre_run,
      .static_run = NULL,
-     .run = ${op_name}_run,
-     .post_run = ${op_name}_post_run
+     .run = ${optype}_run,
+     .post_run = ${optype}_post_run
 };
 EOF
 
-my $op_file = "$root/src/ln_opimpl_${op_name}.c";
-if (-e $op_file) {
-  copy($op_file, "$op_file.bak")
-    or die "Cannot backup file $op_file: $!";
 }
-open OP, '>', $op_file
-  or die "Cannot open $op_file: $!";
-print OP $op_tpl;
-close OP;
-
-my $declare = "extern ln_op ln_opimpl_${op_name};";
-my $item = "&ln_opimpl_${op_name},";
-copy($arch_file, "$arch_file.bak")
-  or die "Cannot backup file $arch_file: $!";
-open ARCH_FILE_BAK, '<', "$arch_file.bak"
-  or die "Cannot open $arch_file.bak: $!";
-open ARCH_FILE, '>', $arch_file
-  or die "Cannot open $arch_file: $!";
-
-while (<ARCH_FILE_BAK>) {
-  s|/\* end of declare $subfix ops \*/|$declare\n/* end of declare $subfix ops */|;
-  s|/\* end of init $subfix ops \*/|     $item\n/* end of init $subfix ops */|;
-  print ARCH_FILE;
-}
-
-close ARCH_FILE;
-close ARCH_FILE_BAK;
 
 sub err_exit {
   my $msg = $_[0];

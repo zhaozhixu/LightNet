@@ -294,6 +294,11 @@ LN_CPPEND
              "%s: \"%s\"'s tensor \"%s\" should be static",     \
              op_arg->optype, op_arg->name, (entry)->name)
 
+#define ln_opck_tensor_isnotstatic(entry)				\
+	ln_opck(LN_ERROR, !(entry)->isstatic,				\
+		"%s: \"%s\"'s tensor \"%s\" should not be static",	\
+		op_arg->optype, op_arg->name, (entry)->name)
+
 #define ln_opck_tensor_mtype_eq(entry, mem_type)                        \
      ln_opck(LN_ERROR, (entry)->mtype == (mem_type),                    \
              "%s: \"%s\"'s tensor \"%s\"'s mtype should be %s, but gets %s", \

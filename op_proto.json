@@ -1,0 +1,17 @@
+{
+    "ops": [
+        {
+            "optype": "upsample",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU"},
+                {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU"}
+            ],
+            "params": [
+                {"arg_name": "mode", "ptype": "LN_PARAM_STRING"}
+            ]
+        }
+    ]
+}

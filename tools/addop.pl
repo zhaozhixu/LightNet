@@ -16,7 +16,7 @@ Example:
 
 	Executing this from project root will generate code templates
 	in file ROOT/src/ln_opimpl_slice_cuda.c, and add associated init ops in
-	ROOT/src/ln_oplist.c.
+	ROOT/src/ln_arch_cuda.c.
 EOF
 if (@ARGV < 2) {
   print $usage;
