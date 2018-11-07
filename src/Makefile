@@ -36,7 +36,7 @@ all: bin
 bin: $(OBJDIR)/$(TARGET_BIN)
 
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
-	$(ECHO) Linking: $^
+	$(ECHO) Linking: $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.c

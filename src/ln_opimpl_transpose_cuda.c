@@ -28,7 +28,6 @@ struct priv_s {
      tl_tensor *dst;
      char      *dst_name;
      int       *axes;
-     tl_tensor *workspace;
 };
 
 /*
@@ -95,18 +94,7 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      priv->dst = dst_entry->tensor;
      priv->dst_name = dst_name;
      priv->axes = axes;
-     priv->workspace = NULL;
      op_arg->priv = priv;
-}
-
-/* This function runs only once per instance right after memory allocation. */
-static void transpose_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
-{
-     struct priv_s *priv;
-
-     priv = op_arg->priv;
-     priv->workspace = tl_tensor_zeros_cuda(1, (int[]){priv->dst->ndim*priv->dst->len*2},
-                                            TL_INT32);
 }
 
 /*
@@ -117,7 +105,7 @@ static void transpose_cuda_run(ln_op_arg *op_arg, ln_error **error)
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     tl_tensor_transpose_cuda(priv->src, priv->dst, priv->axes, priv->workspace);
+     tl_tensor_transpose_cuda(priv->src, priv->dst, priv->axes);
 }
 
 /*
@@ -128,7 +116,6 @@ static void transpose_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
      struct priv_s *priv;
 
      priv = op_arg->priv;
-     tl_tensor_free_data_too_cuda(priv->workspace);
      ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
      ln_free(op_arg->priv);
 }
@@ -142,7 +129,7 @@ static ln_op_arg op_arg_transpose_cuda = {
 ln_op ln_opimpl_transpose_cuda = {
      .op_arg = &op_arg_transpose_cuda,
      .pre_run = transpose_cuda_pre_run,
-     .static_run = transpose_cuda_static_run,
+     .static_run = NULL,
      .run = transpose_cuda_run,
      .post_run = transpose_cuda_post_run
 };

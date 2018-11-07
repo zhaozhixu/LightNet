@@ -40,7 +40,7 @@ all: $(TARGET_TEST)
 	$(AT)./$(TARGET_TEST)
 
 $(TARGET_TEST): $(OBJS) $(SRCOBJS)
-	$(ECHO) Linking: $^
+	$(ECHO) Linking: $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.c
