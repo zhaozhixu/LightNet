@@ -1,5 +1,6 @@
 #! /usr/bin/perl
 
+use 5.014;
 use warnings;
 use strict;
 use JSON;
@@ -19,8 +20,8 @@ Example:
 	associated init ops in ROOT/src/ln_arch_cpu.c.
 EOF
 if (@ARGV < 2) {
-  print $usage;
-  exit;
+    print $usage;
+    exit;
 }
 my $root = abs_path($ARGV[0]);
 my $json_file = $ARGV[1];
@@ -32,32 +33,32 @@ my $json = decode_json $json_text;
 &gen_op($json->{ops}[0]);
 
 sub gen_op {
-  my $op = $_[0];
-  my $optype = $op->{optype};
-  my $subfix = "";
-  $subfix = $op->{subfix} if exists $op->{subfix};
-  my $tensors_in = $op->{tensors_in};
-  my $tensors_out = $op->{tensors_out};
-  my $params = $op->{params};
+    my $op = $_[0];
+    my $optype = $op->{optype};
+    my $subfix = "";
+    $subfix = $op->{subfix} if exists $op->{subfix};
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
 
-  if ($subfix ne "" and not $optype =~ /\w+_$subfix/) {
-    &err_exit("optype \"$optype\" doesn't match subfix \"$subfix\"");
-  }
-  if ($subfix ne "" && $subfix ne "cuda") {
-    &err_exit("unsupported subfix \"$subfix\"");
-  }
-  if ($subfix eq "") {
-    $subfix = "cpu";
-  }
+    if ($subfix ne "" and not $optype =~ /\w+_$subfix/) {
+        &err_exit("optype \"$optype\" doesn't match subfix \"$subfix\"");
+    }
+    if ($subfix ne "" && $subfix ne "cuda") {
+        &err_exit("unsupported subfix \"$subfix\"");
+    }
+    if ($subfix eq "") {
+        $subfix = "cpu";
+    }
 
-  my $struct_def = &gen_struct_def($op);
-  my $pre_run_local_vars = &gen_pre_run_local_vars($op);
-  my $pre_run_checks = &gen_pre_run_checks($op);
-  my $output_tensor_def = "";
-  my $priv_assigns = "";
-  my $post_run_code = "";
+    my $struct_def = &gen_struct_def($op);
+    my $pre_run_local_vars = &gen_pre_run_local_vars($op);
+    my $pre_run_checks = &gen_pre_run_checks($op);
+    my $output_tensor_def = "";
+    my $priv_assigns = "";
+    my $post_run_code = "";
 
-  my $op_tpl = <<EOF;
+    my $op_tpl = <<EOF;
 /*
  * Copyright (c) 2018 Zhao Zhixu
  *
@@ -131,28 +132,28 @@ ln_op ln_opimpl_${optype} = {
      .post_run = ${optype}_post_run
 };
 EOF
-  print $op_tpl;
+    print $op_tpl;
 }
 
 sub gen_struct_def {
-  my $op = $_[0];
-  my $tensors_in = $op->{tensors_in};
-  my $tensors_out = $op->{tensors_out};
-  my $params = $op->{params};
+    my $op = $_[0];
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
 
-  my @defs = ();
-  foreach (@$tensors_in) {
-    push @defs, "tl_tensor *$_->{arg_name};";
-  }
-  foreach (@$tensors_out) {
-    push @defs, "tl_tensor *$_->{arg_name};";
-    push @defs, "char *$_->{arg_name}_name;";
-  }
-  &gen_params($params, \@defs);
-  &make_defs_neat(5, \@defs);
+    my @defs = ();
+    foreach (@$tensors_in) {
+        push @defs, "tl_tensor *$_->{arg_name};";
+    }
+    foreach (@$tensors_out) {
+        push @defs, "tl_tensor *$_->{arg_name};";
+        push @defs, "char *$_->{arg_name}_name;";
+    }
+    &gen_params($params, \@defs);
+    &make_defs_neat(5, \@defs);
 
-  my $defs_str = join "\n", @defs;
-  my $struct_def_tpl = <<EOF;
+    my $defs_str = join "\n", @defs;
+    my $struct_def_tpl = <<EOF;
 struct priv_s {
 ${defs_str}
 };
@@ -160,182 +161,243 @@ EOF
 }
 
 sub gen_pre_run_local_vars {
-  my $op = $_[0];
-  my $tensors_in = $op->{tensors_in};
-  my $tensors_out = $op->{tensors_out};
-  my $params = $op->{params};
+    my $op = $_[0];
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
 
-  my @vars = ();
-  foreach (@$tensors_in) {
-    push @vars, "char *$_->{arg_name}_name;";
-    push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
-  }
-  foreach (@$tensors_out) {
-    push @vars, "char *$_->{arg_name}_name;";
-    push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
-    push @vars, "tl_tensor *$_->{arg_name};";
-  }
-  &gen_params($params, \@vars);
+    my @vars = ();
+    foreach (@$tensors_in) {
+        push @vars, "char *$_->{arg_name}_name;";
+        push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
+        push @vars, "tl_tensor *$_->{arg_name};";
+    }
+    foreach (@$tensors_out) {
+        push @vars, "char *$_->{arg_name}_name;";
+        push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
+        push @vars, "tl_tensor *$_->{arg_name};";
+    }
+    &gen_params($params, \@vars);
 
-  push @vars, "int tensors_in_n;";
-  push @vars, "int tensors_out_n;";
-  push @vars, "int params_n;";
-  push @vars, "struct priv_s *priv;";
-  &make_defs_neat(5, \@vars);
+    push @vars, "int tensors_in_n;";
+    push @vars, "int tensors_out_n;";
+    push @vars, "int params_n;";
+    push @vars, "struct priv_s *priv;";
+    &make_defs_neat(5, \@vars);
 
-  my $vars_str = join "\n", @vars;
+    my $vars_str = join "\n", @vars;
 }
 
 sub gen_params {
-  my $params = shift;
-  my $defs = shift;
-  foreach (@$params) {
-    my $realtype;
-    if ($_->{ptype} eq "LN_PARAM_NULL") {
-      $realtype = "void *";
-    } elsif ($_->{ptype} eq "LN_PARAM_STRING") {
-      if (exists $_->{realtype}) {
-        $realtype = $_->{realtype};
-      } else {
-        $realtype = "char *";
-      }
-    } elsif ($_->{ptype} eq "LN_PARAM_NUMBER") {
-      &err_exit("need a `realtype`") unless exists $_->{realtype};
-      if ($_->{realtype} eq "float"
-          || $_->{realtype} eq "double"
-          || $_->{realtype} eq "int") {
-        $realtype = $_->{realtype};
-      } else {
-        &err_exit("unsupported `realtype`: $_->{realtype}");
-      }
-    } elsif ($_->{ptype} eq "LN_PARAM_BOOL") {
-      $realtype = "tl_bool_t";
-    } elsif ($_->{ptype} eq "LN_PARAM_ARRAY_STRING") {
-      if (exists $_->{realtype}) {
-        $realtype = "$_->{realtype} *";
-      } else {
-        $realtype = "char **";
-      }
-    } elsif ($_->{ptype} eq "LN_PARAM_ARRAY_NUMBER") {
-      &err_exit("need a `realtype`") unless exists $_->{realtype};
-      if ($_->{realtype} eq "float"
-          || $_->{realtype} eq "double"
-          || $_->{realtype} eq "int") {
-        $realtype = "$_->{realtype} *";
-      } else {
-        &err_exit("unsupported `realtype`: $_->{realtype}");
-      }
-    } elsif ($_->{ptype} eq "LN_PARAM_ARRAY_BOOL") {
-      $realtype = "tl_bool_t *";
-    } else {
-      &err_exit("unsupported `ptype`: $_->{ptype}");
-    }
-    $realtype .= " " unless ($realtype =~ /\*$/);
+    my $params = shift;
+    my $defs = shift;
+    foreach my $param (@$params) {
+        my $realtype;
+        given ($param->{ptype}) {
+            when ("LN_PARAM_NULL") {
+                $realtype = "void *";
+            }
+            when ("LN_PARAM_STRING") {
+                if (exists $param->{realtype}) {
+                    $realtype = $param->{realtype};
+                } else {
+                    $realtype = "char *";
+                }
+            }
+            when ("LN_PARAM_NUMBER") {
+                &err_exit("need a `realtype`") unless exists $param->{realtype};
+                if ($param->{realtype} eq "float" ||
+                    $param->{realtype} eq "double"||
+                    $param->{realtype} eq "int") {
+                    $realtype = $param->{realtype};
+                } else {
+                    &err_exit("unsupported `realtype`: $param->{realtype}");
+                }
+            }
+            when ("LN_PARAM_BOOL") {
+                $realtype = "tl_bool_t";
+            }
+            when ("LN_PARAM_ARRAY_STRING") {
+                if (exists $param->{realtype}) {
+                    $realtype = "$param->{realtype} *";
+                } else {
+                    $realtype = "char **";
+                }
+            }
+            when ("LN_PARAM_ARRAY_NUMBER") {
+                &err_exit("need a `realtype`") unless exists $param->{realtype};
+                if ($param->{realtype} eq "float" ||
+                    $param->{realtype} eq "double"||
+                    $param->{realtype} eq "int") {
+                    $realtype = "$param->{realtype} *";
+                } else {
+                    &err_exit("unsupported `realtype`: '$param->{realtype}'");
+                }
+            }
+            when ("LN_PARAM_ARRAY_BOOL") {
+                $realtype = "tl_bool_t *";
+            }
+            default {
+                &err_exit("unsupported `ptype`: '$param->{ptype}'");
+            }
+        }
+        $realtype .= " " unless ($realtype =~ /\*$/);
 
-    push @$defs, "${realtype}$_->{arg_name};";
-  }
+        push @$defs, "${realtype}$param->{arg_name};";
+    }
 }
 
 sub gen_pre_run_checks {
-  my $op = $_[0];
-  my $tensors_in = $op->{tensors_in};
-  my $tensors_out = $op->{tensors_out};
-  my $params = $op->{params};
+    my $op = $_[0];
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
 
-  my @checks = ();
-  my $tensors_in_n = @$tensors_in;
-  my $tensors_out_n = @$tensors_out;
-  push @checks, "tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);";
-  push @checks, "ln_opck_tensor_in_len_eq(tensors_in_n, ${tensors_in_n});";
-  push @checks, "";
-  push @checks, "tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);";
-  push @checks, "ln_opck_tensor_out_len_eq(tensors_out_n, ${tensors_out_n});";
-  push @checks, "";
-  foreach (@$tensors_in) {
-    my $arg_name = $_->{arg_name};
-    push @checks, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_in, \"${arg_name}\");";
-    push @checks, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
-    push @checks, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
-    push @checks, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
-    push @checks, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $_->{mtype});";
-    if (exists $_->{dtype}) {
-      push @checks, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $_->{dtype});";
-    }
-    if (exists $_->{sametype}) {
-      push @checks, "ln_opck_tensor_issametype(${arg_name}_entry, $_->{sametype}_entry);";
-    }
-    if (exists $_->{sameshape}) {
-      push @checks, "ln_opck_tensor_issameshape(${arg_name}_entry, $_->{sametype}_entry);";
-    }
-    if (exists $_->{static}) {
-      if ($_->{static}) {
-        push @checks, "ln_opck_tensor_isstatic(${arg_name}_entry);";
-      } else {
-        push @checks, "ln_opck_tensor_isnotstatic(${arg_name}_entry);";
-      }
-    }
+    my @checks = ();
+    my $tensors_in_n = @$tensors_in;
+    my $tensors_out_n = @$tensors_out;
+    push @checks, "tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);";
+    push @checks, "ln_opck_tensor_in_len_eq(tensors_in_n, ${tensors_in_n});";
     push @checks, "";
-  }
-  foreach (@$tensors_out) {
-    my $arg_name = $_->{arg_name};
-    push @checks, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_out, \"${arg_name}\");";
-    push @checks, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
-    push @checks, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
-    push @checks, "ln_opck_tensor_not_defined(${arg_name}_entry, ${arg_name}_name);";
+    push @checks, "tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);";
+    push @checks, "ln_opck_tensor_out_len_eq(tensors_out_n, ${tensors_out_n});";
     push @checks, "";
-  }
-  my $params_n = @$params;
-  push @checks, "params_n = ln_param_list_length(op_arg->params);";
-  push @checks, "ln_opck_param_len_eq(params_n, ${params_n});";
-  push @checks, "";
-  foreach (@$params) {
-    my $arg_name = $_->{arg_name};
-    push @checks, "${arg_name}_entry = ln_param_list_find(op_arg->params, \"${arg_name}\");";
-    push @checks, "ln_opck_param_exist(${arg_name}_entry, \"${arg_name}\");";
-    push @checks, "ln_opck_param_type(${arg_name}_entry, $_->{ptype});";
-    push @checks, "";
-  }
-  push @checks, "";
-  # TODO: add custom checks
 
-  &indent(5, \@checks);
-  my $checks_str = join "\n", @checks;
+    foreach (@$tensors_in) {
+        my $arg_name = $_->{arg_name};
+        push @checks, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_in, \"${arg_name}\");";
+        push @checks, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
+        push @checks, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
+        push @checks, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
+        push @checks, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $_->{mtype});";
+        if (exists $_->{dtype}) {
+            push @checks, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $_->{dtype});";
+        }
+        if (exists $_->{sametype}) {
+            push @checks, "ln_opck_tensor_issametype(${arg_name}_entry, $_->{sametype}_entry);";
+        }
+        if (exists $_->{sameshape}) {
+            push @checks, "ln_opck_tensor_issameshape(${arg_name}_entry, $_->{sametype}_entry);";
+        }
+        if (exists $_->{static}) {
+            if ($_->{static}) {
+                push @checks, "ln_opck_tensor_isstatic(${arg_name}_entry);";
+            } else {
+                push @checks, "ln_opck_tensor_isnotstatic(${arg_name}_entry);";
+            }
+        }
+        if (exists $_->{cond}) {
+            push @checks, "ln_opck_tensor_satisfy_msg($_->{cond});";
+        }
+        push @checks, "";
+    }
+
+    foreach (@$tensors_out) {
+        my $arg_name = $_->{arg_name};
+        push @checks, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_out, \"${arg_name}\");";
+        push @checks, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
+        push @checks, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
+        push @checks, "ln_opck_tensor_not_defined(${arg_name}_entry, ${arg_name}_name);";
+        push @checks, "";
+    }
+
+    my $params_n = @$params;
+    push @checks, "params_n = ln_param_list_length(op_arg->params);";
+    push @checks, "ln_opck_param_len_eq(params_n, ${params_n});";
+    push @checks, "";
+    foreach my $param (@$params) {
+        my $arg_name = $param->{arg_name};
+        push @checks, "${arg_name}_entry = ln_param_list_find(op_arg->params, \"${arg_name}\");";
+        push @checks, "ln_opck_param_exist(${arg_name}_entry, \"${arg_name}\");";
+        push @checks, "ln_opck_param_type(${arg_name}_entry, $param->{ptype});";
+        given ($param->{ptype}) {
+            when ("LN_PARAM_NULL") {
+                push @checks, "${arg_name} = NULL;";
+            }
+            when ("LN_PARAM_STRING") {
+                if (exists $param->{realtype}) {
+                    if (exists $param->{from_func}) {
+                        push @checks, "${arg_name} = $param->{from_func}(${arg_name}_entry->value_string);";
+                    } else {
+                        &err_exit("needs a `from_func` to convert '${arg_name}'");
+                    }
+                }
+            }
+            when ("LN_PARAM_NUMBER") {
+                if ($param->{realtype} eq "float" ||
+                    $param->{realtype} eq "double"||
+                    $param->{realtype} eq "int") {
+                    push @checks, "${arg_name} = ${arg_name}_entry->value_$param->{realtype};";
+                } else {
+                    &err_exit("unsupported `realtype`: '$param->{realtype}'");
+                }
+            }
+            when ("LN_PARAM_BOOL") {
+            }
+            when ("LN_PARAM_ARRAY_STRING") {
+            }
+            when ("LN_PARAM_ARRAY_NUMBER") {
+            }
+            when ("LN_PARAM_ARRAY_BOOL") {
+            }
+            default {
+                &err_exit("unsupported `ptype`: '$param->{ptype}'");
+            }
+        }
+    }
+    if ($param->{ptype} =~ /LN_PARAM_ARRAY/) {
+        if (exists $param->{len}) {
+            push @checks, "ln_opck_param_array_len_eq(${arg_name}_entry, $param->{len});";
+        }
+        if ($param->{ptype} eq "LN_PARAM_ARRAY_NUMBER") {
+
+        }
+    }
+    if (exists $param->{cond}) {
+        push @checks, "ln_opck_tensor_satisfy_msg($param->{cond});";
+    }
+    push @checks, "";
+}
+# TODO: add custom checks
+
+&indent(5, \@checks);
+my $checks_str = join "\n", @checks;
 }
 
-sub make_defs_neat {
-  my $nspaces = shift;
-  my $defs = shift;
-  my $max_offset = 0;
-  foreach (@$defs) {
-    if (/( |\*)(\w+;)/) {
-      my $offset = index($_, $2);
-      $max_offset = $max_offset < $offset ? $offset : $max_offset;
-    } else {
-      &err_exit("make_defs_neat: wrong format: $_");
+    sub make_defs_neat {
+        my $nspaces = shift;
+        my $defs = shift;
+        my $max_offset = 0;
+        foreach (@$defs) {
+            if (/( |\*)(\w+;)/) {
+                my $offset = index($_, $2);
+                $max_offset = $max_offset < $offset ? $offset : $max_offset;
+            } else {
+                &err_exit("make_defs_neat: wrong format: $_");
+            }
+        }
+        foreach (@$defs) {
+            my $type = $1 if /((\w+[ \t]+)+)/;
+            $type =~ s/[ \t]+$//;
+            my $nstars = 0;
+            $nstars = length $1 if /(\*+)/;
+            my $rest = $2 if /( |\*)(\w+;)/;
+            $_ = sprintf("%-${max_offset}s", $type);
+            my $re = " "x$nstars;
+            my $stars = "*"x$nstars;
+            s/$re$/$stars$rest/;
+        }
+        &indent($nspaces, $defs);
     }
-  }
-  foreach (@$defs) {
-    my $type = $1 if /((\w+[ \t]+)+)/;
-    $type =~ s/[ \t]+$//;
-    my $nstars = 0;
-    $nstars = length $1 if /(\*+)/;
-    my $rest = $2 if /( |\*)(\w+;)/;
-    $_ = sprintf("%-${max_offset}s", $type);
-    my $re = " "x$nstars;
-    my $stars = "*"x$nstars;
-    s/$re$/$stars$rest/;
-  }
-  &indent($nspaces, $defs);
-}
 
 sub indent {
-  my $nspaces = shift;
-  my $states = shift;
-  $_ = " "x$nspaces.$_ foreach @$states;
+    my $nspaces = shift;
+    my $states = shift;
+    $_ = " "x$nspaces.$_ foreach @$states;
 }
 
 sub err_exit {
-  my $msg = $_[0];
-  print STDERR "ERROR: $msg\n";
-  exit 1;
+    my $msg = $_[0];
+    print STDERR "ERROR: $msg\n";
+    exit 1;
 }

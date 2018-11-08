@@ -100,7 +100,7 @@ LN_CPPEND
 
 #define ln_opck_param_satisfy_msg(condition, msg)       \
      ln_opck(LN_ERROR, (condition),                     \
-             "%s: \"%s\"'s params should satisfy: %s",  \
+             "%s: `%s`'s params should satisfy: %s",  \
              op_arg->optype, op_arg->name, (msg))
 
 /* condition is appended as the message */
@@ -109,19 +109,19 @@ LN_CPPEND
 
 #define ln_opck_param_error(condition, msg)             \
      ln_opck(LN_ERROR, (condition),                     \
-             "%s: \"%s\"'s param error: %s",            \
+             "%s: `%s`'s param error: %s",            \
              op_arg->optype, op_arg->name, (msg))
 
 #define ln_opck_param_warning(condition, msg)           \
      ln_opck(LN_WARNING, (condition),                   \
-             "%s: \"%s\"'s param warning: %s",          \
+             "%s: `%s`'s param warning: %s",          \
              op_arg->optype, op_arg->name, (msg))
 
 /* entry should be returned by
    ln_param_list_find(op_arg->params, arg_name) */
 #define ln_opck_param_exist(entry, arg_name)            \
      ln_opck(LN_ERROR, (entry),                         \
-             "%s: \"%s\" needs a \"%s\" param",		\
+             "%s: `%s` needs a `%s` param",		\
              op_arg->optype, op_arg->name, (arg_name))
 
 /*
@@ -130,71 +130,71 @@ LN_CPPEND
  */
 #define ln_opck_param_type(entry, param_type)                           \
      ln_opck(LN_ERROR, (entry)->type == (param_type),                   \
-             "%s: \"%s\"'s \"%s\" param's value should be of type %s, but gets a %s", \
+             "%s: `%s`'s `%s` param's value should be of type %s, but gets a %s", \
              op_arg->optype, op_arg->name, (entry)->arg_name,           \
              ln_param_type_name((param_type)), ln_param_type_name((entry)->type))
 
 /* entry should have been checked with ln_opck_param_exist */
 #define ln_opck_param_array_len_eq(entry, expect_len)                   \
      ln_opck(LN_ERROR, (entry)->array_len == (expect_len),              \
-             "%s: \"%s\"'s \"%s\" param needs %d elements, but gets %d elements", \
+             "%s: `%s`'s `%s` param needs %d elements, but gets %d elements", \
              op_arg->optype, op_arg->name, (entry)->arg_name,           \
              (expect_len), (entry)->array_len)
 
 #define ln_opck_param_array_len_gt(entry, expect_len)                   \
      ln_opck(LN_ERROR, (entry)->array_len > (expect_len),               \
-             "%s: \"%s\"'s \"%s\" param needs > %d elements, but gets %d elements", \
+             "%s: `%s`'s `%s` param needs > %d elements, but gets %d elements", \
              op_arg->optype, op_arg->name, (entry)->arg_name,           \
              (expect_len), (entry)->array_len)
 
 #define ln_opck_param_array_len_ge(entry, expect_len)                   \
      ln_opck(LN_ERROR, (entry)->array_len >= (expect_len),              \
-             "%s: \"%s\"'s \"%s\" param needs >= %d elements, but gets %d elements", \
+             "%s: `%s`'s `%s` param needs >= %d elements, but gets %d elements", \
              op_arg->optype, op_arg->name, (entry)->arg_name,           \
              (expect_len), (entry)->array_len)
 
 #define ln_opck_param_array_len_lt(entry, expect_len)                   \
      ln_opck(LN_ERROR, (entry)->array_len < (expect_len),               \
-             "%s: \"%s\"'s \"%s\" param needs < %d elements, but gets %d elements", \
+             "%s: `%s`'s `%s` param needs < %d elements, but gets %d elements", \
              op_arg->optype, op_arg->name, (entry)->arg_name,           \
              (expect_len), (entry)->array_len)
 
 #define ln_opck_param_array_len_le(entry, expect_len)                   \
      ln_opck(LN_ERROR, (entry)->array_len <= (expect_len),              \
-             "%s: \"%s\"'s \"%s\" param needs <= %d elements, but gets %d elements", \
+             "%s: `%s`'s `%s` param needs <= %d elements, but gets %d elements", \
              op_arg->optype, op_arg->name, (entry)->arg_name,           \
              (expect_len), (entry)->array_len)
 
 /* list_len should be returned by ln_param_list_length(op_arg->params) */
 #define ln_opck_param_len_eq(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) == (expect_len),                      \
-             "%s: \"%s\" needs %d params, but gets %d params",          \
+             "%s: `%s` needs %d params, but gets %d params",          \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 /* list_len should be returned by ln_param_list_length(op_arg->params) */
 #define ln_opck_param_len_gt(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) > (expect_len),                       \
-             "%s: \"%s\" needs > %d params, but gets %d params",        \
+             "%s: `%s` needs > %d params, but gets %d params",        \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_param_len_ge(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) >= (expect_len),                      \
-             "%s: \"%s\" needs >= %d params, but gets %d params",       \
+             "%s: `%s` needs >= %d params, but gets %d params",       \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_param_len_lt(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) < (expect_len),                       \
-             "%s: \"%s\" needs < %d params, but gets %d params",        \
+             "%s: `%s` needs < %d params, but gets %d params",        \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_param_len_le(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) <= (expect_len),                      \
-             "%s: \"%s\" needs <= %d params, but gets %d params",       \
+             "%s: `%s` needs <= %d params, but gets %d params",       \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_satisfy_msg(condition, msg)      \
      ln_opck(LN_ERROR, (condition),                     \
-             "%s: \"%s\"'s tensors should satisfy: %s", \
+             "%s: `%s`'s tensors should satisfy: %s", \
              op_arg->optype, op_arg->name, (msg))
 
 /* condition is appended as the message */
@@ -205,109 +205,109 @@ LN_CPPEND
    ln_tensor_list_find_name(op_arg->tensors_in, arg_name) */
 #define ln_opck_tensor_in_exist(tensor_name, arg_name)	\
      ln_opck(LN_ERROR, (tensor_name),                   \
-             "%s: \"%s\" needs a \"%s\" input tensor",  \
+             "%s: `%s` needs a `%s` input tensor",  \
              op_arg->optype, op_arg->name, (arg_name))
 
 /* list_len should be returned by ln_tensor_list_length(op_arg->tensors_in) */
 #define ln_opck_tensor_in_len_eq(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) == (expect_len),                      \
-             "%s: \"%s\" needs %d input tensors, but gets %d input tensors", \
+             "%s: `%s` needs %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_in_len_gt(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) > (expect_len),                       \
-             "%s: \"%s\" needs > %d input tensors, but gets %d input tensors", \
+             "%s: `%s` needs > %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_in_len_ge(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) >= (expect_len),                      \
-             "%s: \"%s\" needs >= %d input tensors, but gets %d input tensors", \
+             "%s: `%s` needs >= %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_in_len_lt(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) < (expect_len),                       \
-             "%s: \"%s\" needs < %d input tensors, but gets %d input tensors", \
+             "%s: `%s` needs < %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_in_len_le(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) <= (expect_len),                      \
-             "%s: \"%s\" needs <= %d input tensors, but gets %d input tensors", \
+             "%s: `%s` needs <= %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 /* name should be returned by
    ln_tensor_list_find_name(op_arg->tensors_out, arg_name) */
 #define ln_opck_tensor_out_exist(tensor_name, arg_name)	\
      ln_opck(LN_ERROR, (tensor_name),                   \
-             "%s: \"%s\" needs a \"%s\" output tensor", \
+             "%s: `%s` needs a `%s` output tensor", \
              op_arg->optype, op_arg->name, (arg_name))
 
 /* list_len should be returned by ln_tensor_list_length(op_arg->tensors_out) */
 #define ln_opck_tensor_out_len_eq(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) == (expect_len),                      \
-             "%s: \"%s\" needs %d output tensors, but gets %d output tensors", \
+             "%s: `%s` needs %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_out_len_gt(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) > (expect_len),                       \
-             "%s: \"%s\" needs > %d output tensors, but gets %d output tensors", \
+             "%s: `%s` needs > %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_out_len_ge(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) >= (expect_len),                      \
-             "%s: \"%s\" needs >= %d output tensors, but gets %d output tensors", \
+             "%s: `%s` needs >= %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_out_len_lt(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) < (expect_len),                       \
-             "%s: \"%s\" needs < %d output tensors, but gets %d output tensors", \
+             "%s: `%s` needs < %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 #define ln_opck_tensor_out_len_le(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) <= (expect_len),                      \
-             "%s: \"%s\" needs <= %d output tensors, but gets %d output tensors", \
+             "%s: `%s` needs <= %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 /* entry should be returned by ln_tensor_table_find(op_arg->tensor_table, name) */
 #define ln_opck_tensor_not_defined(entry, entry_name)                   \
      ln_opck(LN_ERROR, !(entry),                                        \
-             "%s: \"%s\"'s tensor \"%s\" shouldn't have been defined before", \
+             "%s: `%s`'s tensor `%s` shouldn't have been defined before", \
              op_arg->optype, op_arg->name, (entry_name))
 
 #define ln_opck_tensor_defined(entry, entry_name)                       \
      ln_opck(LN_ERROR, (entry),                                         \
-             "%s: \"%s\"'s tensor \"%s\" should have been defined before", \
+             "%s: `%s`'s tensor `%s` should have been defined before", \
              op_arg->optype, op_arg->name, (entry_name))
 
 /* entry1 and entry2 should have been checked with ln_opck_tensor_defined */
 #define ln_opck_tensor_issameshape(entry1, entry2)                      \
      ln_opck(LN_ERROR, tl_tensor_issameshape((entry1)->tensor, (entry2)->tensor), \
-             "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should have the same shape", \
+             "%s: `%s`'s tensor `%s` and tensor `%s` should have the same shape", \
              op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
 
 #define ln_opck_tensor_issametype(entry1, entry2)                       \
      ln_opck(LN_ERROR, (entry1)->tensor->dtype == (entry2)->tensor->dtype, \
-             "%s: \"%s\"'s tensor \"%s\" and tensor \"%s\" should be the same data type", \
+             "%s: `%s`'s tensor `%s` and tensor `%s` should be the same data type", \
              op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
 
 #define ln_opck_tensor_isstatic(entry)                          \
      ln_opck(LN_ERROR, (entry)->isstatic,                       \
-             "%s: \"%s\"'s tensor \"%s\" should be static",     \
+             "%s: `%s`'s tensor `%s` should be static",     \
              op_arg->optype, op_arg->name, (entry)->name)
 
 #define ln_opck_tensor_isnotstatic(entry)				\
 	ln_opck(LN_ERROR, !(entry)->isstatic,				\
-		"%s: \"%s\"'s tensor \"%s\" should not be static",	\
+		"%s: `%s`'s tensor `%s` should not be static",	\
 		op_arg->optype, op_arg->name, (entry)->name)
 
 #define ln_opck_tensor_mtype_eq(entry, mem_type)                        \
      ln_opck(LN_ERROR, (entry)->mtype == (mem_type),                    \
-             "%s: \"%s\"'s tensor \"%s\"'s mtype should be %s, but gets %s", \
+             "%s: `%s`'s tensor `%s`'s mtype should be %s, but gets %s", \
              op_arg->optype, op_arg->name, (entry)->name, ln_mem_type_name(mem_type), \
              ln_mem_type_name((entry)->mtype))
 
 #define ln_opck_tensor_dtype_eq(entry, dtype)                           \
      ln_opck(LN_ERROR, (entry)->tensor->dtype == (dtype),               \
-             "%s: \"%s\"'s tensor \"%s\"'s dtype should be %s, but gets %s", \
+             "%s: `%s`'s tensor `%s`'s dtype should be %s, but gets %s", \
              op_arg->optype, op_arg->name, (entry)->name, tl_dtype_name(dtype), \
              tl_dtype_name((entry)->tensor->dtype))
 

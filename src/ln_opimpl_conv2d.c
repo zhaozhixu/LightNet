@@ -66,7 +66,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_defined(src_entry, src_name);
      ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
      ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
-                                    "\"src\" should be a 4-dimensional tensor");
+                                "`src` should be a 4-dimensional tensor");
 
      /* [group, output_channel, input_channel, height, width] */
      weight_name = ln_tensor_list_find_name(op_arg->tensors_in, "weight");
@@ -75,7 +75,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_defined(weight_entry, weight_name);
      ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_CPU);
      ln_opck_tensor_satisfy_msg(weight_entry->tensor->ndim == 5,
-                                    "\"weight\" should be a 5-dimensional tensor");
+                                "`weight` should be a 5-dimensional tensor");
 
      bias_name = ln_tensor_list_find_name(op_arg->tensors_in, "bias");
      ln_opck_tensor_in_exist(bias_name, "bias");
@@ -83,10 +83,10 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_defined(bias_entry, bias_name);
      ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CPU);
      ln_opck_tensor_satisfy_msg(bias_entry->tensor->ndim == 1,
-                                "\"bias\" should be a 1-dimensional tensor");
+                                "`bias` should be a 1-dimensional tensor");
      ln_opck_tensor_satisfy_msg(bias_entry->tensor->dims[0]
                                 == weight_entry->tensor->dims[1],
-                                "\"bias\" should have the size of the number of output feature map (the second dimision of \"weight\")");
+                                "`bias` should have the size of the number of output feature map (the second dimision of `weight`)");
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_opck_tensor_out_exist(dst_name, "dst");
@@ -102,7 +102,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_param_type(group_entry, LN_PARAM_NUMBER);
      group = group_entry->value_int;
      ln_opck_param_satisfy_msg(group == weight_entry->tensor->dims[0],
-                                   "\"group\" should be equal to the first dimension of \"weight\"");
+                               "`group` should be equal to the first dimension of `weight`");
 
      size_entry = ln_param_list_find(op_arg->params, "size");
      ln_opck_param_exist(size_entry, "size");
@@ -130,8 +130,8 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      dilation = dilation_entry->value_array_int;
 
      ln_opck_param_satisfy_msg(size[0] == weight_entry->tensor->dims[3] &&
-                                   size[1] == weight_entry->tensor->dims[4],
-                                   "\"size\" should match the last two dimensions of \"weight\"");
+                               size[1] == weight_entry->tensor->dims[4],
+                               "`size` should match the last two dimensions of `weight`");
 
      /* define output tensor shape, tensor data should be NULL */
      int dims[4];

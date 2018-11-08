@@ -76,7 +76,7 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
           tmp[axes[i]] = 1;
      for (i = 0; i < src_entry->tensor->ndim; i++)
           ln_opck_param_satisfy_msg(tmp[i],
-                                        "\"axes\" should match \"src\" tensor's shape");
+                                        "`axes` should match `src` tensor's shape");
      ln_free(tmp);
 
      int *d_dims = ln_alloc(src_entry->tensor->ndim * sizeof(int));

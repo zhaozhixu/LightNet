@@ -60,7 +60,7 @@ static void batchnorm_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_defined(src_entry, src_name);
      ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
      ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
-                                "\"src\" should be a 4-dimensional tensor");
+                                "`src` should be a 4-dimensional tensor");
 
      scale_name = ln_tensor_list_find_name(op_arg->tensors_in, "scale");
      ln_opck_tensor_in_exist(scale_name, "scale");
@@ -70,7 +70,7 @@ static void batchnorm_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_issametype(scale_entry, src_entry);
      ln_opck_tensor_satisfy_msg(scale_entry->tensor->ndim == 1
                                 && scale_entry->tensor->len == src_entry->tensor->dims[1],
-                                "\"scale\" should be a 1-dimensional tensor of size equal to the number of channels of \"src\"");
+                                "`scale` should be a 1-dimensional tensor of size equal to the number of channels of `src`");
 
      offset_name = ln_tensor_list_find_name(op_arg->tensors_in, "offset");
      ln_opck_tensor_in_exist(offset_name, "offset");
@@ -80,7 +80,7 @@ static void batchnorm_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_issametype(offset_entry, src_entry);
      ln_opck_tensor_satisfy_msg(offset_entry->tensor->ndim == 1
                                 && offset_entry->tensor->len == src_entry->tensor->dims[1],
-                                "\"offset\" should be a 1-dimensional tensor of size equal to the number of channels of \"src\"");
+                                "`offset` should be a 1-dimensional tensor of size equal to the number of channels of `src`");
 
      mean_name = ln_tensor_list_find_name(op_arg->tensors_in, "mean");
      ln_opck_tensor_in_exist(mean_name, "mean");
@@ -90,7 +90,7 @@ static void batchnorm_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_issametype(mean_entry, src_entry);
      ln_opck_tensor_satisfy_msg(mean_entry->tensor->ndim == 1
                                 && mean_entry->tensor->len == src_entry->tensor->dims[1],
-                                "\"mean\" should be a 1-dimensional tensor of size equal to the number of channels of \"src\"");
+                                "`mean` should be a 1-dimensional tensor of size equal to the number of channels of `src`");
 
      var_name = ln_tensor_list_find_name(op_arg->tensors_in, "var");
      ln_opck_tensor_in_exist(var_name, "var");
@@ -100,7 +100,7 @@ static void batchnorm_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_issametype(var_entry, src_entry);
      ln_opck_tensor_satisfy_msg(var_entry->tensor->ndim == 1
                                 && var_entry->tensor->len == src_entry->tensor->dims[1],
-                                "\"var\" should be a 1-dimensional tensor of size equal to the number of channels of \"src\"");
+                                "`var` should be a 1-dimensional tensor of size equal to the number of channels of `src`");
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_opck_tensor_out_exist(dst_name, "dst");
@@ -114,7 +114,7 @@ static void batchnorm_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_param_exist(epsilon_entry, "epsilon");
      ln_opck_param_type(epsilon_entry, LN_PARAM_NUMBER);
      epsilon = epsilon_entry->value_double;
-     ln_opck_param_satisfy_msg(epsilon > 0, "\"epsilon\" should be above zero");
+     ln_opck_param_satisfy_msg(epsilon > 0, "`epsilon` should be above zero");
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_create(NULL, src_entry->tensor->ndim,

@@ -77,14 +77,14 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      dtype = k2v(dtype_entry->value_string);
      ln_opck_param_satisfy_msg(dtype != -1,
-                                   "\"dtype\" param should be a supported tl_dtype");
+                                   "`dtype` param should be a supported tl_dtype");
 
      dims_entry = ln_param_list_find(op_arg->params, "dims");
      ln_opck_param_exist(dims_entry, "dims");
      ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
-     for (i = 0; i < dtype_entry->array_len; i++)
+     for (i = 0; i < dims_entry->array_len; i++)
           ln_opck_param_satisfy_msg(dims_entry->value_array_int[i] > 0,
-                                        "\"dims\" array elements should be positive");
+                                        "`dims` array elements should be positive");
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_create(NULL, dims_entry->array_len,

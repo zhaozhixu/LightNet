@@ -72,20 +72,20 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      dtype = tl_dtype_from_str(dtype_entry->value_string);
      ln_opck_param_satisfy_msg(dtype != -1,
-                                   "\"dtype\" param should be a supported tl_dtype");
+                                   "`dtype` param should be a supported tl_dtype");
 
      dims_entry = ln_param_list_find(op_arg->params, "dims");
      ln_opck_param_exist(dims_entry, "dims");
      ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
-     for (i = 0; i < dtype_entry->array_len; i++)
+     for (i = 0; i < dims_entry->array_len; i++)
           ln_opck_param_satisfy_msg(dims_entry->value_array_int[i] > 0,
-                                        "\"dims\" array elements should be positive");
+                                        "`dims` array elements should be positive");
 
      data_entry = ln_param_list_find(op_arg->params, "data");
      ln_opck_param_exist(data_entry, "data");
      ln_opck(LN_ERROR, data_entry->type == LN_PARAM_ARRAY_NUMBER
                  || data_entry->type == LN_PARAM_NULL,
-                 "%s: \"%s\"'s \"%s\" param's value should be of type %s or %s, but gets a %s",
+                 "%s: `%s`'s `%s` param's value should be of type %s or %s, but gets a %s",
                  op_arg->optype, op_arg->name, data_entry->arg_name,
                  ln_param_type_name(LN_PARAM_ARRAY_NUMBER),
                  ln_param_type_name(LN_PARAM_NULL),
@@ -95,7 +95,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
           ln_opck_param_satisfy_msg(compute_length(dims_entry->array_len,
                                                        dims_entry->value_array_int)
                                         == data_entry->array_len,
-                                        "\"data\" array length should match with \"dims\"");
+                                        "`data` array length should match with `dims`");
      }
 
      /* define output tensor shape, tensor data should be NULL */

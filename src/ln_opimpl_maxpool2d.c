@@ -60,7 +60,7 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_defined(src_entry, src_name);
      ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
      ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
-                                    "\"src\" should be a 4-dimensional tensor");
+                                    "`src` should be a 4-dimensional tensor");
 
      dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
      ln_opck_tensor_out_exist(dst_name, "dst");

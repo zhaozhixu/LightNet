@@ -70,12 +70,12 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      dims = dims_entry->value_array_int;
      ndim = dims_entry->array_len;
      ln_opck_param_satisfy_msg(ndim > 0,
-                                   "\"dims\" array shouldn't be empty");
+                                   "`dims` array shouldn't be empty");
      for (i = 0; i < ndim; i++)
           ln_opck_param_satisfy_msg(dims[i] > 0,
-                                        "\"dims\" array elements should be positive");
+                                        "`dims` array elements should be positive");
      ln_opck_param_satisfy_msg(src_entry->tensor->len == ln_compute_length(ndim, dims),
-                                   "\"src\" tensor length is not equal with requested length");
+                                   "`src` tensor length is not equal with requested length");
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);

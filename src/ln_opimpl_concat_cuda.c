@@ -77,13 +77,13 @@ static void concat_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
      axis = axis_entry->value_int;
      ln_opck_param_satisfy_msg(axis >= 0 && axis < src1_entry->tensor->ndim,
-                               "\"axis\" should match the dimensions of \"src1\" and \"src2\"");
+                               "`axis` should match the dimensions of `src1` and `src2`");
 
      for (int i = 0; i < src1_entry->tensor->ndim; i++) {
           if (i == axis)
                continue;
           ln_opck_tensor_satisfy_msg(src1_entry->tensor->dims[i] == src2_entry->tensor->dims[i],
-                                          "\"src1\" and \"src2\" should have the same shape, except in the dimension corresponding to \"axis\"");
+                                          "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
      }
 
      /* define output tensor shape, tensor data should be NULL */

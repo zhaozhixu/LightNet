@@ -79,7 +79,7 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      elew_op = tl_elew_op_from_str(elew_op_entry->value_string);
      ln_opck_param_satisfy_msg(elew_op != -1,
-                                   "\"elew_op\" param should be a supported tl_elew_op");
+                                   "`elew_op` param should be a supported tl_elew_op");
 
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim,

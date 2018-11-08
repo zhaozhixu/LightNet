@@ -3,18 +3,22 @@
         {
             "optype": "upsample",
             "tensors_in": [
-                {"arg_name": "src", "mtype": "LN_MEM_CPU", "static": true},
-                {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT", "sameshape": "src", "sametype": "src", "static": false}
+                {"arg_name": "src", "mtype": "LN_MEM_CPU", "static": true,
+                 "cond": "src_entry->tensor->ndim == 4, \"`src` should be a 4-dimensional tensor\""},
+                {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
+                 "sameshape": "src", "sametype": "src", "static": false}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU"}
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING"},
-                {"arg_name": "test", "ptype": "LN_PARAM_NUMBER", "realtype": "double"},
+                {"arg_name": "test", "ptype": "LN_PARAM_ARRAY_NUMBER", "realtype": "double", "len": 4},
                 {"arg_name": "test2", "ptype": "LN_PARAM_BOOL", "realtype": "double"},
-                {"arg_name": "test3", "ptype": "LN_PARAM_ARRAY_STRING", "realtype": "tl_elew_op"}
-            ]
+                {"arg_name": "elew_op", "ptype": "LN_PARAM_STRING", "realtype": "tl_elew_op",
+                 "from_func": "tl_elew_op_from_str"}
+            ],
+            "extra_check": ""
         }
     ]
 }
