@@ -16,7 +16,7 @@ Example:
 
 	Executing this from project root will generate code templates
 	in file ROOT/src/ln_opimpl_slice_cuda.c from slice.json, and add
-    associated init ops in ROOT/src/ln_arch_cpu.c.
+	associated init ops in ROOT/src/ln_arch_cpu.c.
 EOF
 if (@ARGV < 2) {
   print $usage;
@@ -29,8 +29,9 @@ my $json_text = join '', <JSON_FILE>;
 close JSON_FILE;
 
 my $json = decode_json $json_text;
+&gen_op($json->{ops}[0]);
 
-sub generate_op {
+sub gen_op {
   my $op = $_[0];
   my $optype = $op->{optype};
   my $subfix = "";
@@ -48,6 +49,13 @@ sub generate_op {
   if ($subfix eq "") {
     $subfix = "cpu";
   }
+
+  my $struct_def = &gen_struct_def($op);print$struct_def;
+  my $pre_run_local_vars = "";
+  my $pre_run_checks = "";
+  my $output_tensor_def = "";
+  my $priv_assigns = "";
+  my $post_run_code = "";
 
   my $op_tpl = <<EOF;
 /*
@@ -124,7 +132,86 @@ ln_op ln_opimpl_${optype} = {
      .post_run = ${optype}_post_run
 };
 EOF
+}
 
+sub gen_struct_def {
+  my $op = $_[0];
+  my $tensors_in = $op->{tensors_in};
+  my $tensors_out = $op->{tensors_out};
+  my $params = $op->{params};
+
+  my @defs = ();
+  foreach (@$tensors_in) {
+    push @defs, "tl_tensor *$_->{arg_name};";
+  }
+  foreach (@$tensors_out) {
+    push @defs, "tl_tensor *$_->{arg_name};";
+    push @defs, "char *$_->{arg_name}_name;";
+  }
+  foreach (@$params) {
+    my $real_type;
+    if ($_->{ptype} eq "LN_PARAM_NULL") {
+      $real_type = "void *";
+    } elsif ($_->{ptype} eq "LN_PARAM_STRING") {
+      $real_type = "char *";
+    } elsif ($_->{ptype} eq "LN_PARAM_NUMBER") {
+      if ($_->{real_type} eq "float") {
+        $real_type = "float ";
+      } elsif ($_->{real_type} eq "double") {
+        $real_type = "double ";
+      } elsif ($_->{real_type} eq "int") {
+        $real_type = "int ";
+      }
+    } elsif ($_->{ptype} eq "LN_PARAM_BOOL") {
+      $real_type = "tl_bool_t ";
+    } elsif ($_->{ptype} eq "LN_PARAM_ARRAY_STRING") {
+      $real_type = "char **";
+    } elsif ($_->{ptype} eq "LN_PARAM_ARRAY_NUMBER") {
+      if ($_->{real_type} eq "float") {
+        $real_type = "float *";
+      } elsif ($_->{real_type} eq "double") {
+        $real_type = "double *";
+      } elsif ($_->{real_type} eq "int") {
+        $real_type = "int *";
+      }
+    } elsif ($_->{ptype} eq "LN_PARAM_ARRAY_BOOL") {
+      $real_type = "tl_bool_t *";
+    } else {
+      &err_exit("invalid 'ptype'");
+    }
+    push @defs, "${real_type}$_->{arg_name};";
+  }
+  &make_defs_neat(5, \@defs);
+
+  my $defs_str = join "\n", @defs;
+  my $struct_def_tpl = <<EOF;
+struct priv_s {
+${defs_str}
+};
+EOF
+}
+
+sub make_defs_neat {
+  my $nspaces = shift;
+  my $defs = shift;
+  my $max_offset = 0;
+  foreach (@$defs) {
+    if (/( |\*)(\w+;)/) {
+      my $offset = index($_, $2);
+      $max_offset = $max_offset < $offset ? $offset : $max_offset;
+    } else {
+      &err_exit("wrong defs format");
+    }
+  }
+  foreach (@$defs) {
+    my $type = $1 if /(\w+)/;
+    my $nstars = 0;
+    $nstars = length $1 if /(\*+)/;
+    my $rest = $2 if /( |\*)(\w+;)/;
+    my $spaces = " "x$nspaces;
+    $_ = sprintf("%s%-${max_offset}s", $spaces, $type);
+    substr($_, -$nstars, $nstars) = "*"x$nstars.$rest;
+  }
 }
 
 sub err_exit {
