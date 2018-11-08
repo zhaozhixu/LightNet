@@ -321,6 +321,8 @@ sub gen_pre_run_checks {
                     } else {
                         &err_exit("needs a `from_func` to convert '${arg_name}'");
                     }
+                } else {
+                    push @checks, "${arg_name} = ${arg_name}_entry->value_string;";
                 }
             }
             when ("LN_PARAM_NUMBER") {
@@ -333,6 +335,13 @@ sub gen_pre_run_checks {
                 }
             }
             when ("LN_PARAM_BOOL") {
+                push @checks, "${arg_name} = ${arg_name}_entry->value_bool;";
+            }
+            when (/LN_PARAM_ARRAY/) {
+                if (exists $param->{len}) {
+                    push @checks, "ln_opck_param_array_len_eq(${arg_name}_entry, $param->{len});";
+                }
+                continue ;
             }
             when ("LN_PARAM_ARRAY_STRING") {
             }
@@ -344,51 +353,42 @@ sub gen_pre_run_checks {
                 &err_exit("unsupported `ptype`: '$param->{ptype}'");
             }
         }
-    }
-    if ($param->{ptype} =~ /LN_PARAM_ARRAY/) {
-        if (exists $param->{len}) {
-            push @checks, "ln_opck_param_array_len_eq(${arg_name}_entry, $param->{len});";
+        if (exists $param->{cond}) {
+            push @checks, "ln_opck_param_satisfy_msg($param->{cond});";
         }
-        if ($param->{ptype} eq "LN_PARAM_ARRAY_NUMBER") {
-
-        }
+        push @checks, "";
     }
-    if (exists $param->{cond}) {
-        push @checks, "ln_opck_tensor_satisfy_msg($param->{cond});";
-    }
-    push @checks, "";
-}
-# TODO: add custom checks
+    # TODO: add custom checks
 
-&indent(5, \@checks);
-my $checks_str = join "\n", @checks;
+    &indent(5, \@checks);
+    my $checks_str = join "\n", @checks;
 }
 
-    sub make_defs_neat {
-        my $nspaces = shift;
-        my $defs = shift;
-        my $max_offset = 0;
-        foreach (@$defs) {
-            if (/( |\*)(\w+;)/) {
-                my $offset = index($_, $2);
-                $max_offset = $max_offset < $offset ? $offset : $max_offset;
-            } else {
-                &err_exit("make_defs_neat: wrong format: $_");
-            }
+sub make_defs_neat {
+    my $nspaces = shift;
+    my $defs = shift;
+    my $max_offset = 0;
+    foreach (@$defs) {
+        if (/( |\*)(\w+;)/) {
+            my $offset = index($_, $2);
+            $max_offset = $max_offset < $offset ? $offset : $max_offset;
+        } else {
+            &err_exit("make_defs_neat: wrong format: $_");
         }
-        foreach (@$defs) {
-            my $type = $1 if /((\w+[ \t]+)+)/;
-            $type =~ s/[ \t]+$//;
-            my $nstars = 0;
-            $nstars = length $1 if /(\*+)/;
-            my $rest = $2 if /( |\*)(\w+;)/;
-            $_ = sprintf("%-${max_offset}s", $type);
-            my $re = " "x$nstars;
-            my $stars = "*"x$nstars;
-            s/$re$/$stars$rest/;
-        }
-        &indent($nspaces, $defs);
     }
+    foreach (@$defs) {
+        my $type = $1 if /((\w+[ \t]+)+)/;
+        $type =~ s/[ \t]+$//;
+        my $nstars = 0;
+        $nstars = length $1 if /(\*+)/;
+        my $rest = $2 if /( |\*)(\w+;)/;
+        $_ = sprintf("%-${max_offset}s", $type);
+        my $re = " "x$nstars;
+        my $stars = "*"x$nstars;
+        s/$re$/$stars$rest/;
+    }
+    &indent($nspaces, $defs);
+}
 
 sub indent {
     my $nspaces = shift;
