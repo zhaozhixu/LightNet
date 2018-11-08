@@ -305,4 +305,10 @@ LN_CPPEND
              op_arg->optype, op_arg->name, (entry)->name, ln_mem_type_name(mem_type), \
              ln_mem_type_name((entry)->mtype))
 
+#define ln_opck_tensor_dtype_eq(entry, dtype)                           \
+     ln_opck(LN_ERROR, (entry)->tensor->dtype == (dtype),               \
+             "%s: \"%s\"'s tensor \"%s\"'s dtype should be %s, but gets %s", \
+             op_arg->optype, op_arg->name, (entry)->name, tl_dtype_name(dtype), \
+             tl_dtype_name((entry)->tensor->dtype))
+
 #endif  /* _LN_OP_H_ */
