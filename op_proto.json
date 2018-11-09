@@ -1,12 +1,12 @@
 {
     "ops": [
         {
-            "optype": "upsample",
+            "optype": "testop",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU", "static": true,
                  "check": "src->ndim == 4, \"`src` should be a 4-dimensional tensor\""},
                 {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
-                 "sameshape": "src", "sametype": "src", "static": false},
+                 "sameshape": "src", "sametype": "src", "static": false, "custom": "asdf;\nasdf;\n"},
                 {"arg_name": "bias", "mtype": "LN_MEM_CPU",
                  "checks": [
                      {"check": "bias->ndim == 1, \"`bias` should be a 1-dimensional tensor\""},
@@ -15,7 +15,10 @@
                 }
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_CPU"}
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dims": "src->dims", "dtype": "src->dtype"},
+                {"arg_name": "dst2", "mtype": "LN_MEM_CPU", "custom": "asdf;\nasdf",
+                 "ndim": "src->ndim", "custom": "ndim = src->dim;\ndims = src->dims;\ndtype = src->dtype", "dtype": "src->dtype", "cleanup": "clean!!;"}
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING"},
@@ -29,7 +32,8 @@
                 {"cktype": "tensor", "check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
                 {"cktype": "param", "check": "1, \"test1\""},
                 {"cktype": "tensor", "check": "1, \"test2\""}
-            ]
+            ],
+            "extra_custom": "asdf;\nasdf;\nasdf;"
         }
     ]
 }

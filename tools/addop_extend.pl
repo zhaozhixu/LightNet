@@ -54,7 +54,7 @@ sub gen_op {
     my $struct_def = &gen_struct_def($op);
     my $pre_run_local_vars = &gen_pre_run_local_vars($op);
     my $pre_run_checks = &gen_pre_run_checks($op);
-    my $output_tensor_def = "";
+    my $output_tensor_def = &gen_output_tensor_def($op);
     my $priv_assigns = "";
     my $post_run_code = "";
 
@@ -176,6 +176,9 @@ sub gen_pre_run_local_vars {
         push @vars, "char *$_->{arg_name}_name;";
         push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
         push @vars, "tl_tensor *$_->{arg_name};";
+        push @vars, "int $_->{arg_name}_ndim;";
+        push @vars, "int *$_->{arg_name}_dims;";
+        push @vars, "tl_dtype $_->{arg_name}_dtype;";
     }
     &gen_params($params, \@vars);
 
@@ -258,34 +261,34 @@ sub gen_pre_run_checks {
     push @states, "tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);";
     push @states, "ln_opck_tensor_in_len_eq(tensors_in_n, ${tensors_in_n});";
     push @states, "";
-    foreach (@$tensors_in) {
-        my $arg_name = $_->{arg_name};
+    foreach my $tensor (@$tensors_in) {
+        my $arg_name = $tensor->{arg_name};
         push @states, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_in, \"${arg_name}\");";
         push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
-        push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $_->{mtype});";
-        if (exists $_->{dtype}) {
-            push @states, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $_->{dtype});";
+        push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});";
+        if (exists $tensor->{dtype}) {
+            push @states, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $tensor->{dtype});";
         }
-        if (exists $_->{sametype}) {
-            push @states, "ln_opck_tensor_issametype(${arg_name}_entry, $_->{sametype}_entry);";
+        if (exists $tensor->{sametype}) {
+            push @states, "ln_opck_tensor_issametype(${arg_name}_entry, $tensor->{sametype}_entry);";
         }
-        if (exists $_->{sameshape}) {
-            push @states, "ln_opck_tensor_issameshape(${arg_name}_entry, $_->{sametype}_entry);";
+        if (exists $tensor->{sameshape}) {
+            push @states, "ln_opck_tensor_issameshape(${arg_name}_entry, $tensor->{sametype}_entry);";
         }
-        if (exists $_->{static}) {
-            if ($_->{static}) {
+        if (exists $tensor->{static}) {
+            if ($tensor->{static}) {
                 push @states, "ln_opck_tensor_isstatic(${arg_name}_entry);";
             } else {
                 push @states, "ln_opck_tensor_isnotstatic(${arg_name}_entry);";
             }
         }
-        if (exists $_->{check}) {
-            push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
+        if (exists $tensor->{check}) {
+            push @states, "ln_opck_tensor_satisfy_msg($tensor->{check});";
         }
-        if (exists $_->{checks}) {
-            my $checks = $_->{checks};
+        if (exists $tensor->{checks}) {
+            my $checks = $tensor->{checks};
             foreach (@$checks) {
                 if (exists $_->{check}) {
                     push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
@@ -294,6 +297,9 @@ sub gen_pre_run_checks {
                 }
             }
         }
+        if (exists $tensor->{custom}) {
+            &add_custom_block($tensor->{custom}, \@states);
+        }
         push @states, "";
     }
 
@@ -301,8 +307,8 @@ sub gen_pre_run_checks {
     push @states, "tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);";
     push @states, "ln_opck_tensor_out_len_eq(tensors_out_n, ${tensors_out_n});";
     push @states, "";
-    foreach (@$tensors_out) {
-        my $arg_name = $_->{arg_name};
+    foreach my $tensor (@$tensors_out) {
+        my $arg_name = $tensor->{arg_name};
         push @states, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_out, \"${arg_name}\");";
         push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
@@ -357,7 +363,7 @@ sub gen_pre_run_checks {
                 if (exists $param->{from_func}) {
                   push @states, "${arg_name} = ln_alloc(sizeof($param->{realtype})*${arg_name}_entry->array_len);";
                   push @states, "for (int i = 0; i < ${arg_name}_entry->array_len; i++)";
-                  push @states, "     ${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);";
+                  push @states, &indent_line(5, "${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);");
                 } else {
                   &err_exit("needs a `from_func` to convert '${arg_name}'");
                 }
@@ -394,6 +400,9 @@ sub gen_pre_run_checks {
                 }
             }
         }
+        if (exists $param->{custom}) {
+            &add_custom_block($param->{custom}, \@states);
+        }
         push @states, "";
     }
 
@@ -411,9 +420,65 @@ sub gen_pre_run_checks {
         }
         push @states, "";
     }
+    if (exists $op->{extra_custom}) {
+        &add_custom_block($op->{extra_custom}, \@states);
+    }
 
-    &indent(5, \@states);
+    &indent_block(5, \@states);
     my $checks_str = join "\n", @states;
+}
+
+sub gen_output_tensor_def {
+    my $op = $_[0];
+    my $tensors_out = $op->{tensors_out};
+
+    my @states = ();
+    foreach my $tensor (@$tensors_out) {
+        my $arg_name = $tensor->{arg_name};
+        if (exists $tensor->{ndim}) {
+            push @states, "${arg_name}_ndim = $tensor->{ndim};";
+        } elsif (not exists $tensor->{custom}) {
+            &err_exit("'${arg_name}' needs a `ndim` or `custom` to give the defination of ${arg_name}_ndim");
+        }
+        if (exists $tensor->{dims}) {
+            push @states, "${arg_name}_dims = $tensor->{dims};";
+        } elsif (not exists $tensor->{custom}) {
+            &err_exit("'${arg_name}' needs a `dims` or `custom` to give the defination of ${arg_name}_dims");
+        }
+        if (exists $tensor->{dtype}) {
+            push @states, "${arg_name}_dtype = $tensor->{dtype};";
+        } elsif (not exists $tensor->{custom}) {
+            &err_exit("'${arg_name}' needs a `dtype` or `custom` to give the defination of ${arg_name}_dtype");
+        }
+        if (exists $tensor->{custom}) {
+            &add_custom_block($tensor->{custom}, \@states);
+        }
+        push @states, "${arg_name} = tl_tensor_create(NULL, ${arg_name}_ndim, ${arg_name}_dims, ${arg_name}_dtype);";
+        push @states, "${arg_name}_entry = ln_tensor_entry_create(${arg_name}_name, ${arg_name});";
+        if (exists $tensor->{mtype}) {
+            push @states, "${arg_name}_entry->mtype = $tensor->{mtype};";
+        } else {
+            &err_exit("${arg_name} needs a `mtype`");
+        }
+        push @states, "ln_tensor_table_insert(op_arg->tensor_table, ${arg_name}_name, ${arg_name}_entry);";
+        if (exists $tensor->{cleanup}) {
+            &add_custom_block($tensor->{cleanup}, \@states);
+        }
+        push @states, "";
+    }
+
+    &indent_block(5, \@states);
+    my $checks_str = join "\n", @states;
+}
+
+sub add_custom_block {
+    my $custom_str = shift;
+    my $states = shift;
+    my @customs = split "\n", $custom_str;
+    &indent_block(5, \@customs);
+    push @$states, "{";
+    push @$states, @customs;
+    push @$states, "}";
 }
 
 sub make_defs_neat {
@@ -439,13 +504,19 @@ sub make_defs_neat {
         my $stars = "*"x$nstars;
         s/$re$/$stars$rest/;
     }
-    &indent($nspaces, $defs);
+    &indent_block($nspaces, $defs);
 }
 
-sub indent {
+sub indent_block {
     my $nspaces = shift;
     my $states = shift;
     $_ = " "x$nspaces.$_ foreach @$states;
+}
+
+sub indent_line {
+    my $nspaces = shift;
+    my $state = shift;
+    $state = " "x$nspaces.$state;
 }
 
 sub err_exit {

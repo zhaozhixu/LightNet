@@ -84,10 +84,10 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
           d_dims[i] = src_entry->tensor->dims[axes[i]];
      dst_tensor = tl_tensor_create(NULL, src_entry->tensor->ndim, d_dims,
                                    src_entry->tensor->dtype);
+     ln_free(d_dims);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
      dst_entry->mtype = LN_MEM_CPU;
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
-     ln_free(d_dims);
 
      priv = ln_alloc(sizeof(struct priv_s));
      priv->src = src_entry->tensor;
