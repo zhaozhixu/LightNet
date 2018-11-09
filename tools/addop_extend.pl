@@ -211,7 +211,7 @@ sub gen_params {
                     $param->{realtype} eq "int") {
                     $realtype = $param->{realtype};
                 } else {
-                    &err_exit("unsupported `realtype`: $param->{realtype}");
+                    &err_exit("unsupported `realtype`: '$param->{realtype}'");
                 }
             }
             when ("LN_PARAM_BOOL") {
@@ -253,115 +253,167 @@ sub gen_pre_run_checks {
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
 
-    my @checks = ();
+    my @states = ();
     my $tensors_in_n = @$tensors_in;
-    my $tensors_out_n = @$tensors_out;
-    push @checks, "tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);";
-    push @checks, "ln_opck_tensor_in_len_eq(tensors_in_n, ${tensors_in_n});";
-    push @checks, "";
-    push @checks, "tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);";
-    push @checks, "ln_opck_tensor_out_len_eq(tensors_out_n, ${tensors_out_n});";
-    push @checks, "";
-
+    push @states, "tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);";
+    push @states, "ln_opck_tensor_in_len_eq(tensors_in_n, ${tensors_in_n});";
+    push @states, "";
     foreach (@$tensors_in) {
         my $arg_name = $_->{arg_name};
-        push @checks, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_in, \"${arg_name}\");";
-        push @checks, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
-        push @checks, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
-        push @checks, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
-        push @checks, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $_->{mtype});";
+        push @states, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_in, \"${arg_name}\");";
+        push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
+        push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
+        push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
+        push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $_->{mtype});";
         if (exists $_->{dtype}) {
-            push @checks, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $_->{dtype});";
+            push @states, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $_->{dtype});";
         }
         if (exists $_->{sametype}) {
-            push @checks, "ln_opck_tensor_issametype(${arg_name}_entry, $_->{sametype}_entry);";
+            push @states, "ln_opck_tensor_issametype(${arg_name}_entry, $_->{sametype}_entry);";
         }
         if (exists $_->{sameshape}) {
-            push @checks, "ln_opck_tensor_issameshape(${arg_name}_entry, $_->{sametype}_entry);";
+            push @states, "ln_opck_tensor_issameshape(${arg_name}_entry, $_->{sametype}_entry);";
         }
         if (exists $_->{static}) {
             if ($_->{static}) {
-                push @checks, "ln_opck_tensor_isstatic(${arg_name}_entry);";
+                push @states, "ln_opck_tensor_isstatic(${arg_name}_entry);";
             } else {
-                push @checks, "ln_opck_tensor_isnotstatic(${arg_name}_entry);";
+                push @states, "ln_opck_tensor_isnotstatic(${arg_name}_entry);";
             }
         }
-        if (exists $_->{cond}) {
-            push @checks, "ln_opck_tensor_satisfy_msg($_->{cond});";
+        if (exists $_->{check}) {
+            push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
         }
-        push @checks, "";
+        if (exists $_->{checks}) {
+            my $checks = $_->{checks};
+            foreach (@$checks) {
+                if (exists $_->{check}) {
+                    push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
+                } else {
+                    &err_exit("tensor '${arg_name}' expects a `check` in `checks`");
+                }
+            }
+        }
+        push @states, "";
     }
 
+    my $tensors_out_n = @$tensors_out;
+    push @states, "tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);";
+    push @states, "ln_opck_tensor_out_len_eq(tensors_out_n, ${tensors_out_n});";
+    push @states, "";
     foreach (@$tensors_out) {
         my $arg_name = $_->{arg_name};
-        push @checks, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_out, \"${arg_name}\");";
-        push @checks, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
-        push @checks, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
-        push @checks, "ln_opck_tensor_not_defined(${arg_name}_entry, ${arg_name}_name);";
-        push @checks, "";
+        push @states, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_out, \"${arg_name}\");";
+        push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
+        push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
+        push @states, "ln_opck_tensor_not_defined(${arg_name}_entry, ${arg_name}_name);";
+        push @states, "";
     }
 
     my $params_n = @$params;
-    push @checks, "params_n = ln_param_list_length(op_arg->params);";
-    push @checks, "ln_opck_param_len_eq(params_n, ${params_n});";
-    push @checks, "";
+    push @states, "params_n = ln_param_list_length(op_arg->params);";
+    push @states, "ln_opck_param_len_eq(params_n, ${params_n});";
+    push @states, "";
     foreach my $param (@$params) {
         my $arg_name = $param->{arg_name};
-        push @checks, "${arg_name}_entry = ln_param_list_find(op_arg->params, \"${arg_name}\");";
-        push @checks, "ln_opck_param_exist(${arg_name}_entry, \"${arg_name}\");";
-        push @checks, "ln_opck_param_type(${arg_name}_entry, $param->{ptype});";
+        push @states, "${arg_name}_entry = ln_param_list_find(op_arg->params, \"${arg_name}\");";
+        push @states, "ln_opck_param_exist(${arg_name}_entry, \"${arg_name}\");";
+        push @states, "ln_opck_param_type(${arg_name}_entry, $param->{ptype});";
         given ($param->{ptype}) {
             when ("LN_PARAM_NULL") {
-                push @checks, "${arg_name} = NULL;";
+                push @states, "${arg_name} = NULL;";
             }
             when ("LN_PARAM_STRING") {
                 if (exists $param->{realtype}) {
                     if (exists $param->{from_func}) {
-                        push @checks, "${arg_name} = $param->{from_func}(${arg_name}_entry->value_string);";
+                        push @states, "${arg_name} = $param->{from_func}(${arg_name}_entry->value_string);";
                     } else {
                         &err_exit("needs a `from_func` to convert '${arg_name}'");
                     }
                 } else {
-                    push @checks, "${arg_name} = ${arg_name}_entry->value_string;";
+                    push @states, "${arg_name} = ${arg_name}_entry->value_string;";
                 }
             }
             when ("LN_PARAM_NUMBER") {
                 if ($param->{realtype} eq "float" ||
                     $param->{realtype} eq "double"||
                     $param->{realtype} eq "int") {
-                    push @checks, "${arg_name} = ${arg_name}_entry->value_$param->{realtype};";
+                    push @states, "${arg_name} = ${arg_name}_entry->value_$param->{realtype};";
                 } else {
                     &err_exit("unsupported `realtype`: '$param->{realtype}'");
                 }
             }
             when ("LN_PARAM_BOOL") {
-                push @checks, "${arg_name} = ${arg_name}_entry->value_bool;";
+                push @states, "${arg_name} = ${arg_name}_entry->value_bool;";
             }
-            when (/LN_PARAM_ARRAY/) {
+            when (/^LN_PARAM_ARRAY/) {
                 if (exists $param->{len}) {
-                    push @checks, "ln_opck_param_array_len_eq(${arg_name}_entry, $param->{len});";
+                    push @states, "ln_opck_param_array_len_eq(${arg_name}_entry, $param->{len});";
                 }
                 continue ;
             }
             when ("LN_PARAM_ARRAY_STRING") {
+              if (exists $param->{realtype}) {
+                if (exists $param->{from_func}) {
+                  push @states, "${arg_name} = ln_alloc(sizeof($param->{realtype})*${arg_name}_entry->array_len);";
+                  push @states, "for (int i = 0; i < ${arg_name}_entry->array_len; i++)";
+                  push @states, "     ${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);";
+                } else {
+                  &err_exit("needs a `from_func` to convert '${arg_name}'");
+                }
+              } else {
+                push @states, "${arg_name} = ${arg_name}_entry->value_array_string;";
+              }
             }
             when ("LN_PARAM_ARRAY_NUMBER") {
+              if ($param->{realtype} eq "float" ||
+                  $param->{realtype} eq "double"||
+                  $param->{realtype} eq "int") {
+                push @states, "${arg_name} = ${arg_name}_entry->value_array_$param->{realtype};";
+              } else {
+                &err_exit("unsupported `realtype`: '$param->{realtype}'");
+              }
             }
             when ("LN_PARAM_ARRAY_BOOL") {
+              push @states, "${arg_name} = ${arg_name}_entry->value_array_bool;";
             }
             default {
                 &err_exit("unsupported `ptype`: '$param->{ptype}'");
             }
         }
-        if (exists $param->{cond}) {
-            push @checks, "ln_opck_param_satisfy_msg($param->{cond});";
+        if (exists $param->{check}) {
+            push @states, "ln_opck_param_satisfy_msg($param->{check});";
         }
-        push @checks, "";
+        if (exists $param->{checks}) {
+            my $checks = $param->{checks};
+            foreach (@$checks) {
+                if (exists $_->{check}) {
+                    push @states, "ln_opck_param_satisfy_msg($_->{check});";
+                } else {
+                    &err_exit("param '${arg_name}' expects a `check` in `checks`");
+                }
+            }
+        }
+        push @states, "";
     }
-    # TODO: add custom checks
 
-    &indent(5, \@checks);
-    my $checks_str = join "\n", @checks;
+    if (exists $op->{extra_checks}) {
+        my $checks = $op->{extra_checks};
+        foreach (@$checks) {
+            if (exists $_->{cktype} && exists $_->{check}) {
+                if ($_->{cktype} ne "param" && $_->{cktype} ne "tensor") {
+                    &err_exit("`cktype` should be 'param' or 'tensor' in `extra_checks`");
+                }
+                push @states, "ln_opck_$_->{cktype}_satisfy_msg($_->{check});";
+            } else {
+                &err_exit("expects a `cktype` and a `check` in `extra_checks`");
+            }
+        }
+        push @states, "";
+    }
+
+    &indent(5, \@states);
+    my $checks_str = join "\n", @states;
 }
 
 sub make_defs_neat {
