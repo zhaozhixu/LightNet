@@ -30,9 +30,9 @@ my $json_text = join '', <JSON_FILE>;
 close JSON_FILE;
 
 my $json = decode_json $json_text;
-&gen_op($json->{ops}[0]);
+&gen_code($json->{ops}[0]);
 
-sub gen_op {
+sub gen_code {
     my $op = $_[0];
     my $optype = $op->{optype};
     my $subfix = "";
@@ -42,23 +42,31 @@ sub gen_op {
     my $params = $op->{params};
 
     if ($subfix ne "" and not $optype =~ /\w+_$subfix/) {
-        &err_exit("optype \"$optype\" doesn't match subfix \"$subfix\"");
+        &err_exit("`optype` '$optype' doesn't match `subfix` '$subfix'");
     }
     if ($subfix ne "" && $subfix ne "cuda") {
-        &err_exit("unsupported subfix \"$subfix\"");
+        &err_exit("unsupported `subfix` '$subfix'");
     }
     if ($subfix eq "") {
         $subfix = "cpu";
     }
 
-    my $struct_def = &gen_struct_def($op);
-    my $pre_run_local_vars = &gen_pre_run_local_vars($op);
-    my $pre_run_checks = &gen_pre_run_checks($op);
-    my $output_tensor_def = &gen_output_tensor_def($op);
-    my $priv_assigns = "";
-    my $post_run_code = "";
+    my @blocks = ();
+    push @blocks, &gen_head_block($op);
+    push @blocks, &gen_struct_def($op);
+    push @blocks, &gen_pre_run($op);
+    push @blocks, &gen_static_run($op) if exists $op->{static_run};
+    push @blocks, &gen_run($op) if exists $op->{run};
+    push @blocks, &gen_post_run($op);
+    push @blocks, &gen_op_arg($op);
+    push @blocks, &gen_op_impl($op);
 
-    my $op_tpl = <<EOF;
+    my $code_str = join "\n", @blocks;
+    print $code_str;
+}
+
+sub gen_head_block {
+    my $head_block_tpl = <<EOF;
 /*
  * Copyright (c) 2018 Zhao Zhixu
  *
@@ -83,56 +91,7 @@ sub gen_op {
 
 #include <assert.h>
 #include "ln_op.h"
-
-${struct_def}
-/*
- * This function should do the parameter checking and tensor shape inference.
- */
-static void ${optype}_pre_run(ln_op_arg *op_arg, ln_error **error)
-{
-${pre_run_local_vars}
-
-     /* check tensors and parameters */
-${pre_run_checks}
-
-     /* define output tensor shape, tensor data should be NULL */
-${output_tensor_def}
-
-     /* use op_arg->priv to store private data to be used in other functions */
-${priv_assigns}
-}
-
-/*
- * This function should only do the calculations.
- */
-static void ${optype}_run(ln_op_arg *op_arg, ln_error **error)
-{
-     /* TODO: add ${optype}_run */
-}
-
-/*
- * This function should free all the memory allocated by other *_run()s.
- */
-static void ${optype}_post_run(ln_op_arg *op_arg, ln_error **error)
-{
-${post_run_code}
-}
-
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_${optype} = {
-     .optype = "${optype}",
-};
-
-/* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_${optype} = {
-     .op_arg = &op_arg_${optype},
-     .pre_run = ${optype}_pre_run,
-     .static_run = NULL,
-     .run = ${optype}_run,
-     .post_run = ${optype}_post_run
-};
 EOF
-    print $op_tpl;
 }
 
 sub gen_struct_def {
@@ -157,6 +116,28 @@ sub gen_struct_def {
 struct priv_s {
 ${defs_str}
 };
+EOF
+}
+
+sub gen_pre_run {
+    my $op = $_[0];
+    my $pre_run_local_vars = &gen_pre_run_local_vars($op);
+    my $pre_run_checks = &gen_pre_run_checks($op);
+    my $output_tensor_def = &gen_output_tensor_def($op);
+    my $priv_assigns = &gen_priv_assigns($op);
+
+    my $pre_run_str = <<EOF;
+/* This function should do the parameter checking and tensor shape inference. */
+static void $op->{optype}_pre_run(ln_op_arg *op_arg, ln_error **error)
+{
+${pre_run_local_vars}
+     /* check tensors and parameters */
+${pre_run_checks}
+     /* define output tensor shape, tensor data should be NULL */
+${output_tensor_def}
+     /* use op_arg->priv to store private data to be used in other functions */
+${priv_assigns}
+}
 EOF
 }
 
@@ -187,8 +168,9 @@ sub gen_pre_run_local_vars {
     push @vars, "int params_n;";
     push @vars, "struct priv_s *priv;";
     &make_defs_neat(5, \@vars);
+    push @vars, "";
 
-    my $vars_str = join "\n", @vars;
+    join "\n", @vars;
 }
 
 sub gen_params {
@@ -422,10 +404,11 @@ sub gen_pre_run_checks {
     }
     if (exists $op->{extra_custom}) {
         &add_custom_block($op->{extra_custom}, \@states);
+        push @states, "";
     }
 
     &indent_block(5, \@states);
-    my $checks_str = join "\n", @states;
+    join "\n", @states;
 }
 
 sub gen_output_tensor_def {
@@ -468,7 +451,122 @@ sub gen_output_tensor_def {
     }
 
     &indent_block(5, \@states);
-    my $checks_str = join "\n", @states;
+    join "\n", @states;
+}
+
+sub gen_priv_assigns {
+    my $op = $_[0];
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
+
+    my @states = ();
+    push @states, "priv = ln_alloc(sizeof(struct priv_s));";
+    foreach (@$tensors_in) {
+        push @states, "priv->$_->{arg_name} = $_->{arg_name};";
+    }
+    foreach (@$tensors_out) {
+        push @states, "priv->$_->{arg_name} = $_->{arg_name};";
+        push @states, "priv->$_->{arg_name}_name = $_->{arg_name}_name;";
+    }
+    foreach (@$params) {
+        push @states, "priv->$_->{arg_name} = $_->{arg_name};";
+    }
+    push @states, "op_arg->priv = priv;";
+
+    &indent_block(5, \@states);
+    join "\n", @states;
+}
+
+sub gen_static_run {
+    my $op = $_[0];
+
+    my @states = ();
+    push @states, "struct priv_s *priv = op_arg->priv;";
+    push @states, "";
+    &add_custom_block($op->{static_run}, \@states);
+    &indent_block(5, \@states);
+    my $states_str = join "\n", @states;
+
+    my $static_run_tpl = <<EOF;
+/* This function blocks only once per instance right after memory allocation. */
+static void $op->{optype}_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+${states_str}
+}
+EOF
+}
+
+sub gen_run {
+    my $op = $_[0];
+
+    my @states = ();
+    push @states, "struct priv_s *priv = op_arg->priv;";
+    push @states, "";
+    &add_custom_block($op->{run}, \@states);
+    &indent_block(5, \@states);
+    my $states_str = join "\n", @states;
+
+    my $static_run_tpl = <<EOF;
+/* This function should only do the calculations. */
+static void $op->{optype}_run(ln_op_arg *op_arg, ln_error **error)
+{
+${states_str}
+}
+EOF
+}
+
+sub gen_post_run {
+    my $op = $_[0];
+    my $tensors_out = $op->{tensors_out};
+
+    my @states = ();
+    push @states, "struct priv_s *priv = op_arg->priv;";
+    push @states, "";
+    foreach (@$tensors_out) {
+        push @states, "ln_tensor_table_remove(op_arg->tensor_table, priv->$_->{arg_name}_name);";
+    }
+    &add_custom_block($op->{post_run}, \@states);
+    push @states, "ln_free(op_arg->priv);";
+
+    &indent_block(5, \@states);
+    my $states_str = join "\n", @states;
+
+    my $static_run_tpl = <<EOF;
+/* This function should free all the memory allocated by other *_run()s. */
+static void create_post_run(ln_op_arg *op_arg, ln_error **error)
+{
+${states_str}
+}
+EOF
+}
+
+sub gen_op_arg {
+    my $op = $_[0];
+
+    my $op_arg_tpl = <<EOF;
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_$op->{optype} = {
+     .optype = "$op->{optype}",
+};
+EOF
+}
+
+sub gen_op_impl {
+    my $op = $_[0];
+    my $static_run_func = exists $op->{static_run} ? "$op->{optype}_static_run" : "NULL";
+    my $run_func = exists $op->{run} ? "$op->{optype}_run" : "NULL";
+
+    my $op_impl_tpl = <<EOF;
+/* struct used for op registration in ln_oplist.c */
+ln_op ln_opimpl_$op->{optype} = {
+     .op_arg = &op_arg_$op->{optype},
+     .pre_run = $op->{optype}_pre_run,
+     .static_run = ${static_run_func},
+     .run = ${run_func},
+     .post_run = $op->{optype}_post_run
+};
+EOF
 }
 
 sub add_custom_block {

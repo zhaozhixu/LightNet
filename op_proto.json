@@ -33,7 +33,10 @@
                 {"cktype": "param", "check": "1, \"test1\""},
                 {"cktype": "tensor", "check": "1, \"test2\""}
             ],
-            "extra_custom": "asdf;\nasdf;\nasdf;"
+            "extra_custom": "extra_custom;\nasdf;\nasdf;",
+            "static_run": "static_run;",
+            "run": "run!;",
+            "post_run": "post_run;"
         }
     ]
 }
