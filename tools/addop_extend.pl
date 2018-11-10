@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
 
 use 5.014;
 use warnings;
@@ -6,48 +6,80 @@ use strict;
 use JSON;
 use File::Copy;
 use Cwd 'abs_path';
+use Getopt::Long;
+no warnings 'experimental::smartmatch';
 
 my $usage = <<EOF;
-Usage: $0 ROOT OP_JSON_FILE;
-ROOT is the path of the project root.
-OP_JSON_FILE is the location of op defination file.
+Usage: $0 [OPTION] [JSON_FILE(s)]
+Generate operator defination code from operator description JSON.
+Read the JSON string from standard if JSON_FILE(s) are not given.
+Print the output code to stdout if --dir and --root are omited.
 
-Example:
-	tools/addop_extend.pl . slice.json
-
-	Executing this from project root will generate code templates
-	in file ROOT/src/ln_opimpl_slice_cuda.c from slice.json, and add
-	associated init ops in ROOT/src/ln_arch_cpu.c.
+options:
+  -h, --help               print this message
+  -d, --dir=<directory>    save operator defination file(s) in <directory>
+  -r, --root=<root>        set project root directory; set to current directory
+                           if <root> is omited; this option will save operator
+                           defination file(s) in <root>/src, and add operator
+                           declarations and such to <root>/src/ln_arch_*.c
 EOF
-if (@ARGV < 2) {
-    print $usage;
-    exit;
-}
-my $root = abs_path($ARGV[0]);
-my $json_file = $ARGV[1];
-open JSON_FILE, '<', $json_file or die "Cannot open $json_file: $!";
-my $json_text = join '', <JSON_FILE>;
-close JSON_FILE;
 
-my $json = decode_json $json_text;
-&gen_code($json->{ops}[0]);
+my $root = '';
+my $dir = '';
+my $help = '';
+GetOptions(
+           'help' => \$help,
+           'dir=s' => \$dir,
+           'root:s' => sub {$root = $_[1] ? abs_path($_[1]) : abs_path('.')},
+          ) or &exit_msg(1, $usage);
+&exit_msg(0, $usage) if $help;
+
+my @json_files = @ARGV;
+if (@json_files == 0) {
+    my $json_text = join '', <STDIN>;
+    &parse_and_generate($json_text);
+} else {
+    foreach my $json_file (@json_files) {
+        open JSON_FILE, '<', $json_file or die "Cannot open $json_file: $!";
+        my $json_text = join '', <JSON_FILE>;
+        close JSON_FILE;
+        &parse_and_generate($json_text);
+    }
+}
+
+sub parse_and_generate {
+    my $json_text = shift;
+    my $json = decode_json($json_text);
+    if (exists $json->{ops}) {
+        foreach my $op (@{$json->{ops}}) {
+            &gen_code($op);
+        }
+    }
+    if (exists $json->{optype}) {
+        &gen_code($json);
+    }
+}
 
 sub gen_code {
-    my $op = $_[0];
+    my $op = shift;
+    &err_exit("needs a `optype`") unless exists $op->{optype};
     my $optype = $op->{optype};
-    my $subfix = "";
-    $subfix = $op->{subfix} if exists $op->{subfix};
+    &err_exit("'${optype}' needs a `tensors_in`") unless exists $op->{tensors_in};
     my $tensors_in = $op->{tensors_in};
+    &err_exit("'${optype}' needs a `tensors_out`") unless exists $op->{tensors_out};
     my $tensors_out = $op->{tensors_out};
+    &err_exit("'${optype}' needs a `params`") unless exists $op->{params};
     my $params = $op->{params};
 
-    if ($subfix ne "" and not $optype =~ /\w+_$subfix/) {
-        &err_exit("`optype` '$optype' doesn't match `subfix` '$subfix'");
+    my $subfix = "";
+    $subfix = $op->{subfix} if exists $op->{subfix};
+    if ($subfix && not $optype =~ /\w+_$subfix/) {
+        &err_exit("'${optype}' doesn't match `subfix` '${subfix}'");
     }
-    if ($subfix ne "" && $subfix ne "cuda") {
-        &err_exit("unsupported `subfix` '$subfix'");
+    if ($subfix && $subfix ne "cuda") {
+        &err_exit("'${optype}' has unsupported `subfix` '${subfix}'");
     }
-    if ($subfix eq "") {
+    if (not $subfix) {
         $subfix = "cpu";
     }
 
@@ -62,7 +94,53 @@ sub gen_code {
     push @blocks, &gen_op_impl($op);
 
     my $code_str = join "\n", @blocks;
-    print $code_str;
+    if (not $dir && not $root) {
+        print $code_str;
+    }
+    if ($dir) {
+        my $dir_file = "${dir}/ln_opimpl_${optype}.c";
+        open DIR_FILE, '>', $dir_file or die "Cannot open $dir_file: $!";
+        print DIR_FILE $code_str;
+        close DIR_FILE;
+    }
+    if ($root) {
+        my $src_file = "${root}/src/ln_opimpl_${optype}.c";
+        open SRC_FILE, '>', $src_file or die "Cannot open $src_file: $!";
+        print SRC_FILE $code_str;
+        close SRC_FILE;
+        my $arch_file = "";
+        if ($subfix eq "cpu") {
+            $arch_file = "${root}/src/ln_arch_cpu.c";
+        } elsif ($subfix eq "cuda") {
+            $arch_file = "${root}/src/ln_arch_cuda.c";
+        }
+        &add_to_arch_file($arch_file, $optype, $subfix);
+    }
+}
+
+sub add_to_arch_file {
+    my $arch_file = shift;
+    my $optype = shift;
+    my $subfix = shift;
+
+    my $declare = "extern ln_op ln_opimpl_${optype};";
+    my $item = "&ln_opimpl_${optype},";
+
+    copy($arch_file, "${arch_file}.bak")
+        or die "Cannot backup file ${arch_file}: $!";
+    open ARCH_FILE_BAK, '<', "${arch_file}.bak"
+        or die "Cannot open ${arch_file}.bak: $!";
+    open ARCH_FILE, '>', $arch_file
+        or die "Cannot open ${arch_file}: $!";
+
+    while (<ARCH_FILE_BAK>) {
+        s|/\* end of declare $subfix ops \*/|$declare\n/* end of declare $subfix ops */|;
+        s|/\* end of init $subfix ops \*/|     $item\n/* end of init $subfix ops */|;
+        print ARCH_FILE;
+    }
+
+    close ARCH_FILE;
+    close ARCH_FILE_BAK;
 }
 
 sub gen_head_block {
@@ -102,13 +180,15 @@ sub gen_struct_def {
 
     my @defs = ();
     foreach (@$tensors_in) {
+        &err_exit("'$op->{optype}' needs a `arg_name` in one of the  `tensors_in`") unless exists $_->{arg_name};
         push @defs, "tl_tensor *$_->{arg_name};";
     }
     foreach (@$tensors_out) {
+        &err_exit("'$op->{optype}' needs a `arg_name` in one of the `tensors_out`") unless exists $_->{arg_name};
         push @defs, "tl_tensor *$_->{arg_name};";
         push @defs, "char *$_->{arg_name}_name;";
     }
-    &gen_params($params, \@defs);
+    &gen_params($op, \@defs);
     &make_defs_neat(5, \@defs);
 
     my $defs_str = join "\n", @defs;
@@ -161,7 +241,7 @@ sub gen_pre_run_local_vars {
         push @vars, "int *$_->{arg_name}_dims;";
         push @vars, "tl_dtype $_->{arg_name}_dtype;";
     }
-    &gen_params($params, \@vars);
+    &gen_params($op, \@vars);
 
     push @vars, "int tensors_in_n;";
     push @vars, "int tensors_out_n;";
@@ -174,9 +254,12 @@ sub gen_pre_run_local_vars {
 }
 
 sub gen_params {
-    my $params = shift;
+    my $op = shift;
+    my $params = $op->{params};
     my $defs = shift;
     foreach my $param (@$params) {
+        &err_exit("'$op->{optype}' needs a `arg_name` in one of the `params`") unless exists $param->{arg_name};
+        &err_exit("'$param->{arg_name}' needs a `ptype`") unless exists $param->{ptype};
         my $realtype;
         given ($param->{ptype}) {
             when ("LN_PARAM_NULL") {
@@ -190,7 +273,7 @@ sub gen_params {
                 }
             }
             when ("LN_PARAM_NUMBER") {
-                &err_exit("need a `realtype`") unless exists $param->{realtype};
+                &err_exit("$param->{arg_name} needs a `realtype`") unless exists $param->{realtype};
                 if ($param->{realtype} eq "float" ||
                     $param->{realtype} eq "double"||
                     $param->{realtype} eq "int") {
@@ -210,20 +293,20 @@ sub gen_params {
                 }
             }
             when ("LN_PARAM_ARRAY_NUMBER") {
-                &err_exit("need a `realtype`") unless exists $param->{realtype};
+                &err_exit("$param->{arg_name} needs a `realtype`") unless exists $param->{realtype};
                 if ($param->{realtype} eq "float" ||
                     $param->{realtype} eq "double"||
                     $param->{realtype} eq "int") {
                     $realtype = "$param->{realtype} *";
                 } else {
-                    &err_exit("unsupported `realtype`: '$param->{realtype}'");
+                    &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
                 }
             }
             when ("LN_PARAM_ARRAY_BOOL") {
                 $realtype = "tl_bool_t *";
             }
             default {
-                &err_exit("unsupported `ptype`: '$param->{ptype}'");
+                &err_exit("$param->{arg_name} has unsupported `ptype`: '$param->{ptype}'");
             }
         }
         $realtype .= " " unless ($realtype =~ /\*$/);
@@ -249,6 +332,7 @@ sub gen_pre_run_checks {
         push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
+        &err_exit("'$tensor->{arg_name}' needs a `mtype`") unless exists $tensor->{mtype};
         push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});";
         if (exists $tensor->{dtype}) {
             push @states, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $tensor->{dtype});";
@@ -316,7 +400,7 @@ sub gen_pre_run_checks {
                     if (exists $param->{from_func}) {
                         push @states, "${arg_name} = $param->{from_func}(${arg_name}_entry->value_string);";
                     } else {
-                        &err_exit("needs a `from_func` to convert '${arg_name}'");
+                        &err_exit("$param->{arg_name} needs a `from_func` to convert '${arg_name}'");
                     }
                 } else {
                     push @states, "${arg_name} = ${arg_name}_entry->value_string;";
@@ -328,7 +412,7 @@ sub gen_pre_run_checks {
                     $param->{realtype} eq "int") {
                     push @states, "${arg_name} = ${arg_name}_entry->value_$param->{realtype};";
                 } else {
-                    &err_exit("unsupported `realtype`: '$param->{realtype}'");
+                    &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
                 }
             }
             when ("LN_PARAM_BOOL") {
@@ -347,7 +431,7 @@ sub gen_pre_run_checks {
                   push @states, "for (int i = 0; i < ${arg_name}_entry->array_len; i++)";
                   push @states, &indent_line(5, "${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);");
                 } else {
-                  &err_exit("needs a `from_func` to convert '${arg_name}'");
+                  &err_exit("$param->{arg_name} needs a `from_func` to convert '${arg_name}'");
                 }
               } else {
                 push @states, "${arg_name} = ${arg_name}_entry->value_array_string;";
@@ -359,14 +443,14 @@ sub gen_pre_run_checks {
                   $param->{realtype} eq "int") {
                 push @states, "${arg_name} = ${arg_name}_entry->value_array_$param->{realtype};";
               } else {
-                &err_exit("unsupported `realtype`: '$param->{realtype}'");
+                &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
               }
             }
             when ("LN_PARAM_ARRAY_BOOL") {
               push @states, "${arg_name} = ${arg_name}_entry->value_array_bool;";
             }
             default {
-                &err_exit("unsupported `ptype`: '$param->{ptype}'");
+                &err_exit("$param->{arg_name} has unsupported `ptype`: '$param->{ptype}'");
             }
         }
         if (exists $param->{check}) {
@@ -378,7 +462,7 @@ sub gen_pre_run_checks {
                 if (exists $_->{check}) {
                     push @states, "ln_opck_param_satisfy_msg($_->{check});";
                 } else {
-                    &err_exit("param '${arg_name}' expects a `check` in `checks`");
+                    &err_exit("$param->{arg_name} expects a `check` in `checks`");
                 }
             }
         }
@@ -393,11 +477,11 @@ sub gen_pre_run_checks {
         foreach (@$checks) {
             if (exists $_->{cktype} && exists $_->{check}) {
                 if ($_->{cktype} ne "param" && $_->{cktype} ne "tensor") {
-                    &err_exit("`cktype` should be 'param' or 'tensor' in `extra_checks`");
+                    &err_exit("`extra_checks`'s `cktype` should be 'param' or 'tensor'");
                 }
                 push @states, "ln_opck_$_->{cktype}_satisfy_msg($_->{check});";
             } else {
-                &err_exit("expects a `cktype` and a `check` in `extra_checks`");
+                &err_exit("`extra_checks` expects a `cktype` and a `check`");
             }
         }
         push @states, "";
@@ -621,4 +705,11 @@ sub err_exit {
     my $msg = $_[0];
     print STDERR "ERROR: $msg\n";
     exit 1;
+}
+
+sub exit_msg {
+    my $status = shift;
+    my $msg = shift;
+    print $msg;
+    exit $status;
 }

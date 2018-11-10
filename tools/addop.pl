@@ -19,8 +19,8 @@ Example:
 	ROOT/src/ln_arch_cuda.c.
 EOF
 if (@ARGV < 2) {
-  print $usage;
-  exit;
+    print $usage;
+    exit;
 }
 my $root = abs_path($ARGV[0]);
 my $op_name = $ARGV[1];
@@ -28,20 +28,20 @@ my $op_name = $ARGV[1];
 my $subfix = "";
 $subfix = $ARGV[2] if @ARGV == 3;
 if ($subfix ne "" and not $op_name =~ /\w+_$subfix/) {
-  err_exit("OP_NAME \"$op_name\" doesn't match SUBFIX \"$subfix\"");
+    err_exit("OP_NAME \"$op_name\" doesn't match SUBFIX \"$subfix\"");
 }
 if ($subfix ne "" && $subfix ne "cuda") {
-  err_exit("unsupported SUBFIX \"$subfix\"");
+    err_exit("unsupported SUBFIX \"$subfix\"");
 }
 if ($subfix eq "") {
-  $subfix = "cpu";
+    $subfix = "cpu";
 }
 
 my $arch_file = "";
 if ($subfix eq "cpu") {
-  $arch_file = "$root/src/ln_arch_cpu.c";
+    $arch_file = "$root/src/ln_arch_cpu.c";
 } elsif ($subfix eq "cuda") {
-  $arch_file = "$root/src/ln_arch_cuda.c";
+    $arch_file = "$root/src/ln_arch_cuda.c";
 }
 
 my $op_tpl = <<EOF;
@@ -116,34 +116,34 @@ EOF
 
 my $op_file = "$root/src/ln_opimpl_${op_name}.c";
 if (-e $op_file) {
-  copy($op_file, "$op_file.bak")
-    or die "Cannot backup file $op_file: $!";
+    copy($op_file, "$op_file.bak")
+        or die "Cannot backup file $op_file: $!";
 }
 open OP, '>', $op_file
-  or die "Cannot open $op_file: $!";
+    or die "Cannot open $op_file: $!";
 print OP $op_tpl;
 close OP;
 
 my $declare = "extern ln_op ln_opimpl_${op_name};";
 my $item = "&ln_opimpl_${op_name},";
 copy($arch_file, "$arch_file.bak")
-  or die "Cannot backup file $arch_file: $!";
+    or die "Cannot backup file $arch_file: $!";
 open ARCH_FILE_BAK, '<', "$arch_file.bak"
-  or die "Cannot open $arch_file.bak: $!";
+    or die "Cannot open $arch_file.bak: $!";
 open ARCH_FILE, '>', $arch_file
-  or die "Cannot open $arch_file: $!";
+    or die "Cannot open $arch_file: $!";
 
 while (<ARCH_FILE_BAK>) {
-  s|/\* end of declare $subfix ops \*/|$declare\n/* end of declare $subfix ops */|;
-  s|/\* end of init $subfix ops \*/|     $item\n/* end of init $subfix ops */|;
-  print ARCH_FILE;
+    s|/\* end of declare $subfix ops \*/|$declare\n/* end of declare $subfix ops */|;
+    s|/\* end of init $subfix ops \*/|     $item\n/* end of init $subfix ops */|;
+    print ARCH_FILE;
 }
 
 close ARCH_FILE;
 close ARCH_FILE_BAK;
 
 sub err_exit {
-  my $msg = $_[0];
-  print STDERR "Error: $msg\n";
-  exit 1;
+    my $msg = $_[0];
+    print STDERR "Error: $msg\n";
+    exit 1;
 }
