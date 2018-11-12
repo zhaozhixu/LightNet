@@ -99,15 +99,11 @@ sub gen_code {
     }
     if ($dir) {
         my $dir_file = "${dir}/ln_opimpl_${optype}.c";
-        open DIR_FILE, '>', $dir_file or die "Cannot open $dir_file: $!";
-        print DIR_FILE $code_str;
-        close DIR_FILE;
+        &backup_write($dir_file, $code_str);
     }
     if ($root) {
         my $src_file = "${root}/src/ln_opimpl_${optype}.c";
-        open SRC_FILE, '>', $src_file or die "Cannot open $src_file: $!";
-        print SRC_FILE $code_str;
-        close SRC_FILE;
+        &backup_write($src_file, $code_str);
         my $arch_file = "";
         if ($subfix eq "cpu") {
             $arch_file = "${root}/src/ln_arch_cpu.c";
@@ -116,6 +112,19 @@ sub gen_code {
         }
         &add_to_arch_file($arch_file, $optype, $subfix);
     }
+}
+
+sub backup_write {
+    my $file = shift;
+    my $str = shift;
+    if (-e $file) {
+        &warn_msg("${file} exists, backuped as ${file}.bak");
+        copy($file, "${file}.bak")
+            or die "Cannot backup file ${file}.bak: $!";
+    }
+    open FILE, '>', $file or die "Cannot open $file: $!";
+    print FILE $str;
+    close FILE;
 }
 
 sub add_to_arch_file {
@@ -705,6 +714,11 @@ sub err_exit {
     my $msg = $_[0];
     print STDERR "ERROR: $msg\n";
     exit 1;
+}
+
+sub warn_msg {
+    my $msg = $_[0];
+    print STDERR "WARNING: $msg\n";
 }
 
 sub exit_msg {
