@@ -190,7 +190,7 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
                          op = l->data;
                          op->post_run(op->op_arg, &error);
                          error_handle(&error);
-                         ln_op_free(op); /* don't free tensor & param list */
+                         ln_op_free_lists_too(op);
                          l->data = l_out->data;
                          op = l->data;
                          op->pre_run(op->op_arg, &error);

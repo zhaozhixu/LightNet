@@ -61,6 +61,17 @@ void ln_tensor_list_free(ln_list *list)
      ln_list_free_deep(list, list_entry_free_wrapper);
 }
 
+ln_list *ln_tensor_list_copy(ln_list *list)
+{
+     ln_list *new_list = NULL;
+     ln_tensor_list_entry *entry;
+
+     LN_LIST_FOREACH(entry, list) {
+          new_list = ln_tensor_list_append(new_list, entry->arg_name, entry->name);
+     }
+     return new_list;
+}
+
 static int find_by_arg_name(void *data1, void *data2)
 {
      ln_tensor_list_entry *e1, *e2;

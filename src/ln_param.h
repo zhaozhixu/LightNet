@@ -72,6 +72,7 @@ ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
 ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
                                          int array_len, ln_bool *array_bool);
 void ln_param_list_free(ln_list *list);
+ln_list *ln_param_list_copy(ln_list *list);
 ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name);
 ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
                                     const char *arg_name2);

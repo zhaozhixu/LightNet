@@ -108,9 +108,9 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
           op_arg = op->op_arg;
           if (!replace_flag[i++]) {
                new_op = ln_op_create_from_proto(op, op_arg->name,
-                                                op_arg->tensors_in,
-                                                op_arg->tensors_out,
-                                                op_arg->params,
+                                                ln_tensor_list_copy(op_arg->tensors_in),
+                                                ln_tensor_list_copy(op_arg->tensors_out),
+                                                ln_param_list_copy(op_arg->params),
                                                 op_arg->tensor_table);
           } else {
                optype_cuda = ln_alloc(sizeof(char)*(strlen(op_arg->optype)+10));
@@ -119,9 +119,9 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
                op_proto = ln_op_array_find_by_optype(ops_cuda, optype_cuda);
                assert(op_proto && "optype_cuda not found");
                new_op = ln_op_create_from_proto(op_proto, op_arg->name,
-                                                op_arg->tensors_in,
-                                                op_arg->tensors_out,
-                                                op_arg->params,
+                                                ln_tensor_list_copy(op_arg->tensors_in),
+                                                ln_tensor_list_copy(op_arg->tensors_out),
+                                                ln_param_list_copy(op_arg->params),
                                                 op_arg->tensor_table);
                ln_free(optype_cuda);
           }

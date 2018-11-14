@@ -33,8 +33,7 @@ static ln_param_entry *ln_param_entry_create(const char *arg_name,
 
      assert(type >= LN_PARAM_NULL && type < LN_PARAM_INVALID);
      entry = ln_alloc(sizeof(ln_param_entry));
-     entry->arg_name = ln_alloc(sizeof(char)*(strlen(arg_name)+1));
-     strcpy(entry->arg_name, arg_name);
+     entry->arg_name = ln_strdup(arg_name);
      entry->type = type;
      entry->array_len = 0;
      entry->value_string = NULL;
@@ -71,8 +70,7 @@ ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
      ln_param_entry *entry;
 
      entry = ln_param_entry_create(arg_name, LN_PARAM_STRING);
-     entry->value_string = ln_alloc(sizeof(char)*(strlen(string)+1));
-     strcpy(entry->value_string, string);
+     entry->value_string = ln_strdup(string);
      list = ln_list_append(list, entry);
      return list;
 }
@@ -127,9 +125,7 @@ ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
      entry->array_len = array_len;
      entry->value_array_string = ln_alloc(sizeof(char *)*array_len);
      for (i = 0; i < array_len; i++) {
-          entry->value_array_string[i] =
-               ln_alloc(sizeof(char)*(strlen(array_string[i])+1));
-          strcpy(entry->value_array_string[i], array_string[i]);
+          entry->value_array_string[i] = ln_strdup(array_string[i]);
      }
      list = ln_list_append(list, entry);
      return list;
@@ -175,6 +171,50 @@ ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
      return list;
 }
 
+ln_list *ln_param_list_copy(ln_list *list)
+{
+     ln_list *new_list = NULL;
+     ln_param_entry *entry;
+
+     LN_LIST_FOREACH(entry, list) {
+          switch (entry->type) {
+          case LN_PARAM_ARRAY_BOOL:
+               new_list = ln_param_list_append_array_bool(new_list, entry->arg_name,
+                                                          entry->array_len,
+                                                          entry->value_array_bool);
+               break;
+          case LN_PARAM_ARRAY_NUMBER:
+               new_list = ln_param_list_append_array_number(new_list, entry->arg_name,
+                                                            entry->array_len,
+                                                            entry->value_array_double);
+               break;
+          case LN_PARAM_ARRAY_STRING:
+               new_list = ln_param_list_append_array_string(new_list, entry->arg_name,
+                                                            entry->array_len,
+                                                            entry->value_array_string);
+               break;
+          case LN_PARAM_BOOL:
+               new_list = ln_param_list_append_bool(new_list, entry->arg_name,
+                                                    entry->value_bool);
+               break;
+          case LN_PARAM_NULL:
+               new_list = ln_param_list_append_null(new_list, entry->arg_name);
+               break;
+          case LN_PARAM_NUMBER:
+               new_list = ln_param_list_append_number(new_list, entry->arg_name,
+                                                      entry->value_double);
+               break;
+          case LN_PARAM_STRING:
+               new_list = ln_param_list_append_string(new_list, entry->arg_name,
+                                                      entry->value_string);
+               break;
+          default:
+               assert(0 && "unsupported ln_param_type");
+               break;
+          }
+     }
+     return new_list;
+}
 
 static void param_entry_free_wrapper(void *p)
 {
