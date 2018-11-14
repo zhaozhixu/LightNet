@@ -16,12 +16,12 @@ Read the JSON string from standard if JSON_FILE(s) are not given.
 Print the output code to stdout if --dir and --root are omited.
 
 options:
-  -h, --help               print this message
-  -d, --dir=<directory>    save operator defination file(s) in <directory>
-  -r, --root=<root>        set project root directory; set to current directory
-                           if <root> is omited; this option will save operator
-                           defination file(s) in <root>/src, and add operator
-                           declarations and such to <root>/src/ln_arch_*.c
+  -h, --help              print this message
+  -d, --dir=<directory>   save operator defination file(s) in <directory>
+  -r, --root=<root>       set project root directory; this option will save
+                          operator defination file(s) in <root>/src, and add
+                          operator declarations and such to
+                          <root>/src/ln_arch_*.c
 EOF
 
 my $root = '';
@@ -30,7 +30,7 @@ my $help = '';
 GetOptions(
            'help' => \$help,
            'dir=s' => \$dir,
-           'root:s' => sub {$root = $_[1] ? abs_path($_[1]) : abs_path('.')},
+           'root=s' => sub {$root = abs_path($_[1])},
           ) or &exit_msg(1, $usage);
 &exit_msg(0, $usage) if $help;
 
@@ -71,16 +71,14 @@ sub gen_code {
     &err_exit("'${optype}' needs a `params`") unless exists $op->{params};
     my $params = $op->{params};
 
-    my $subfix = "";
-    $subfix = $op->{subfix} if exists $op->{subfix};
-    if ($subfix && not $optype =~ /\w+_$subfix/) {
-        &err_exit("'${optype}' doesn't match `subfix` '${subfix}'");
+    my $arch = "";
+    &err_exit("'${optype}' needs a `arch`") unless exists $op->{arch};
+    $arch = $op->{arch};
+    if ($arch ne "cpu" and $arch ne "cuda") {
+        &err_exit("'${optype}' has unsupported `arch` '${arch}'");
     }
-    if ($subfix && $subfix ne "cuda") {
-        &err_exit("'${optype}' has unsupported `subfix` '${subfix}'");
-    }
-    if (not $subfix) {
-        $subfix = "cpu";
+    if ($arch ne "cpu" and not $optype =~ /\w+_$arch/) {
+        &err_exit("'${optype}' doesn't match `arch` '${arch}'");
     }
 
     my @blocks = ();
@@ -94,7 +92,7 @@ sub gen_code {
     push @blocks, &gen_op_impl($op);
 
     my $code_str = join "\n", @blocks;
-    if (not $dir && not $root) {
+    if (not $dir and not $root) {
         print $code_str;
     }
     if ($dir) {
@@ -105,12 +103,14 @@ sub gen_code {
         my $src_file = "${root}/src/ln_opimpl_${optype}.c";
         &backup_write($src_file, $code_str);
         my $arch_file = "";
-        if ($subfix eq "cpu") {
+        if ($arch eq "cpu") {
             $arch_file = "${root}/src/ln_arch_cpu.c";
-        } elsif ($subfix eq "cuda") {
+        } elsif ($arch eq "cuda") {
             $arch_file = "${root}/src/ln_arch_cuda.c";
+        } else {
+            &err_exit("${optype}: unsupported `arch` '${arch}'");
         }
-        &add_to_arch_file($arch_file, $optype, $subfix);
+        &add_to_arch_file($arch_file, $optype, $arch);
     }
 }
 
@@ -118,7 +118,7 @@ sub backup_write {
     my $file = shift;
     my $str = shift;
     if (-e $file) {
-        &warn_msg("${file} exists, backuped as ${file}.bak");
+        &warn_msg("${file} exists, backuped with subfix .bak");
         copy($file, "${file}.bak")
             or die "Cannot backup file ${file}.bak: $!";
     }
@@ -130,7 +130,7 @@ sub backup_write {
 sub add_to_arch_file {
     my $arch_file = shift;
     my $optype = shift;
-    my $subfix = shift;
+    my $arch = shift;
 
     my $declare = "extern ln_op ln_opimpl_${optype};";
     my $item = "&ln_opimpl_${optype},";
@@ -142,9 +142,15 @@ sub add_to_arch_file {
     open ARCH_FILE, '>', $arch_file
         or die "Cannot open ${arch_file}: $!";
 
+    my $declared = 0;
+    my $inited = 0;
     while (<ARCH_FILE_BAK>) {
-        s|/\* end of declare $subfix ops \*/|$declare\n/* end of declare $subfix ops */|;
-        s|/\* end of init $subfix ops \*/|     $item\n/* end of init $subfix ops */|;
+        $declared = 1 if /$declare$/;
+        s|/\* end of declare $arch ops \*/|$declare\n/* end of declare $arch ops */|
+            unless $declared;
+        $inited = 1 if /$item$/;
+        s|/\* end of init $arch ops \*/|     $item\n/* end of init $arch ops */|
+            unless $inited;
         print ARCH_FILE;
     }
 
@@ -197,7 +203,7 @@ sub gen_struct_def {
         push @defs, "tl_tensor *$_->{arg_name};";
         push @defs, "char *$_->{arg_name}_name;";
     }
-    &gen_params($op, \@defs);
+    &gen_params($op, 0, \@defs);
     &make_defs_neat(5, \@defs);
 
     my $defs_str = join "\n", @defs;
@@ -250,7 +256,7 @@ sub gen_pre_run_local_vars {
         push @vars, "int *$_->{arg_name}_dims;";
         push @vars, "tl_dtype $_->{arg_name}_dtype;";
     }
-    &gen_params($op, \@vars);
+    &gen_params($op, 1, \@vars);
 
     push @vars, "int tensors_in_n;";
     push @vars, "int tensors_out_n;";
@@ -265,6 +271,7 @@ sub gen_pre_run_local_vars {
 sub gen_params {
     my $op = shift;
     my $params = $op->{params};
+    my $do_gen_entry = shift;
     my $defs = shift;
     foreach my $param (@$params) {
         &err_exit("'$op->{optype}' needs a `arg_name` in one of the `params`") unless exists $param->{arg_name};
@@ -320,6 +327,9 @@ sub gen_params {
         }
         $realtype .= " " unless ($realtype =~ /\*$/);
 
+        if ($do_gen_entry) {
+          push @$defs, "ln_param_entry *$param->{arg_name}_entry;";
+        }
         push @$defs, "${realtype}$param->{arg_name};";
     }
 }
@@ -333,7 +343,7 @@ sub gen_pre_run_checks {
     my @states = ();
     my $tensors_in_n = @$tensors_in;
     push @states, "tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);";
-    push @states, "ln_opck_tensor_in_len_eq(tensors_in_n, ${tensors_in_n});";
+    push @states, "ln_opck_tensors_in_len_eq(tensors_in_n, ${tensors_in_n});";
     push @states, "";
     foreach my $tensor (@$tensors_in) {
         my $arg_name = $tensor->{arg_name};
@@ -341,6 +351,7 @@ sub gen_pre_run_checks {
         push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
+        push @states, "${arg_name} = ${arg_name}_entry->tensor;";
         &err_exit("'$tensor->{arg_name}' needs a `mtype`") unless exists $tensor->{mtype};
         push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});";
         if (exists $tensor->{dtype}) {
@@ -380,7 +391,7 @@ sub gen_pre_run_checks {
 
     my $tensors_out_n = @$tensors_out;
     push @states, "tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);";
-    push @states, "ln_opck_tensor_out_len_eq(tensors_out_n, ${tensors_out_n});";
+    push @states, "ln_opck_tensors_out_len_eq(tensors_out_n, ${tensors_out_n});";
     push @states, "";
     foreach my $tensor (@$tensors_out) {
         my $arg_name = $tensor->{arg_name};
@@ -393,7 +404,7 @@ sub gen_pre_run_checks {
 
     my $params_n = @$params;
     push @states, "params_n = ln_param_list_length(op_arg->params);";
-    push @states, "ln_opck_param_len_eq(params_n, ${params_n});";
+    push @states, "ln_opck_params_len_eq(params_n, ${params_n});";
     push @states, "";
     foreach my $param (@$params) {
         my $arg_name = $param->{arg_name};
@@ -484,8 +495,8 @@ sub gen_pre_run_checks {
     if (exists $op->{extra_checks}) {
         my $checks = $op->{extra_checks};
         foreach (@$checks) {
-            if (exists $_->{cktype} && exists $_->{check}) {
-                if ($_->{cktype} ne "param" && $_->{cktype} ne "tensor") {
+            if (exists $_->{cktype} and exists $_->{check}) {
+                if ($_->{cktype} ne "param" and $_->{cktype} ne "tensor") {
                     &err_exit("`extra_checks`'s `cktype` should be 'param' or 'tensor'");
                 }
                 push @states, "ln_opck_$_->{cktype}_satisfy_msg($_->{check});";
@@ -514,17 +525,17 @@ sub gen_output_tensor_def {
         if (exists $tensor->{ndim}) {
             push @states, "${arg_name}_ndim = $tensor->{ndim};";
         } elsif (not exists $tensor->{custom}) {
-            &err_exit("'${arg_name}' needs a `ndim` or `custom` to give the defination of ${arg_name}_ndim");
+            &err_exit("'${arg_name}' needs a `ndim` or `custom` to give the defination of '${arg_name}_ndim'");
         }
         if (exists $tensor->{dims}) {
             push @states, "${arg_name}_dims = $tensor->{dims};";
         } elsif (not exists $tensor->{custom}) {
-            &err_exit("'${arg_name}' needs a `dims` or `custom` to give the defination of ${arg_name}_dims");
+            &err_exit("'${arg_name}' needs a `dims` or `custom` to give the defination of '${arg_name}_dims'");
         }
         if (exists $tensor->{dtype}) {
             push @states, "${arg_name}_dtype = $tensor->{dtype};";
         } elsif (not exists $tensor->{custom}) {
-            &err_exit("'${arg_name}' needs a `dtype` or `custom` to give the defination of ${arg_name}_dtype");
+            &err_exit("'${arg_name}' needs a `dtype` or `custom` to give the defination of '${arg_name}_dtype'");
         }
         if (exists $tensor->{custom}) {
             &add_custom_block($tensor->{custom}, \@states);
@@ -619,7 +630,7 @@ sub gen_post_run {
     foreach (@$tensors_out) {
         push @states, "ln_tensor_table_remove(op_arg->tensor_table, priv->$_->{arg_name}_name);";
     }
-    &add_custom_block($op->{post_run}, \@states);
+    &add_custom_block($op->{post_run}, \@states) if exists $op->{post_run};
     push @states, "ln_free(op_arg->priv);";
 
     &indent_block(5, \@states);
@@ -627,7 +638,7 @@ sub gen_post_run {
 
     my $static_run_tpl = <<EOF;
 /* This function should free all the memory allocated by other *_run()s. */
-static void create_post_run(ln_op_arg *op_arg, ln_error **error)
+static void $op->{optype}_post_run(ln_op_arg *op_arg, ln_error **error)
 {
 ${states_str}
 }
@@ -701,7 +712,9 @@ sub make_defs_neat {
 sub indent_block {
     my $nspaces = shift;
     my $states = shift;
-    $_ = " "x$nspaces.$_ foreach @$states;
+    foreach (@$states) {
+      $_ = " "x$nspaces.$_ unless /^\s*$/;
+    }
 }
 
 sub indent_line {

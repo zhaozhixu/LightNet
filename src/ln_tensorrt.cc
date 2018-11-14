@@ -220,7 +220,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
      ln_list *l;
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_opck_tensor_in_len_gt(tensors_n, 0);
+     ln_opck_tensors_in_len_gt(tensors_n, 0);
 
      for (l = op_arg->tensors_in; l; l = l->next) {
            tle = (ln_tensor_list_entry *)l->data;
@@ -247,7 +247,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
      }
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_opck_tensor_out_len_gt(tensors_n, 0);
+     ln_opck_tensors_out_len_gt(tensors_n, 0);
 
      for (l = op_arg->tensors_out; l; l = l->next) {
           tle = (ln_tensor_list_entry *)l->data;

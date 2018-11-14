@@ -2,16 +2,49 @@
     "ops": [
         {
             "optype": "upsample",
+            "arch": "cpu",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU"},
                 {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
-                 "check": "scales->ndim == 1 && scales->len == src->ndim, \"the number of elements of `scales` should be the same as the rank of input `src`.\"",
-                 "custom": "for (int i = 0; i < scales->len; i++)\n     ln_opck_tensor_satisfy_msg(((float *)scales->data)[i] >= 1, \"`scales` takes values >= 1\")"}
+                 "check": "scales->ndim == 1 && scales->len == src->ndim, \"the number of elements of `scales` should be the same as the rank of input `src`\"",
+                 "custom": "for (int i = 0; i < scales->len; i++) {\n     ln_opck_tensor_satisfy_msg(((float *)scales->data)[i] >= 1, \"`scales` takes values >= 1\");\n     ln_opck_tensor_satisfy_msg(floorf(((float *)scales->data)[i]*src->dims[i]) <= INT32_MAX, \"scaled dimension exceeds INT32_MAX limit\");\n}"}
             ],
             "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "dtype": "src->dtype", "ndim": "src->ndim",
+                 "custom": "dst_dims = ln_alloc(sizeof(int)*dst_ndim);\nfor (int i = 0; i < dst_ndim; i++)\n     dst_dims[i] = (int)floorf(((float *)scales->data)[i] * src->dims[i]);",
+                 "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
-            ]
+                {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
+                 "realtype": "tl_resize_type",
+                 "from_func": "tl_resize_type_from_str",
+                 "check": "mode != -1, \"`mode` should be 'nearest' or 'linear'\""}
+            ],
+            "run": "tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);"
+        },
+        {
+            "optype": "upsample_cuda",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA"},
+                {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
+                 "check": "scales->ndim == 1 && scales->len == src->ndim, \"the number of elements of `scales` should be the same as the rank of input `src`\"",
+                 "custom": "for (int i = 0; i < scales->len; i++) {\n     ln_opck_tensor_satisfy_msg(((float *)scales->data)[i] >= 1, \"`scales` takes values >= 1\");\n     ln_opck_tensor_satisfy_msg(floorf(((float *)scales->data)[i]*src->dims[i]) <= INT32_MAX, \"scaled dimension exceeds INT32_MAX limit\");\n}"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "dtype": "src->dtype", "ndim": "src->ndim",
+                 "custom": "dst_dims = ln_alloc(sizeof(int)*dst_ndim);\nfor (int i = 0; i < dst_ndim; i++)\n     dst_dims[i] = (int)floorf(((float *)scales->data)[i] * src->dims[i]);",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
+                 "realtype": "tl_resize_type",
+                 "from_func": "tl_resize_type_from_str",
+                 "check": "mode != -1, \"`mode` should be 'nearest' or 'linear'\""}
+            ],
+            "run": "tl_tensor_resize_cuda(priv->src, priv->dst, priv->dst->dims, priv->mode);"
         }
     ]
 }

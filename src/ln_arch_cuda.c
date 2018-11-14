@@ -137,18 +137,18 @@ static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
 /* TODO: use hash? */
 static inline int can_replace_tensorrt(const char *optype)
 {
-     if (!strcmp(optype, "create_cuda") ||
-         !strcmp(optype, "conv2d_cuda") ||
-         !strcmp(optype, "maxpool2d_cuda") ||
-         !strcmp(optype, "maxreduce_cuda") ||
-         !strcmp(optype, "relu_cuda") ||
-         !strcmp(optype, "reshape_cuda") ||
-         !strcmp(optype, "slice_cuda") ||
-         !strcmp(optype, "transpose_cuda") ||
-         !strcmp(optype, "zeros_cuda") ||
-         !strcmp(optype, "elew_cuda") ||
-         !strcmp(optype, "softmax_cuda") ||
-         !strcmp(optype, "concat_cuda"))
+     if (!strcmp(optype, "create") ||
+         !strcmp(optype, "conv2d") ||
+         !strcmp(optype, "maxpool2d") ||
+         !strcmp(optype, "maxreduce") ||
+         !strcmp(optype, "relu") ||
+         !strcmp(optype, "reshape") ||
+         !strcmp(optype, "slice") ||
+         !strcmp(optype, "transpose") ||
+         !strcmp(optype, "zeros") ||
+         !strcmp(optype, "elew") ||
+         !strcmp(optype, "softmax") ||
+         !strcmp(optype, "concat"))
           return 1;
      return 0;
 }

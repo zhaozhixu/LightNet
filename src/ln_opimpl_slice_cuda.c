@@ -47,10 +47,10 @@ static void slice_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 
      /* check tensors and parameters */
      tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_opck_tensor_in_len_eq(tensors_n, 1);
+     ln_opck_tensors_in_len_eq(tensors_n, 1);
 
      tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_opck_tensor_out_len_eq(tensors_n, 1);
+     ln_opck_tensors_out_len_eq(tensors_n, 1);
 
      src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
      ln_opck_tensor_in_exist(src_name, "src");
@@ -64,7 +64,7 @@ static void slice_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      ln_opck_tensor_not_defined(dst_entry, dst_name);
 
      params_n = ln_param_list_length(op_arg->params);
-     ln_opck_param_len_eq(params_n, 3);
+     ln_opck_params_len_eq(params_n, 3);
 
      axis_entry = ln_param_list_find(op_arg->params, "axis");
      ln_opck_param_exist(axis_entry, "axis");

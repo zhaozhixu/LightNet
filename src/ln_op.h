@@ -23,6 +23,8 @@
 #ifndef _LN_OP_H_
 #define _LN_OP_H_
 
+#include <math.h>
+
 #include "ln_mem.h"
 #include "ln_tensor.h"
 #include "ln_param.h"
@@ -166,28 +168,28 @@ LN_CPPEND
              (expect_len), (entry)->array_len)
 
 /* list_len should be returned by ln_param_list_length(op_arg->params) */
-#define ln_opck_param_len_eq(list_len, expect_len)                      \
+#define ln_opck_params_len_eq(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) == (expect_len),                      \
              "%s: `%s` needs %d params, but gets %d params",          \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
 /* list_len should be returned by ln_param_list_length(op_arg->params) */
-#define ln_opck_param_len_gt(list_len, expect_len)                      \
+#define ln_opck_params_len_gt(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) > (expect_len),                       \
              "%s: `%s` needs > %d params, but gets %d params",        \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_param_len_ge(list_len, expect_len)                      \
+#define ln_opck_params_len_ge(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) >= (expect_len),                      \
              "%s: `%s` needs >= %d params, but gets %d params",       \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_param_len_lt(list_len, expect_len)                      \
+#define ln_opck_params_len_lt(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) < (expect_len),                       \
              "%s: `%s` needs < %d params, but gets %d params",        \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_param_len_le(list_len, expect_len)                      \
+#define ln_opck_params_len_le(list_len, expect_len)                      \
      ln_opck(LN_ERROR, (list_len) <= (expect_len),                      \
              "%s: `%s` needs <= %d params, but gets %d params",       \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
@@ -209,27 +211,27 @@ LN_CPPEND
              op_arg->optype, op_arg->name, (arg_name))
 
 /* list_len should be returned by ln_tensor_list_length(op_arg->tensors_in) */
-#define ln_opck_tensor_in_len_eq(list_len, expect_len)                  \
+#define ln_opck_tensors_in_len_eq(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) == (expect_len),                      \
              "%s: `%s` needs %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_in_len_gt(list_len, expect_len)                  \
+#define ln_opck_tensors_in_len_gt(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) > (expect_len),                       \
              "%s: `%s` needs > %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_in_len_ge(list_len, expect_len)                  \
+#define ln_opck_tensors_in_len_ge(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) >= (expect_len),                      \
              "%s: `%s` needs >= %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_in_len_lt(list_len, expect_len)                  \
+#define ln_opck_tensors_in_len_lt(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) < (expect_len),                       \
              "%s: `%s` needs < %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_in_len_le(list_len, expect_len)                  \
+#define ln_opck_tensors_in_len_le(list_len, expect_len)                  \
      ln_opck(LN_ERROR, (list_len) <= (expect_len),                      \
              "%s: `%s` needs <= %d input tensors, but gets %d input tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
@@ -242,27 +244,27 @@ LN_CPPEND
              op_arg->optype, op_arg->name, (arg_name))
 
 /* list_len should be returned by ln_tensor_list_length(op_arg->tensors_out) */
-#define ln_opck_tensor_out_len_eq(list_len, expect_len)                 \
+#define ln_opck_tensors_out_len_eq(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) == (expect_len),                      \
              "%s: `%s` needs %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_out_len_gt(list_len, expect_len)                 \
+#define ln_opck_tensors_out_len_gt(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) > (expect_len),                       \
              "%s: `%s` needs > %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_out_len_ge(list_len, expect_len)                 \
+#define ln_opck_tensors_out_len_ge(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) >= (expect_len),                      \
              "%s: `%s` needs >= %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_out_len_lt(list_len, expect_len)                 \
+#define ln_opck_tensors_out_len_lt(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) < (expect_len),                       \
              "%s: `%s` needs < %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-#define ln_opck_tensor_out_len_le(list_len, expect_len)                 \
+#define ln_opck_tensors_out_len_le(list_len, expect_len)                 \
      ln_opck(LN_ERROR, (list_len) <= (expect_len),                      \
              "%s: `%s` needs <= %d output tensors, but gets %d output tensors", \
              op_arg->optype, op_arg->name, (expect_len), (list_len))
@@ -305,10 +307,10 @@ LN_CPPEND
              op_arg->optype, op_arg->name, (entry)->name, ln_mem_type_name(mem_type), \
              ln_mem_type_name((entry)->mtype))
 
-#define ln_opck_tensor_dtype_eq(entry, dtype)                           \
-     ln_opck(LN_ERROR, (entry)->tensor->dtype == (dtype),               \
+#define ln_opck_tensor_dtype_eq(entry, data_type)                           \
+     ln_opck(LN_ERROR, (entry)->tensor->dtype == (data_type),               \
              "%s: `%s`'s tensor `%s`'s dtype should be %s, but gets %s", \
-             op_arg->optype, op_arg->name, (entry)->name, tl_dtype_name(dtype), \
+             op_arg->optype, op_arg->name, (entry)->name, tl_dtype_name(data_type), \
              tl_dtype_name((entry)->tensor->dtype))
 
 #endif  /* _LN_OP_H_ */
