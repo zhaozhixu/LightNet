@@ -20,30 +20,30 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_ARCH_H_
-#define _LN_ARCH_H_
+#ifndef _LN_QUEUE_H_
+#define _LN_QUEUE_H_
 
-#include "ln_op.h"
+#include <stdlib.h>
+#include "ln_list.h"
 
-typedef ln_list *(*ln_peephole_func) (ln_list *ops, int win_size, int *match);
-typedef ln_list *(*ln_post_peephole) (ln_list *ops);
-
-struct ln_arch {
-     ln_op            **ops;       /* NULL terminated */
-     ln_peephole_func  *ph_funcs;  /* NULL terminated */
-     ln_post_peephole   post_ph;
-     char              *arch_name;
+typedef struct ln_queue ln_queue;
+struct ln_queue {
+     ln_list  *head;
+     ln_list  *tail;
+     size_t    size;
 };
-typedef struct ln_arch ln_arch;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_list *ln_arch_create_oplist(ln_arch *archs[]);
+ln_queue *ln_queue_create(void);
+ln_queue *ln_queue_enqueue(ln_queue *queue, void *data);
+void *ln_queue_dequeue(ln_queue *queue);
+void ln_queue_free(ln_queue *queue);
 
 #ifdef __cplusplus
-LN_CPPEND
+}
 #endif
 
-#endif  /* _LN_ARCH_H_ */
+#endif	/* _LN_QUEUE_H_ */

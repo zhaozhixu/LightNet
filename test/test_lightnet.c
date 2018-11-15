@@ -34,6 +34,8 @@ int main(int argc, char **argv)
 
      sr = srunner_create(make_master_suite());
      srunner_add_suite(sr, make_list_suite());
+     srunner_add_suite(sr, make_queue_suite());
+     srunner_add_suite(sr, make_graph_suite());
      srunner_add_suite(sr, make_hash_suite());
      srunner_add_suite(sr, make_error_suite());
      srunner_add_suite(sr, make_param_suite());

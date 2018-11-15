@@ -117,7 +117,7 @@ START_TEST(test_ln_pass_peephole)
      char *tensor_name;
 
      ln_op_list_do_pre_run(ops, &error);
-     ops = ln_pass_peephole(ops, 1, ln_archs[1]->ph_funcs);
+     ops = ln_pass_peephole(ops, 1, ln_archs[1]->ph_funcs, NULL);
 
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");

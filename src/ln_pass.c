@@ -156,7 +156,8 @@ static inline void error_handle(ln_error **error)
      }
 }
 
-ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs)
+ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs,
+                          ln_post_peephole post_ph)
 {
      ln_peephole_func pf;
      ln_op *op;
@@ -221,6 +222,8 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
                ln_list_free(win_in);
           }
      }
+     if (post_ph)
+          ops = post_ph(ops);
 
      return ops;
 }
