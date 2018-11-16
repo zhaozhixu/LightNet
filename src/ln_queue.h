@@ -26,12 +26,12 @@
 #include <stdlib.h>
 #include "ln_list.h"
 
-typedef struct ln_queue ln_queue;
 struct ln_queue {
      ln_list  *head;
      ln_list  *tail;
      size_t    size;
 };
+typedef struct ln_queue ln_queue;
 
 #ifdef __cplusplus
 LN_CPPSTART
@@ -43,7 +43,7 @@ void *ln_queue_dequeue(ln_queue *queue);
 void ln_queue_free(ln_queue *queue);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_QUEUE_H_ */

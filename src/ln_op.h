@@ -29,6 +29,7 @@
 #include "ln_tensor.h"
 #include "ln_param.h"
 #include "ln_error.h"
+#include "ln_graph.h"
 
 struct ln_op_arg {
      char            *name;
@@ -36,8 +37,8 @@ struct ln_op_arg {
      ln_list         *tensors_in;
      ln_list         *tensors_out;
      ln_list         *params;
-     void            *priv;     /* for other private data storage */
      ln_hash         *tensor_table;
+     void            *priv;     /* for other private data storage */
      int              fixed;    /* won't be replaced if set to 1 */
 };
 typedef struct ln_op_arg ln_op_arg;

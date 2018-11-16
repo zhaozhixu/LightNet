@@ -23,45 +23,55 @@
 #ifndef _LN_GRAPH_H_
 #define _LN_GRAPH_H_
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "ln_list.h"
-#include "ln_util.h"
 
-typedef struct ln_graph_node ln_graph_node;
 struct ln_graph_node {
      size_t       indegree;
      size_t       outdegree;
      void        *data;
-     ln_list     *adj_nodes;	/* data type ln_graph_node */
+     ln_list     *edge_nodes;  	/* data type is ln_graph_edge_node */
 };
+typedef struct ln_graph_node ln_graph_node;
 
-typedef struct ln_graph ln_graph;
+struct ln_graph_edge_node {
+     void           *edge_data;
+     ln_graph_node  *node;
+};
+typedef struct ln_graph_edge_node ln_graph_edge_node;
+
 struct ln_graph {
      size_t       size;
-     ln_list     *nodes;	/* data type ln_graph_node */
+     ln_list     *nodes;	/* data type is ln_graph_node */
 };
+typedef struct ln_graph ln_graph;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
 ln_graph_node *ln_graph_node_create(void *data);
-ln_graph *ln_graph_create(void);
 void ln_graph_node_free(ln_graph_node *node);
+ln_graph_edge_node *ln_graph_edge_node_create(void *edge_data,
+                                              ln_graph_node *node);
+void ln_graph_edge_node_free(ln_graph_edge_node *edge_node);
+ln_graph *ln_graph_create(void);
 void ln_graph_free(ln_graph *graph);
 ln_graph_node *ln_graph_add(ln_graph *graph, void *data);
 ln_graph_node *ln_graph_find(ln_graph *graph, void *data);
-void ln_graph_link(ln_graph *graph, void *data1, void *data2);
+void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data);
 void ln_graph_unlink(ln_graph *graph, void *data1, void *data2);
 ln_graph *ln_graph_copy(ln_graph *graph);
 int ln_graph_num_outlier(ln_graph *graph);
-void ln_graph_free_topsortlist(ln_list *list);
-int ln_graph_topsort(ln_graph *graph, ln_list **res);
-void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_func);
+void ln_graph_free_topsortlist(ln_list *layers);
+/* return the number of layers of sorted data, -1 if graph has a cycle,
+   layers of sorted data is returned in layers  */
+int ln_graph_topsort(ln_graph *graph, ln_list **layers);
+/* print_edge can be NULL */
+void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_node,
+                     ln_fprint_func print_edge);
 
 #ifdef __cplusplus
-}
+LN_CPPEND
 #endif
 
 #endif	/* _LN_GRAPH_H_ */
