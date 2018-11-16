@@ -24,7 +24,6 @@
 #define _LN_OP_H_
 
 #include <math.h>
-
 #include "ln_mem.h"
 #include "ln_tensor.h"
 #include "ln_param.h"

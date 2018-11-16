@@ -80,6 +80,7 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
      /* define output tensor shape, tensor data should be NULL */
      dst_tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
      dst_entry->mtype = LN_MEM_CUDA;
      ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, src_name);
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);

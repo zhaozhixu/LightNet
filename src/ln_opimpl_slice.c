@@ -90,6 +90,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
      dst_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, len,
                                          src_entry->tensor->dtype);
      dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
      dst_entry->mtype = LN_MEM_CPU;
      ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 

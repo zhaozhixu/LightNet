@@ -230,3 +230,24 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
                return;
      }
 }
+
+/* generate Data Flow Graph, unused output values will be linked to NULL op */
+ln_graph *ln_op_list_gen_DFG(ln_list *ops)
+{
+     ln_op *op;
+     ln_op_arg *arg;
+     ln_graph *DFG;
+     ln_tensor_list_entry *tle;
+     ln_hash *node_table;
+
+     DFG = ln_graph_create();
+     node_table = ln_hash_create(ln_str_hash, ln_str_cmp, ln_free, NULL);
+     ln_graph_add(DFG, NULL);   /* unused edges will be linked to NULL */
+     LN_LIST_FOREACH(op, ops) {
+          ln_graph_add(DFG, op);
+     }
+     LN_LIST_FOREACH(op, ops) {
+          arg = op->op_arg;
+
+     }
+}

@@ -32,6 +32,12 @@ typedef uint32_t (*ln_hash_func)(void *key);
 LN_CPPSTART
 #endif
 
+/*
+ * When inserting keys and values, hash table will assign them without copy.
+ * free_k_func and free_v_func will be both called in ln_hash_remove(),
+ * ln_hash_free(), and ln_hash_insert() when inserting a different value with
+ * the same key.
+ */
 ln_hash *ln_hash_create_full(ln_hash_func hash_func, ln_cmp_func cmp_func,
                              ln_free_func free_k_func, ln_free_func free_v_func,
                              int init_capacity, float load_factor);

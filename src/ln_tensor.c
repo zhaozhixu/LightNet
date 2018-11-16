@@ -106,6 +106,7 @@ ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)
      entry->name = ln_strdup(name);
      entry->tensor = tensor;
      entry->owner = NULL;
+     entry->creater = NULL;
      entry->offset = 0;
      entry->isstatic = 0;
      entry->mtype = LN_MEM_UNDEF;
@@ -116,6 +117,8 @@ ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)
 void ln_tensor_entry_free(ln_tensor_entry *entry)
 {
      ln_free(entry->name);
+     ln_free(entry->owner);
+     ln_free(entry->creater);
      ln_free(entry);
 }
 
@@ -141,7 +144,12 @@ void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
      te = ln_tensor_table_find(tensor_table, direct_owner);
      while (te->owner)
           te = ln_tensor_table_find(tensor_table, te->owner);
-     entry->owner = te->name;
+     entry->owner = ln_strdup(te->name);
+}
+
+void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)
+{
+     entry->creater = ln_strdup(creater);
 }
 
 ln_hash *ln_tensor_table_create(void)

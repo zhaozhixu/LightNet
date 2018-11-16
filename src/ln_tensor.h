@@ -28,16 +28,19 @@
 #include "ln_hash.h"
 #include "ln_mem.h"
 
+/* tensor entry used in JSON */
 struct ln_tensor_list_entry {
      char *name;
      char *arg_name;
 };
 typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 
+/* tensor entry used in tensor table */
 struct ln_tensor_entry {
      char        *name;
      tl_tensor   *tensor;
-     char        *owner;         /* owner of the tensor data */
+     char        *owner;         /* owner tensor name of the tensor data */
+     char        *creater;       /* name of the creater op */
      size_t       offset;
      int          isstatic;
      ln_mem_type  mtype;
@@ -60,11 +63,13 @@ void ln_tensor_entry_free(ln_tensor_entry *entry);
 void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry);
 void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
                                char *direct_owner);
+void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater);
 
 /*
- * When removes or deconstructions or insert-different-tensor-with-same-names
- * happen, this table will free the table entry and the tensor,
- * but not the tensor->data. So we should always insert tensors with NULL data.
+ * When removing-tensor or inserting-different-tensor-with-same-name
+ * or freeing-table happens, tensor_table will free the table entry and
+ * the tensor, but not free the tensor->data.
+ * We should always insert tensors with NULL data.
  */
 ln_hash *ln_tensor_table_create(void);
 int ln_tensor_table_insert(ln_hash *table, char *name, ln_tensor_entry *entry);
