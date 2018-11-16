@@ -137,16 +137,25 @@ START_TEST(test_graph_link_unlink)
      ck_assert_int_eq(ln_graph_find(graph, &data[4])->outdegree, 0);
      ck_assert_int_eq(ln_graph_find(graph, &data[4])->indegree, 1);
 
-     ck_assert_ptr_eq(ln_graph_find(graph, &data[0])->edge_nodes->node->data,
-                      ln_graph_find(graph, &data[1]));
-     ck_assert_ptr_eq(ln_graph_find(graph, &data[0])->edge_nodes->next->node->data,
-                      ln_graph_find(graph, &data[2]));
-     ck_assert_ptr_eq(ln_graph_find(graph, &data[0])->edge_nodes->next->next->node->data,
-                      ln_graph_find(graph, &data[3]));
-     ck_assert_ptr_eq(ln_graph_find(graph, &data[3])->edge_nodes->node->data,
-                      ln_graph_find(graph, &data[4]));
-     ck_assert_ptr_eq(ln_graph_find(graph, &data[2])->edge_nodes->node->data,
-                      ln_graph_find(graph, &data[3]));
+     ln_list *edge_nodes;
+     ln_graph_edge_node *edge_node;
+     edge_nodes = ln_graph_find(graph, &data[0])->edge_nodes;
+     edge_node = ln_list_nth_data(edge_nodes, 0);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(graph, &data[1]));
+
+     edge_node = ln_list_nth_data(edge_nodes, 1);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(graph, &data[2]));
+
+     edge_node = ln_list_nth_data(edge_nodes, 2);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(graph, &data[3]));
+
+     edge_nodes = ln_graph_find(graph, &data[3])->edge_nodes;
+     edge_node = ln_list_nth_data(edge_nodes, 0);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(graph, &data[4]));
+
+     edge_nodes = ln_graph_find(graph, &data[2])->edge_nodes;
+     edge_node = ln_list_nth_data(edge_nodes, 0);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(graph, &data[3]));
 
      ln_graph_unlink(graph, &data[0], &data[1]);
      ln_graph_unlink(graph, &data[0], &data[2]);
@@ -204,16 +213,25 @@ START_TEST(test_graph_copy)
      ck_assert_int_eq(ln_graph_find(g, &data[4])->outdegree, 0);
      ck_assert_int_eq(ln_graph_find(g, &data[4])->indegree, 1);
 
-     ck_assert_ptr_eq(ln_graph_find(g, &data[0])->edge_nodes->node->data,
-                      ln_graph_find(g, &data[1]));
-     ck_assert_ptr_eq(ln_graph_find(g, &data[0])->edge_nodes->next->node->data,
-                      ln_graph_find(g, &data[2]));
-     ck_assert_ptr_eq(ln_graph_find(g, &data[0])->edge_nodes->next->next->node->data,
-                      ln_graph_find(g, &data[3]));
-     ck_assert_ptr_eq(ln_graph_find(g, &data[3])->edge_nodes->node->data,
-                      ln_graph_find(g, &data[4]));
-     ck_assert_ptr_eq(ln_graph_find(g, &data[2])->edge_nodes->node->data,
-                      ln_graph_find(g, &data[3]));
+     ln_list *edge_nodes;
+     ln_graph_edge_node *edge_node;
+     edge_nodes = ln_graph_find(g, &data[0])->edge_nodes;
+     edge_node = ln_list_nth_data(edge_nodes, 0);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(g, &data[1]));
+
+     edge_node = ln_list_nth_data(edge_nodes, 1);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(g, &data[2]));
+
+     edge_node = ln_list_nth_data(edge_nodes, 2);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(g, &data[3]));
+
+     edge_nodes = ln_graph_find(g, &data[3])->edge_nodes;
+     edge_node = ln_list_nth_data(edge_nodes, 0);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(g, &data[4]));
+
+     edge_nodes = ln_graph_find(g, &data[2])->edge_nodes;
+     edge_node = ln_list_nth_data(edge_nodes, 0);
+     ck_assert_ptr_eq(edge_node->node, ln_graph_find(g, &data[3]));
 
      ln_graph_free(g);
 }
@@ -225,13 +243,13 @@ START_TEST(test_graph_num_outlier)
 
      for (i = 0; i < data_len; i++)
           ln_graph_add(graph, &data[i]);
-     ln_graph_link(graph, &data[0], &data[2]);
-     ln_graph_link(graph, &data[0], &data[3]);
-     ln_graph_link(graph, &data[3], &data[4]);
-     ln_graph_link(graph, &data[2], &data[3]);
+     ln_graph_link(graph, &data[0], &data[2], &data[1]);
+     ln_graph_link(graph, &data[0], &data[3], &data[3]);
+     ln_graph_link(graph, &data[3], &data[4], &data[4]);
+     ln_graph_link(graph, &data[2], &data[3], &data[3]);
      ck_assert_int_eq(ln_graph_num_outlier(graph), 1);
 
-     ln_graph_link(graph, &data[0], &data[1]);
+     ln_graph_link(graph, &data[0], &data[1], &data[1]);
      ck_assert_int_eq(ln_graph_num_outlier(graph), 0);
 }
 END_TEST
@@ -246,11 +264,11 @@ START_TEST(test_graph_topsort)
 
      for (i = 0; i < data_len; i++)
           ln_graph_add(graph, &data[i]);
-     ln_graph_link(graph, &data[0], &data[1]);
-     ln_graph_link(graph, &data[0], &data[2]);
-     ln_graph_link(graph, &data[0], &data[3]);
-     ln_graph_link(graph, &data[3], &data[4]);
-     ln_graph_link(graph, &data[2], &data[3]);
+     ln_graph_link(graph, &data[0], &data[1], &data[1]);
+     ln_graph_link(graph, &data[0], &data[2], &data[2]);
+     ln_graph_link(graph, &data[0], &data[3], &data[3]);
+     ln_graph_link(graph, &data[3], &data[4], &data[4]);
+     ln_graph_link(graph, &data[2], &data[3], &data[3]);
 
      res_num = ln_graph_topsort(graph, &res);
      ck_assert_int_eq(res_num, 4);
@@ -280,7 +298,7 @@ START_TEST(test_graph_topsort)
      }
      ln_graph_free_topsortlist(res);
 
-     ln_graph_link(graph, &data[3], &data[2]);
+     ln_graph_link(graph, &data[3], &data[2], &data[2]);
      res_num = ln_graph_topsort(graph, &res);
      ck_assert_int_eq(res_num, -1);
      ln_graph_free_topsortlist(res);
