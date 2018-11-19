@@ -69,6 +69,8 @@ ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
                                            int array_len, char **array_string);
 ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
                                            int array_len, double *array_number);
+ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
+                                        int array_len, int *array_int);
 ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
                                          int array_len, ln_bool *array_bool);
 void ln_param_list_free(ln_list *list);

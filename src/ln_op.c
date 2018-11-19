@@ -231,23 +231,37 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
      }
 }
 
-/* generate Data Flow Graph, unused output values will be linked to NULL op */
-ln_graph *ln_op_list_gen_DFG(ln_list *ops)
+ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
 {
      ln_op *op;
      ln_op_arg *arg;
      ln_graph *DFG;
+     ln_graph_node *node;
      ln_tensor_list_entry *tle;
+     ln_tensor_entry *te;
      ln_hash *node_table;
+     int ret;
 
      DFG = ln_graph_create();
-     node_table = ln_hash_create(ln_str_hash, ln_str_cmp, ln_free, NULL);
-     ln_graph_add(DFG, NULL);   /* unused edges will be linked to NULL */
+     node_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
      LN_LIST_FOREACH(op, ops) {
-          ln_graph_add(DFG, op);
+          node = ln_graph_add(DFG, op);
+          ret = ln_hash_insert(node_table, op->op_arg->name, node);
+          assert(ret && "duplicated op name");
      }
      LN_LIST_FOREACH(op, ops) {
           arg = op->op_arg;
-
+          LN_LIST_FOREACH(tle, arg->tensors_in) {
+               te = ln_tensor_table_find(arg->tensor_table, tle->name);
+               node = ln_hash_find(node_table, te->creater);
+               assert(node);
+               ln_graph_link(DFG, node->data, op, tle->name);
+          }
      }
+     if (!node_table_p)
+          *node_table_p = node_table;
+     else
+          ln_hash_free(node_table);
+
+     return DFG;
 }

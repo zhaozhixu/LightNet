@@ -157,6 +157,25 @@ ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
      return list;
 }
 
+ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
+                                        int array_len, int *array_int)
+{
+     ln_param_entry *entry;
+     int i;
+
+     assert(array_len >= 0);
+     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
+     entry->array_len = array_len;
+     entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+     entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+     memmove(entry->value_array_int, array_int, sizeof(int)*array_len);
+     for (i = 0; i < array_len; i++)
+          entry->value_array_double = (double)array_int[i];
+
+     list = ln_list_append(list, entry);
+     return list;
+}
+
 ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
                                          int array_len, ln_bool *array_bool)
 {

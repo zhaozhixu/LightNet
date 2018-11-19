@@ -74,7 +74,6 @@ ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
      use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
      LN_LIST_FOREACH(op, ops) {
           arg = op->op_arg;
-
           LN_LIST_FOREACH(tle, arg->tensors_out) {
                te = ln_tensor_table_find(arg->tensor_table, tle->name);
                mp = ln_hash_find(mem_pools, (void *)te->mtype);
