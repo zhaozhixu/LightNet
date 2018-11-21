@@ -131,7 +131,7 @@
                 {"arg_name": "dst", "name": "softmax1"}
             ],
             "params": [
-                {"arg_name": "axis", "value": -1}
+                {"arg_name": "axis", "value": 1}
             ]
         }
         {

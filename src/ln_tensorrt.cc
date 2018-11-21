@@ -85,33 +85,33 @@ static int tl_dtype_to_weight_DataType(tl_dtype dtype)
 
 static int str_to_activation_type(const char *str)
 {
-    if (!strcmp(str, "kRELU"))
+    if (ln_streq(str, "kRELU"))
         return (int)ActivationType::kRELU;
-    if (!strcmp(str, "kSIGMOID"))
+    if (ln_streq(str, "kSIGMOID"))
         return (int)ActivationType::kSIGMOID;
-    if (!strcmp(str, "kTANH"))
+    if (ln_streq(str, "kTANH"))
         return (int)ActivationType::kTANH;
     return -1;
 }
 
 static int str_to_pooling_type(const char *str)
 {
-    if (!strcmp(str, "kMAX"))
+    if (ln_streq(str, "kMAX"))
         return (int)PoolingType::kMAX;
-    if (!strcmp(str, "kAVERAGE"))
+    if (ln_streq(str, "kAVERAGE"))
         return (int)PoolingType::kAVERAGE;
-    if (!strcmp(str, "kMAX_AVERAGE_BLEND"))
+    if (ln_streq(str, "kMAX_AVERAGE_BLEND"))
         return (int)PoolingType::kMAX_AVERAGE_BLEND;
     return -1;
 }
 
 static int str_to_scale_mode(const char *str)
 {
-    if (!strcmp(str, "kUNIFORM"))
+    if (ln_streq(str, "kUNIFORM"))
         return (int)ScaleMode::kUNIFORM;
-    if (!strcmp(str, "kCHANNEL"))
+    if (ln_streq(str, "kCHANNEL"))
         return (int)ScaleMode::kCHANNEL;
-    if (!strcmp(str, "kELEMENTWISE"))
+    if (ln_streq(str, "kELEMENTWISE"))
         return (int)ScaleMode::kELEMENTWISE;
     return -1;
 }
@@ -262,17 +262,17 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
         if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
             continue;
         ln_opck_param_type(pe, LN_PARAM_STRING);
-        if (!strcmp(pe->value_string, "conv"))
+        if (ln_streq(pe->value_string, "conv"))
             check_conv(pe->arg_name, op_arg, error);
-        else if (!strcmp(pe->value_string, "activation"))
+        else if (ln_streq(pe->value_string, "activation"))
             check_activation(pe->arg_name, op_arg, error);
-        else if (!strcmp(pe->value_string, "pooling"))
+        else if (ln_streq(pe->value_string, "pooling"))
             check_pooling(pe->arg_name, op_arg, error);
-        else if (!strcmp(pe->value_string, "softmax"))
+        else if (ln_streq(pe->value_string, "softmax"))
             check_softmax(pe->arg_name, op_arg, error);
-        else if (!strcmp(pe->value_string, "concat"))
+        else if (ln_streq(pe->value_string, "concat"))
             check_concat(pe->arg_name, op_arg, error);
-        else if (!strcmp(pe->value_string, "scale"))
+        else if (ln_streq(pe->value_string, "scale"))
             check_scale(pe->arg_name, op_arg, error);
         else
             ln_opck_param_error(0, "unsupported TensorRT operator");
@@ -630,17 +630,17 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
         pe = (ln_param_entry *)l->data;
         if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
             continue;
-        if (!strcmp(pe->value_string, "conv"))
+        if (ln_streq(pe->value_string, "conv"))
             add_conv(network, tensors, weights, pe->arg_name, op_arg);
-        else if (!strcmp(pe->value_string, "activation"))
+        else if (ln_streq(pe->value_string, "activation"))
             add_activation(network, tensors, pe->arg_name, op_arg);
-        else if (!strcmp(pe->value_string, "pooling"))
+        else if (ln_streq(pe->value_string, "pooling"))
             add_pooling(network, tensors, pe->arg_name, op_arg);
-        else if (!strcmp(pe->value_string, "softmax"))
+        else if (ln_streq(pe->value_string, "softmax"))
             add_softmax(network, tensors, pe->arg_name, op_arg);
-        else if (!strcmp(pe->value_string, "concat"))
+        else if (ln_streq(pe->value_string, "concat"))
             add_concat(network, tensors, pe->arg_name, op_arg);
-        else if (!strcmp(pe->value_string, "scale"))
+        else if (ln_streq(pe->value_string, "scale"))
             add_scale(network, tensors, weights, pe->arg_name, op_arg);
         else
             assert(0 && "unsupported TensorRT operator");

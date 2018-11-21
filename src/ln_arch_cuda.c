@@ -60,18 +60,18 @@ static ln_op *ops_cuda[] = {
 
 static inline int can_replace(const char *optype)
 {
-    if (!strcmp(optype, "create") ||
-        !strcmp(optype, "conv2d") ||
-        !strcmp(optype, "maxpool2d") ||
-        !strcmp(optype, "maxreduce") ||
-        !strcmp(optype, "relu") ||
-        !strcmp(optype, "reshape") ||
-        !strcmp(optype, "slice") ||
-        !strcmp(optype, "transpose") ||
-        !strcmp(optype, "zeros") ||
-        !strcmp(optype, "elew") ||
-        !strcmp(optype, "softmax") ||
-        !strcmp(optype, "concat"))
+    if (ln_streq(optype, "create") ||
+        ln_streq(optype, "conv2d") ||
+        ln_streq(optype, "maxpool2d") ||
+        ln_streq(optype, "maxreduce") ||
+        ln_streq(optype, "relu") ||
+        ln_streq(optype, "reshape") ||
+        ln_streq(optype, "slice") ||
+        ln_streq(optype, "transpose") ||
+        ln_streq(optype, "zeros") ||
+        ln_streq(optype, "elew") ||
+        ln_streq(optype, "softmax") ||
+        ln_streq(optype, "concat"))
         return 1;
     return 0;
 }

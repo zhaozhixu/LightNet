@@ -57,6 +57,7 @@ char *ln_read_text(const char *file_name);
 char *ln_next_token(const char *s, int c);
 char *ln_strcat_alloc(const char *s1, const char *s2);
 char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim);
+int ln_streq(const char *s1, const char *s2);
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding);
 int ln_compute_length(int ndim, const int *dims);
 void ln_err_msg(const char *fmt, ...);

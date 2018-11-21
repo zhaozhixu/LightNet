@@ -67,8 +67,8 @@ static void softmax_pre_run(ln_op_arg *op_arg, ln_error **error)
     axis_entry = ln_param_list_find(op_arg->params, "axis");
     ln_opck_param_exist(axis_entry, "axis");
     ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
-    axis = axis_entry->value_int; /* -1 is the last dimension */
-    ln_opck_param_satisfy_msg(axis == -1 || (axis >= 0 && axis < src_entry->tensor->dims[src_entry->tensor->ndim-1]), "`axis` should be -1 or match the dimisions of `src`");
+    axis = axis_entry->value_int;
+    ln_opck_param_satisfy_msg(axis >= 0 && axis < src_entry->tensor->ndim, "`axis` should match the dimisions of `src`");
 
     /* define output tensor shape, tensor data should be NULL */
     dst_tensor = tl_tensor_create(NULL, src_entry->tensor->ndim,

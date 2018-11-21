@@ -94,7 +94,7 @@ static int exists_in_tensors(ln_list *tensors, const char *name)
     ln_tensor_list_entry *tle;
 
     LN_LIST_FOREACH(tle, tensors) {
-        if (!strcmp(tle->name, name))
+        if (ln_streq(tle->name, name))
             return 1;
     }
     return 0;
@@ -175,6 +175,17 @@ static void add_dst(ln_op_arg *trt_arg, ln_op_arg *arg, char *opname,
     ln_free(tensor_arg_name);
 }
 
+static int check_conv(ln_op *op)
+{
+    ln_param_entry *pe;
+
+    pe = ln_param_list_find(op->op_arg->params, "padding");
+    if (pe->value_array_int[0] != pe->value_array_int[1]
+        || pe->value_array_int[2] != pe->value_array_int[3])
+        return 0;
+    return 1;
+}
+
 static void add_conv_to_trt(ln_op *trt_op, ln_op *op)
 {
     ln_param_entry *pe;
@@ -184,14 +195,6 @@ static void add_conv_to_trt(ln_op *trt_op, ln_op *op)
     ln_op_arg *op_arg = op->op_arg;
     char *opname;
     char *param_arg_name;
-
-    pe = ln_param_list_find(op_arg->params, "padding");
-    if (pe->value_array_int[0] != pe->value_array_int[1]
-        || pe->value_array_int[2] != pe->value_array_int[3]) {
-        ln_error_emit(LN_WARNING, "cannot convert '%s' with asymmetrical padding to TensorRT op",
-                      op_arg->name);
-        return ;
-    }
 
     opname = create_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
@@ -249,44 +252,134 @@ static void add_conv_to_trt(ln_op *trt_op, ln_op *op)
 
 static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
 {
-    char *tensor_name;
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
     char *opname;
-    char *param_arg_name;
-    char *tensor_arg_name;
-
-    if (strcmp(op_arg->optype, "relu") ||
-        strcmp(op_arg->optype, "sigmoid") ||
-        strcmp(op_arg->optype, "tanh")) {
-        ln_error_emit(LN_WARNING, "cannot convert '%s' to TensorRT op",
-                      op_arg->name);
-        return ;
-    }
-
     opname = create_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "conv");
+                                                  opname, "activation");
 
-    tensor_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-    param_arg_name = ln_strcat_delim_alloc(opname, "src", '_');
+    add_src(trt_arg, op_arg, opname, "src");
+    add_dst(trt_arg, op_arg, opname, "dst");
+
+    const char *atype;
+    if (ln_streq(op_arg->optype, "relu"))
+        atype = "kRELU";
+    else if (ln_streq(op_arg->optype, "sigmoid"))
+        atype = "kSIGMOID";
+    else if (ln_streq(op_arg->optype, "tanh"))
+        atype = "kTANH";
+    else
+        assert(0 && "unsupported activation type");
+
+    char *param_arg_name;
+    param_arg_name = ln_strcat_delim_alloc(opname, "activation_type", '_');
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  param_arg_name, tensor_name);
-    tensor_arg_name = create_name_in_tensors(trt_arg->tensors_in, "src");
-    trt_arg->tensors_in = ln_tensor_list_append(trt_arg->tensors_in,
-                                                tensor_arg_name, tensor_name);
-    ln_free(tensor_arg_name);
+                                                  param_arg_name,
+                                                  atype);
+    ln_free(param_arg_name);
+    ln_free(opname);
+}
+
+static int check_pooling(ln_op *op)
+{
+    ln_param_entry *pe;
+    pe = ln_param_list_find(op->op_arg->params, "padding");
+    if (pe->value_array_int[0] != pe->value_array_int[1]
+        || pe->value_array_int[2] != pe->value_array_int[3])
+        return 0;
+    return 1;
+}
+
+static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
+{
+    ln_op_arg *trt_arg = trt_op->op_arg;
+    ln_op_arg *op_arg = op->op_arg;
+    char *opname;
+    opname = create_name_in_params(op_arg->params, "op");
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  opname, "pooling");
+
+    add_src(trt_arg, op_arg, opname, "src");
+    add_dst(trt_arg, op_arg, opname, "dst");
+
+    const char *atype;
+    if (ln_streq(op_arg->optype, "maxpool2d"))
+        atype = "kMAX";
+    else if (ln_streq(op_arg->optype, "averagepool2d"))
+        atype = "kAVERAGE";
+    else
+        assert(0 && "unsupported pooling type");
+
+    char *param_arg_name;
+    param_arg_name = ln_strcat_delim_alloc(opname, "pooling_type", '_');
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  param_arg_name,
+                                                  atype);
+    ln_free(param_arg_name);
+
+    ln_param_entry *pe;
+    pe = ln_param_list_find(op_arg->params, "size");
+    param_arg_name = ln_strcat_delim_alloc(opname, "size", '_');
+    trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
+                                                        param_arg_name, 2,
+                                                        pe->value_array_double);
+    ln_free(param_arg_name);
+
+    pe = ln_param_list_find(op_arg->params, "stride");
+    param_arg_name = ln_strcat_delim_alloc(opname, "stride", '_');
+    trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
+                                                        param_arg_name, 2,
+                                                        pe->value_array_double);
+    ln_free(param_arg_name);
+
+    pe = ln_param_list_find(op_arg->params, "padding");
+    param_arg_name = ln_strcat_delim_alloc(opname, "padding", '_');
+    trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
+                                                        param_arg_name, 2,
+                                                        (double[]){pe->value_array_double[0],
+                                                                pe->value_array_double[2]});
     ln_free(param_arg_name);
 
     ln_free(opname);
 }
 
-static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
+static int check_softmax(ln_op *op)
 {
+    ln_param_entry *pe;
+    ln_tensor_entry *te;
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0)
+    pe = ln_param_list_find(op->op_arg->params, "axis");
+    te = ln_tensor_table_find(op->op_arg->tensor_table,
+                              ln_tensor_list_find_name(op->op_arg->tensors_in,
+                                                       "src"));
+    assert(te);
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") < 0) {
+        if (pe->value_int != te->tensor->ndim-3)
+            return 0;
+    }
+    return 1;
 }
 
 static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
 {
+    ln_op_arg *trt_arg = trt_op->op_arg;
+    ln_op_arg *op_arg = op->op_arg;
+    char *opname;
+    opname = create_name_in_params(op_arg->params, "op");
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  opname, "softmax");
+
+    add_src(trt_arg, op_arg, opname, "src");
+    add_dst(trt_arg, op_arg, opname, "dst");
+
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
+
+    } else {
+
+    }
+
+    ln_free(opname);
 }
 
 static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
@@ -302,7 +395,6 @@ static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
 }
 
 typedef void (*add_to_trt_func)(ln_op *trt_op, ln_op *op);
-
 static ln_hash_init_entry init_add_funcs[] = {
     {"conv2d", add_conv_to_trt},
     {"relu", add_activation_to_trt},
@@ -315,6 +407,50 @@ static ln_hash_init_entry init_add_funcs[] = {
 };
 static ln_hash *add_funcs_hash = NULL;
 
+typedef int (*check_func)(ln_op *op);
+static ln_hash_init_entry init_check_funcs[] = {
+    {"conv2d", check_conv},
+    {"relu", NULL},
+    {"maxpool2d", check_pooling},
+    {"batchnorm", NULL},
+    {"softmax", check_softmax},
+    {"concat", NULL},
+    {"tensorrt", NULL},
+    LN_HASH_INIT_ENTRY_NULL
+};
+static ln_hash *check_funcs_hash = NULL;
+
+static int is_win_match(ln_list *ops)
+{
+    ln_op *op;
+    ln_list *l;
+    void *value;
+    check_func check;
+
+    for (l = ops; l; l = l->next) {
+        op = l->data;
+        if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
+                                  NULL, &value)) {
+            if (ln_streq(op->op_arg->optype, "tensorrt")) {
+                if (l->next) {
+                    op = l->next->data;
+                    if (ln_streq(op->op_arg->optype, "tensorrt"))
+                        return 1;
+                }
+            } else {
+                if (value) {
+                    check = value;
+                    if (check(op))
+                        return 1;
+                } else {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
 {
     /* TODO: multithread safety */
@@ -322,44 +458,29 @@ static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
         add_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
         ln_hash_init(add_funcs_hash, init_add_funcs);
     }
-
-    ln_op *op;
-    ln_list *l;
-    int i;
-    *match = 0;
-    for (i = 0, l = ops; l; l = l->next, i++) {
-        op = l->data;
-        if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
-                                  NULL, NULL)) {
-            if (!strcmp(op->op_arg->optype, "tensorrt")) {
-                if (l->next) {
-                    op = l->next->data;
-                    if (!strcmp(op->op_arg->optype, "tensorrt")) {
-                        *match = 1;
-                        break;
-                    }
-                }
-            } else {
-                *match = 1;
-                break;
-            }
-        }
+    if (!check_funcs_hash) {
+        check_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+        ln_hash_init(check_funcs_hash, init_check_funcs);
     }
-    if (!match)
+
+    *match = 0;
+    if (is_win_match(ops))
+        *match = 1;
+    else
         return NULL;
 
     ln_list *new_ops = NULL;
-    ln_op *new_op, *prev_op = NULL;
-    for (i = 0, l = ops; l; prev_op = op, l = l->next, i++) {
-        op = l->data;
+    ln_op *op, *new_op, *prev_op = NULL;
+    add_to_trt_func add_func;
+    ln_op *trt_op;
+    void *value;
 
-        add_to_trt_func add_func;
-        ln_op *trt_op;
-        void *value;
+    for (ln_list *l = ops; l; prev_op = op, l = l->next) {
+        op = l->data;
         if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
                                   NULL, &value)) {
             add_func = value;
-            if (prev_op && !strcmp(prev_op->op_arg->optype, "tensorrt")) {
+            if (prev_op && ln_streq(prev_op->op_arg->optype, "tensorrt")) {
                 trt_op = prev_op;
                 add_func(trt_op, op);
             } else {
@@ -407,7 +528,7 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
 
     DFG = ln_op_list_gen_DFG(ops, &node_table);
     LN_LIST_FOREACH(op, ops) {
-        if (strcmp(op->op_arg->optype, "tensorrt"))
+        if (!ln_streq(op->op_arg->optype, "tensorrt"))
             continue;
 
         ln_graph_node *node = ln_hash_find(node_table, op->op_arg->name);

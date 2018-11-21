@@ -11,7 +11,7 @@ else
 AT = @
 endif
 
-CFLAGS = -Wall
+CFLAGS = -Wall -std=gnu99 -D_GNU_SOURCE
 CXXFLAGS = -std=c++11 -Wall
 CUFLAGS = -m64 -arch=sm_30 -ccbin $(CXX)
 LDFLAGS = $(CFLAGS)

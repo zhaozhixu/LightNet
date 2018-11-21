@@ -25,21 +25,21 @@
 
 static int k2v(char *str)
 {
-    if (!strcmp(str, "TL_FLOAT"))
+    if (ln_streq(str, "TL_FLOAT"))
         return TL_FLOAT;
-    if (!strcmp(str, "TL_INT32"))
+    if (ln_streq(str, "TL_INT32"))
         return TL_INT32;
-    if (!strcmp(str, "TL_INT16"))
+    if (ln_streq(str, "TL_INT16"))
         return TL_INT16;
-    if (!strcmp(str, "TL_INT8"))
+    if (ln_streq(str, "TL_INT8"))
         return TL_INT8;
-    if (!strcmp(str, "TL_UINT32"))
+    if (ln_streq(str, "TL_UINT32"))
         return TL_UINT32;
-    if (!strcmp(str, "TL_UINT16"))
+    if (ln_streq(str, "TL_UINT16"))
         return TL_UINT16;
-    if (!strcmp(str, "TL_UINT8"))
+    if (ln_streq(str, "TL_UINT8"))
         return TL_UINT8;
-    if (!strcmp(str, "TL_BOOL"))
+    if (ln_streq(str, "TL_BOOL"))
         return TL_BOOL;
     return -1;
 }
