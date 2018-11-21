@@ -58,7 +58,6 @@ static ln_op *ops_cuda[] = {
     NULL
 };
 
-/* TODO: use hash? */
 static inline int can_replace(const char *optype)
 {
     if (!strcmp(optype, "create") ||

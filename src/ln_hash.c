@@ -125,6 +125,15 @@ void ln_hash_free(ln_hash *hash)
     ln_free(hash);
 }
 
+void ln_hash_init(ln_hash *hash, ln_hash_init_entry *init_array)
+{
+    ln_hash_init_entry *ie = init_array;
+
+    for (; ie->key || ie->value; ie++) {
+        ln_hash_insert(hash, ie->key, ie->value);
+    }
+}
+
 static inline int index_of(uint32_t h, int capacity)
 {
     return (int)(h & ((uint32_t)capacity - 1));

@@ -28,10 +28,17 @@ extern ln_arch ln_arch_cpu;
 extern ln_arch ln_arch_cuda;
 #endif
 
+#ifdef LN_TENSORRT
+extern ln_arch ln_arch_tensorrt;
+#endif
+
 ln_arch *ln_archs[] = {
     &ln_arch_cpu,
 #ifdef LN_CUDA
     &ln_arch_cuda,
+#endif
+#ifdef LN_TENSORRT
+    &ln_arch_tensorrt,
 #endif
     NULL
 };

@@ -35,25 +35,6 @@ static ln_op *ops_tensorrt[] = {
     NULL
 };
 
-/* TODO: use hash? */
-static inline int can_replace_trt(ln_op *op)
-{
-    if (strcmp(op->op_arg->optype, "create") &&
-        strcmp(op->op_arg->optype, "conv2d") &&
-        strcmp(op->op_arg->optype, "maxpool2d") &&
-        strcmp(op->op_arg->optype, "maxreduce") &&
-        strcmp(op->op_arg->optype, "relu") &&
-        strcmp(op->op_arg->optype, "reshape") &&
-        strcmp(op->op_arg->optype, "slice") &&
-        strcmp(op->op_arg->optype, "transpose") &&
-        strcmp(op->op_arg->optype, "zeros") &&
-        strcmp(op->op_arg->optype, "elew") &&
-        strcmp(op->op_arg->optype, "softmax") &&
-        strcmp(op->op_arg->optype, "concat"))
-        return 0;
-    return 1;
-}
-
 /* TODO: add a global op name hash */
 static ln_op *create_trt_op(ln_op *from_op)
 {
@@ -300,77 +281,103 @@ static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
     ln_free(opname);
 }
 
-/* static ln_op *add_to_trt(ln_op *trt_op, ln_op *op) */
-/* { */
-/*      ln_list *l; */
-/*      ln_op *op; */
+static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
+{
+}
 
-/*      for (l = ops; l; l = l->next, ++*idx) { */
-/*           op = l->data; */
+static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
+{
+}
 
-/*      } */
-/* } */
+static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
+{
+}
 
-/* TODO: add data flow graph */
+static void add_scale_to_trt(ln_op *trt_op, ln_op *op)
+{
+}
+
+static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
+{
+}
+
+typedef void (*add_to_trt_func)(ln_op *trt_op, ln_op *op);
+
+static ln_hash_init_entry init_add_funcs[] = {
+    {"conv2d", add_conv_to_trt},
+    {"relu", add_activation_to_trt},
+    {"maxpool2d", add_pooling_to_trt},
+    {"batchnorm", add_scale_to_trt},
+    {"softmax", add_softmax_to_trt},
+    {"concat", add_concat_to_trt},
+    {"tensorrt", add_trt_to_trt},
+    LN_HASH_INIT_ENTRY_NULL
+};
+static ln_hash *add_funcs_hash = NULL;
+
 static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
 {
+    /* TODO: multithread safety */
+    if (!add_funcs_hash) {
+        add_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+        ln_hash_init(add_funcs_hash, init_add_funcs);
+    }
+
     ln_op *op;
-    ln_op_arg *op_arg;
     ln_list *l;
-    int *replace_flag;
     int i;
-
     *match = 0;
-    replace_flag = ln_alloc(sizeof(int) * win_size);
     for (i = 0, l = ops; l; l = l->next, i++) {
         op = l->data;
-        if (can_replace_trt(op)) {
-            replace_flag[i] = 1;
-            *match = 1;
-            continue;
-        }
-        if (!strcmp(op->op_arg->optype, "tensorrt")) {
-            replace_flag[i] = 2;
-            continue;
-        }
-        replace_flag[i] = 0;
-    }
-    for (i = 0; i + 1 < win_size; i++) {
-        if (replace_flag[i] == 2 && replace_flag[i+1] == 2)
-            *match = 1;
-    }
-    if (!match) {
-        ln_free(replace_flag);
-        return NULL;
-    }
-
-    ln_list *new_ops = NULL;
-    ln_op *new_op;
-    ln_list *m;
-    int j;
-    for (i = 0, l = ops; l; l = l->next, i++) {
-        op = l->data;
-        op_arg = op->op_arg;
-        if (!replace_flag[i]) {
-            new_op = ln_op_create_from_proto(op, op_arg->name,
-                                             op_arg->tensors_in,
-                                             op_arg->tensors_out,
-                                             op_arg->params,
-                                             op_arg->tensor_table);
-            new_ops = ln_list_append(new_ops, new_op);
-            continue;
-        }
-        if (replace_flag[i] == 1) {
-
-        }
-        if (replace_flag[i] == 2) {
-            for (j = i+1, m = l->next; m && replace_flag[j]; j++, m = m->next) {
-
+        if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
+                                  NULL, NULL)) {
+            if (!strcmp(op->op_arg->optype, "tensorrt")) {
+                if (l->next) {
+                    op = l->next->data;
+                    if (!strcmp(op->op_arg->optype, "tensorrt")) {
+                        *match = 1;
+                        break;
+                    }
+                }
+            } else {
+                *match = 1;
+                break;
             }
         }
     }
+    if (!match)
+        return NULL;
 
-    ln_free(replace_flag);
+    ln_list *new_ops = NULL;
+    ln_op *new_op, *prev_op = NULL;
+    for (i = 0, l = ops; l; prev_op = op, l = l->next, i++) {
+        op = l->data;
+
+        add_to_trt_func add_func;
+        ln_op *trt_op;
+        void *value;
+        if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
+                                  NULL, &value)) {
+            add_func = value;
+            if (prev_op && !strcmp(prev_op->op_arg->optype, "tensorrt")) {
+                trt_op = prev_op;
+                add_func(trt_op, op);
+            } else {
+                trt_op = create_trt_op(op);
+                add_func(trt_op, op);
+                new_ops = ln_list_append(new_ops, trt_op);
+            }
+            continue;
+        }
+
+        new_op = ln_op_create_from_proto(op, op->op_arg->name,
+                                         ln_tensor_list_copy(op->op_arg->tensors_in),
+                                         ln_tensor_list_copy(op->op_arg->tensors_out),
+                                         ln_param_list_copy(op->op_arg->params),
+                                         op->op_arg->tensor_table);
+        new_ops = ln_list_append(new_ops, new_op);
+    }
+
     return new_ops;
 }
 
@@ -419,6 +426,7 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
     }
     ln_graph_free(DFG);
     ln_hash_free(node_table);
+    return ops;
 }
 
 ln_peephole_func ph_funcs_tensorrt[] = {
