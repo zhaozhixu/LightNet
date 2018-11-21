@@ -27,9 +27,9 @@
 #include "ln_list.h"
 
 struct ln_queue {
-     ln_list  *head;
-     ln_list  *tail;
-     size_t    size;
+    ln_list  *head;
+    ln_list  *tail;
+    size_t    size;
 };
 typedef struct ln_queue ln_queue;
 

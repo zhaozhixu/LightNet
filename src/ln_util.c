@@ -34,143 +34,143 @@
 
 void *ln_alloc(size_t size)
 {
-     void *p;
+    void *p;
 
-     p = malloc(size);
-     if (p == NULL) {
-          err(EXIT_FAILURE, "ln_alloc: malloc(%luz) failed", size);
-     }
+    p = malloc(size);
+    if (p == NULL) {
+        err(EXIT_FAILURE, "ln_alloc: malloc(%luz) failed", size);
+    }
 
-     return p;
+    return p;
 }
 
 void *ln_realloc(void *ptr, size_t size)
 {
-     void *p;
+    void *p;
 
-     p = realloc(ptr, size);
-     if (p == NULL && size != 0) {
-          err(EXIT_FAILURE, "ln_realloc: realloc() failed");
-     }
+    p = realloc(ptr, size);
+    if (p == NULL && size != 0) {
+        err(EXIT_FAILURE, "ln_realloc: realloc() failed");
+    }
 
-     return p;
+    return p;
 }
 
 char *ln_strdup(const char *s)
 {
-     char *new_s;
+    char *new_s;
 
-     new_s = strdup(s);
-     if (new_s == NULL) {
-          err(EXIT_FAILURE, "ln_strdup: strdup(%s) failed", s);
-     }
+    new_s = strdup(s);
+    if (new_s == NULL) {
+        err(EXIT_FAILURE, "ln_strdup: strdup(%s) failed", s);
+    }
 
-     return new_s;
+    return new_s;
 }
 
 void *ln_clone(const void *src, size_t size)
 {
-     assert(src);
-     void *p;
-     p = ln_alloc(size);
-     memmove(p, src, size);
-     return p;
+    assert(src);
+    void *p;
+    p = ln_alloc(size);
+    memmove(p, src, size);
+    return p;
 }
 
 void *ln_repeat(void *data, size_t size, int times)
 {
-     assert(data && times > 0);
-     void *p, *dst;
-     int i;
-     dst = p = ln_alloc(size * times);
-     for (i = 0; i < times; i++, p = (char *)p + size * times)
-          memmove(p, data, size);
-     return dst;
+    assert(data && times > 0);
+    void *p, *dst;
+    int i;
+    dst = p = ln_alloc(size * times);
+    for (i = 0; i < times; i++, p = (char *)p + size * times)
+        memmove(p, data, size);
+    return dst;
 }
 
 char *ln_read_text(const char *file_name)
 {
-     struct stat buf;
-     FILE *fp;
-     size_t n;
-     char *str;
+    struct stat buf;
+    FILE *fp;
+    size_t n;
+    char *str;
 
-     if (stat(file_name, &buf) < 0)
-          err(EXIT_FAILURE, "ln_read_text: cannot stat %s", file_name);
+    if (stat(file_name, &buf) < 0)
+        err(EXIT_FAILURE, "ln_read_text: cannot stat %s", file_name);
 
-     if (!(fp = fopen(file_name, "rb")))
-          err(EXIT_FAILURE, "ln_read_text: cannot open %s", file_name);
+    if (!(fp = fopen(file_name, "rb")))
+        err(EXIT_FAILURE, "ln_read_text: cannot open %s", file_name);
 
-     str = ln_alloc(buf.st_size+1);
-     n = fread(str, buf.st_size, 1, fp);
-     if (n < 1 && ferror(fp))
-          err(EXIT_FAILURE, "ln_read_text: cannot read %s", file_name);
+    str = ln_alloc(buf.st_size+1);
+    n = fread(str, buf.st_size, 1, fp);
+    if (n < 1 && ferror(fp))
+        err(EXIT_FAILURE, "ln_read_text: cannot read %s", file_name);
 
-     fclose(fp);
-     return str;
+    fclose(fp);
+    return str;
 }
 
 char *ln_next_token(const char *s, int c)
 {
-     char *c_pos;
+    char *c_pos;
 
-     c_pos = strchr(s, c);
-     if (!c_pos || !*(c_pos+1))
-          return NULL;
-     return c_pos + 1;
+    c_pos = strchr(s, c);
+    if (!c_pos || !*(c_pos+1))
+        return NULL;
+    return c_pos + 1;
 }
 
 char *ln_strcat_alloc(const char *s1, const char *s2)
 {
-     char *dst;
+    char *dst;
 
-     dst = ln_alloc(sizeof(char) * (strlen(s1)+strlen(s2)+1));
-     strcpy(dst, s1);
-     strcat(dst, s2);
-     return dst;
+    dst = ln_alloc(sizeof(char) * (strlen(s1)+strlen(s2)+1));
+    strcpy(dst, s1);
+    strcat(dst, s2);
+    return dst;
 }
 
 char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim)
 {
-     char *dst;
-     size_t s1_len, s2_len;
+    char *dst;
+    size_t s1_len, s2_len;
 
-     s1_len = strlen(s1);
-     s2_len = strlen(s2);
-     dst = ln_alloc(sizeof(char) * (s2_len+s2_len+2));
-     strcpy(dst, s1);
-     dst[s1_len] = delim;
-     dst[s1_len+1] = '\0';
-     strcat(dst, s2);
-     return dst;
+    s1_len = strlen(s1);
+    s2_len = strlen(s2);
+    dst = ln_alloc(sizeof(char) * (s2_len+s2_len+2));
+    strcpy(dst, s1);
+    dst[s1_len] = delim;
+    dst[s1_len+1] = '\0';
+    strcat(dst, s2);
+    return dst;
 }
 
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding)
 {
-     return ((input_dim + padding) - size) / stride + 1;
+    return ((input_dim + padding) - size) / stride + 1;
 }
 
 int ln_compute_length(int ndim, const int *dims)
 {
-     int i, len;
+    int i, len;
 
-     for (i = 0, len = 1; i < ndim; i++)
-          len *= dims[i];
-     return len;
+    for (i = 0, len = 1; i < ndim; i++)
+        len *= dims[i];
+    return len;
 }
 
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
-     char buf[LN_MAXLINE];
+    char buf[LN_MAXLINE];
 
-     vsnprintf(buf, LN_MAXLINE-1, fmt, ap);
-     if (errnoflag)
-          snprintf(buf+strlen(buf), LN_MAXLINE-strlen(buf)-1, ": %s",
-               strerror(error));
-     strcat(buf, "\n");
-     fflush(stdout);
-     fputs(buf, stderr);
-     fflush(NULL);
+    vsnprintf(buf, LN_MAXLINE-1, fmt, ap);
+    if (errnoflag)
+        snprintf(buf+strlen(buf), LN_MAXLINE-strlen(buf)-1, ": %s",
+                 strerror(error));
+    strcat(buf, "\n");
+    fflush(stdout);
+    fputs(buf, stderr);
+    fflush(NULL);
 }
 
 /*
@@ -179,10 +179,10 @@ static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
  */
 void ln_err_msg(const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(0, 0, fmt, ap);
-     va_end(ap);
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(0, 0, fmt, ap);
+    va_end(ap);
 }
 
 /*
@@ -192,10 +192,10 @@ void ln_err_msg(const char *fmt, ...)
  */
 void ln_err_cont(int error, const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(1, error, fmt, ap);
-     va_end(ap);
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(1, error, fmt, ap);
+    va_end(ap);
 }
 
 /*
@@ -204,10 +204,10 @@ void ln_err_cont(int error, const char *fmt, ...)
  */
 void ln_err_ret(const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(1, errno, fmt, ap);
-     va_end(ap);
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(1, errno, fmt, ap);
+    va_end(ap);
 }
 
 /*
@@ -216,11 +216,11 @@ void ln_err_ret(const char *fmt, ...)
  */
 void ln_err_quit(const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(0, 0, fmt, ap);
-     va_end(ap);
-     exit(1);
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(0, 0, fmt, ap);
+    va_end(ap);
+    exit(1);
 }
 
 /*
@@ -229,12 +229,12 @@ void ln_err_quit(const char *fmt, ...)
  */
 void ln_err_bt(const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(0, 0, fmt, ap);
-     va_end(ap);
-     abort();
-     exit(1);
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(0, 0, fmt, ap);
+    va_end(ap);
+    abort();
+    exit(1);
 }
 
 /*
@@ -244,12 +244,12 @@ void ln_err_bt(const char *fmt, ...)
  */
 void ln_err_exit(int error, const char *fmt, ...)
 {
-     va_list
-          ap;
-     va_start(ap, fmt);
-     err_doit(1, error, fmt, ap);
-     va_end(ap);
-     exit(1);
+    va_list
+        ap;
+    va_start(ap, fmt);
+    err_doit(1, error, fmt, ap);
+    va_end(ap);
+    exit(1);
 }
 
 /*
@@ -258,11 +258,11 @@ void ln_err_exit(int error, const char *fmt, ...)
  */
 void ln_err_sys(const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(1, errno, fmt, ap);
-     va_end(ap);
-     exit(1);
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(1, errno, fmt, ap);
+    va_end(ap);
+    exit(1);
 }
 
 /*
@@ -271,12 +271,12 @@ void ln_err_sys(const char *fmt, ...)
  */
 void ln_err_dump(const char *fmt, ...)
 {
-     va_list ap;
-     va_start(ap, fmt);
-     err_doit(1, errno, fmt, ap);
-     va_end(ap);
-     abort();
+    va_list ap;
+    va_start(ap, fmt);
+    err_doit(1, errno, fmt, ap);
+    va_end(ap);
+    abort();
 /* dump core and terminate */
-     exit(1);
+    exit(1);
 /* shouldn’t get here */
 }

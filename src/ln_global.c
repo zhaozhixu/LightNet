@@ -29,9 +29,9 @@ extern ln_arch ln_arch_cuda;
 #endif
 
 ln_arch *ln_archs[] = {
-     &ln_arch_cpu,
+    &ln_arch_cpu,
 #ifdef LN_CUDA
-     &ln_arch_cuda,
+    &ln_arch_cuda,
 #endif
-     NULL
+    NULL
 };

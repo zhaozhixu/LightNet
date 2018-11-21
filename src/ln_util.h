@@ -28,8 +28,8 @@
 #include <stdint.h>
 
 enum ln_bool {
-     LN_FALSE = 0,
-     LN_TRUE = 1
+    LN_FALSE = 0,
+    LN_TRUE = 1
 };
 typedef enum ln_bool ln_bool;
 

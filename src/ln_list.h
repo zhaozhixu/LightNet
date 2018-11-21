@@ -26,13 +26,14 @@
 #include "ln_util.h"
 
 struct ln_list {
-     void            *data;
-     struct ln_list  *next;
+    void            *data;
+    struct ln_list  *next;
 };
 typedef struct ln_list ln_list;
 
+/* no inserting\removing when using this macro */
 #define LN_LIST_FOREACH(my_data, list)                                  \
-     for (ln_list *l = (list); l && (((my_data) = l->data) ? 1:1); l = l->next)
+    for (ln_list *l = (list); l && (((my_data) = l->data) ? 1:1); l = l->next)
 
 #ifdef __cplusplus
 LN_CPPSTART

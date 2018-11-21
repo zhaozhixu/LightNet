@@ -24,6 +24,9 @@ options:
                           <root>/src/ln_arch_*.c
 EOF
 
+my $INDENT_OFFSET = 4;
+my $INDENT_SPACE = " "x$INDENT_OFFSET;
+
 my $root = '';
 my $dir = '';
 my $help = '';
@@ -149,7 +152,7 @@ sub add_to_arch_file {
         s|/\* end of declare $arch ops \*/|$declare\n/* end of declare $arch ops */|
             unless $declared;
         $inited = 1 if /$item$/;
-        s|/\* end of init $arch ops \*/|     $item\n/* end of init $arch ops */|
+        s|/\* end of init $arch ops \*/|    $item\n/* end of init $arch ops */|
             unless $inited;
         print ARCH_FILE;
     }
@@ -204,7 +207,7 @@ sub gen_struct_def {
         push @defs, "char *$_->{arg_name}_name;";
     }
     &gen_params($op, 0, \@defs);
-    &make_defs_neat(5, \@defs);
+    &make_defs_neat($INDENT_OFFSET, \@defs);
 
     my $defs_str = join "\n", @defs;
     my $struct_def_tpl = <<EOF;
@@ -262,7 +265,7 @@ sub gen_pre_run_local_vars {
     push @vars, "int tensors_out_n;";
     push @vars, "int params_n;";
     push @vars, "struct priv_s *priv;";
-    &make_defs_neat(5, \@vars);
+    &make_defs_neat($INDENT_OFFSET, \@vars);
     push @vars, "";
 
     join "\n", @vars;
@@ -449,7 +452,7 @@ sub gen_pre_run_checks {
                 if (exists $param->{from_func}) {
                   push @states, "${arg_name} = ln_alloc(sizeof($param->{realtype})*${arg_name}_entry->array_len);";
                   push @states, "for (int i = 0; i < ${arg_name}_entry->array_len; i++)";
-                  push @states, &indent_line(5, "${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);");
+                  push @states, &indent_line($INDENT_OFFSET, "${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);");
                 } else {
                   &err_exit("$param->{arg_name} needs a `from_func` to convert '${arg_name}'");
                 }
@@ -511,7 +514,7 @@ sub gen_pre_run_checks {
         push @states, "";
     }
 
-    &indent_block(5, \@states);
+    &indent_block($INDENT_OFFSET, \@states);
     join "\n", @states;
 }
 
@@ -556,7 +559,7 @@ sub gen_output_tensor_def {
         push @states, "";
     }
 
-    &indent_block(5, \@states);
+    &indent_block($INDENT_OFFSET, \@states);
     join "\n", @states;
 }
 
@@ -580,7 +583,7 @@ sub gen_priv_assigns {
     }
     push @states, "op_arg->priv = priv;";
 
-    &indent_block(5, \@states);
+    &indent_block($INDENT_OFFSET, \@states);
     join "\n", @states;
 }
 
@@ -591,7 +594,7 @@ sub gen_static_run {
     push @states, "struct priv_s *priv = op_arg->priv;";
     push @states, "";
     &add_custom_block($op->{static_run}, \@states);
-    &indent_block(5, \@states);
+    &indent_block($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
@@ -610,7 +613,7 @@ sub gen_run {
     push @states, "struct priv_s *priv = op_arg->priv;";
     push @states, "";
     &add_custom_block($op->{run}, \@states);
-    &indent_block(5, \@states);
+    &indent_block($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
@@ -635,7 +638,7 @@ sub gen_post_run {
     &add_custom_block($op->{post_run}, \@states) if exists $op->{post_run};
     push @states, "ln_free(op_arg->priv);";
 
-    &indent_block(5, \@states);
+    &indent_block($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
@@ -653,7 +656,7 @@ sub gen_op_arg {
     my $op_arg_tpl = <<EOF;
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_$op->{optype} = {
-     .optype = "$op->{optype}",
+    .optype = "$op->{optype}",
 };
 EOF
 }
@@ -666,11 +669,11 @@ sub gen_op_impl {
     my $op_impl_tpl = <<EOF;
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_$op->{optype} = {
-     .op_arg = &op_arg_$op->{optype},
-     .pre_run = $op->{optype}_pre_run,
-     .static_run = ${static_run_func},
-     .run = ${run_func},
-     .post_run = $op->{optype}_post_run
+    .op_arg = &op_arg_$op->{optype},
+    .pre_run = $op->{optype}_pre_run,
+    .static_run = ${static_run_func},
+    .run = ${run_func},
+    .post_run = $op->{optype}_post_run
 };
 EOF
 }
@@ -679,7 +682,7 @@ sub add_custom_block {
     my $custom_str = shift;
     my $states = shift;
     my @customs = split "\n", $custom_str;
-    &indent_block(5, \@customs);
+    &indent_block($INDENT_OFFSET, \@customs);
     push @$states, "{";
     push @$states, @customs;
     push @$states, "}";

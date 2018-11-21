@@ -25,56 +25,56 @@
 
 ln_queue *ln_queue_create(void)
 {
-     ln_queue *q;
+    ln_queue *q;
 
-     q = (ln_queue *)ln_alloc(sizeof(ln_queue));
-     q->head = NULL;
-     q->tail = NULL;
-     q->size = 0;
+    q = (ln_queue *)ln_alloc(sizeof(ln_queue));
+    q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
 
-     return q;
+    return q;
 }
 
 /* return the queue with a new element (a new queue if queue == NULL) */
 ln_queue *ln_queue_enqueue(ln_queue *queue, void *data)
 {
-     ln_queue *q;
+    ln_queue *q;
 
-     if (!queue) {
-          q = (ln_queue *)ln_alloc(sizeof(ln_queue));
-          q->head = ln_list_append(NULL, data);
-          q->tail = q->head;
-          q->size = 1;
-          return q;
-     }
+    if (!queue) {
+        q = (ln_queue *)ln_alloc(sizeof(ln_queue));
+        q->head = ln_list_append(NULL, data);
+        q->tail = q->head;
+        q->size = 1;
+        return q;
+    }
 
-     q = queue;
-     q->tail = ln_list_append(q->tail, data);
-     q->size++;
-     if (!q->head)
-          q->head = q->tail;
-     else
-          q->tail = q->tail->next;
+    q = queue;
+    q->tail = ln_list_append(q->tail, data);
+    q->size++;
+    if (!q->head)
+        q->head = q->tail;
+    else
+        q->tail = q->tail->next;
 
-     return q;
+    return q;
 }
 
 void *ln_queue_dequeue(ln_queue *queue)
 {
-     void *data;
+    void *data;
 
-     data = ln_list_nth_data(queue->head, 0);
-     queue->head = ln_list_remove_nth(queue->head, 0);
-     if (queue->head == NULL)
-          queue->tail = NULL;
-     if (queue->size > 0)
-          queue->size--;
+    data = ln_list_nth_data(queue->head, 0);
+    queue->head = ln_list_remove_nth(queue->head, 0);
+    if (queue->head == NULL)
+        queue->tail = NULL;
+    if (queue->size > 0)
+        queue->size--;
 
-     return data;
+    return data;
 }
 
 void ln_queue_free(ln_queue *queue)
 {
-     ln_list_free(queue->head);
-     ln_free(queue);
+    ln_list_free(queue->head);
+    ln_free(queue);
 }

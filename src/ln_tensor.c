@@ -24,159 +24,159 @@
 #include "ln_util.h"
 
 static ln_tensor_list_entry *list_entry_create(const char *arg_name,
-                                            const char *name)
+                                               const char *name)
 {
-     ln_tensor_list_entry *entry;
+    ln_tensor_list_entry *entry;
 
-     entry = ln_alloc(sizeof(ln_tensor_list_entry));
-     entry->arg_name = ln_strdup(arg_name);
-     entry->name = ln_strdup(name);
-     return entry;
+    entry = ln_alloc(sizeof(ln_tensor_list_entry));
+    entry->arg_name = ln_strdup(arg_name);
+    entry->name = ln_strdup(name);
+    return entry;
 }
 
 static void list_entry_free(ln_tensor_list_entry *entry)
 {
-     ln_free(entry->arg_name);
-     ln_free(entry->name);
-     ln_free(entry);
+    ln_free(entry->arg_name);
+    ln_free(entry->name);
+    ln_free(entry);
 }
 
 static void list_entry_free_wrapper(void *entry)
 {
-     list_entry_free(entry);
+    list_entry_free(entry);
 }
 
 ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
                                const char *name)
 {
-     ln_tensor_list_entry *entry;
+    ln_tensor_list_entry *entry;
 
-     entry = list_entry_create(arg_name, name);
-     list = ln_list_append(list, entry);
-     return list;
+    entry = list_entry_create(arg_name, name);
+    list = ln_list_append(list, entry);
+    return list;
 }
 
 void ln_tensor_list_free(ln_list *list)
 {
-     ln_list_free_deep(list, list_entry_free_wrapper);
+    ln_list_free_deep(list, list_entry_free_wrapper);
 }
 
 ln_list *ln_tensor_list_copy(ln_list *list)
 {
-     ln_list *new_list = NULL;
-     ln_tensor_list_entry *entry;
+    ln_list *new_list = NULL;
+    ln_tensor_list_entry *entry;
 
-     LN_LIST_FOREACH(entry, list) {
-          new_list = ln_tensor_list_append(new_list, entry->arg_name, entry->name);
-     }
-     return new_list;
+    LN_LIST_FOREACH(entry, list) {
+        new_list = ln_tensor_list_append(new_list, entry->arg_name, entry->name);
+    }
+    return new_list;
 }
 
 static int find_by_arg_name(void *data1, void *data2)
 {
-     ln_tensor_list_entry *e1, *e2;
+    ln_tensor_list_entry *e1, *e2;
 
-     e1 = data1;
-     e2 = data2;
-     return strcmp(e1->arg_name, e2->arg_name);
+    e1 = data1;
+    e2 = data2;
+    return strcmp(e1->arg_name, e2->arg_name);
 }
 
 char *ln_tensor_list_find_name(ln_list *list, char *arg_name)
 {
-     ln_tensor_list_entry cmp_entry;
-     ln_tensor_list_entry *result_entry;
+    ln_tensor_list_entry cmp_entry;
+    ln_tensor_list_entry *result_entry;
 
-     cmp_entry.arg_name = arg_name;
-     result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);
-     if (!result_entry)
-          return NULL;
-     return result_entry->name;
+    cmp_entry.arg_name = arg_name;
+    result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);
+    if (!result_entry)
+        return NULL;
+    return result_entry->name;
 }
 
 int ln_tensor_list_length(ln_list *list)
 {
-     return ln_list_length(list);
+    return ln_list_length(list);
 }
 
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)
 {
-     ln_tensor_entry *entry;
+    ln_tensor_entry *entry;
 
-     entry = ln_alloc(sizeof(ln_tensor_entry));
-     entry->name = ln_strdup(name);
-     entry->tensor = tensor;
-     entry->owner = NULL;
-     entry->creater = NULL;
-     entry->offset = 0;
-     entry->isstatic = 0;
-     entry->mtype = LN_MEM_UNDEF;
+    entry = ln_alloc(sizeof(ln_tensor_entry));
+    entry->name = ln_strdup(name);
+    entry->tensor = tensor;
+    entry->owner = NULL;
+    entry->creater = NULL;
+    entry->offset = 0;
+    entry->isstatic = 0;
+    entry->mtype = LN_MEM_UNDEF;
 
-     return entry;
+    return entry;
 }
 
 void ln_tensor_entry_free(ln_tensor_entry *entry)
 {
-     ln_free(entry->name);
-     ln_free(entry->owner);
-     ln_free(entry->creater);
-     ln_free(entry);
+    ln_free(entry->name);
+    ln_free(entry->owner);
+    ln_free(entry->creater);
+    ln_free(entry);
 }
 
 void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)
 {
-     ln_free(entry->name);
-     tl_tensor_free(entry->tensor);
-     ln_free(entry);
+    ln_free(entry->name);
+    tl_tensor_free(entry->tensor);
+    ln_free(entry);
 }
 
 static void tensor_entry_free_tensor_too_wrapper(void *p)
 {
-     ln_tensor_entry_free_tensor_too(p);
+    ln_tensor_entry_free_tensor_too(p);
 }
 
 void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
                                char *direct_owner)
 {
-     ln_tensor_entry *te;
+    ln_tensor_entry *te;
 
-     assert(entry->name != direct_owner);
+    assert(entry->name != direct_owner);
 
-     te = ln_tensor_table_find(tensor_table, direct_owner);
-     while (te->owner)
-          te = ln_tensor_table_find(tensor_table, te->owner);
-     entry->owner = ln_strdup(te->name);
+    te = ln_tensor_table_find(tensor_table, direct_owner);
+    while (te->owner)
+        te = ln_tensor_table_find(tensor_table, te->owner);
+    entry->owner = ln_strdup(te->name);
 }
 
 void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)
 {
-     entry->creater = ln_strdup(creater);
+    entry->creater = ln_strdup(creater);
 }
 
 ln_hash *ln_tensor_table_create(void)
 {
-     return ln_hash_create(ln_str_hash, ln_str_cmp, ln_free,
-                           tensor_entry_free_tensor_too_wrapper);
+    return ln_hash_create(ln_str_hash, ln_str_cmp, ln_free,
+                          tensor_entry_free_tensor_too_wrapper);
 }
 
 int ln_tensor_table_insert(ln_hash *table, char *name, ln_tensor_entry *entry)
 {
-     char *name_k;
+    char *name_k;
 
-     name_k = ln_strdup(name);
-     return ln_hash_insert(table, name_k, entry);
+    name_k = ln_strdup(name);
+    return ln_hash_insert(table, name_k, entry);
 }
 
 int ln_tensor_table_remove(ln_hash *table, char *name)
 {
-     return ln_hash_remove(table, name);
+    return ln_hash_remove(table, name);
 }
 
 ln_tensor_entry *ln_tensor_table_find(ln_hash *table, char *name)
 {
-     return ln_hash_find(table, name);
+    return ln_hash_find(table, name);
 }
 
 void ln_tensor_table_free(ln_hash *table)
 {
-     ln_hash_free(table);
+    ln_hash_free(table);
 }

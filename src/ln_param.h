@@ -26,31 +26,31 @@
 #include "ln_list.h"
 
 enum ln_param_type {
-     /* NULL should always be the first type */
-     LN_PARAM_NULL = 0,
-     LN_PARAM_STRING,
-     LN_PARAM_NUMBER,
-     LN_PARAM_BOOL,
-     LN_PARAM_ARRAY_STRING,
-     LN_PARAM_ARRAY_NUMBER,
-     LN_PARAM_ARRAY_BOOL,
-     LN_PARAM_INVALID
-     /* INVALID should always be the last type */
+    /* NULL should always be the first type */
+    LN_PARAM_NULL = 0,
+    LN_PARAM_STRING,
+    LN_PARAM_NUMBER,
+    LN_PARAM_BOOL,
+    LN_PARAM_ARRAY_STRING,
+    LN_PARAM_ARRAY_NUMBER,
+    LN_PARAM_ARRAY_BOOL,
+    LN_PARAM_INVALID
+    /* INVALID should always be the last type */
 };
 typedef enum ln_param_type ln_param_type;
 
 struct ln_param_entry {
-     char          *arg_name;
-     ln_param_type  type;
-     int            array_len;
-     double         value_double;
-     int            value_int;
-     ln_bool        value_bool;
-     char          *value_string;
-     char         **value_array_string;
-     double        *value_array_double;
-     int           *value_array_int;
-     ln_bool       *value_array_bool;
+    char          *arg_name;
+    ln_param_type  type;
+    int            array_len;
+    double         value_double;
+    int            value_int;
+    ln_bool        value_bool;
+    char          *value_string;
+    char         **value_array_string;
+    double        *value_array_double;
+    int           *value_array_int;
+    ln_bool       *value_array_bool;
 };
 typedef struct ln_param_entry ln_param_entry;
 

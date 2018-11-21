@@ -37,293 +37,293 @@ static char TENSORRT_VERSION_STR[20] = {0};
 
 // TODO: add async support
 struct ln_tensorrt_bundle {
-     ICudaEngine        *engine;
-     IExecutionContext  *context;
-     void              **bindings;
-     int                 batch_size;
+    ICudaEngine        *engine;
+    IExecutionContext  *context;
+    void              **bindings;
+    int                 batch_size;
 };
 
 const char *ln_tensorrt_version_str(void)
 {
-     if (TENSORRT_VERSION_STR[0] == 0)
-          snprintf(TENSORRT_VERSION_STR, 20, "%d.%d.%d",
-                   NV_TENSORRT_MAJOR, NV_TENSORRT_MINOR, NV_TENSORRT_PATCH);
-     return TENSORRT_VERSION_STR;
+    if (TENSORRT_VERSION_STR[0] == 0)
+        snprintf(TENSORRT_VERSION_STR, 20, "%d.%d.%d",
+                 NV_TENSORRT_MAJOR, NV_TENSORRT_MINOR, NV_TENSORRT_PATCH);
+    return TENSORRT_VERSION_STR;
 }
 
 static int tl_dtype_to_ioTensor_DataType(tl_dtype dtype)
 {
-     // TODO: add fp16 support
-     switch (dtype) {
-     case TL_FLOAT:
-          return (int)DataType::kFLOAT;
+    // TODO: add fp16 support
+    switch (dtype) {
+    case TL_FLOAT:
+        return (int)DataType::kFLOAT;
 #if NV_TENSORRT_MAJOR >= 4
-     case TL_INT32:
-          return (int)DataType::kINT32;
+    case TL_INT32:
+        return (int)DataType::kINT32;
 #endif
-     default:
-          return -1;
-     }
+    default:
+        return -1;
+    }
 }
 
 static int tl_dtype_to_weight_DataType(tl_dtype dtype)
 {
-     // TODO: add fp16 support
-     switch (dtype) {
-     case TL_FLOAT:
-          return (int)DataType::kFLOAT;
+    // TODO: add fp16 support
+    switch (dtype) {
+    case TL_FLOAT:
+        return (int)DataType::kFLOAT;
 #if NV_TENSORRT_MAJOR >= 4
-     case TL_INT32:
-          return (int)DataType::kINT32;
+    case TL_INT32:
+        return (int)DataType::kINT32;
 #endif
-     case TL_INT8:
-          return (int)DataType::kINT8;
-     default:
-          return -1;
-     }
+    case TL_INT8:
+        return (int)DataType::kINT8;
+    default:
+        return -1;
+    }
 }
 
 static int str_to_activation_type(const char *str)
 {
-     if (!strcmp(str, "kRELU"))
-          return (int)ActivationType::kRELU;
-     if (!strcmp(str, "kSIGMOID"))
-          return (int)ActivationType::kSIGMOID;
-     if (!strcmp(str, "kTANH"))
-          return (int)ActivationType::kTANH;
-     return -1;
+    if (!strcmp(str, "kRELU"))
+        return (int)ActivationType::kRELU;
+    if (!strcmp(str, "kSIGMOID"))
+        return (int)ActivationType::kSIGMOID;
+    if (!strcmp(str, "kTANH"))
+        return (int)ActivationType::kTANH;
+    return -1;
 }
 
 static int str_to_pooling_type(const char *str)
 {
-     if (!strcmp(str, "kMAX"))
-          return (int)PoolingType::kMAX;
-     if (!strcmp(str, "kAVERAGE"))
-          return (int)PoolingType::kAVERAGE;
-     if (!strcmp(str, "kMAX_AVERAGE_BLEND"))
-          return (int)PoolingType::kMAX_AVERAGE_BLEND;
-     return -1;
+    if (!strcmp(str, "kMAX"))
+        return (int)PoolingType::kMAX;
+    if (!strcmp(str, "kAVERAGE"))
+        return (int)PoolingType::kAVERAGE;
+    if (!strcmp(str, "kMAX_AVERAGE_BLEND"))
+        return (int)PoolingType::kMAX_AVERAGE_BLEND;
+    return -1;
 }
 
 static int str_to_scale_mode(const char *str)
 {
-     if (!strcmp(str, "kUNIFORM"))
-          return (int)ScaleMode::kUNIFORM;
-     if (!strcmp(str, "kCHANNEL"))
-          return (int)ScaleMode::kCHANNEL;
-     if (!strcmp(str, "kELEMENTWISE"))
-          return (int)ScaleMode::kELEMENTWISE;
-     return -1;
+    if (!strcmp(str, "kUNIFORM"))
+        return (int)ScaleMode::kUNIFORM;
+    if (!strcmp(str, "kCHANNEL"))
+        return (int)ScaleMode::kCHANNEL;
+    if (!strcmp(str, "kELEMENTWISE"))
+        return (int)ScaleMode::kELEMENTWISE;
+    return -1;
 }
 
 static void check_param(const char *name1, const char *name2, ln_param_type ptype,
                         int plen ,ln_op_arg *op_arg, ln_error **error)
 {
-     char *full_name;
-     ln_param_entry *pe;
+    char *full_name;
+    ln_param_entry *pe;
 
-     if (name2)
-          full_name = ln_strcat_delim_alloc(name1, name2, '_');
-     else
-          full_name = ln_strdup(name1);
-     pe = ln_param_list_find(op_arg->params, full_name);
-     ln_opck_param_exist(pe, full_name);
-     ln_opck_param_type(pe, ptype);
-     if (plen > 0)
-          ln_opck_param_array_len_eq(pe, plen);
+    if (name2)
+        full_name = ln_strcat_delim_alloc(name1, name2, '_');
+    else
+        full_name = ln_strdup(name1);
+    pe = ln_param_list_find(op_arg->params, full_name);
+    ln_opck_param_exist(pe, full_name);
+    ln_opck_param_type(pe, ptype);
+    if (plen > 0)
+        ln_opck_param_array_len_eq(pe, plen);
 
-     ln_free(full_name);
+    ln_free(full_name);
 }
 
 /* TODO: check params throughly */
 static void check_conv(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
-     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "weight", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "bias", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "group", LN_PARAM_NUMBER, 0, op_arg, error);
-     check_param(opname, "output_c", LN_PARAM_NUMBER, 0, op_arg, error);
-     check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
-     check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
-     check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
-     check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "weight", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "bias", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "group", LN_PARAM_NUMBER, 0, op_arg, error);
+    check_param(opname, "output_c", LN_PARAM_NUMBER, 0, op_arg, error);
+    check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
 }
 
 static void check_activation(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
-     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "activation_type", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "activation_type", LN_PARAM_STRING, 0, op_arg, error);
 
-     ln_param_entry *pe;
-     pe = ln_param_list_find2(op_arg->params, opname, "activation_type");
-     ln_opck_param_satisfy_msg(str_to_activation_type(pe->value_string) != -1,
-                               "unsupported activation type");
+    ln_param_entry *pe;
+    pe = ln_param_list_find2(op_arg->params, opname, "activation_type");
+    ln_opck_param_satisfy_msg(str_to_activation_type(pe->value_string) != -1,
+                              "unsupported activation type");
 }
 
 static void check_pooling(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
-     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
-     check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
-     check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
-     check_param(opname, "pooling_type", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
+    check_param(opname, "pooling_type", LN_PARAM_STRING, 0, op_arg, error);
 
-     ln_param_entry *pe;
-     pe = ln_param_list_find2(op_arg->params, opname, "pooling_type");
-     ln_opck_param_satisfy_msg(str_to_pooling_type(pe->value_string) != -1,
-                               "unsupported pooling type");
+    ln_param_entry *pe;
+    pe = ln_param_list_find2(op_arg->params, opname, "pooling_type");
+    ln_opck_param_satisfy_msg(str_to_pooling_type(pe->value_string) != -1,
+                              "unsupported pooling type");
 }
 
 static void check_softmax(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
-     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
 #if NV_TENSORRT_MAJOR >= 4
-     check_param(opname, "axes", LN_PARAM_NUMBER, 0, op_arg, error);
+    check_param(opname, "axes", LN_PARAM_NUMBER, 0, op_arg, error);
 #endif
 }
 
 static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
-     check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
 #if NV_TENSORRT_MAJOR >= 4
-     check_param(opname, "axis", LN_PARAM_NUMBER, 0, op_arg, error);
+    check_param(opname, "axis", LN_PARAM_NUMBER, 0, op_arg, error);
 #endif
 }
 
 static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
-     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "shift", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "scale", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "power", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-     check_param(opname, "scale_mode", LN_PARAM_NUMBER, 0, op_arg, error);
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "shift", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "scale", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "power", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    check_param(opname, "scale_mode", LN_PARAM_NUMBER, 0, op_arg, error);
 
-     ln_param_entry *pe;
-     pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
-     ln_opck_param_satisfy_msg(str_to_scale_mode(pe->value_string) != -1,
-                               "unsupported scale mode");
+    ln_param_entry *pe;
+    pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
+    ln_opck_param_satisfy_msg(str_to_scale_mode(pe->value_string) != -1,
+                              "unsupported scale mode");
 }
 
 void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
 {
-     int tensors_n;
-     ln_param_entry *pe;
-     ln_tensor_list_entry *tle;
-     ln_tensor_entry *te;
-     ln_list *l;
+    int tensors_n;
+    ln_param_entry *pe;
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
+    ln_list *l;
 
-     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_opck_tensors_in_len_gt(tensors_n, 0);
+    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_gt(tensors_n, 0);
 
-     for (l = op_arg->tensors_in; l; l = l->next) {
-           tle = (ln_tensor_list_entry *)l->data;
-          if (!strncmp(tle->arg_name, "src", 3)) {
-               te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-               ln_opck_tensor_defined(te, tle->name);
-               ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
-               ln_opck_tensor_satisfy_msg(te->tensor->ndim == 4,
-                                          "\"src*\" should be a 4-dimensional tensor");
-               ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
-                       "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
-                       op_arg->optype, op_arg->name, te->name,
-                       tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
-          } else if (!strncmp(tle->arg_name, "weight", 6)) {
-               te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-               ln_opck_tensor_defined(te, tle->name);
-               ln_opck_tensor_mtype_eq(te, LN_MEM_CPU);
-               ln_opck_tensor_isstatic(te);
-               ln_opck(LN_ERROR, tl_dtype_to_weight_DataType(te->tensor->dtype) != -1,
-                       "%s: \"%s\"'s tensor %s have unsupported weight tensor dtype %s for building TensorRT %s model",
-                       op_arg->optype, op_arg->name, te->name,
-                       tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
-          }
-     }
+    for (l = op_arg->tensors_in; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        if (!strncmp(tle->arg_name, "src", 3)) {
+            te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+            ln_opck_tensor_defined(te, tle->name);
+            ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
+            ln_opck_tensor_satisfy_msg(te->tensor->ndim == 4,
+                                       "\"src*\" should be a 4-dimensional tensor");
+            ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
+                    "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
+                    op_arg->optype, op_arg->name, te->name,
+                    tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
+        } else if (!strncmp(tle->arg_name, "weight", 6)) {
+            te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+            ln_opck_tensor_defined(te, tle->name);
+            ln_opck_tensor_mtype_eq(te, LN_MEM_CPU);
+            ln_opck_tensor_isstatic(te);
+            ln_opck(LN_ERROR, tl_dtype_to_weight_DataType(te->tensor->dtype) != -1,
+                    "%s: \"%s\"'s tensor %s have unsupported weight tensor dtype %s for building TensorRT %s model",
+                    op_arg->optype, op_arg->name, te->name,
+                    tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
+        }
+    }
 
-     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_opck_tensors_out_len_gt(tensors_n, 0);
+    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_gt(tensors_n, 0);
 
-     for (l = op_arg->tensors_out; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          if (!strncmp(tle->arg_name, "dst", 3)) {
-               te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-               ln_opck_tensor_not_defined(te, tle->name);
-          }
-     }
+    for (l = op_arg->tensors_out; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        if (!strncmp(tle->arg_name, "dst", 3)) {
+            te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+            ln_opck_tensor_not_defined(te, tle->name);
+        }
+    }
 
-     for (l = op_arg->params; l; l = l->next) {
-          pe = (ln_param_entry *)l->data;
-          if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
-               continue;
-          ln_opck_param_type(pe, LN_PARAM_STRING);
-          if (!strcmp(pe->value_string, "conv"))
-               check_conv(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "activation"))
-               check_activation(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "pooling"))
-               check_pooling(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "softmax"))
-               check_softmax(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "concat"))
-               check_concat(pe->arg_name, op_arg, error);
-          else if (!strcmp(pe->value_string, "scale"))
-               check_scale(pe->arg_name, op_arg, error);
-          else
-               ln_opck_param_error(0, "unsupported TensorRT operator");
-     }
-     pe = ln_param_list_find(op_arg->params, "batch_size");
-     ln_opck_param_exist(pe, "batch_size");
-     ln_opck_param_type(pe, LN_PARAM_NUMBER);
-     ln_opck_param_satisfy_msg(pe->value_int > 0, "\"batch_size\" should be a positive integer");
+    for (l = op_arg->params; l; l = l->next) {
+        pe = (ln_param_entry *)l->data;
+        if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+            continue;
+        ln_opck_param_type(pe, LN_PARAM_STRING);
+        if (!strcmp(pe->value_string, "conv"))
+            check_conv(pe->arg_name, op_arg, error);
+        else if (!strcmp(pe->value_string, "activation"))
+            check_activation(pe->arg_name, op_arg, error);
+        else if (!strcmp(pe->value_string, "pooling"))
+            check_pooling(pe->arg_name, op_arg, error);
+        else if (!strcmp(pe->value_string, "softmax"))
+            check_softmax(pe->arg_name, op_arg, error);
+        else if (!strcmp(pe->value_string, "concat"))
+            check_concat(pe->arg_name, op_arg, error);
+        else if (!strcmp(pe->value_string, "scale"))
+            check_scale(pe->arg_name, op_arg, error);
+        else
+            ln_opck_param_error(0, "unsupported TensorRT operator");
+    }
+    pe = ln_param_list_find(op_arg->params, "batch_size");
+    ln_opck_param_exist(pe, "batch_size");
+    ln_opck_param_type(pe, LN_PARAM_NUMBER);
+    ln_opck_param_satisfy_msg(pe->value_int > 0, "\"batch_size\" should be a positive integer");
 
-     tl_dtype dtype;
-     char *arg_name;
-     for (l = op_arg->tensors_out; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
-          pe = ln_param_list_find(op_arg->params, arg_name);
-          ln_opck_param_exist(pe, arg_name);
-          ln_opck_param_type(pe, LN_PARAM_ARRAY_NUMBER);
-          ln_opck_param_array_len_gt(pe, 0);
-          ln_free(arg_name);
+    tl_dtype dtype;
+    char *arg_name;
+    for (l = op_arg->tensors_out; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
+        pe = ln_param_list_find(op_arg->params, arg_name);
+        ln_opck_param_exist(pe, arg_name);
+        ln_opck_param_type(pe, LN_PARAM_ARRAY_NUMBER);
+        ln_opck_param_array_len_gt(pe, 0);
+        ln_free(arg_name);
 
-          arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
-          pe = ln_param_list_find(op_arg->params, arg_name);
-          ln_opck_param_exist(pe, arg_name);
-          ln_opck_param_type(pe, LN_PARAM_ARRAY_STRING);
-          dtype = tl_dtype_from_str(pe->value_string);
-          ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
-                  "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",
-                  op_arg->optype, op_arg->name, arg_name, tl_dtype_name(dtype),
-                  ln_tensorrt_version_str());
-          ln_free(arg_name);
-     }
+        arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
+        pe = ln_param_list_find(op_arg->params, arg_name);
+        ln_opck_param_exist(pe, arg_name);
+        ln_opck_param_type(pe, LN_PARAM_ARRAY_STRING);
+        dtype = tl_dtype_from_str(pe->value_string);
+        ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
+                "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",
+                op_arg->optype, op_arg->name, arg_name, tl_dtype_name(dtype),
+                ln_tensorrt_version_str());
+        ln_free(arg_name);
+    }
 }
 
 class Logger : public ILogger
 {
 public:
-     void log(ILogger::Severity severity, const char* msg) override
-          {
-               // suppress info-level messages
-               if (severity == Severity::kINFO) return;
+    void log(ILogger::Severity severity, const char* msg) override
+        {
+            // suppress info-level messages
+            if (severity == Severity::kINFO) return;
 
-               switch (severity)
-               {
-               case Severity::kINTERNAL_ERROR: std::cerr << "INTERNAL_ERROR: "; break;
-               case Severity::kERROR: std::cerr << "ERROR: "; break;
-               case Severity::kWARNING: std::cerr << "WARNING: "; break;
-               case Severity::kINFO: std::cerr << "INFO: "; break;
-               default: std::cerr << "UNKNOWN: "; break;
-               }
-               std::cerr << msg << std::endl;
-          }
+            switch (severity)
+            {
+            case Severity::kINTERNAL_ERROR: std::cerr << "INTERNAL_ERROR: "; break;
+            case Severity::kERROR: std::cerr << "ERROR: "; break;
+            case Severity::kWARNING: std::cerr << "WARNING: "; break;
+            case Severity::kINFO: std::cerr << "INFO: "; break;
+            default: std::cerr << "UNKNOWN: "; break;
+            }
+            std::cerr << msg << std::endl;
+        }
 };
 
 static Logger global_logger;
@@ -331,24 +331,24 @@ static size_t max_workspace = 1 << 20; // TODO: what's the difference?
 
 static std::map<std::string, Weights> create_weight_map(ln_op_arg *op_arg)
 {
-     std::map<std::string, Weights> weights;
-     ln_tensor_list_entry *tle;
-     ln_tensor_entry *te;
-     Weights wt;
-     ln_list *l;
+    std::map<std::string, Weights> weights;
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
+    Weights wt;
+    ln_list *l;
 
-     for (l = op_arg->tensors_in; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          if (strncmp(tle->arg_name, "weight", 6))
-               continue;
-          te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-          wt.type = (DataType)tl_dtype_to_weight_DataType(te->tensor->dtype);
-          wt.values = te->tensor->data;
-          wt.count = te->tensor->len;
-          weights[te->name] = wt;
-     }
+    for (l = op_arg->tensors_in; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        if (strncmp(tle->arg_name, "weight", 6))
+            continue;
+        te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+        wt.type = (DataType)tl_dtype_to_weight_DataType(te->tensor->dtype);
+        wt.values = te->tensor->data;
+        wt.count = te->tensor->len;
+        weights[te->name] = wt;
+    }
 
-     return weights;
+    return weights;
 }
 
 static void add_conv(INetworkDefinition *network,
@@ -356,206 +356,206 @@ static void add_conv(INetworkDefinition *network,
                      std::map<std::string, Weights> &weights,
                      char *opname, ln_op_arg *op_arg)
 {
-     char *src;
-     char *weight;
-     char *bias;
-     char *dst;
-     int group;
-     int output_c;
-     int *size;
-     int *stride;
-     int *padding;
-     int *dilation;
-     ln_param_entry *pe;
+    char *src;
+    char *weight;
+    char *bias;
+    char *dst;
+    int group;
+    int output_c;
+    int *size;
+    int *stride;
+    int *padding;
+    int *dilation;
+    ln_param_entry *pe;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src");
-     assert(pe);
-     src = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "weight");
-     assert(pe);
-     weight = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "weight");
+    assert(pe);
+    weight = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "bias");
-     assert(pe);
-     bias = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "bias");
+    assert(pe);
+    bias = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dst");
-     assert(pe);
-     dst = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "group");
-     assert(pe);
-     group = pe->value_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "group");
+    assert(pe);
+    group = pe->value_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "output_c");
-     assert(pe);
-     output_c = pe->value_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "output_c");
+    assert(pe);
+    output_c = pe->value_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "size");
-     assert(pe);
-     size = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "size");
+    assert(pe);
+    size = pe->value_array_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "stride");
-     assert(pe);
-     stride = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "stride");
+    assert(pe);
+    stride = pe->value_array_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "padding");
-     assert(pe);
-     padding = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "padding");
+    assert(pe);
+    padding = pe->value_array_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dilation");
-     assert(pe);
-     dilation = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "dilation");
+    assert(pe);
+    dilation = pe->value_array_int;
 
-     IConvolutionLayer *conv;
-     conv = network->addConvolution(*tensors[src], output_c,
-                                    DimsHW(size[0], size[1]),
-                                    weights[weight],
-                                    weights[bias]);
-     assert(conv);
-     conv->setNbGroups(group);
-     conv->setStride(DimsHW(stride[0], stride[1]));
-     conv->setPadding(DimsHW(padding[0], padding[1]));
-     conv->setDilation(DimsHW(dilation[0], dilation[1]));
-     tensors[dst] = conv->getOutput(0);
+    IConvolutionLayer *conv;
+    conv = network->addConvolution(*tensors[src], output_c,
+                                   DimsHW(size[0], size[1]),
+                                   weights[weight],
+                                   weights[bias]);
+    assert(conv);
+    conv->setNbGroups(group);
+    conv->setStride(DimsHW(stride[0], stride[1]));
+    conv->setPadding(DimsHW(padding[0], padding[1]));
+    conv->setDilation(DimsHW(dilation[0], dilation[1]));
+    tensors[dst] = conv->getOutput(0);
 }
 
 static void add_activation(INetworkDefinition *network,
                            std::map<std::string, ITensor*> &tensors,
                            char *opname, ln_op_arg *op_arg)
 {
-     char *src;
-     char *dst;
-     char *activation_type;
-     ln_param_entry *pe;
+    char *src;
+    char *dst;
+    char *activation_type;
+    ln_param_entry *pe;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src");
-     assert(pe);
-     src = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dst");
-     assert(pe);
-     dst = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "activation_type");
-     assert(pe);
-     activation_type = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "activation_type");
+    assert(pe);
+    activation_type = pe->value_string;
 
-     IActivationLayer *activation;
-     activation = network->addActivation(*tensors[src],
-                                         (ActivationType)str_to_activation_type(activation_type));
-     assert(activation);
-     tensors[dst] = activation->getOutput(0);
+    IActivationLayer *activation;
+    activation = network->addActivation(*tensors[src],
+                                        (ActivationType)str_to_activation_type(activation_type));
+    assert(activation);
+    tensors[dst] = activation->getOutput(0);
 }
 
 static void add_pooling(INetworkDefinition *network,
                         std::map<std::string, ITensor*> &tensors,
                         char *opname, ln_op_arg *op_arg)
 {
-     char *src;
-     char *dst;
-     char *pooling_type;
-     int *size;
-     int *stride;
-     int *padding;
-     ln_param_entry *pe;
+    char *src;
+    char *dst;
+    char *pooling_type;
+    int *size;
+    int *stride;
+    int *padding;
+    ln_param_entry *pe;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src");
-     assert(pe);
-     src = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dst");
-     assert(pe);
-     dst = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "pooling_type");
-     assert(pe);
-     pooling_type = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "pooling_type");
+    assert(pe);
+    pooling_type = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "size");
-     assert(pe);
-     size = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "size");
+    assert(pe);
+    size = pe->value_array_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "stride");
-     assert(pe);
-     stride = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "stride");
+    assert(pe);
+    stride = pe->value_array_int;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "padding");
-     assert(pe);
-     padding = pe->value_array_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "padding");
+    assert(pe);
+    padding = pe->value_array_int;
 
-     IPoolingLayer *pooling;
-     pooling = network->addPooling(*tensors[src],
-                                   (PoolingType)str_to_pooling_type(pooling_type),
-                                   DimsHW(size[0], size[1]));
-     assert(pooling);
-     pooling->setStride(DimsHW(stride[0], stride[1]));
-     pooling->setPadding(DimsHW(padding[0], padding[1]));
-     tensors[dst] = pooling->getOutput(0);
+    IPoolingLayer *pooling;
+    pooling = network->addPooling(*tensors[src],
+                                  (PoolingType)str_to_pooling_type(pooling_type),
+                                  DimsHW(size[0], size[1]));
+    assert(pooling);
+    pooling->setStride(DimsHW(stride[0], stride[1]));
+    pooling->setPadding(DimsHW(padding[0], padding[1]));
+    tensors[dst] = pooling->getOutput(0);
 }
 
 static void add_softmax(INetworkDefinition *network,
                         std::map<std::string, ITensor*> &tensors,
                         char *opname, ln_op_arg *op_arg)
 {
-     ln_param_entry *pe;
+    ln_param_entry *pe;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src");
-     assert(pe);
-     char *src = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    char *src = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dst");
-     assert(pe);
-     char *dst = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    char *dst = pe->value_string;
 
 #if NV_TENSORRT_MAJOR >= 4
-     pe = ln_param_list_find2(op_arg->params, opname, "axes");
-     assert(pe);
-     uint32_t axes = (uint32_t)pe->value_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "axes");
+    assert(pe);
+    uint32_t axes = (uint32_t)pe->value_int;
 #endif
 
-     ISoftMaxLayer *softmax;
-     softmax = network->addSoftMax(*tensors[src]);
-     assert(softmax);
+    ISoftMaxLayer *softmax;
+    softmax = network->addSoftMax(*tensors[src]);
+    assert(softmax);
 #if NV_TENSORRT_MAJOR >= 4
-     softmax->setAxes(axes);
+    softmax->setAxes(axes);
 #endif
-     tensors[dst] = softmax->getOutput(0);
+    tensors[dst] = softmax->getOutput(0);
 }
 
 static void add_concat(INetworkDefinition *network,
                        std::map<std::string, ITensor*> &tensors,
                        char *opname, ln_op_arg *op_arg)
 {
-     ln_param_entry *pe;
+    ln_param_entry *pe;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src1");
-     assert(pe);
-     char *src1 = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src1");
+    assert(pe);
+    char *src1 = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src2");
-     assert(pe);
-     char *src2 = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src2");
+    assert(pe);
+    char *src2 = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dst");
-     assert(pe);
-     char *dst = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    char *dst = pe->value_string;
 
 #if NV_TENSORRT_MAJOR >= 4
-     pe = ln_param_list_find2(op_arg->params, opname, "axis");
-     assert(pe);
-     int axis = pe->value_int;
+    pe = ln_param_list_find2(op_arg->params, opname, "axis");
+    assert(pe);
+    int axis = pe->value_int;
 #endif
 
-     IConcatenationLayer *concat;
-     ITensor *concat_tensors[2] = {tensors[src1], tensors[src2]};
-     concat = network->addConcatenation(concat_tensors, 2);
-     assert(concat);
+    IConcatenationLayer *concat;
+    ITensor *concat_tensors[2] = {tensors[src1], tensors[src2]};
+    concat = network->addConcatenation(concat_tensors, 2);
+    assert(concat);
 #if NV_TENSORRT_MAJOR >= 4
-     concat->setAxis(axis);
+    concat->setAxis(axis);
 #endif
-     tensors[dst] = concat->getOutput(0);
+    tensors[dst] = concat->getOutput(0);
 }
 
 static void add_scale(INetworkDefinition *network,
@@ -563,162 +563,162 @@ static void add_scale(INetworkDefinition *network,
                       std::map<std::string, Weights> &weights,
                       char *opname, ln_op_arg *op_arg)
 {
-     char *src;
-     char *shift;
-     char *scale;
-     char *power;
-     char *dst;
-     char *scale_mode;
-     ln_param_entry *pe;
+    char *src;
+    char *shift;
+    char *scale;
+    char *power;
+    char *dst;
+    char *scale_mode;
+    ln_param_entry *pe;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "src");
-     assert(pe);
-     src = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "dst");
-     assert(pe);
-     dst = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "shift");
-     assert(pe);
-     shift = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "shift");
+    assert(pe);
+    shift = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "scale");
-     assert(pe);
-     scale = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "scale");
+    assert(pe);
+    scale = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "power");
-     assert(pe);
-     power = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "power");
+    assert(pe);
+    power = pe->value_string;
 
-     pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
-     assert(pe);
-     scale_mode = pe->value_string;
+    pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
+    assert(pe);
+    scale_mode = pe->value_string;
 
-     IScaleLayer *scale_layer;
-     scale_layer = network->addScale(*tensors[src], (ScaleMode)str_to_scale_mode(scale_mode), weights[shift], weights[scale], weights[power]);
-     assert(scale_layer);
-     tensors[dst] = scale_layer->getOutput(0);
+    IScaleLayer *scale_layer;
+    scale_layer = network->addScale(*tensors[src], (ScaleMode)str_to_scale_mode(scale_mode), weights[shift], weights[scale], weights[power]);
+    assert(scale_layer);
+    tensors[dst] = scale_layer->getOutput(0);
 }
 
 static ICudaEngine *create_engine(ln_op_arg *op_arg)
 {
-     IBuilder *builder = createInferBuilder(global_logger);
-     INetworkDefinition *network = builder->createNetwork();
-     std::map<std::string, Weights> weights = create_weight_map(op_arg);
-     std::map<std::string, ITensor*> tensors;
+    IBuilder *builder = createInferBuilder(global_logger);
+    INetworkDefinition *network = builder->createNetwork();
+    std::map<std::string, Weights> weights = create_weight_map(op_arg);
+    std::map<std::string, ITensor*> tensors;
 
-     ln_tensor_entry *te;
-     ln_tensor_list_entry *tle;
-     ln_list *l;
-     DataType dt;
-     for (l = op_arg->tensors_in; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          if (strncmp(tle->arg_name, "src", 3))
-               continue;
-          te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-          dt = (DataType)tl_dtype_to_ioTensor_DataType(te->tensor->dtype);
-          tensors[te->name] = network->addInput(te->name, dt,
-                                                DimsNCHW(te->tensor->dims[0],
-                                                         te->tensor->dims[1],
-                                                         te->tensor->dims[2],
-                                                         te->tensor->dims[3]));
-     }
+    ln_tensor_entry *te;
+    ln_tensor_list_entry *tle;
+    ln_list *l;
+    DataType dt;
+    for (l = op_arg->tensors_in; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        if (strncmp(tle->arg_name, "src", 3))
+            continue;
+        te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+        dt = (DataType)tl_dtype_to_ioTensor_DataType(te->tensor->dtype);
+        tensors[te->name] = network->addInput(te->name, dt,
+                                              DimsNCHW(te->tensor->dims[0],
+                                                       te->tensor->dims[1],
+                                                       te->tensor->dims[2],
+                                                       te->tensor->dims[3]));
+    }
 
-     ln_param_entry *pe;
-     for (l = op_arg->params; l; l = l->next) {
-          pe = (ln_param_entry *)l->data;
-          if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
-               continue;
-          if (!strcmp(pe->value_string, "conv"))
-               add_conv(network, tensors, weights, pe->arg_name, op_arg);
-          else if (!strcmp(pe->value_string, "activation"))
-               add_activation(network, tensors, pe->arg_name, op_arg);
-          else if (!strcmp(pe->value_string, "pooling"))
-               add_pooling(network, tensors, pe->arg_name, op_arg);
-          else if (!strcmp(pe->value_string, "softmax"))
-               add_softmax(network, tensors, pe->arg_name, op_arg);
-          else if (!strcmp(pe->value_string, "concat"))
-               add_concat(network, tensors, pe->arg_name, op_arg);
-          else if (!strcmp(pe->value_string, "scale"))
-               add_scale(network, tensors, weights, pe->arg_name, op_arg);
-          else
-               assert(0 && "unsupported TensorRT operator");
-     }
+    ln_param_entry *pe;
+    for (l = op_arg->params; l; l = l->next) {
+        pe = (ln_param_entry *)l->data;
+        if (strncmp(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+            continue;
+        if (!strcmp(pe->value_string, "conv"))
+            add_conv(network, tensors, weights, pe->arg_name, op_arg);
+        else if (!strcmp(pe->value_string, "activation"))
+            add_activation(network, tensors, pe->arg_name, op_arg);
+        else if (!strcmp(pe->value_string, "pooling"))
+            add_pooling(network, tensors, pe->arg_name, op_arg);
+        else if (!strcmp(pe->value_string, "softmax"))
+            add_softmax(network, tensors, pe->arg_name, op_arg);
+        else if (!strcmp(pe->value_string, "concat"))
+            add_concat(network, tensors, pe->arg_name, op_arg);
+        else if (!strcmp(pe->value_string, "scale"))
+            add_scale(network, tensors, weights, pe->arg_name, op_arg);
+        else
+            assert(0 && "unsupported TensorRT operator");
+    }
 
-     for (l = op_arg->tensors_out; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          tensors[tle->name]->setName(tle->name);
-          network->markOutput(*tensors[tle->name]);
-     }
+    for (l = op_arg->tensors_out; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        tensors[tle->name]->setName(tle->name);
+        network->markOutput(*tensors[tle->name]);
+    }
 
-     pe = ln_param_list_find(op_arg->params, "batch_size");
-     builder->setMaxBatchSize(pe->value_int);
-     builder->setMaxWorkspaceSize(max_workspace);
+    pe = ln_param_list_find(op_arg->params, "batch_size");
+    builder->setMaxBatchSize(pe->value_int);
+    builder->setMaxWorkspaceSize(max_workspace);
 
-     ICudaEngine *engine = builder->buildCudaEngine(*network);
-     network->destroy();
-     builder->destroy();
+    ICudaEngine *engine = builder->buildCudaEngine(*network);
+    network->destroy();
+    builder->destroy();
 
-     return engine;
+    return engine;
 }
 
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
 {
-     ICudaEngine *engine;
-     IExecutionContext *context;
-     void **bindings;
-     int batch_size;
-     ln_tensorrt_bundle *bundle;
+    ICudaEngine *engine;
+    IExecutionContext *context;
+    void **bindings;
+    int batch_size;
+    ln_tensorrt_bundle *bundle;
 
-     ln_list *l;
-     ln_tensor_list_entry *tle;
-     ln_tensor_entry *te;
-     int index;
+    ln_list *l;
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
+    int index;
 
-     engine = create_engine(op_arg);
-     context = engine->createExecutionContext();
-     bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
-     for (l = op_arg->tensors_in; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          if (strncmp(tle->arg_name, "src", 3))
-               continue;
-          index = engine->getBindingIndex(tle->name);
-          te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-          bindings[index] = te->tensor->data;
-     }
-     for (l = op_arg->tensors_out; l; l = l->next) {
-          tle = (ln_tensor_list_entry *)l->data;
-          if (strncmp(tle->arg_name, "dst", 3))
-               continue;
-          index = engine->getBindingIndex(tle->name);
-          te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
-          bindings[index] = te->tensor->data;
-     }
-     batch_size = engine->getMaxBatchSize(); // TODO: make batch_size flexible?
+    engine = create_engine(op_arg);
+    context = engine->createExecutionContext();
+    bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
+    for (l = op_arg->tensors_in; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        if (strncmp(tle->arg_name, "src", 3))
+            continue;
+        index = engine->getBindingIndex(tle->name);
+        te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+        bindings[index] = te->tensor->data;
+    }
+    for (l = op_arg->tensors_out; l; l = l->next) {
+        tle = (ln_tensor_list_entry *)l->data;
+        if (strncmp(tle->arg_name, "dst", 3))
+            continue;
+        index = engine->getBindingIndex(tle->name);
+        te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
+        bindings[index] = te->tensor->data;
+    }
+    batch_size = engine->getMaxBatchSize(); // TODO: make batch_size flexible?
 
-     bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
-     bundle->engine = engine;
-     bundle->context = context;
-     bundle->bindings = bindings;
-     bundle->batch_size = batch_size;
+    bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
+    bundle->engine = engine;
+    bundle->context = context;
+    bundle->bindings = bindings;
+    bundle->batch_size = batch_size;
 
-     return bundle;
+    return bundle;
 }
 
 void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle)
 {
-     if (!bundle)
-          return;
-     if (bundle->engine) {
-          bundle->context->destroy();
-          bundle->engine->destroy();
-          ln_free(bundle->bindings);
-     }
-     ln_free(bundle);
+    if (!bundle)
+        return;
+    if (bundle->engine) {
+        bundle->context->destroy();
+        bundle->engine->destroy();
+        ln_free(bundle->bindings);
+    }
+    ln_free(bundle);
 }
 
 void ln_tensorrt_bundle_execute(ln_tensorrt_bundle *bundle)
 {
-     bundle->context->execute(bundle->batch_size, bundle->bindings);
+    bundle->context->execute(bundle->batch_size, bundle->bindings);
 }

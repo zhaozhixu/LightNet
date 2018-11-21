@@ -24,15 +24,15 @@
 #include "ln_op.h"
 
 struct priv_s {
-     tl_tensor *src;
-     tl_tensor *weight;
-     tl_tensor *dst;
-     char      *dst_name;
-     int       *size;
-     int       *stride;
-     int       *padding;
-     int       *dilation;
-     int        group;
+    tl_tensor *src;
+    tl_tensor *weight;
+    tl_tensor *dst;
+    char      *dst_name;
+    int       *size;
+    int       *stride;
+    int       *padding;
+    int       *dilation;
+    int        group;
 };
 
 /*
@@ -40,124 +40,124 @@ struct priv_s {
  */
 static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-     char *src_name, *weight_name, *bias_name, *dst_name;
-     ln_tensor_entry *src_entry, *weight_entry, *bias_entry,  *dst_entry;
-     ln_param_entry *group_entry, *size_entry, *stride_entry,
-          *padding_entry, *dilation_entry;
-     int tensors_n, params_n;
-     tl_tensor *dst_tensor;
-     int       *size;
-     int       *stride;
-     int       *padding;
-     int       *dilation;
-     int        group;
-     struct priv_s *priv;
+    char *src_name, *weight_name, *bias_name, *dst_name;
+    ln_tensor_entry *src_entry, *weight_entry, *bias_entry,  *dst_entry;
+    ln_param_entry *group_entry, *size_entry, *stride_entry,
+        *padding_entry, *dilation_entry;
+    int tensors_n, params_n;
+    tl_tensor *dst_tensor;
+    int       *size;
+    int       *stride;
+    int       *padding;
+    int       *dilation;
+    int        group;
+    struct priv_s *priv;
 
-     /* check tensors and parameters */
-     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-     ln_opck_tensors_in_len_eq(tensors_n, 2);
+    /* check tensors and parameters */
+    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_eq(tensors_n, 2);
 
-     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-     ln_opck_tensors_out_len_eq(tensors_n, 1);
+    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_eq(tensors_n, 1);
 
-     src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-     ln_opck_tensor_in_exist(src_name, "src");
-     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
-     ln_opck_tensor_defined(src_entry, src_name);
-     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
-     ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
-                                "`src` should be a 4-dimensional tensor");
+    src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
+    ln_opck_tensor_in_exist(src_name, "src");
+    src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
+    ln_opck_tensor_defined(src_entry, src_name);
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
+    ln_opck_tensor_satisfy_msg(src_entry->tensor->ndim == 4,
+                               "`src` should be a 4-dimensional tensor");
 
-     weight_name = ln_tensor_list_find_name(op_arg->tensors_in, "weight");
-     ln_opck_tensor_in_exist(weight_name, "weight");
-     weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
-     ln_opck_tensor_defined(weight_entry, weight_name);
-     ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_CPU);
-     ln_opck_tensor_satisfy_msg(weight_entry->tensor->ndim == 5,
-                                "`weight` should be a 5-dimensional tensor");
+    weight_name = ln_tensor_list_find_name(op_arg->tensors_in, "weight");
+    ln_opck_tensor_in_exist(weight_name, "weight");
+    weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
+    ln_opck_tensor_defined(weight_entry, weight_name);
+    ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_CPU);
+    ln_opck_tensor_satisfy_msg(weight_entry->tensor->ndim == 5,
+                               "`weight` should be a 5-dimensional tensor");
 
-     bias_name = ln_tensor_list_find_name(op_arg->tensors_in, "bias");
-     ln_opck_tensor_in_exist(bias_name, "bias");
-     bias_entry = ln_tensor_table_find(op_arg->tensor_table, bias_name);
-     ln_opck_tensor_defined(bias_entry, bias_name);
-     ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CPU);
-     ln_opck_tensor_satisfy_msg(bias_entry->tensor->ndim == 1,
-                                "`bias` should be a 1-dimensional tensor");
-     ln_opck_tensor_satisfy_msg(bias_entry->tensor->dims[0]
-                                == weight_entry->tensor->dims[1],
-                                "`bias` should have the size of the number of output feature map (the second dimision of `weight`)");
+    bias_name = ln_tensor_list_find_name(op_arg->tensors_in, "bias");
+    ln_opck_tensor_in_exist(bias_name, "bias");
+    bias_entry = ln_tensor_table_find(op_arg->tensor_table, bias_name);
+    ln_opck_tensor_defined(bias_entry, bias_name);
+    ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CPU);
+    ln_opck_tensor_satisfy_msg(bias_entry->tensor->ndim == 1,
+                               "`bias` should be a 1-dimensional tensor");
+    ln_opck_tensor_satisfy_msg(bias_entry->tensor->dims[0]
+                               == weight_entry->tensor->dims[1],
+                               "`bias` should have the size of the number of output feature map (the second dimision of `weight`)");
 
-     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-     ln_opck_tensor_out_exist(dst_name, "dst");
-     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-     ln_opck_tensor_not_defined(dst_entry, dst_name);
+    dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
+    ln_opck_tensor_out_exist(dst_name, "dst");
+    dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
+    ln_opck_tensor_not_defined(dst_entry, dst_name);
 
-     params_n = ln_param_list_length(op_arg->params);
-     ln_opck_params_len_eq(params_n, 5);
+    params_n = ln_param_list_length(op_arg->params);
+    ln_opck_params_len_eq(params_n, 5);
 
-     /* TODO: check the group */
-     group_entry = ln_param_list_find(op_arg->params, "group");
-     ln_opck_param_exist(group_entry, "group");
-     ln_opck_param_type(group_entry, LN_PARAM_NUMBER);
-     group = group_entry->value_int;
-     ln_opck_param_satisfy_msg(group == weight_entry->tensor->dims[0],
-                               "`group` should be equal to the first dimension of `weight`");
+    /* TODO: check the group */
+    group_entry = ln_param_list_find(op_arg->params, "group");
+    ln_opck_param_exist(group_entry, "group");
+    ln_opck_param_type(group_entry, LN_PARAM_NUMBER);
+    group = group_entry->value_int;
+    ln_opck_param_satisfy_msg(group == weight_entry->tensor->dims[0],
+                              "`group` should be equal to the first dimension of `weight`");
 
-     size_entry = ln_param_list_find(op_arg->params, "size");
-     ln_opck_param_exist(size_entry, "size");
-     ln_opck_param_type(size_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_opck_param_array_len_eq(size_entry, 2);
-     size = size_entry->value_array_int;
+    size_entry = ln_param_list_find(op_arg->params, "size");
+    ln_opck_param_exist(size_entry, "size");
+    ln_opck_param_type(size_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(size_entry, 2);
+    size = size_entry->value_array_int;
 
-     stride_entry = ln_param_list_find(op_arg->params, "stride");
-     ln_opck_param_exist(stride_entry, "stride");
-     ln_opck_param_type(stride_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_opck_param_array_len_eq(stride_entry, 2);
-     stride = stride_entry->value_array_int;
+    stride_entry = ln_param_list_find(op_arg->params, "stride");
+    ln_opck_param_exist(stride_entry, "stride");
+    ln_opck_param_type(stride_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(stride_entry, 2);
+    stride = stride_entry->value_array_int;
 
-     padding_entry = ln_param_list_find(op_arg->params, "padding");
-     ln_opck_param_exist(padding_entry, "padding");
-     ln_opck_param_type(padding_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_opck_param_array_len_eq(padding_entry, 4);
-     padding = padding_entry->value_array_int;
+    padding_entry = ln_param_list_find(op_arg->params, "padding");
+    ln_opck_param_exist(padding_entry, "padding");
+    ln_opck_param_type(padding_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(padding_entry, 4);
+    padding = padding_entry->value_array_int;
 
-     /* TODO: check this throughly */
-     dilation_entry = ln_param_list_find(op_arg->params, "dilation");
-     ln_opck_param_exist(dilation_entry, "dilation");
-     ln_opck_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
-     ln_opck_param_array_len_eq(dilation_entry, 2);
-     dilation = dilation_entry->value_array_int;
+    /* TODO: check this throughly */
+    dilation_entry = ln_param_list_find(op_arg->params, "dilation");
+    ln_opck_param_exist(dilation_entry, "dilation");
+    ln_opck_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(dilation_entry, 2);
+    dilation = dilation_entry->value_array_int;
 
-     ln_opck_param_satisfy_msg(size[0] == weight_entry->tensor->dims[3] &&
-                               size[1] == weight_entry->tensor->dims[4],
-                               "`size` should match the last two dimensions of `weight`");
+    ln_opck_param_satisfy_msg(size[0] == weight_entry->tensor->dims[3] &&
+                              size[1] == weight_entry->tensor->dims[4],
+                              "`size` should match the last two dimensions of `weight`");
 
-     /* define output tensor shape, tensor data should be NULL */
-     int dims[4];
-     dims[0] = src_entry->tensor->dims[0];
-     dims[1] = weight_entry->tensor->dims[1];
-     dims[2] = ln_compute_output_dim(src_entry->tensor->dims[2], size[0],
-                                     stride[0], padding[0] + padding[1]);
-     dims[3] = ln_compute_output_dim(src_entry->tensor->dims[3], size[1],
-                                     stride[1], padding[2] + padding[3]);
-     dst_tensor = tl_tensor_create(NULL, 4, dims, src_entry->tensor->dtype);
-     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
-     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-     dst_entry->mtype = LN_MEM_CUDA;
-     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
+    /* define output tensor shape, tensor data should be NULL */
+    int dims[4];
+    dims[0] = src_entry->tensor->dims[0];
+    dims[1] = weight_entry->tensor->dims[1];
+    dims[2] = ln_compute_output_dim(src_entry->tensor->dims[2], size[0],
+                                    stride[0], padding[0] + padding[1]);
+    dims[3] = ln_compute_output_dim(src_entry->tensor->dims[3], size[1],
+                                    stride[1], padding[2] + padding[3]);
+    dst_tensor = tl_tensor_create(NULL, 4, dims, src_entry->tensor->dtype);
+    dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+    ln_tensor_entry_set_creater(dst_entry, op_arg->name);
+    dst_entry->mtype = LN_MEM_CUDA;
+    ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
 
-     /* use op_arg->priv to store private data to be used in other functions */
-     priv = ln_alloc(sizeof(struct priv_s));
-     priv->dilation = dilation;
-     priv->dst = dst_tensor;
-     priv->dst_name = dst_name;
-     priv->group = group;
-     priv->padding = padding;
-     priv->size = size;
-     priv->src = src_entry->tensor;
-     priv->stride = stride;
-     priv->weight = weight_entry->tensor;
-     op_arg->priv = priv;
+    /* use op_arg->priv to store private data to be used in other functions */
+    priv = ln_alloc(sizeof(struct priv_s));
+    priv->dilation = dilation;
+    priv->dst = dst_tensor;
+    priv->dst_name = dst_name;
+    priv->group = group;
+    priv->padding = padding;
+    priv->size = size;
+    priv->src = src_entry->tensor;
+    priv->stride = stride;
+    priv->weight = weight_entry->tensor;
+    op_arg->priv = priv;
 }
 
 /*
@@ -165,7 +165,7 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void conv2d_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* TODO: add conv2d_cuda_run */
+    /* TODO: add conv2d_cuda_run */
 }
 
 /*
@@ -173,23 +173,23 @@ static void conv2d_cuda_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void conv2d_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     struct priv_s *priv;
+    struct priv_s *priv;
 
-     priv = op_arg->priv;
-     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-     ln_free(op_arg->priv);
+    priv = op_arg->priv;
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
+    ln_free(op_arg->priv);
 }
 
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_conv2d_cuda = {
-     .optype = "conv2d_cuda",
+    .optype = "conv2d_cuda",
 };
 
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_conv2d_cuda = {
-     .op_arg = &op_arg_conv2d_cuda,
-     .pre_run = conv2d_cuda_pre_run,
-     .static_run = NULL,
-     .run = conv2d_cuda_run,
-     .post_run = conv2d_cuda_post_run
+    .op_arg = &op_arg_conv2d_cuda,
+    .pre_run = conv2d_cuda_pre_run,
+    .static_run = NULL,
+    .run = conv2d_cuda_run,
+    .post_run = conv2d_cuda_post_run
 };

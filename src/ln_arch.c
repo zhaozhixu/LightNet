@@ -24,14 +24,14 @@
 
 ln_list *ln_arch_create_oplist(ln_arch *archs[])
 {
-     ln_list *ops = NULL;
-     int i, j;
+    ln_list *ops = NULL;
+    int i, j;
 
-     for (i = 0; archs[i]; i++) {
-          for (j = 0; archs[i]->ops[j]; j++) {
-               ops = ln_list_append(ops, archs[i]->ops[j]);
-          }
-     }
+    for (i = 0; archs[i]; i++) {
+        for (j = 0; archs[i]->ops[j]; j++) {
+            ops = ln_list_append(ops, archs[i]->ops[j]);
+        }
+    }
 
-     return ops;
+    return ops;
 }

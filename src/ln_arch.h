@@ -29,10 +29,10 @@ typedef ln_list *(*ln_peephole_func) (ln_list *ops, int win_size, int *match);
 typedef ln_list *(*ln_post_peephole) (ln_list *ops);
 
 struct ln_arch {
-     ln_op            **ops;       /* NULL terminated */
-     ln_peephole_func  *ph_funcs;  /* NULL terminated */
-     ln_post_peephole   post_ph;
-     char              *arch_name;
+    ln_op            **ops;       /* NULL terminated */
+    ln_peephole_func  *ph_funcs;  /* NULL terminated */
+    ln_post_peephole   post_ph;
+    char              *arch_name;
 };
 typedef struct ln_arch ln_arch;
 

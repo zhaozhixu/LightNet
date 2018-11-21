@@ -26,242 +26,242 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
                                    ln_list *tensors_in, ln_list *tensors_out,
                                    ln_list *params, ln_hash *tensor_table)
 {
-     ln_op_arg *op_arg;
+    ln_op_arg *op_arg;
 
-     op_arg = ln_alloc(sizeof(ln_op_arg));
-     op_arg->name = ln_strdup(name);
-     op_arg->optype = ln_strdup(optype);
-     op_arg->tensors_in = tensors_in;
-     op_arg->tensors_out = tensors_out;
-     op_arg->params = params;
-     op_arg->priv = NULL;
-     op_arg->tensor_table = tensor_table;
-     op_arg->fixed = 0;
+    op_arg = ln_alloc(sizeof(ln_op_arg));
+    op_arg->name = ln_strdup(name);
+    op_arg->optype = ln_strdup(optype);
+    op_arg->tensors_in = tensors_in;
+    op_arg->tensors_out = tensors_out;
+    op_arg->params = params;
+    op_arg->priv = NULL;
+    op_arg->tensor_table = tensor_table;
+    op_arg->fixed = 0;
 
-     return op_arg;
+    return op_arg;
 }
 
 static void ln_op_arg_free(ln_op_arg *op_arg)
 {
-     ln_free(op_arg->name);
-     ln_free(op_arg->optype);
-     ln_free(op_arg);
+    ln_free(op_arg->name);
+    ln_free(op_arg->optype);
+    ln_free(op_arg);
 }
 
 ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
                                ln_list *tensors_in, ln_list *tensors_out,
                                ln_list *params, ln_hash *tensor_table)
 {
-     ln_op *op;
+    ln_op *op;
 
-     op = ln_alloc(sizeof(ln_op));
-     op->op_arg = ln_op_arg_create(name, op_proto->op_arg->optype, tensors_in,
-                                   tensors_out, params, tensor_table);
-     op->pre_run = op_proto->pre_run;
-     op->static_run = op_proto->static_run;
-     op->run = op_proto->run;
-     op->post_run = op_proto->post_run;
+    op = ln_alloc(sizeof(ln_op));
+    op->op_arg = ln_op_arg_create(name, op_proto->op_arg->optype, tensors_in,
+                                  tensors_out, params, tensor_table);
+    op->pre_run = op_proto->pre_run;
+    op->static_run = op_proto->static_run;
+    op->run = op_proto->run;
+    op->post_run = op_proto->post_run;
 
-     return op;
+    return op;
 }
 
 void ln_op_free(ln_op *op)
 {
-     if (!op)
-          return;
-     ln_op_arg_free(op->op_arg);
-     ln_free(op);
+    if (!op)
+        return;
+    ln_op_arg_free(op->op_arg);
+    ln_free(op);
 }
 
 void ln_op_free_lists_too(ln_op *op)
 {
-     if (!op)
-          return;
-     ln_tensor_list_free(op->op_arg->tensors_in);
-     ln_tensor_list_free(op->op_arg->tensors_out);
-     ln_param_list_free(op->op_arg->params);
-     ln_op_arg_free(op->op_arg);
-     ln_free(op);
+    if (!op)
+        return;
+    ln_tensor_list_free(op->op_arg->tensors_in);
+    ln_tensor_list_free(op->op_arg->tensors_out);
+    ln_param_list_free(op->op_arg->params);
+    ln_op_arg_free(op->op_arg);
+    ln_free(op);
 }
 
 ln_list *ln_op_list_create_from_array(ln_op **op_array)
 {
-     ln_list *ops = NULL;
-     int i;
+    ln_list *ops = NULL;
+    int i;
 
-     for (i = 0; op_array[i]; i++)
-          ops = ln_list_append(ops, op_array[i]);
+    for (i = 0; op_array[i]; i++)
+        ops = ln_list_append(ops, op_array[i]);
 
-     return ops;
+    return ops;
 }
 
 void ln_op_list_free(ln_list *op_list)
 {
-     ln_list_free(op_list);
+    ln_list_free(op_list);
 }
 
 static void op_free_lists_too_wrapper(void *p)
 {
-     ln_op *op = p;
+    ln_op *op = p;
 
-     ln_tensor_list_free(op->op_arg->tensors_in);
-     ln_tensor_list_free(op->op_arg->tensors_out);
-     ln_param_list_free(op->op_arg->params);
-     ln_op_free(p);
+    ln_tensor_list_free(op->op_arg->tensors_in);
+    ln_tensor_list_free(op->op_arg->tensors_out);
+    ln_param_list_free(op->op_arg->params);
+    ln_op_free(p);
 }
 
 void ln_op_list_free_lists_too(ln_list *ops)
 {
-     ln_list_free_deep(ops, op_free_lists_too_wrapper);
+    ln_list_free_deep(ops, op_free_lists_too_wrapper);
 }
 
 static int cmp_by_optype(void *data1, void *data2)
 {
-     ln_op *op1, *op2;
+    ln_op *op1, *op2;
 
-     op1 = (ln_op *)data1;
-     op2 = (ln_op *)data2;
-     return strcmp(op1->op_arg->optype, op2->op_arg->optype);
+    op1 = (ln_op *)data1;
+    op2 = (ln_op *)data2;
+    return strcmp(op1->op_arg->optype, op2->op_arg->optype);
 }
 
 ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
 {
-     ln_op cmp_op;
-     ln_op *result_op;
+    ln_op cmp_op;
+    ln_op *result_op;
 
-     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
-     result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_optype);
-     ln_op_arg_free(cmp_op.op_arg);
+    cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
+    result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_optype);
+    ln_op_arg_free(cmp_op.op_arg);
 
-     return result_op;
+    return result_op;
 }
 
 ln_op *ln_op_array_find_by_optype(ln_op *ops[], char *optype)
 {
-     ln_op cmp_op;
-     ln_op *result_op = NULL;
-     int i;
+    ln_op cmp_op;
+    ln_op *result_op = NULL;
+    int i;
 
-     cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
-     for (i = 0; ops[i]; i++) {
-          if (!cmp_by_optype(ops[i], &cmp_op)) {
-               result_op = ops[i];
-               break;
-          }
-     }
-     ln_op_arg_free(cmp_op.op_arg);
+    cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
+    for (i = 0; ops[i]; i++) {
+        if (!cmp_by_optype(ops[i], &cmp_op)) {
+            result_op = ops[i];
+            break;
+        }
+    }
+    ln_op_arg_free(cmp_op.op_arg);
 
-     return result_op;
+    return result_op;
 }
 
 static int cmp_by_name(void *data1, void *data2)
 {
-     ln_op *op1, *op2;
+    ln_op *op1, *op2;
 
-     op1 = (ln_op *)data1;
-     op2 = (ln_op *)data2;
-     return strcmp(op1->op_arg->name, op2->op_arg->name);
+    op1 = (ln_op *)data1;
+    op2 = (ln_op *)data2;
+    return strcmp(op1->op_arg->name, op2->op_arg->name);
 }
 
 ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
 {
-     ln_op cmp_op;
-     ln_op *result_op;
+    ln_op cmp_op;
+    ln_op *result_op;
 
-     cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL, NULL, NULL);
-     result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_name);
-     ln_op_arg_free(cmp_op.op_arg);
+    cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL, NULL, NULL);
+    result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_name);
+    ln_op_arg_free(cmp_op.op_arg);
 
-     return result_op;
+    return result_op;
 }
 
 void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
 {
-     ln_op *op;
-     ln_list *l;
+    ln_op *op;
+    ln_list *l;
 
-     for (l = ops; l; l = l->next) {
-          op = l->data;
-          op->pre_run(op->op_arg, error);
-          if (*error)
-               return;
-     }
+    for (l = ops; l; l = l->next) {
+        op = l->data;
+        op->pre_run(op->op_arg, error);
+        if (*error)
+            return;
+    }
 }
 
 void ln_op_list_do_static_run(ln_list *ops, ln_error **error)
 {
-     ln_op *op;
-     ln_list *l;
+    ln_op *op;
+    ln_list *l;
 
-     for (l = ops; l; l = l->next) {
-          op = l->data;
-          if (!op->static_run)
-               continue;
-          op->static_run(op->op_arg, error);
-          if (*error)
-               return;
-     }
+    for (l = ops; l; l = l->next) {
+        op = l->data;
+        if (!op->static_run)
+            continue;
+        op->static_run(op->op_arg, error);
+        if (*error)
+            return;
+    }
 }
 
 void ln_op_list_do_run(ln_list *ops, ln_error **error)
 {
-     ln_op *op;
-     ln_list *l;
+    ln_op *op;
+    ln_list *l;
 
-     for (l = ops; l; l = l->next) {
-          op = l->data;
-          if (!op->run)
-               continue;
-          op->run(op->op_arg, error);
-          if (*error)
-               return;
-     }
+    for (l = ops; l; l = l->next) {
+        op = l->data;
+        if (!op->run)
+            continue;
+        op->run(op->op_arg, error);
+        if (*error)
+            return;
+    }
 }
 
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
 {
-     ln_op *op;
-     ln_list *l;
+    ln_op *op;
+    ln_list *l;
 
-     for (l = ops; l; l = l->next) {
-          op = l->data;
-          op->post_run(op->op_arg, error);
-          if (*error)
-               return;
-     }
+    for (l = ops; l; l = l->next) {
+        op = l->data;
+        op->post_run(op->op_arg, error);
+        if (*error)
+            return;
+    }
 }
 
 ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
 {
-     ln_op *op;
-     ln_op_arg *arg;
-     ln_graph *DFG;
-     ln_graph_node *node;
-     ln_tensor_list_entry *tle;
-     ln_tensor_entry *te;
-     ln_hash *node_table;
-     int ret;
+    ln_op *op;
+    ln_op_arg *arg;
+    ln_graph *DFG;
+    ln_graph_node *node;
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
+    ln_hash *node_table;
+    int ret;
 
-     DFG = ln_graph_create();
-     node_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-     LN_LIST_FOREACH(op, ops) {
-          node = ln_graph_add(DFG, op);
-          ret = ln_hash_insert(node_table, op->op_arg->name, node);
-          assert(ret && "duplicated op name");
-     }
-     LN_LIST_FOREACH(op, ops) {
-          arg = op->op_arg;
-          LN_LIST_FOREACH(tle, arg->tensors_in) {
-               te = ln_tensor_table_find(arg->tensor_table, tle->name);
-               node = ln_hash_find(node_table, te->creater);
-               assert(node);
-               ln_graph_link(DFG, node->data, op, tle->name);
-          }
-     }
-     if (!node_table_p)
-          *node_table_p = node_table;
-     else
-          ln_hash_free(node_table);
+    DFG = ln_graph_create();
+    node_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    LN_LIST_FOREACH(op, ops) {
+        node = ln_graph_add(DFG, op);
+        ret = ln_hash_insert(node_table, op->op_arg->name, node);
+        assert(ret && "duplicated op name");
+    }
+    LN_LIST_FOREACH(op, ops) {
+        arg = op->op_arg;
+        LN_LIST_FOREACH(tle, arg->tensors_in) {
+            te = ln_tensor_table_find(arg->tensor_table, tle->name);
+            node = ln_hash_find(node_table, te->creater);
+            assert(node);
+            ln_graph_link(DFG, node->data, op, tle->name);
+        }
+    }
+    if (!node_table_p)
+        *node_table_p = node_table;
+    else
+        ln_hash_free(node_table);
 
-     return DFG;
+    return DFG;
 }

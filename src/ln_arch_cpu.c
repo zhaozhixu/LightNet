@@ -39,31 +39,31 @@ extern ln_op ln_opimpl_upsample;
 /* end of declare cpu ops */
 
 static ln_op *ops_cpu[] = {
-     &ln_opimpl_slice,
-     &ln_opimpl_reshape,
-     &ln_opimpl_maxreduce,
-     &ln_opimpl_elew,
-     &ln_opimpl_transpose,
-     &ln_opimpl_zeros,
-     &ln_opimpl_create,
-     &ln_opimpl_conv2d,
-     &ln_opimpl_relu,
-     &ln_opimpl_maxpool2d,
-     &ln_opimpl_softmax,
-     &ln_opimpl_concat,
-     &ln_opimpl_batchnorm,
-     &ln_opimpl_upsample,
+    &ln_opimpl_slice,
+    &ln_opimpl_reshape,
+    &ln_opimpl_maxreduce,
+    &ln_opimpl_elew,
+    &ln_opimpl_transpose,
+    &ln_opimpl_zeros,
+    &ln_opimpl_create,
+    &ln_opimpl_conv2d,
+    &ln_opimpl_relu,
+    &ln_opimpl_maxpool2d,
+    &ln_opimpl_softmax,
+    &ln_opimpl_concat,
+    &ln_opimpl_batchnorm,
+    &ln_opimpl_upsample,
 /* end of init cpu ops */
-     NULL
+    NULL
 };
 
 ln_peephole_func ph_funcs_cpu[] = {
-     NULL
+    NULL
 };
 
 ln_arch ln_arch_cpu = {
-     .ops = ops_cpu,
-     .ph_funcs = ph_funcs_cpu,
-     .post_ph = NULL,
-     .arch_name = "cpu",
+    .ops = ops_cpu,
+    .ph_funcs = ph_funcs_cpu,
+    .post_ph = NULL,
+    .arch_name = "cpu",
 };

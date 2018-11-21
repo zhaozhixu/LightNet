@@ -24,26 +24,26 @@
 #define _LN_ERROR_H_
 
 enum ln_error_level {
-     LN_ERROR,
-     LN_ERROR_SYS,
-     LN_WARNING,
-     LN_WARNING_SYS,
-     LN_INFO
+    LN_ERROR,
+    LN_ERROR_SYS,
+    LN_WARNING,
+    LN_WARNING_SYS,
+    LN_INFO
 };
 typedef enum ln_error_level ln_error_level;
 
 struct ln_error {
-     char            *err_str;
-     ln_error_level   level;
+    char            *err_str;
+    ln_error_level   level;
 };
 typedef struct ln_error ln_error;
 
 #define ln_error_emit(level, fmt, varg...)                              \
-     do {                                                               \
-          ln_error *err = ln_error_create((level), (fmt), ##varg);      \
-          ln_error_handle(&err);                                        \
-          ln_error_free(err);                                           \
-     } while (0)
+    do {                                                                \
+        ln_error *err = ln_error_create((level), (fmt), ##varg);        \
+        ln_error_handle(&err);                                          \
+        ln_error_free(err);                                             \
+    } while (0)
 
 #ifdef __cplusplus
 LN_CPPSTART

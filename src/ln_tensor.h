@@ -30,20 +30,20 @@
 
 /* tensor entry used in JSON */
 struct ln_tensor_list_entry {
-     char *name;
-     char *arg_name;
+    char *name;
+    char *arg_name;
 };
 typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 
 /* tensor entry used in tensor table */
 struct ln_tensor_entry {
-     char        *name;
-     tl_tensor   *tensor;
-     char        *owner;         /* owner tensor name of the tensor data */
-     char        *creater;       /* name of the creater op */
-     size_t       offset;
-     int          isstatic;
-     ln_mem_type  mtype;
+    char        *name;
+    tl_tensor   *tensor;
+    char        *owner;         /* owner tensor name of the tensor data */
+    char        *creater;       /* name of the creater op */
+    size_t       offset;
+    int          isstatic;
+    ln_mem_type  mtype;
 };
 typedef struct ln_tensor_entry ln_tensor_entry;
 

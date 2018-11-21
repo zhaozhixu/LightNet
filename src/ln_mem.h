@@ -29,17 +29,17 @@
 /* NOTE: keep this sync with mtype_name in ln_mem.c */
 #define LN_MEM_TYPE_SIZE 4
 enum ln_mem_type {
-     LN_MEM_UNDEF = 0,
-     LN_MEM_DIFF,
-     LN_MEM_CPU,
-     LN_MEM_CUDA,
+    LN_MEM_UNDEF = 0,
+    LN_MEM_DIFF,
+    LN_MEM_CPU,
+    LN_MEM_CUDA,
 };
 typedef enum ln_mem_type ln_mem_type;
 
 struct ln_mem_pool {
-     size_t   size;
-     size_t   align_size;
-     ln_list *mem_blocks;
+    size_t   size;
+    size_t   align_size;
+    ln_list *mem_blocks;
 };
 typedef struct ln_mem_pool ln_mem_pool;
 

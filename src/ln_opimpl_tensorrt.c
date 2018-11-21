@@ -25,7 +25,7 @@
 #include "ln_tensorrt.h"
 
 struct priv_s {
-     ln_tensorrt_bundle *bundle;
+    ln_tensorrt_bundle *bundle;
 };
 
 /*
@@ -33,49 +33,49 @@ struct priv_s {
  */
 static void tensorrt_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-     /* check tensors and parameters */
-     ln_tensorrt_check_op(op_arg, error);
+    /* check tensors and parameters */
+    ln_tensorrt_check_op(op_arg, error);
 
-     /* define output tensor shape, tensor data should be NULL */
-     ln_param_entry *pe;
-     ln_tensor_list_entry *tle;
-     ln_tensor_entry *dst_entry;
-     tl_tensor *dst_tensor;
-     int *dims;
-     int ndim;
-     tl_dtype dtype;
-     char *arg_name;
-     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
-          arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
-          pe = ln_param_list_find(op_arg->params, arg_name);
-          dims = pe->value_array_int;
-          ndim = pe->array_len;
-          ln_free(arg_name);
+    /* define output tensor shape, tensor data should be NULL */
+    ln_param_entry *pe;
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *dst_entry;
+    tl_tensor *dst_tensor;
+    int *dims;
+    int ndim;
+    tl_dtype dtype;
+    char *arg_name;
+    LN_LIST_FOREACH(tle, op_arg->tensors_out) {
+        arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
+        pe = ln_param_list_find(op_arg->params, arg_name);
+        dims = pe->value_array_int;
+        ndim = pe->array_len;
+        ln_free(arg_name);
 
-          arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
-          pe = ln_param_list_find(op_arg->params, arg_name);
-          dtype = tl_dtype_from_str(pe->value_string);
-          ln_free(arg_name);
+        arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
+        pe = ln_param_list_find(op_arg->params, arg_name);
+        dtype = tl_dtype_from_str(pe->value_string);
+        ln_free(arg_name);
 
-          dst_tensor = tl_tensor_create(NULL, ndim, dims, dtype);
-          dst_entry = ln_tensor_entry_create(tle->name, dst_tensor);
-          ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-          dst_entry->mtype = LN_MEM_CUDA;
-          ln_tensor_table_insert(op_arg->tensor_table, tle->name, dst_entry);
-     }
+        dst_tensor = tl_tensor_create(NULL, ndim, dims, dtype);
+        dst_entry = ln_tensor_entry_create(tle->name, dst_tensor);
+        ln_tensor_entry_set_creater(dst_entry, op_arg->name);
+        dst_entry->mtype = LN_MEM_CUDA;
+        ln_tensor_table_insert(op_arg->tensor_table, tle->name, dst_entry);
+    }
 
-     struct priv_s *priv;
-     priv = ln_alloc(sizeof(struct priv_s));
-     priv->bundle = NULL;
-     op_arg->priv = priv;
+    struct priv_s *priv;
+    priv = ln_alloc(sizeof(struct priv_s));
+    priv->bundle = NULL;
+    op_arg->priv = priv;
 }
 
 static void tensorrt_static_run(ln_op_arg *op_arg, ln_error **error)
 {
-     struct priv_s *priv;
+    struct priv_s *priv;
 
-     priv = op_arg->priv;
-     priv->bundle = ln_tensorrt_bundle_create(op_arg);
+    priv = op_arg->priv;
+    priv->bundle = ln_tensorrt_bundle_create(op_arg);
 }
 
 /*
@@ -83,10 +83,10 @@ static void tensorrt_static_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void tensorrt_run(ln_op_arg *op_arg, ln_error **error)
 {
-     struct priv_s *priv;
+    struct priv_s *priv;
 
-     priv = op_arg->priv;
-     ln_tensorrt_bundle_execute(priv->bundle);
+    priv = op_arg->priv;
+    ln_tensorrt_bundle_execute(priv->bundle);
 }
 
 /*
@@ -94,27 +94,27 @@ static void tensorrt_run(ln_op_arg *op_arg, ln_error **error)
  */
 static void tensorrt_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-     struct priv_s *priv;
-     ln_tensor_list_entry *tle;
+    struct priv_s *priv;
+    ln_tensor_list_entry *tle;
 
-     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
-          ln_tensor_table_remove(op_arg->tensor_table, tle->name);
-     }
-     priv = op_arg->priv;
-     ln_tensorrt_bundle_free(priv->bundle);
-     ln_free(op_arg->priv);
+    LN_LIST_FOREACH(tle, op_arg->tensors_out) {
+        ln_tensor_table_remove(op_arg->tensor_table, tle->name);
+    }
+    priv = op_arg->priv;
+    ln_tensorrt_bundle_free(priv->bundle);
+    ln_free(op_arg->priv);
 }
 
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_tensorrt = {
-     .optype = "tensorrt",
+    .optype = "tensorrt",
 };
 
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_tensorrt = {
-     .op_arg = &op_arg_tensorrt,
-     .pre_run = tensorrt_pre_run,
-     .static_run = tensorrt_static_run,
-     .run = tensorrt_run,
-     .post_run = tensorrt_post_run
+    .op_arg = &op_arg_tensorrt,
+    .pre_run = tensorrt_pre_run,
+    .static_run = tensorrt_static_run,
+    .run = tensorrt_run,
+    .post_run = tensorrt_post_run
 };

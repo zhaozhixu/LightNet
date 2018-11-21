@@ -26,22 +26,22 @@
 #include "ln_list.h"
 
 struct ln_graph_node {
-     size_t       indegree;
-     size_t       outdegree;
-     void        *data;
-     ln_list     *edge_nodes;  	/* data type is ln_graph_edge_node */
+    size_t       indegree;
+    size_t       outdegree;
+    void        *data;
+    ln_list     *edge_nodes;  	/* data type is ln_graph_edge_node */
 };
 typedef struct ln_graph_node ln_graph_node;
 
 struct ln_graph_edge_node {
-     void           *edge_data;
-     ln_graph_node  *node;
+    void           *edge_data;
+    ln_graph_node  *node;
 };
 typedef struct ln_graph_edge_node ln_graph_edge_node;
 
 struct ln_graph {
-     size_t       size;
-     ln_list     *nodes;	/* data type is ln_graph_node */
+    size_t       size;
+    ln_list     *nodes;	/* data type is ln_graph_node */
 };
 typedef struct ln_graph ln_graph;
 
