@@ -35,6 +35,8 @@ static ln_op *ops_tensorrt[] = {
     NULL
 };
 
+static ln_hash *error_hash = NULL;
+
 /* TODO: add a global op name hash */
 static ln_op *create_trt_op(ln_op *from_op)
 {
@@ -198,8 +200,12 @@ static int check_conv(ln_op *op)
 
     pe = ln_param_list_find(op->op_arg->params, "padding");
     if (pe->value_array_int[0] != pe->value_array_int[1]
-        || pe->value_array_int[2] != pe->value_array_int[3])
+        || pe->value_array_int[2] != pe->value_array_int[3]) {
+        ln_error_emit_once(error_hash, op->op_arg->name, LN_WARNING,
+                           "cannot convert '%s' with asymmetrical padding to TensorRT op",
+                           op->op_arg->name);
         return 0;
+    }
     return 1;
 }
 
@@ -309,8 +315,12 @@ static int check_pooling(ln_op *op)
 
     pe = ln_param_list_find(op->op_arg->params, "padding");
     if (pe->value_array_int[0] != pe->value_array_int[1]
-        || pe->value_array_int[2] != pe->value_array_int[3])
+        || pe->value_array_int[2] != pe->value_array_int[3]) {
+        ln_error_emit_once(error_hash, op->op_arg->name, LN_WARNING,
+                           "cannot convert '%s' with asymmetrical padding to TensorRT op",
+                           op->op_arg->name);
         return 0;
+    }
     return 1;
 }
 
@@ -402,7 +412,7 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
     char *tensor_name;
     ln_tensor_entry *te;
     ln_param_entry *pe;
-    int axes;
+    int axes = 0;
     char *param_arg_name;
 
     opname = create_name_in_params(op_arg->params, "op");
@@ -420,7 +430,7 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
 
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0 &&
         pe->value_int != te->tensor->ndim-3) {
-        axes = 1 << (pe->value_int - 1);
+        axes |= 1 << (pe->value_int - 1);
         param_arg_name = ln_strcat_delim_alloc(opname, "axes", '_');
         trt_arg->params = ln_param_list_append_number(trt_arg->params, param_arg_name, axes);
         ln_free(param_arg_name);
@@ -509,6 +519,8 @@ static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
         check_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
         ln_hash_init(check_funcs_hash, init_check_funcs);
     }
+    if (!error_hash)
+        error_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
 
     *match = 0;
     if (is_win_match(ops))

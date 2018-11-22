@@ -23,6 +23,8 @@
 #ifndef _LN_ERROR_H_
 #define _LN_ERROR_H_
 
+#include "ln_hash.h"
+
 enum ln_error_level {
     LN_ERROR,
     LN_ERROR_SYS,
@@ -43,6 +45,14 @@ typedef struct ln_error ln_error;
         ln_error *err = ln_error_create((level), (fmt), ##varg);        \
         ln_error_handle(&err);                                          \
         ln_error_free(err);                                             \
+    } while (0)
+
+#define ln_error_emit_once(hash, key, level, fmt, varg...)              \
+    do {                                                                \
+        if (!ln_hash_find((hash), (key))) {                             \
+            ln_hash_insert((hash), (key), (void *)1);                   \
+            ln_error_emit((level), (fmt), ##varg);                      \
+        }                                                               \
     } while (0)
 
 #ifdef __cplusplus
