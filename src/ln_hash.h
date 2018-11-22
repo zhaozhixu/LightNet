@@ -28,6 +28,7 @@
 typedef struct ln_hash ln_hash;
 typedef uint32_t (*ln_hash_func)(void *key);
 
+/* key and value cannot both be NULL */
 struct ln_hash_init_entry {
     void *key;
     void *value;

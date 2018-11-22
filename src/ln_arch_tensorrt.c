@@ -35,6 +35,7 @@ static ln_op *ops_tensorrt[] = {
     NULL
 };
 
+/* TODO: add a private field to ln_arch and put this there? */
 static ln_hash *error_hash = NULL;
 
 /* TODO: add a global op name hash */
@@ -202,7 +203,7 @@ static int check_conv(ln_op *op)
     if (pe->value_array_int[0] != pe->value_array_int[1]
         || pe->value_array_int[2] != pe->value_array_int[3]) {
         ln_error_emit_once(error_hash, op->op_arg->name, LN_WARNING,
-                           "cannot convert '%s' with asymmetrical padding to TensorRT op",
+                           "cannot convert '%s' with asymmetrical padding to TensorRT conv op",
                            op->op_arg->name);
         return 0;
     }
@@ -317,7 +318,7 @@ static int check_pooling(ln_op *op)
     if (pe->value_array_int[0] != pe->value_array_int[1]
         || pe->value_array_int[2] != pe->value_array_int[3]) {
         ln_error_emit_once(error_hash, op->op_arg->name, LN_WARNING,
-                           "cannot convert '%s' with asymmetrical padding to TensorRT op",
+                           "cannot convert '%s' with asymmetrical padding to TensorRT pooling op",
                            op->op_arg->name);
         return 0;
     }
@@ -388,6 +389,7 @@ static int check_softmax(ln_op *op)
 {
     ln_param_entry *pe;
     ln_tensor_entry *te;
+    char *error_key;
 
     pe = ln_param_list_find(op->op_arg->params, "axis");
     te = ln_tensor_table_find(op->op_arg->tensor_table,
@@ -395,16 +397,70 @@ static int check_softmax(ln_op *op)
                                                        "src"));
     assert(te);
 
-    if (pe->value_int == 0)
+    if (pe->value_int == 0) {
+        error_key = ln_strcat_delim_alloc(op->op_arg->name, "eq0", '_');
+        ln_error_emit_once(error_hash, error_key, LN_WARNING,
+                           "cannot convert '%s' with 'axis' = 0 to TensorRT softmax op",
+                           op->op_arg->name);
+        ln_free(error_key);
         return 0;
+    }
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") < 0) {
-        if (pe->value_int != te->tensor->ndim-3)
+        if (te->tensor->ndim < 4 && pe->value_int != 1) {
+            error_key = ln_strcat_delim_alloc(op->op_arg->name, "ne1", '_');
+            ln_error_emit_once(error_hash, error_key, LN_WARNING,
+                               "cannot convert '%s' with 'src''s number of dimensions < 4 and 'axis' != 1 to TensorRT softmax op in TensorRT version < 4.0.0",
+                               op->op_arg->name);
+            ln_free(error_key);
             return 0;
+        }
+        if (pe->value_int != te->tensor->ndim-3) {
+            error_key = ln_strcat_delim_alloc(op->op_arg->name, "nendim-3", '_');
+            ln_error_emit_once(error_hash, error_key, LN_WARNING,
+                               "cannot convert '%s' with 'src''s number of dimensions >= 4 and 'axis' != 'src''s number of dimensions minus 3 to TensorRT softmax op in TensorRT version < 4.0.0",
+                               op->op_arg->name);
+            ln_free(error_key);
+            return 0;
+        }
     }
     return 1;
 }
 
 static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
+{
+    ln_op_arg *trt_arg = trt_op->op_arg;
+    ln_op_arg *op_arg = op->op_arg;
+    char *opname;
+    char *tensor_name;
+    ln_tensor_entry *te;
+    ln_param_entry *pe;
+    int axes = 0;
+    char *param_arg_name;
+
+    opname = create_name_in_params(op_arg->params, "op");
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  opname, "softmax");
+
+    add_src(trt_arg, op_arg, opname, "src");
+    add_dst(trt_arg, op_arg, opname, "dst");
+
+    tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
+    te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
+
+    pe = ln_param_list_find(op->op_arg->params, "axis");
+
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
+        axes |= 1 << (pe->value_int - 1);
+        param_arg_name = ln_strcat_delim_alloc(opname, "axes", '_');
+        trt_arg->params = ln_param_list_append_number(trt_arg->params, param_arg_name, axes);
+        ln_free(param_arg_name);
+    }
+
+    ln_free(opname);
+}
+
+static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
@@ -437,10 +493,6 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
     }
 
     ln_free(opname);
-}
-
-static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
-{
 }
 
 static void add_scale_to_trt(ln_op *trt_op, ln_op *op)
