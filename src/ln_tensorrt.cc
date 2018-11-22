@@ -181,9 +181,6 @@ static void check_softmax(char *opname, ln_op_arg *op_arg, ln_error **error)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-#if NV_TENSORRT_MAJOR >= 4
-    check_param(opname, "axes", LN_PARAM_NUMBER, 0, op_arg, error);
-#endif
 }
 
 static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
@@ -500,26 +497,30 @@ static void add_softmax(INetworkDefinition *network,
                         char *opname, ln_op_arg *op_arg)
 {
     ln_param_entry *pe;
+    char *src;
+    char *dst;
 
     pe = ln_param_list_find2(op_arg->params, opname, "src");
     assert(pe);
-    char *src = pe->value_string;
+    src = pe->value_string;
 
     pe = ln_param_list_find2(op_arg->params, opname, "dst");
     assert(pe);
-    char *dst = pe->value_string;
+    dst = pe->value_string;
 
 #if NV_TENSORRT_MAJOR >= 4
+    int axes;
     pe = ln_param_list_find2(op_arg->params, opname, "axes");
-    assert(pe);
-    uint32_t axes = (uint32_t)pe->value_int;
+    if (pe)
+      axes = pe->value_int;
 #endif
 
     ISoftMaxLayer *softmax;
     softmax = network->addSoftMax(*tensors[src]);
     assert(softmax);
 #if NV_TENSORRT_MAJOR >= 4
-    softmax->setAxes(axes);
+    if (pe)
+      softmax->setAxes(axes);
 #endif
     tensors[dst] = softmax->getOutput(0);
 }

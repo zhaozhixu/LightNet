@@ -175,6 +175,23 @@ static void add_dst(ln_op_arg *trt_arg, ln_op_arg *arg, char *opname,
     ln_free(tensor_arg_name);
 }
 
+static void check_and_add_batch_size(ln_op *trt_op, int batch_size,
+                                     const char *opname)
+{
+    ln_param_entry *pe;
+
+    pe = ln_param_list_find(trt_op->op_arg->params, "batch_size");
+    if (!pe)
+        trt_op->op_arg->params = ln_param_list_append_number(trt_op->op_arg->params,
+                                                             "batch_size", batch_size);
+    else if (batch_size != pe->value_int)
+        ln_error_emit(LN_ERROR,
+                      "batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
+                      pe->value_int, opname, batch_size);
+    else
+        return;
+}
+
 static int check_conv(ln_op *op)
 {
     ln_param_entry *pe;
@@ -204,6 +221,10 @@ static void add_conv_to_trt(ln_op *trt_op, ln_op *op)
     add_weight(trt_arg, op_arg, opname, "weight");
     add_weight(trt_arg, op_arg, opname, "bias");
     add_dst(trt_arg, op_arg, opname, "dst");
+
+    tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
+    te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
 
     pe = ln_param_list_find(op_arg->params, "group");
     param_arg_name = ln_strcat_delim_alloc(opname, "group", '_');
@@ -255,6 +276,9 @@ static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
     char *opname;
+    const char *atype;
+    char *param_arg_name;
+
     opname = create_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   opname, "activation");
@@ -262,7 +286,6 @@ static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
     add_src(trt_arg, op_arg, opname, "src");
     add_dst(trt_arg, op_arg, opname, "dst");
 
-    const char *atype;
     if (ln_streq(op_arg->optype, "relu"))
         atype = "kRELU";
     else if (ln_streq(op_arg->optype, "sigmoid"))
@@ -272,7 +295,6 @@ static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
     else
         assert(0 && "unsupported activation type");
 
-    char *param_arg_name;
     param_arg_name = ln_strcat_delim_alloc(opname, "activation_type", '_');
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   param_arg_name,
@@ -284,6 +306,7 @@ static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
 static int check_pooling(ln_op *op)
 {
     ln_param_entry *pe;
+
     pe = ln_param_list_find(op->op_arg->params, "padding");
     if (pe->value_array_int[0] != pe->value_array_int[1]
         || pe->value_array_int[2] != pe->value_array_int[3])
@@ -296,6 +319,12 @@ static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
     char *opname;
+    char *tensor_name;
+    ln_tensor_entry *te;
+    const char *pool_type;
+    char *param_arg_name;
+    ln_param_entry *pe;
+
     opname = create_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   opname, "pooling");
@@ -303,22 +332,23 @@ static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
     add_src(trt_arg, op_arg, opname, "src");
     add_dst(trt_arg, op_arg, opname, "dst");
 
-    const char *atype;
+    tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
+    te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
+
     if (ln_streq(op_arg->optype, "maxpool2d"))
-        atype = "kMAX";
+        pool_type = "kMAX";
     else if (ln_streq(op_arg->optype, "averagepool2d"))
-        atype = "kAVERAGE";
+        pool_type = "kAVERAGE";
     else
         assert(0 && "unsupported pooling type");
 
-    char *param_arg_name;
     param_arg_name = ln_strcat_delim_alloc(opname, "pooling_type", '_');
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   param_arg_name,
-                                                  atype);
+                                                  pool_type);
     ln_free(param_arg_name);
 
-    ln_param_entry *pe;
     pe = ln_param_list_find(op_arg->params, "size");
     param_arg_name = ln_strcat_delim_alloc(opname, "size", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
@@ -348,12 +378,15 @@ static int check_softmax(ln_op *op)
 {
     ln_param_entry *pe;
     ln_tensor_entry *te;
-    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0)
+
     pe = ln_param_list_find(op->op_arg->params, "axis");
     te = ln_tensor_table_find(op->op_arg->tensor_table,
                               ln_tensor_list_find_name(op->op_arg->tensors_in,
                                                        "src"));
     assert(te);
+
+    if (pe->value_int == 0)
+        return 0;
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") < 0) {
         if (pe->value_int != te->tensor->ndim-3)
             return 0;
@@ -366,6 +399,12 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
     char *opname;
+    char *tensor_name;
+    ln_tensor_entry *te;
+    ln_param_entry *pe;
+    int axes;
+    char *param_arg_name;
+
     opname = create_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   opname, "softmax");
@@ -373,10 +412,18 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
     add_src(trt_arg, op_arg, opname, "src");
     add_dst(trt_arg, op_arg, opname, "dst");
 
-    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
+    tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
+    te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
 
-    } else {
+    pe = ln_param_list_find(op->op_arg->params, "axis");
 
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0 &&
+        pe->value_int != te->tensor->ndim-3) {
+        axes = 1 << (pe->value_int - 1);
+        param_arg_name = ln_strcat_delim_alloc(opname, "axes", '_');
+        trt_arg->params = ln_param_list_append_number(trt_arg->params, param_arg_name, axes);
+        ln_free(param_arg_name);
     }
 
     ln_free(opname);
@@ -525,15 +572,16 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
     ln_op *op;
     ln_graph *DFG;
     ln_hash *node_table;
+    ln_graph_node *node;
+    ln_tensor_list_entry *tle;
 
     DFG = ln_op_list_gen_DFG(ops, &node_table);
     LN_LIST_FOREACH(op, ops) {
         if (!ln_streq(op->op_arg->optype, "tensorrt"))
             continue;
 
-        ln_graph_node *node = ln_hash_find(node_table, op->op_arg->name);
+        node = ln_hash_find(node_table, op->op_arg->name);
         assert(node);
-        ln_tensor_list_entry *tle;
         for (ln_list *l = op->op_arg->tensors_out; l;) {
             tle = l->data;
             if (is_tensor_been_refered(node->edge_nodes, tle->name)) {

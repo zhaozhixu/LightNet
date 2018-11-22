@@ -1,11 +1,12 @@
 *#
+#*
+
 *~
 *.bak
 *.o
 *.so
 *.out
 *.el
-#*
 .clang_complete
 config.mk
 check_output.xml

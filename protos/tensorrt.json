@@ -45,12 +45,12 @@
                 {"arg_name": "op4", "value": "softmax"},
                 {"arg_name": "op4_src", "value": "pooling_dst1"},
                 {"arg_name": "op4_dst", "value": "softmax_dst1"},
-                // {"arg_name": "op4_axes", "value": 0}, // excluding N
+                // {"arg_name": "op4_axes", "value": 0},
                 {"arg_name": "op5", "value": "concat"},
                 {"arg_name": "op5_src1", "value": "pooling_dst1"},
                 {"arg_name": "op5_src2", "value": "pooling_dst1"},
                 {"arg_name": "op5_dst", "value": "concat_dst1"},
-                // {"arg_name": "op5_axis", "value": 0}, // excluding N
+                // {"arg_name": "op5_axis", "value": 0},
                 {"arg_name": "op5", "value": "scale"},
                 {"arg_name": "op5_src", "value": "pooling_dst1"},
                 {"arg_name": "op5_shift", "value": "pooling_dst1"},
