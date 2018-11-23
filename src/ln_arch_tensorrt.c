@@ -536,29 +536,6 @@ static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
     ln_free(opname);
 }
 
-static void add_batchnorm_to_trt(ln_op *trt_op, ln_op *op)
-{
-    ln_op_arg *trt_arg = trt_op->op_arg;
-    ln_op_arg *op_arg = op->op_arg;
-    char *opname;
-    char *tensor_name;
-    ln_tensor_entry *te;
-    ln_param_entry *pe;
-    int axis;
-    char *param_arg_name;
-
-    opname = create_name_in_params(op_arg->params, "op");
-    trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "scale");
-
-    add_src(trt_arg, op_arg, opname, "src");
-    add_weight(trt_arg, op_arg, opname, "scale");
-    add_weight(trt_arg, op_arg, opname, "offset");
-    add_weight(trt_arg, op_arg, opname, "mean");
-    add_weight(trt_arg, op_arg, opname, "var");
-    add_dst(trt_arg, op_arg, opname, "dst");
-}
-
 static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
 {
 }
@@ -568,7 +545,6 @@ static ln_hash_init_entry init_add_funcs[] = {
     {"conv2d", add_conv_to_trt},
     {"relu", add_activation_to_trt},
     {"maxpool2d", add_pooling_to_trt},
-    {"batchnorm", add_batchnorm_to_trt},
     {"softmax", add_softmax_to_trt},
     {"concat", add_concat_to_trt},
     {"tensorrt", add_trt_to_trt},

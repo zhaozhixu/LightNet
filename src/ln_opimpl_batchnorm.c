@@ -31,7 +31,7 @@ struct priv_s {
     tl_tensor *mean;
     tl_tensor *var;
     char      *dst_name;
-    double     epsilon;
+    float      epsilon;
 };
 
 /*
@@ -44,7 +44,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     tl_tensor *dst_tensor;
     ln_param_entry *epsilon_entry;
     int tensors_n, params_n;
-    double epsilon;
+    float epsilon;
     struct priv_s *priv;
 
     /* check tensors and parameters */
@@ -113,7 +113,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     epsilon_entry = ln_param_list_find(op_arg->params, "epsilon");
     ln_opck_param_exist(epsilon_entry, "epsilon");
     ln_opck_param_type(epsilon_entry, LN_PARAM_NUMBER);
-    epsilon = epsilon_entry->value_double;
+    epsilon = epsilon_entry->value_float;
     ln_opck_param_satisfy_msg(epsilon > 0, "`epsilon` should be above zero");
 
     /* define output tensor shape, tensor data should be NULL */

@@ -36,6 +36,7 @@ extern ln_op ln_opimpl_softmax;
 extern ln_op ln_opimpl_concat;
 extern ln_op ln_opimpl_batchnorm;
 extern ln_op ln_opimpl_upsample;
+extern ln_op ln_opimpl_bn2scale_wts;
 /* end of declare cpu ops */
 
 static ln_op *ops_cpu[] = {
@@ -53,6 +54,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_concat,
     &ln_opimpl_batchnorm,
     &ln_opimpl_upsample,
+    &ln_opimpl_bn2scale_wts,
 /* end of init cpu ops */
     NULL
 };

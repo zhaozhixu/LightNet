@@ -44,11 +44,13 @@ struct ln_param_entry {
     ln_param_type  type;
     int            array_len;
     double         value_double;
+    float          value_float;
     int            value_int;
     ln_bool        value_bool;
     char          *value_string;
     char         **value_array_string;
     double        *value_array_double;
+    float         *value_array_float;
     int           *value_array_int;
     ln_bool       *value_array_bool;
 };
@@ -62,6 +64,12 @@ ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
                                      const char *string);
 ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,
                                      double number);
+ln_list *ln_param_list_append_double(ln_list *list, const char *arg_name,
+                                     double number);
+ln_list *ln_param_list_append_float(ln_list *list, const char *arg_name,
+                                    float number);
+ln_list *ln_param_list_append_int(ln_list *list, const char *arg_name,
+                                  int number);
 ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name,
                                    ln_bool bool_value);
 ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name);
@@ -69,6 +77,10 @@ ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
                                            int array_len, char **array_string);
 ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
                                            int array_len, double *array_number);
+ln_list *ln_param_list_append_array_double(ln_list *list, const char *arg_name,
+                                           int array_len, double *array_number);
+ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name,
+                                          int array_len, float *array_number);
 ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
                                         int array_len, int *array_int);
 ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,

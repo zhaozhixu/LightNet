@@ -1,0 +1,28 @@
+{
+    "optype": "bn2scale_wts",
+    "arch": "cpu",
+    "tensors_in": [
+        {"arg_name": "src_mean", "mtype": "LN_MEM_CPU",
+         "dtype": "TL_FLOAT", "static": true,
+         "check": "src_mean->ndim == 1, \"`src_mean` should have only 1 dimension\""},
+        {"arg_name": "src_var", "mtype": "LN_MEM_CPU",
+         "dtype": "TL_FLOAT", "static": true, "sameshape": "src_mean"},
+        {"arg_name": "src_scale", "mtype": "LN_MEM_CPU",
+         "dtype": "TL_FLOAT", "static": true, "sameshape": "src_mean"},
+        {"arg_name": "src_offset", "mtype": "LN_MEM_CPU",
+         "dtype": "TL_FLOAT", "static": true, "sameshape": "src_mean"}
+    ],
+    "tensors_out": [
+        {"arg_name": "dst_scale", "mtype": "LN_MEM_CPU", "static": true,
+         "dtype": "src_mean->dtype", "ndim": "1", "dims": "src_mean->dims"},
+        {"arg_name": "dst_shift", "mtype": "LN_MEM_CPU", "static": true,
+         "dtype": "src_mean->dtype", "ndim": "1", "dims": "src_mean->dims"},
+        {"arg_name": "dst_power", "mtype": "LN_MEM_CPU", "static": true,
+         "dtype": "src_mean->dtype", "ndim": "1", "dims": "src_mean->dims"}
+    ],
+    "params": [
+        {"arg_name": "epsilon", "ptype": "LN_PARAM_NUMBER", "realtype": "float",
+         "check": "epsilon > 0, \"`epsilon` should be positive\""}
+    ],
+    "static_run": "for (int i = 0; i < priv->dst_scale->len; i++) {\n    ((float *)priv->dst_scale->data)[i] = ((float *)priv->src_scale->data)[i] / (((float *)priv->src_var->data)[i] + priv->epsilon);\n    ((float *)priv->dst_shift->data)[i] = ((float *)priv->src_offset->data)[i] - ((float *)priv->src_mean->data)[i] * ((float *)priv->src_scale->data)[i] / (((float *)priv->src_var->data)[i] + priv->epsilon);\n    ((float *)priv->dst_power->data)[i] = 1;\n}"
+}

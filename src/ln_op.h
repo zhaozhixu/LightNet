@@ -293,7 +293,7 @@ LN_CPPEND
 
 #define ln_opck_tensor_issametype(entry1, entry2)                       \
     ln_opck(LN_ERROR, (entry1)->tensor->dtype == (entry2)->tensor->dtype, \
-            "%s: `%s`'s tensor `%s` and tensor `%s` should be the same data type", \
+            "%s: `%s`'s tensor `%s` and tensor `%s` should have the same data type", \
             op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
 
 #define ln_opck_tensor_isstatic(entry)                          \

@@ -12,8 +12,8 @@ no warnings 'experimental::smartmatch';
 my $usage = <<EOF;
 Usage: $0 [OPTION] [JSON_FILE(s)]
 Generate operator defination code from operator description JSON.
-Read the JSON string from standard if JSON_FILE(s) are not given.
-Print the output code to stdout if --dir and --root are omited.
+Read the JSON string from standard input if JSON_FILE(s) are not given.
+Print the output code to standard output if --dir and --root are omited.
 
 options:
   -h, --help              print this message
@@ -80,7 +80,7 @@ sub gen_code {
     if ($arch ne "cpu" and $arch ne "cuda") {
         &err_exit("'${optype}' has unsupported `arch` '${arch}'");
     }
-    if ($arch ne "cpu" and not $optype =~ /\w+_$arch/) {
+    if ($arch ne "cpu" and not $optype =~ /\w+_$arch$/) {
         &err_exit("'${optype}' doesn't match `arch` '${arch}'");
     }
 
@@ -190,6 +190,7 @@ sub gen_head_block {
 EOF
 }
 
+# TODO: replace tl_tensor to ln_tensor_entry
 sub gen_struct_def {
     my $op = $_[0];
     my $tensors_in = $op->{tensors_in};
@@ -229,11 +230,11 @@ sub gen_pre_run {
 static void $op->{optype}_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
 ${pre_run_local_vars}
-     /* check tensors and parameters */
+    /* check tensors and parameters */
 ${pre_run_checks}
-     /* define output tensor shape, tensor data should be NULL */
+    /* define output tensor shape, tensor data should be NULL */
 ${output_tensor_def}
-     /* use op_arg->priv to store private data to be used in other functions */
+    /* use op_arg->priv to store private data to be used in other functions */
 ${priv_assigns}
 }
 EOF
@@ -364,7 +365,7 @@ sub gen_pre_run_checks {
             push @states, "ln_opck_tensor_issametype(${arg_name}_entry, $tensor->{sametype}_entry);";
         }
         if (exists $tensor->{sameshape}) {
-            push @states, "ln_opck_tensor_issameshape(${arg_name}_entry, $tensor->{sametype}_entry);";
+            push @states, "ln_opck_tensor_issameshape(${arg_name}_entry, $tensor->{sameshape}_entry);";
         }
         if (exists $tensor->{static}) {
             if ($tensor->{static}) {
@@ -545,8 +546,10 @@ sub gen_output_tensor_def {
         }
         push @states, "${arg_name} = tl_tensor_create(NULL, ${arg_name}_ndim, ${arg_name}_dims, ${arg_name}_dtype);";
         push @states, "${arg_name}_entry = ln_tensor_entry_create(${arg_name}_name, ${arg_name});";
-        push @states, "${arg_name}_entry->creater = op_arg->name;";
         push @states, "ln_tensor_entry_set_creater(${arg_name}_entry, op_arg->name);";
+        if (exists $tensor->{static}) {
+          push @states, "${arg_name}_entry->isstatic = 1;";
+        }
         if (exists $tensor->{mtype}) {
             push @states, "${arg_name}_entry->mtype = $tensor->{mtype};";
         } else {

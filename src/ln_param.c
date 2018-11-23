@@ -23,6 +23,7 @@
 #include <string.h>
 #include <assert.h>
 #include <limits.h>
+#include <float.h>
 #include "ln_param.h"
 #include "ln_util.h"
 
@@ -38,10 +39,12 @@ static ln_param_entry *ln_param_entry_create(const char *arg_name,
     entry->array_len = 0;
     entry->value_string = NULL;
     entry->value_double = 0;
+    entry->value_float = 0;
     entry->value_int = 0;
     entry->value_bool = LN_FALSE;
     entry->value_array_string = NULL;
     entry->value_array_double = NULL;
+    entry->value_array_float = NULL;
     entry->value_array_int = NULL;
     entry->value_array_bool = NULL;
 
@@ -59,6 +62,7 @@ static void ln_param_entry_free(ln_param_entry *entry)
     }
     ln_free(entry->value_array_string);
     ln_free(entry->value_array_double);
+    ln_free(entry->value_array_float);
     ln_free(entry->value_array_int);
     ln_free(entry->value_array_bool);
     ln_free(entry);
@@ -82,6 +86,41 @@ ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,
 
     entry = ln_param_entry_create(arg_name, LN_PARAM_NUMBER);
     entry->value_double = number;
+
+    /* use saturation in case of overflow */
+    if (number >= FLT_MAX)
+        entry->value_float = FLT_MAX;
+    else if (number <= FLT_MIN)
+        entry->value_float = FLT_MIN;
+    else
+        entry->value_float = (float)number;
+
+    if (number >= INT_MAX)
+        entry->value_int = INT_MAX;
+    else if (number <= INT_MIN)
+        entry->value_int = INT_MIN;
+    else
+        entry->value_int = (int)number;
+
+    list = ln_list_append(list, entry);
+    return list;
+}
+
+ln_list *ln_param_list_append_double(ln_list *list, const char *arg_name,
+                                     double number)
+{
+    return ln_param_list_append_number(list, arg_name, number);
+}
+
+ln_list *ln_param_list_append_float(ln_list *list, const char *arg_name,
+                                    float number)
+{
+    ln_param_entry *entry;
+
+    entry = ln_param_entry_create(arg_name, LN_PARAM_NUMBER);
+    entry->value_double = (double)number;
+    entry->value_float = number;
+
     /* use saturation in case of overflow */
     if (number >= INT_MAX)
         entry->value_int = INT_MAX;
@@ -89,6 +128,20 @@ ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,
         entry->value_int = INT_MIN;
     else
         entry->value_int = (int)number;
+
+    list = ln_list_append(list, entry);
+    return list;
+}
+
+ln_list *ln_param_list_append_int(ln_list *list, const char *arg_name,
+                                  int number)
+{
+    ln_param_entry *entry;
+
+    entry = ln_param_entry_create(arg_name, LN_PARAM_NUMBER);
+    entry->value_double = (double)number;
+    entry->value_float = (float)number;
+    entry->value_int = number;
 
     list = ln_list_append(list, entry);
     return list;
@@ -141,10 +194,60 @@ ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
     entry->array_len = array_len;
     entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
     entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+
     memmove(entry->value_array_double, array_number, sizeof(double)*array_len);
+
+    /* use saturation in case of overflow */
     for (i = 0; i < array_len; i++) {
-        /* use saturation in case of overflow */
+        if (array_number[i] >= FLT_MAX)
+            entry->value_array_float[i] = FLT_MAX;
+        else if (array_number[i] <= FLT_MIN)
+            entry->value_array_float[i] = FLT_MIN;
+        else
+            entry->value_array_float[i] = (float)array_number[i];
+    }
+
+    for (i = 0; i < array_len; i++) {
+        if (array_number[i] >= INT_MAX)
+            entry->value_array_int[i] = INT_MAX;
+        else if (array_number[i] <= INT_MIN)
+            entry->value_array_int[i] = INT_MIN;
+        else
+            entry->value_array_int[i] = (int)array_number[i];
+    }
+
+    list = ln_list_append(list, entry);
+    return list;
+}
+
+ln_list *ln_param_list_append_array_double(ln_list *list, const char *arg_name,
+                                           int array_len, double *array_number)
+{
+    return ln_param_list_append_array_number(list, arg_name, array_len, array_number);
+}
+
+ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name,
+                                          int array_len, float *array_number)
+{
+    ln_param_entry *entry;
+    int i;
+
+    assert(array_len >= 0);
+    entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
+    entry->array_len = array_len;
+    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
+    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+
+    memmove(entry->value_array_float, array_number, sizeof(float)*array_len);
+
+    for (i = 0; i < array_len; i++)
+        entry->value_array_double[i] = (double)array_number[i];
+
+    /* use saturation in case of overflow */
+    for (i = 0; i < array_len; i++) {
         if (array_number[i] >= INT_MAX)
             entry->value_array_int[i] = INT_MAX;
         else if (array_number[i] <= INT_MIN)
@@ -167,10 +270,15 @@ ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
     entry->array_len = array_len;
     entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
     entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+
     memmove(entry->value_array_int, array_int, sizeof(int)*array_len);
-    for (i = 0; i < array_len; i++)
+
+    for (i = 0; i < array_len; i++) {
         entry->value_array_double[i] = (double)array_int[i];
+        entry->value_array_float[i] = (float)array_int[i];
+    }
 
     list = ln_list_append(list, entry);
     return list;
