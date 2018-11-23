@@ -414,7 +414,7 @@ static int check_softmax(ln_op *op)
             ln_free(error_key);
             return 0;
         }
-        if (pe->value_int != te->tensor->ndim-3) {
+        if (te->tensor->ndim >= 4 && pe->value_int != te->tensor->ndim-3) {
             error_key = ln_strcat_delim_alloc(op->op_arg->name, "nendim-3", '_');
             ln_error_emit_once(error_hash, error_key, LN_WARNING,
                                "cannot convert '%s' with 'src''s number of dimensions >= 4 and 'axis' != 'src''s number of dimensions minus 3 to TensorRT softmax op in TensorRT version < 4.0.0",
@@ -460,6 +460,47 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
     ln_free(opname);
 }
 
+static int check_concat(ln_op *op)
+{
+    ln_param_entry *pe;
+    ln_tensor_entry *te;
+    char *error_key;
+
+    pe = ln_param_list_find(op->op_arg->params, "axis");
+    te = ln_tensor_table_find(op->op_arg->tensor_table,
+                              ln_tensor_list_find_name(op->op_arg->tensors_in,
+                                                       "src"));
+    assert(te);
+
+    if (pe->value_int == 0) {
+        error_key = ln_strcat_delim_alloc(op->op_arg->name, "eq0", '_');
+        ln_error_emit_once(error_hash, error_key, LN_WARNING,
+                           "cannot convert '%s' with 'axis' = 0 to TensorRT concat op",
+                           op->op_arg->name);
+        ln_free(error_key);
+        return 0;
+    }
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") < 0) {
+        if (te->tensor->ndim < 4 && pe->value_int != 1) {
+            error_key = ln_strcat_delim_alloc(op->op_arg->name, "ne1", '_');
+            ln_error_emit_once(error_hash, error_key, LN_WARNING,
+                               "cannot convert '%s' with 'src''s number of dimensions < 4 and 'axis' != 1 to TensorRT concat op in TensorRT version < 4.0.0",
+                               op->op_arg->name);
+            ln_free(error_key);
+            return 0;
+        }
+        if (te->tensor->ndim >= 4 && pe->value_int != te->tensor->ndim-3) {
+            error_key = ln_strcat_delim_alloc(op->op_arg->name, "nendim-3", '_');
+            ln_error_emit_once(error_hash, error_key, LN_WARNING,
+                               "cannot convert '%s' with 'src''s number of dimensions >= 4 and 'axis' != 'src''s number of dimensions minus 3 to TensorRT concat op in TensorRT version < 4.0.0",
+                               op->op_arg->name);
+            ln_free(error_key);
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
@@ -468,12 +509,12 @@ static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
     char *tensor_name;
     ln_tensor_entry *te;
     ln_param_entry *pe;
-    int axes = 0;
+    int axis;
     char *param_arg_name;
 
     opname = create_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "softmax");
+                                                  opname, "concat");
 
     add_src(trt_arg, op_arg, opname, "src");
     add_dst(trt_arg, op_arg, opname, "dst");
@@ -484,19 +525,38 @@ static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
 
     pe = ln_param_list_find(op->op_arg->params, "axis");
 
-    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0 &&
-        pe->value_int != te->tensor->ndim-3) {
-        axes |= 1 << (pe->value_int - 1);
-        param_arg_name = ln_strcat_delim_alloc(opname, "axes", '_');
-        trt_arg->params = ln_param_list_append_number(trt_arg->params, param_arg_name, axes);
+    if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
+        axis = pe->value_int - 1;
+        param_arg_name = ln_strcat_delim_alloc(opname, "axis", '_');
+        trt_arg->params = ln_param_list_append_number(trt_arg->params,
+                                                      param_arg_name, axis);
         ln_free(param_arg_name);
     }
 
     ln_free(opname);
 }
 
-static void add_scale_to_trt(ln_op *trt_op, ln_op *op)
+static void add_batchnorm_to_trt(ln_op *trt_op, ln_op *op)
 {
+    ln_op_arg *trt_arg = trt_op->op_arg;
+    ln_op_arg *op_arg = op->op_arg;
+    char *opname;
+    char *tensor_name;
+    ln_tensor_entry *te;
+    ln_param_entry *pe;
+    int axis;
+    char *param_arg_name;
+
+    opname = create_name_in_params(op_arg->params, "op");
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  opname, "scale");
+
+    add_src(trt_arg, op_arg, opname, "src");
+    add_weight(trt_arg, op_arg, opname, "scale");
+    add_weight(trt_arg, op_arg, opname, "offset");
+    add_weight(trt_arg, op_arg, opname, "mean");
+    add_weight(trt_arg, op_arg, opname, "var");
+    add_dst(trt_arg, op_arg, opname, "dst");
 }
 
 static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
@@ -508,7 +568,7 @@ static ln_hash_init_entry init_add_funcs[] = {
     {"conv2d", add_conv_to_trt},
     {"relu", add_activation_to_trt},
     {"maxpool2d", add_pooling_to_trt},
-    {"batchnorm", add_scale_to_trt},
+    {"batchnorm", add_batchnorm_to_trt},
     {"softmax", add_softmax_to_trt},
     {"concat", add_concat_to_trt},
     {"tensorrt", add_trt_to_trt},

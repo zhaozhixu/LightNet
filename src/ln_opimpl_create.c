@@ -91,6 +91,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
             ln_param_type_name(LN_PARAM_NULL),
             ln_param_type_name(data_entry->type));
 
+    /* TODO: add file reading */
     if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
         ln_opck_param_satisfy_msg(compute_length(dims_entry->array_len,
                                                  dims_entry->value_array_int)

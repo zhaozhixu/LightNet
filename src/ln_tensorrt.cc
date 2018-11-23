@@ -188,9 +188,6 @@ static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
     check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-#if NV_TENSORRT_MAJOR >= 4
-    check_param(opname, "axis", LN_PARAM_NUMBER, 0, op_arg, error);
-#endif
 }
 
 static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)
@@ -530,23 +527,27 @@ static void add_concat(INetworkDefinition *network,
                        char *opname, ln_op_arg *op_arg)
 {
     ln_param_entry *pe;
+    char *src1;
+    char *src2;
+    char *dst;
 
     pe = ln_param_list_find2(op_arg->params, opname, "src1");
     assert(pe);
-    char *src1 = pe->value_string;
+    src1 = pe->value_string;
 
     pe = ln_param_list_find2(op_arg->params, opname, "src2");
     assert(pe);
-    char *src2 = pe->value_string;
+    src2 = pe->value_string;
 
     pe = ln_param_list_find2(op_arg->params, opname, "dst");
     assert(pe);
-    char *dst = pe->value_string;
+    dst = pe->value_string;
 
 #if NV_TENSORRT_MAJOR >= 4
+    int axis;
     pe = ln_param_list_find2(op_arg->params, opname, "axis");
-    assert(pe);
-    int axis = pe->value_int;
+    if (pe)
+      axis = pe->value_int;
 #endif
 
     IConcatenationLayer *concat;
@@ -554,7 +555,8 @@ static void add_concat(INetworkDefinition *network,
     concat = network->addConcatenation(concat_tensors, 2);
     assert(concat);
 #if NV_TENSORRT_MAJOR >= 4
-    concat->setAxis(axis);
+    if (pe)
+      concat->setAxis(axis);
 #endif
     tensors[dst] = concat->getOutput(0);
 }
