@@ -39,6 +39,7 @@ extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_bn2scale_wts;
 /* end of declare cpu ops */
 
+/* TODO: use a hash */
 static ln_op *ops_cpu[] = {
     &ln_opimpl_slice,
     &ln_opimpl_reshape,

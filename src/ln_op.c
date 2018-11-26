@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <ctype.h>
 #include "ln_op.h"
 
 static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
@@ -264,4 +265,25 @@ ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
         ln_hash_free(node_table);
 
     return DFG;
+}
+
+char *ln_op_list_new_opname(ln_list *ops, const char *prefix)
+{
+    ln_op *op;
+    char *buf;
+    size_t prefix_len = strlen(prefix);
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
+    int max_idx = 0;
+
+    buf = ln_alloc(sizeof(char)*buf_len);
+    LN_LIST_FOREACH(op, ops) {
+        if (!ln_strneq(op->op_arg->name, prefix, prefix_len))
+            continue;
+        assert(isdigit(op->op_arg->name[prefix_len]) &&
+               "subfixed with no digit");
+        int idx = atoi(&op->op_arg->name[prefix_len]);
+        max_idx = max_idx < idx ? idx : max_idx;
+    }
+    snprintf(buf, buf_len, "%s%d", prefix, max_idx);
+    return buf;
 }

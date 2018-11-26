@@ -36,7 +36,7 @@ struct ln_op_arg {
     ln_list         *tensors_in;
     ln_list         *tensors_out;
     ln_list         *params;
-    ln_hash         *tensor_table;
+    ln_hash         *tensor_table;   /* TODO: put this in ln_global.c */
     void            *priv;           /* for other private data storage */
     int              fixed;          /* won't be replaced if set to 1 */
 };
@@ -72,6 +72,9 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_static_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
+/* Create a new opname with `prefix` subfixed with the next number.
+   Need to be freed. `ops` should not be modified */
+char *ln_op_list_new_opname(ln_list *ops, const char *prefix);
 
 /* Generate Data Flow Graph, with ops as its nodes and tensor names
    as its edge. A hash of <opname, graph_node> returned in node_table_p

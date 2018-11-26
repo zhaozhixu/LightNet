@@ -25,8 +25,6 @@
 #include "ln_arch.h"
 #include "ln_tensorrt.h"
 
-#define MAX_NAME_SUBFIX 30
-
 extern ln_op ln_opimpl_tensorrt;
 /* end of declare tensorrt ops */
 
@@ -42,25 +40,25 @@ static ln_hash *error_hash = NULL;
 static ln_op *create_trt_op(ln_op *from_op)
 {
     ln_op *trt_op;
-    char name[3+MAX_NAME_SUBFIX];
+    char name[3+LN_MAX_NAME_SUBFIX];
 
-    snprintf(name, 3+MAX_NAME_SUBFIX, "trt%p", from_op);
+    snprintf(name, 3+LN_MAX_NAME_SUBFIX, "trt%p", from_op);
     trt_op = ln_op_create_from_proto(&ln_opimpl_tensorrt, name, NULL,
                                      NULL, NULL, from_op->op_arg->tensor_table);
     return trt_op;
 }
 
-static char *create_name_in_tensors(ln_list *tensors, const char *prefix)
+static char *create_arg_name_in_tensors(ln_list *tensors, const char *prefix)
 {
     ln_tensor_list_entry *tle;
     int max_idx = 0;
     char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + MAX_NAME_SUBFIX;
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(tle, tensors) {
-        if (strncmp(tle->arg_name, prefix, prefix_len) ||
+        if (!ln_strneq(tle->arg_name, prefix, prefix_len) ||
             ln_next_token(tle->arg_name, '_'))
             continue;
         assert(isdigit(tle->arg_name[prefix_len]) && "subfixed with no digit");
@@ -71,17 +69,17 @@ static char *create_name_in_tensors(ln_list *tensors, const char *prefix)
     return buf;
 }
 
-static char *create_name_in_params(ln_list *params, const char *prefix)
+static char *create_arg_name_in_params(ln_list *params, const char *prefix)
 {
     ln_param_entry *pe;
     int max_idx = 0;
     char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + MAX_NAME_SUBFIX;
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(pe, params) {
-        if (strncmp(pe->arg_name, prefix, prefix_len) ||
+        if (!ln_strneq(pe->arg_name, prefix, prefix_len) ||
             ln_next_token(pe->arg_name, '_'))
             continue;
         assert(isdigit(pe->arg_name[prefix_len]) && "subfixed with no digit");
@@ -117,7 +115,7 @@ static void add_src(ln_op_arg *trt_arg, ln_op_arg *arg, char *opname,
     ln_free(param_arg_name);
 
     if (!exists_in_tensors(trt_arg->tensors_out, tensor_name)) {
-        tensor_arg_name = create_name_in_tensors(trt_arg->tensors_in, "src");
+        tensor_arg_name = create_arg_name_in_tensors(trt_arg->tensors_in, "src");
         trt_arg->tensors_in = ln_tensor_list_append(trt_arg->tensors_in,
                                                     tensor_arg_name, tensor_name);
         ln_free(tensor_arg_name);
@@ -137,7 +135,7 @@ static void add_weight(ln_op_arg *trt_arg, ln_op_arg *arg, char *opname,
                                                   param_arg_name, tensor_name);
     ln_free(param_arg_name);
 
-    tensor_arg_name = create_name_in_tensors(trt_arg->tensors_in, "weight");
+    tensor_arg_name = create_arg_name_in_tensors(trt_arg->tensors_in, "weight");
     trt_arg->tensors_in = ln_tensor_list_append(trt_arg->tensors_in,
                                                 tensor_arg_name, tensor_name);
     ln_free(tensor_arg_name);
@@ -157,7 +155,7 @@ static void add_dst(ln_op_arg *trt_arg, ln_op_arg *arg, char *opname,
                                                   param_arg_name, tensor_name);
     ln_free(param_arg_name);
 
-    tensor_arg_name = create_name_in_tensors(trt_arg->tensors_out, "dst");
+    tensor_arg_name = create_arg_name_in_tensors(trt_arg->tensors_out, "dst");
     trt_arg->tensors_out = ln_tensor_list_append(trt_arg->tensors_out,
                                                  tensor_arg_name, tensor_name);
 
@@ -210,58 +208,59 @@ static int check_conv(ln_op *op)
     return 1;
 }
 
-static void add_conv_to_trt(ln_op *trt_op, ln_op *op)
+static void add_conv_to_trt(ln_list *ops, ln_list *new_ops,
+                            ln_op *trt_op, ln_op *op)
 {
     ln_param_entry *pe;
     ln_tensor_entry *te;
     char *tensor_name;
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
-    char *opname;
+    char *param_op_arg_name;
     char *param_arg_name;
 
-    opname = create_name_in_params(op_arg->params, "op");
+    param_op_arg_name = create_arg_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "conv");
+                                                  param_op_arg_name, "conv");
 
-    add_src(trt_arg, op_arg, opname, "src");
-    add_weight(trt_arg, op_arg, opname, "weight");
-    add_weight(trt_arg, op_arg, opname, "bias");
-    add_dst(trt_arg, op_arg, opname, "dst");
+    add_src(trt_arg, op_arg, param_op_arg_name, "src");
+    add_weight(trt_arg, op_arg, param_op_arg_name, "weight");
+    add_weight(trt_arg, op_arg, param_op_arg_name, "bias");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
     check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
 
     pe = ln_param_list_find(op_arg->params, "group");
-    param_arg_name = ln_strcat_delim_alloc(opname, "group", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "group", '_');
     trt_arg->params = ln_param_list_append_number(trt_arg->params,
                                                   param_arg_name, pe->value_double);
     ln_free(param_arg_name);
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
-    param_arg_name = ln_strcat_delim_alloc(opname, "output_c", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "output_c", '_');
     trt_arg->params = ln_param_list_append_number(trt_arg->params,
                                                   param_arg_name, te->tensor->dims[1]);
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "size");
-    param_arg_name = ln_strcat_delim_alloc(opname, "size", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "size", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         pe->value_array_double);
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "stride");
-    param_arg_name = ln_strcat_delim_alloc(opname, "stride", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "stride", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         pe->value_array_double);
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "padding");
-    param_arg_name = ln_strcat_delim_alloc(opname, "padding", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "padding", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         (double[]){pe->value_array_double[0],
@@ -269,29 +268,30 @@ static void add_conv_to_trt(ln_op *trt_op, ln_op *op)
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "dilation");
-    param_arg_name = ln_strcat_delim_alloc(opname, "dilation", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "dilation", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         pe->value_array_double);
     ln_free(param_arg_name);
 
-    ln_free(opname);
+    ln_free(param_op_arg_name);
 }
 
-static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
+static void add_activation_to_trt(ln_list *ops, ln_list *new_ops,
+                                  ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
-    char *opname;
+    char *param_op_arg_name;
     const char *atype;
     char *param_arg_name;
 
-    opname = create_name_in_params(op_arg->params, "op");
+    param_op_arg_name = create_arg_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "activation");
+                                                  param_op_arg_name, "activation");
 
-    add_src(trt_arg, op_arg, opname, "src");
-    add_dst(trt_arg, op_arg, opname, "dst");
+    add_src(trt_arg, op_arg, param_op_arg_name, "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst");
 
     if (ln_streq(op_arg->optype, "relu"))
         atype = "kRELU";
@@ -302,12 +302,12 @@ static void add_activation_to_trt(ln_op *trt_op, ln_op *op)
     else
         assert(0 && "unsupported activation type");
 
-    param_arg_name = ln_strcat_delim_alloc(opname, "activation_type", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "activation_type", '_');
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   param_arg_name,
                                                   atype);
     ln_free(param_arg_name);
-    ln_free(opname);
+    ln_free(param_op_arg_name);
 }
 
 static int check_pooling(ln_op *op)
@@ -325,23 +325,24 @@ static int check_pooling(ln_op *op)
     return 1;
 }
 
-static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
+static void add_pooling_to_trt(ln_list *ops, ln_list *new_ops,
+                               ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
-    char *opname;
+    char *param_op_arg_name;
     char *tensor_name;
     ln_tensor_entry *te;
     const char *pool_type;
     char *param_arg_name;
     ln_param_entry *pe;
 
-    opname = create_name_in_params(op_arg->params, "op");
+    param_op_arg_name = create_arg_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "pooling");
+                                                  param_op_arg_name, "pooling");
 
-    add_src(trt_arg, op_arg, opname, "src");
-    add_dst(trt_arg, op_arg, opname, "dst");
+    add_src(trt_arg, op_arg, param_op_arg_name, "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
@@ -354,35 +355,35 @@ static void add_pooling_to_trt(ln_op *trt_op, ln_op *op)
     else
         assert(0 && "unsupported pooling type");
 
-    param_arg_name = ln_strcat_delim_alloc(opname, "pooling_type", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "pooling_type", '_');
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
                                                   param_arg_name,
                                                   pool_type);
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "size");
-    param_arg_name = ln_strcat_delim_alloc(opname, "size", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "size", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         pe->value_array_double);
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "stride");
-    param_arg_name = ln_strcat_delim_alloc(opname, "stride", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "stride", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         pe->value_array_double);
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "padding");
-    param_arg_name = ln_strcat_delim_alloc(opname, "padding", '_');
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "padding", '_');
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         (double[]){pe->value_array_double[0],
                                                                 pe->value_array_double[2]});
     ln_free(param_arg_name);
 
-    ln_free(opname);
+    ln_free(param_op_arg_name);
 }
 
 static int check_softmax(ln_op *op)
@@ -426,23 +427,24 @@ static int check_softmax(ln_op *op)
     return 1;
 }
 
-static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
+static void add_softmax_to_trt(ln_list *ops, ln_list *new_ops,
+                               ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
-    char *opname;
+    char *param_op_arg_name;
     char *tensor_name;
     ln_tensor_entry *te;
     ln_param_entry *pe;
     int axes = 0;
     char *param_arg_name;
 
-    opname = create_name_in_params(op_arg->params, "op");
+    param_op_arg_name = create_arg_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "softmax");
+                                                  param_op_arg_name, "softmax");
 
-    add_src(trt_arg, op_arg, opname, "src");
-    add_dst(trt_arg, op_arg, opname, "dst");
+    add_src(trt_arg, op_arg, param_op_arg_name, "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
@@ -452,12 +454,13 @@ static void add_softmax_to_trt(ln_op *trt_op, ln_op *op)
 
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
         axes |= 1 << (pe->value_int - 1);
-        param_arg_name = ln_strcat_delim_alloc(opname, "axes", '_');
-        trt_arg->params = ln_param_list_append_number(trt_arg->params, param_arg_name, axes);
+        param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "axes", '_');
+        trt_arg->params = ln_param_list_append_number(trt_arg->params,
+                                                      param_arg_name, axes);
         ln_free(param_arg_name);
     }
 
-    ln_free(opname);
+    ln_free(param_op_arg_name);
 }
 
 static int check_concat(ln_op *op)
@@ -490,7 +493,7 @@ static int check_concat(ln_op *op)
             return 0;
         }
         if (te->tensor->ndim >= 4 && pe->value_int != te->tensor->ndim-3) {
-            error_key = ln_strcat_delim_alloc(op->op_arg->name, "nendim-3", '_');
+            error_key = ln_strcat_delim_alloc(op->op_arg->name, "ne_ndim-3", '_');
             ln_error_emit_once(error_hash, error_key, LN_WARNING,
                                "cannot convert '%s' with 'src''s number of dimensions >= 4 and 'axis' != 'src''s number of dimensions minus 3 to TensorRT concat op in TensorRT version < 4.0.0",
                                op->op_arg->name);
@@ -501,23 +504,24 @@ static int check_concat(ln_op *op)
     return 1;
 }
 
-static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
+static void add_concat_to_trt(ln_list *ops, ln_list *new_ops,
+                              ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
-    char *opname;
+    char *param_op_arg_name;
     char *tensor_name;
     ln_tensor_entry *te;
     ln_param_entry *pe;
     int axis;
     char *param_arg_name;
 
-    opname = create_name_in_params(op_arg->params, "op");
+    param_op_arg_name = create_arg_name_in_params(op_arg->params, "op");
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  opname, "concat");
+                                                  param_op_arg_name, "concat");
 
-    add_src(trt_arg, op_arg, opname, "src");
-    add_dst(trt_arg, op_arg, opname, "dst");
+    add_src(trt_arg, op_arg, param_op_arg_name, "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_out, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
@@ -527,43 +531,58 @@ static void add_concat_to_trt(ln_op *trt_op, ln_op *op)
 
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
         axis = pe->value_int - 1;
-        param_arg_name = ln_strcat_delim_alloc(opname, "axis", '_');
+        param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "axis", '_');
         trt_arg->params = ln_param_list_append_number(trt_arg->params,
                                                       param_arg_name, axis);
         ln_free(param_arg_name);
     }
 
-    ln_free(opname);
+    ln_free(param_op_arg_name);
 }
 
-static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
+static void add_batchnorm_to_trt(ln_list *ops, ln_list *new_ops,
+                                 ln_op *trt_op, ln_op *op)
+{
+    extern ln_op ln_opimpl_bn2scale_wts;
+    ln_op *bn2scale_wts;
+    char *new_opname;
+
+    new_opname = ln_op_list_new_opname(ops, "bn2scale_wts");
+    /* bn2scale_wts = ln_op_create_from_proto(&ln_opimpl_bn2scale_wts, new_opname, in, out, pa, op->op_arg->tensor_table); */
+}
+
+static void add_trt_to_trt(ln_list *ops, ln_list *new_ops,
+                           ln_op *trt_op, ln_op *op)
 {
 }
-
-typedef void (*add_to_trt_func)(ln_op *trt_op, ln_op *op);
-static ln_hash_init_entry init_add_funcs[] = {
-    {"conv2d", add_conv_to_trt},
-    {"relu", add_activation_to_trt},
-    {"maxpool2d", add_pooling_to_trt},
-    {"softmax", add_softmax_to_trt},
-    {"concat", add_concat_to_trt},
-    {"tensorrt", add_trt_to_trt},
-    LN_HASH_INIT_ENTRY_NULL
-};
-static ln_hash *add_funcs_hash = NULL;
 
 typedef int (*check_func)(ln_op *op);
 static ln_hash_init_entry init_check_funcs[] = {
     {"conv2d", check_conv},
     {"relu", NULL},
     {"maxpool2d", check_pooling},
-    {"batchnorm", NULL},
     {"softmax", check_softmax},
-    {"concat", NULL},
+    {"concat", check_concat},
+    {"batchnorm", NULL},
     {"tensorrt", NULL},
     LN_HASH_INIT_ENTRY_NULL
 };
 static ln_hash *check_funcs_hash = NULL;
+
+/* `ops` should not be modified here. Most ops only use `trt_op` and `op` */
+typedef void (*add_to_trt_func)(ln_list *ops, ln_list *new_ops,
+                                ln_op *trt_op, ln_op *op);
+static ln_hash_init_entry init_add_funcs[] = {
+    {"conv2d", add_conv_to_trt},
+    {"relu", add_activation_to_trt},
+    {"maxpool2d", add_pooling_to_trt},
+    {"softmax", add_softmax_to_trt},
+    {"concat", add_concat_to_trt},
+    {"batchnorm", add_batchnorm_to_trt},
+    {"tensorrt", add_trt_to_trt},
+    LN_HASH_INIT_ENTRY_NULL
+};
+static ln_hash *add_funcs_hash = NULL;
 
 static int is_win_match(ln_list *ops)
 {
@@ -629,10 +648,10 @@ static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
             add_func = value;
             if (prev_op && ln_streq(prev_op->op_arg->optype, "tensorrt")) {
                 trt_op = prev_op;
-                add_func(trt_op, op);
+                add_func(ops, new_ops, trt_op, op);
             } else {
                 trt_op = create_trt_op(op);
-                add_func(trt_op, op);
+                add_func(ops,new_ops, trt_op, op);
                 new_ops = ln_list_append(new_ops, trt_op);
             }
             continue;

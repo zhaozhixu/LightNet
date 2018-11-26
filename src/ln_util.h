@@ -40,6 +40,7 @@ typedef void (*ln_fprint_func) (FILE *, void *);
 #define ln_free free
 
 #define LN_MAXLINE 4096
+#define LN_MAX_NAME_SUBFIX 30
 
 #ifdef __cplusplus
 #define LN_CPPSTART extern "C" {
@@ -58,6 +59,7 @@ char *ln_next_token(const char *s, int c);
 char *ln_strcat_alloc(const char *s1, const char *s2);
 char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim);
 int ln_streq(const char *s1, const char *s2);
+int ln_strneq(const char *s1, const char *s2, size_t n);
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding);
 int ln_compute_length(int ndim, const int *dims);
 void ln_err_msg(const char *fmt, ...);

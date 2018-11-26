@@ -590,6 +590,7 @@ sub gen_priv_assigns {
     join "\n", @states;
 }
 
+# TODO: dynamicly gen declarations
 sub gen_static_run {
     my $op = $_[0];
 

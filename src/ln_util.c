@@ -150,6 +150,11 @@ int ln_streq(const char *s1, const char *s2)
     return !!!strcmp(s1, s2);
 }
 
+int ln_strneq(const char *s1, const char *s2, size_t n)
+{
+    return !!!strncmp(s1, s2, n);
+}
+
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding)
 {
     return ((input_dim + padding) - size) / stride + 1;
