@@ -2,6 +2,7 @@
     "ops": [
         {
             "optype": "testop",
+            "arch": "cpu",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU", "static": true,
                  "check": "src->ndim == 4, \"`src` should be a 4-dimensional tensor\""},
