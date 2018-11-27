@@ -725,20 +725,50 @@ static void add_trt_dst(ln_op_arg *trt_arg, ln_op_arg *arg,
     ln_free(tensor_arg_name);
 }
 
+static int digits_len(int n)
+{
+    int count = 0;
+
+    while (n) {
+        n /= 10;
+        count++;
+    }
+    return n == 0 ? 1 : count;
+}
+
+static char *new_arg_name(const char *old_name, int base_idx)
+{
+    char *new_name;
+    char *next_token;
+    int old_idx, new_idx;
+    size_t new_name_len;
+
+    old_idx = atoi(&old_name[2]); /* 2 for length of "op" */
+    new_idx = old_idx + base_idx;
+    new_name_len = strlen(old_name) - digits_len(old_idx) + digits_len(new_idx);
+    new_name = ln_alloc(sizeof(char) * (new_name_len + 1));
+
+    if ((next_token = ln_next_token(old_name, '_')))
+        snprintf(new_name, new_name_len + 1, "op%d_%s", new_idx, next_token);
+    else
+        snprintf(new_name, new_name_len + 1, "op%d", new_idx);
+
+    return new_name;
+}
+
 static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
-    char *param_op_arg_name;
-    char *param_arg_name;
-    char *tensor_arg_name;
-    char *tensor_name;
     ln_param_entry *pe;
-    ln_tensor_entry *te;
+    ln_param_entry *new_pe;
     ln_tensor_list_entry *tle;
+    char *param_op_arg_name;
+    int op_batch_size;
+    int base_idx;
 
     pe = ln_param_list_find(op_arg->params, "batch_size");
-    int op_batch_size = pe->value_int;
+    op_batch_size = pe->value_int;
     pe = ln_param_list_find(trt_arg->params, "batch_size");
     if (pe && op_batch_size != pe->value_int) {
         ln_error_emit(LN_ERROR,
@@ -755,41 +785,23 @@ static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
         else
             add_trt_weight(trt_arg, op_arg, tle->name);
     }
+
     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
         add_trt_dst(trt_arg, op_arg, tle->name);
     }
 
-    LN_LIST_FOREACH(pe, op_arg->params) {
-        if (!ln_strneq(tle->arg_name, "op", 2))
-            continue;
-        param_op_arg_name = create_arg_name_in_params(trt_arg->params, "op");
-        ln_param_entry *new_pe;
-
-    }
-
-    param_op_arg_name = create_arg_name_in_params(op_arg->params, "op");
-    trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  param_op_arg_name,
-                                                  "activation");
-
-    add_src(trt_arg, op_arg, param_op_arg_name, "src");
-    add_dst(trt_arg, op_arg, param_op_arg_name, "dst");
-
-    if (ln_streq(op_arg->optype, "relu"))
-        atype = "kRELU";
-    else if (ln_streq(op_arg->optype, "sigmoid"))
-        atype = "kSIGMOID";
-    else if (ln_streq(op_arg->optype, "tanh"))
-        atype = "kTANH";
-    else
-        assert(0 && "unsupported activation type");
-
-    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "activation_type", '_');
-    trt_arg->params = ln_param_list_append_string(trt_arg->params,
-                                                  param_arg_name,
-                                                  atype);
-    ln_free(param_arg_name);
+    param_op_arg_name = create_arg_name_in_params(trt_arg->params, "op");
+    base_idx = atoi(&param_op_arg_name[2]);
     ln_free(param_op_arg_name);
+
+    LN_LIST_FOREACH(pe, op_arg->params) {
+        if (!ln_strneq(pe->arg_name, "op", 2))
+            continue;
+        new_pe = ln_param_entry_copy(pe);
+        ln_free(new_pe->arg_name);
+        new_pe->arg_name = new_arg_name(pe->arg_name, base_idx);
+        trt_arg->params = ln_list_append(trt_arg->params, new_pe);
+    }
 }
 
 typedef int (*check_func)(ln_op *op);

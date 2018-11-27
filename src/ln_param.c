@@ -413,3 +413,34 @@ const char *ln_param_type_name(ln_param_type type)
         assert(0 && "unsupported ln_param_type");
     }
 }
+
+ln_param_entry *ln_param_entry_copy(const ln_param_entry *pe)
+{
+    ln_param_entry *new_pe;
+
+    new_pe = ln_param_entry_create(pe->arg_name, pe->type);
+    new_pe->array_len = pe->array_len;
+    new_pe->value_string = pe->value_string ?
+        ln_strdup(pe->value_string) : NULL;
+    new_pe->value_double = pe->value_double;
+    new_pe->value_float = pe->value_float;
+    new_pe->value_int = pe->value_int;
+    new_pe->value_bool = pe->value_bool;
+    if (pe->value_array_string) {
+        new_pe->value_array_string = ln_alloc(sizeof(char *)*pe->array_len);
+        for (int i = 0; i < pe->array_len; i++)
+            new_pe->value_array_string[i] = ln_strdup(pe->value_array_string[i]);
+    } else {
+        new_pe->value_array_string = NULL;
+    }
+    new_pe->value_array_double = pe->value_array_double ?
+        ln_clone(pe->value_array_double, sizeof(double)*pe->array_len) : NULL;
+    new_pe->value_array_float = pe->value_array_float ?
+        ln_clone(pe->value_array_float, sizeof(float)*pe->array_len) : NULL;
+    new_pe->value_array_int = pe->value_array_int ?
+        ln_clone(pe->value_array_int, sizeof(int)*pe->array_len) : NULL;
+    new_pe->value_array_bool = pe->value_array_bool ?
+        ln_clone(pe->value_array_bool, sizeof(ln_bool)*pe->array_len) : NULL;;
+
+    return new_pe;
+}

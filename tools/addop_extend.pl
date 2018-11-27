@@ -75,7 +75,7 @@ sub gen_code {
     my $params = $op->{params};
 
     my $arch = "";
-    &err_exit("'${optype}' needs a `arch`") unless exists $op->{arch};
+    &err_exit("'${optype}' needs an `arch`") unless exists $op->{arch};
     $arch = $op->{arch};
     if ($arch ne "cpu" and $arch ne "cuda") {
         &err_exit("'${optype}' has unsupported `arch` '${arch}'");
