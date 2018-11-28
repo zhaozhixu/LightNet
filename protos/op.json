@@ -1,85 +1,93 @@
 {
     "ops": [
         {
+            "name": "create1",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "create1_dst"}
+            ],
+            "params": [
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "dims", "value": [2, 4]},
+                {"arg_name": "data", "value": [1, 2, 3, 4, 5, 6, 7, 8]}
+            ]
+        },
+        {
             "name": "slice1",
             "optype": "slice",
             "tensors_in": [
-                {"arg_name": "src", "name": "input"},
+                {"arg_name": "src", "name": "create1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "slice1"}
+                {"arg_name": "dst", "name": "slice1_dst"}
             ],
             "params": [
                 {"arg_name": "axis", "value": 1},
                 {"arg_name": "start", "value": 1},
-                {"arg_name": "len", "value": 2}
-            ]
-        },
-        {
-            "name": "concat1",
-            "optype": "concat",
-            "tensors_in": [
-                {"arg_name": "src1", "name": ""},
-                {"arg_name": "src2", "name": ""},
-            ],
-            "tensors_out":[
-                {"arg_name": "dst", "name": ""}
-            ],
-            "params": [
-                {"arg_name": "axis", "value": 1}
+                {"arg_name": "len", "value": 3}
             ]
         },
         {
             "name": "reshape1",
             "optype": "reshape",
-            "tensors": [
-                {"arg_name": "src", "name": "slice1"},
-                {"arg_name": "dst", "name": "reshape1"}
+            "tensors_in": [
+                {"arg_name": "src", "name": "slice1_dst"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "reshape1_dst"}
             ],
             "params": [
-                {"arg_name": "dims", "value": [1, 2, 3]}
+                {"arg_name": "dims", "value": [3, 2]}
             ]
         },
         {
             "name": "maxreduce1",
             "optype": "maxreduce",
-            "tensors": [
-                {"arg_name": "src", "name": "reshape1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "reshape1_dst"}
+            ],
+            "tensors_out": [
                 {"arg_name": "dst", "name": "maxreduce1_dst"},
                 {"arg_name": "arg", "name": "maxreduce1_arg"}
             ],
             "params": [
-                {"arg_name": "axis", "value": 1}
+                {"arg_name": "axis", "value": 0}
             ]
         },
         {
             "name": "elew1",
             "optype": "elew",
-            "tensors": [
+            "tensors_in": [
                 {"arg_name": "src1", "name": "maxreduce1_dst"},
-                {"arg_name": "src2", "name": "maxreduce1_arg"},
-                {"arg_name": "dst", "name": "elew1"}
+                {"arg_name": "src2", "name": "maxreduce1_arg"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "elew1_dst"}
             ],
             "params": [
                 {"arg_name": "elew_op", "value": "TL_MUL"}
-            ],
-        }
+            ]
+        },
         {
             "name": "transpose1",
             "optype": "transpose",
-            "tensors": [
-                {"arg_name": "src", "name": "elew1"},
-                {"arg_name": "dst", "name": "transpose1"},
+            "tensors_in": [
+                {"arg_name": "src", "name": "elew1_dst"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "transpose1_dst"}
             ],
             "params": [
-                {"arg_name": "axes", "value": [2, 1, 0]}
+                {"arg_name": "axes", "value": [1, 0]}
             ]
         },
         {
             "name": "conv2d1",
             "optype": "conv2d",
             "tensors_in": [
-                {"arg_name": "src", "name": "transpose1"},
+                {"arg_name": "src", "name": "transpose1_dst"},
                 {"arg_name": "weight", "name": "weight1"},
                 {"arg_name": "bias", "name": "bias1"}
             ],
@@ -98,7 +106,7 @@
             "name": "relu1",
             "optype": "relu",
             "tensors_in": [
-                {"arg_name": "src", "name": "conv2d1"},
+                {"arg_name": "src", "name": "conv2d1"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "name": "relu1"}
@@ -120,7 +128,7 @@
                 {"arg_name": "stride", "value": [2, 2]},
                 {"arg_name": "padding", "value": [1, 1, 1, 1]}
             ]
-        }
+        },
         {
             "name": "softmax1",
             "optype": "softmax",
@@ -133,7 +141,7 @@
             "params": [
                 {"arg_name": "axis", "value": 1}
             ]
-        }
+        },
         {
             "name": "concat1",
             "optype": "concat",
@@ -147,36 +155,36 @@
             "params": [
                 {"arg_name": "axis", "value": 0}
             ]
-        }
+        },
         {
             "name": "batchnorm1",
             "optype": "batchnorm",
             "tensors_in": [
-                {"arg_name": "src", "name": ""}
+                {"arg_name": "src", "name": ""},
                 {"arg_name": "scale", "name": ""},
                 {"arg_name": "offset", "name": ""},
                 {"arg_name": "mean", "name": ""},
-                {"arg_name": "var", "name": ""},
+                {"arg_name": "var", "name": ""}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": ""},
+                {"arg_name": "dst", "name": ""}
             ],
             "params": [
-                {"arg_name": "epsilon", "value": 1e-5},
+                {"arg_name": "epsilon", "value": 1e-5}
             ]
-        }
+        },
         {
             "name": "upsample1",
             "optype": "upsample",
             "tensors_in": [
-                {"arg_name": "src", "name": ""}
-                {"arg_name": "scales", "name": ""},
+                {"arg_name": "src", "name": ""},
+                {"arg_name": "scales", "name": ""}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": ""},
+                {"arg_name": "dst", "name": ""}
             ],
             "params": [
-                {"arg_name": "mode", "value": "nearest"},
+                {"arg_name": "mode", "value": "nearest"}
             ]
         }
     ]

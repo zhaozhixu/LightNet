@@ -76,7 +76,8 @@ static inline int can_replace(const char *optype)
     return 0;
 }
 
-static ln_list *ph_func_single_replace(ln_list *ops, int win_size, int *match)
+static ln_list *ph_func_single_replace(const ln_list *ops, int win_size,
+                                       int *match)
 {
     ln_op *op, *new_op, *op_proto;
     ln_op_arg *op_arg;

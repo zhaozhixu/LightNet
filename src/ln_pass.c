@@ -215,7 +215,10 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
                         else
                             l_ops_pre->next = l_ops;
                     }
+                } else if (l_in && l_out) {
+                    assert(0 && "shouldn't get here");
                 }
+                ln_list_free(win_out);
                 break;
             }
             ln_list_free(win_in);

@@ -483,7 +483,7 @@ ln_list *ln_json_parse(char *json_str, ln_list *registered_ops,
     newline_indices = preprocess(json_str);
     json = cJSON_Parse(json_str);
     if (!json) {
-        error = ln_error_create(LN_ERROR, "%s",
+        error = ln_error_create(LN_ERROR, "syntax error in %s",
                                 cJSON_GetErrorPtr());
         goto err_json;
     }
@@ -586,7 +586,7 @@ static void add_params(cJSON *params_json, ln_list *params)
                                            pe->array_len);
             break;
         case LN_PARAM_ARRAY_STRING:
-            item = cJSON_CreateStringArray(pe->value_array_string,
+            item = cJSON_CreateStringArray((const char**)pe->value_array_string,
                                            pe->array_len);
             break;
         default:

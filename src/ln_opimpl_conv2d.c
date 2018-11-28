@@ -55,7 +55,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* check tensors and parameters */
     tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-    ln_opck_tensors_in_len_eq(tensors_n, 2);
+    ln_opck_tensors_in_len_eq(tensors_n, 3);
 
     tensors_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_n, 1);

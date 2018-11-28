@@ -25,7 +25,8 @@
 
 #include "ln_op.h"
 
-typedef ln_list *(*ln_peephole_func) (ln_list *ops, int win_size, int *match);
+typedef ln_list *(*ln_peephole_func) (const ln_list *ops, int win_size,
+                                      int *match);
 typedef ln_list *(*ln_post_peephole) (ln_list *ops);
 
 struct ln_arch {

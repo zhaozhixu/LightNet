@@ -37,6 +37,7 @@ int main(int argc, char **argv)
 {
     char *json_file;
     char *json_str;
+    char *target;
     ln_hash *arch_table;
     ln_hash *tensor_table;
     ln_hash *reg_op_table;
@@ -44,6 +45,7 @@ int main(int argc, char **argv)
     ln_list *ops;
     ln_list *reg_ops;
     ln_arch *arch;
+    ln_error *error = NULL;
 
     arch_table = ln_arch_table_create();
     tensor_table = ln_tensor_table_create();
@@ -51,11 +53,14 @@ int main(int argc, char **argv)
     reg_op_table = ln_op_table_create(reg_ops, "optype");
 
     json_file = argv[1];
+    target = argv[2];
     json_str = ln_read_text(json_file);
     ops = ln_json_parse(json_str, reg_ops, tensor_table);
-    arch = ln_hash_find(arch_table, "tensorrt");
+    ln_op_list_do_pre_run(ops, &error);
+    ln_error_handle(&error);
+    arch = ln_hash_find(arch_table, target);
     ops = ln_pass_peephole(ops, 3, arch->ph_funcs, arch->post_ph);
-    ln_json_fprint(stdout, ops);
+    /* ln_json_fprint(stdout, ops); */
 
     ln_arch_table_free(arch_table);
     ln_tensor_table_free(tensor_table);

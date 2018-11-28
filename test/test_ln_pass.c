@@ -106,12 +106,12 @@ static void assert_op_eq(ln_list *reg_ops, ln_op *op, char *optype,
      op_proto = ln_op_list_find_by_optype(reg_ops, optype);
      ck_assert_ptr_ne(op_proto, NULL);
      ck_assert_ptr_ne(op, NULL);
+     ck_assert_str_eq(op->op_arg->optype, op_proto->op_arg->optype);
+     ck_assert_str_eq(op->op_arg->name, opname);
      ck_assert_ptr_eq(op->pre_run, op_proto->pre_run);
      ck_assert_ptr_eq(op->static_run, op_proto->static_run);
      ck_assert_ptr_eq(op->run, op_proto->run);
      ck_assert_ptr_eq(op->post_run, op_proto->post_run);
-     ck_assert_str_eq(op->op_arg->optype, op_proto->op_arg->optype);
-     ck_assert_str_eq(op->op_arg->name, opname);
 }
 
 #define TENSORS_OUT (op->op_arg->tensors_out)
@@ -129,7 +129,7 @@ START_TEST(test_ln_pass_peephole)
 
      ln_op_list_do_pre_run(ops, &error);
      arch = ln_hash_find(arch_table, "cuda");
-     ops = ln_pass_peephole(ops, 1, arch->ph_funcs, arch->post_ph);
+     ops = ln_pass_peephole(ops, 3, arch->ph_funcs, arch->post_ph);
 
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");

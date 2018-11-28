@@ -258,7 +258,7 @@ ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
             ln_graph_link(DFG, node->data, op, tle->name);
         }
     }
-    if (!node_table_p)
+    if (node_table_p)
         *node_table_p = node_table;
     else
         ln_hash_free(node_table);

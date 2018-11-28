@@ -830,15 +830,15 @@ static ln_hash_init_entry init_add_funcs[] = {
 };
 static ln_hash *add_funcs_hash = NULL;
 
-static int is_win_match(ln_list *ops)
+static int is_win_match(const ln_list *ops)
 {
     ln_op *op;
     ln_list *l;
     void *value;
     check_func check;
 
-    for (l = ops; l; l = l->next) {
-        op = l->data;
+    for (l = (ln_list *)ops; l; l = l->next) {
+        op = l->data;printf("%s\n", op->op_arg->optype);
         if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
                                   NULL, &value)) {
             if (ln_streq(op->op_arg->optype, "tensorrt")) {
@@ -861,7 +861,7 @@ static int is_win_match(ln_list *ops)
     return 0;
 }
 
-static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
+static ln_list *ph_func_tensorrt(const ln_list *ops, int win_size, int *match)
 {
     /* TODO: multithread safety */
     if (!add_funcs_hash) {
@@ -886,7 +886,7 @@ static ln_list *ph_func_tensorrt(ln_list *ops, int win_size, int *match)
     add_to_trt_func add_func;
     void *value;
 
-    for (ln_list *l = ops; l; l = l->next) {
+    for (ln_list *l = (ln_list *)ops; l; l = l->next) {
         op = l->data;
         if (ln_hash_find_extended(add_funcs_hash, op->op_arg->optype,
                                   NULL, &value)) {
