@@ -22,18 +22,16 @@
 
 #include "test_lightnet.h"
 #include "../src/ln_op.h"
-#include "../src/ln_parse.h"
+#include "../src/ln_json.h"
 #include "../src/ln_arch.h"
 
 static char *json_str;
 static ln_list *reg_ops = NULL;
 
-extern ln_arch *ln_archs[];
-
 static void checked_setup(void)
 {
      json_str = ln_read_text("test_ops.json");
-     reg_ops = ln_arch_create_oplist(ln_archs);
+     reg_ops = ln_arch_create_oplist();
 }
 
 static void checked_teardown(void)
@@ -87,7 +85,7 @@ START_TEST(test_ln_parse)
      /* tl_tensor *tensor1, *tensor2, *tensor_true; */
 
      table = ln_tensor_table_create();
-     ops = ln_parse(json_str, reg_ops, table);
+     ops = ln_json_parse(json_str, reg_ops, table);
 
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");

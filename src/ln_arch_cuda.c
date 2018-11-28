@@ -137,7 +137,7 @@ ln_peephole_func ph_funcs_cuda[] = {
 };
 
 ln_arch ln_arch_cuda = {
-    .ops = ops_cuda,
+    .reg_ops = ops_cuda,
     .ph_funcs = ph_funcs_cuda,
     .post_ph = NULL,
     .arch_name = "cuda",

@@ -218,7 +218,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
 
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
-        if (ln_strneq(tle->arg_name, "src", 3)) {
+        if (ln_streqn(tle->arg_name, "src", 3)) {
             te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
             ln_opck_tensor_defined(te, tle->name);
             ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
@@ -228,7 +228,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
                     "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
                     op_arg->optype, op_arg->name, te->name,
                     tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
-        } else if (ln_strneq(tle->arg_name, "weight", 6)) {
+        } else if (ln_streqn(tle->arg_name, "weight", 6)) {
             te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
             ln_opck_tensor_defined(te, tle->name);
             ln_opck_tensor_mtype_eq(te, LN_MEM_CPU);
@@ -245,7 +245,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
 
     for (l = op_arg->tensors_out; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
-        if (ln_strneq(tle->arg_name, "dst", 3)) {
+        if (ln_streqn(tle->arg_name, "dst", 3)) {
             te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
             ln_opck_tensor_not_defined(te, tle->name);
         }
@@ -253,7 +253,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
 
     for (l = op_arg->params; l; l = l->next) {
         pe = (ln_param_entry *)l->data;
-        if (!ln_strneq(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+        if (!ln_streqn(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
             continue;
         ln_opck_param_type(pe, LN_PARAM_STRING);
         if (ln_streq(pe->value_string, "conv"))
@@ -333,7 +333,7 @@ static std::map<std::string, Weights> create_weight_map(ln_op_arg *op_arg)
 
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
-        if (!ln_strneq(tle->arg_name, "weight", 6))
+        if (!ln_streqn(tle->arg_name, "weight", 6))
             continue;
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         wt.type = (DataType)tl_dtype_to_weight_DataType(te->tensor->dtype);
@@ -614,7 +614,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
     DataType dt;
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
-        if (!ln_strneq(tle->arg_name, "src", 3))
+        if (!ln_streqn(tle->arg_name, "src", 3))
             continue;
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         dt = (DataType)tl_dtype_to_ioTensor_DataType(te->tensor->dtype);
@@ -628,7 +628,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
     ln_param_entry *pe;
     for (l = op_arg->params; l; l = l->next) {
         pe = (ln_param_entry *)l->data;
-        if (!ln_strneq(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+        if (!ln_streqn(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
             continue;
         if (ln_streq(pe->value_string, "conv"))
             add_conv(network, tensors, weights, pe->arg_name, op_arg);
@@ -681,7 +681,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
     bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
-        if (!ln_strneq(tle->arg_name, "src", 3))
+        if (!ln_streqn(tle->arg_name, "src", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
@@ -689,7 +689,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
     }
     for (l = op_arg->tensors_out; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
-        if (!ln_strneq(tle->arg_name, "dst", 3))
+        if (!ln_streqn(tle->arg_name, "dst", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);

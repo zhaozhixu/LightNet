@@ -20,25 +20,21 @@
  * SOFTWARE.
  */
 
+#ifndef _LIGHTNET_H_
+#define _LIGHTNET_H_
+
+#include "ln_util.h"
+#include "ln_list.h"
+#include "ln_queue.h"
+#include "ln_error.h"
+#include "ln_graph.h"
+#include "ln_hash.h"
+#include "ln_mem.h"
+#include "ln_param.h"
+#include "ln_tensor.h"
+#include "ln_op.h"
+#include "ln_json.h"
+#include "ln_pass.h"
 #include "ln_arch.h"
 
-extern ln_arch ln_arch_cpu;
-
-#ifdef LN_CUDA
-extern ln_arch ln_arch_cuda;
-#endif
-
-#ifdef LN_TENSORRT
-extern ln_arch ln_arch_tensorrt;
-#endif
-
-ln_arch *ln_archs[] = {
-    &ln_arch_cpu,
-#ifdef LN_CUDA
-    &ln_arch_cuda,
-#endif
-#ifdef LN_TENSORRT
-    &ln_arch_tensorrt,
-#endif
-    NULL
-};
+#endif  /* _LIGHTNET_H_ */

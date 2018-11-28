@@ -58,7 +58,7 @@ static char *create_arg_name_in_tensors(ln_list *tensors, const char *prefix)
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(tle, tensors) {
-        if (!ln_strneq(tle->arg_name, prefix, prefix_len) ||
+        if (!ln_streqn(tle->arg_name, prefix, prefix_len) ||
             ln_next_token(tle->arg_name, '_'))
             continue;
         assert(isdigit(tle->arg_name[prefix_len]) && "subfixed with no digit");
@@ -79,7 +79,7 @@ static char *create_arg_name_in_params(ln_list *params, const char *prefix)
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(pe, params) {
-        if (!ln_strneq(pe->arg_name, prefix, prefix_len) ||
+        if (!ln_streqn(pe->arg_name, prefix, prefix_len) ||
             ln_next_token(pe->arg_name, '_'))
             continue;
         assert(isdigit(pe->arg_name[prefix_len]) && "subfixed with no digit");
@@ -780,7 +780,7 @@ static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
     }
 
     LN_LIST_FOREACH(tle, op_arg->tensors_in) {
-        if (ln_strneq(tle->arg_name, "src", 3))
+        if (ln_streqn(tle->arg_name, "src", 3))
             add_trt_src(trt_arg, op_arg, tle->name);
         else
             add_trt_weight(trt_arg, op_arg, tle->name);
@@ -795,7 +795,7 @@ static void add_trt_to_trt(ln_op *trt_op, ln_op *op)
     ln_free(param_op_arg_name);
 
     LN_LIST_FOREACH(pe, op_arg->params) {
-        if (!ln_strneq(pe->arg_name, "op", 2))
+        if (!ln_streqn(pe->arg_name, "op", 2))
             continue;
         new_pe = ln_param_entry_copy(pe);
         ln_free(new_pe->arg_name);
@@ -982,7 +982,7 @@ ln_peephole_func ph_funcs_tensorrt[] = {
 };
 
 ln_arch ln_arch_tensorrt = {
-    .ops = ops_tensorrt,
+    .reg_ops = ops_tensorrt,
     .ph_funcs = ph_funcs_tensorrt,
     .post_ph = post_ph_tensorrt,
     .arch_name = "tensorrt",

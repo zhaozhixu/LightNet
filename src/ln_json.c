@@ -469,8 +469,8 @@ static int *preprocess(char *json_str)
     return array;
 }
 
-ln_list *ln_parse(char *json_str, ln_list *registered_ops,
-                  ln_hash *tensor_table)
+ln_list *ln_json_parse(char *json_str, ln_list *registered_ops,
+                       ln_hash *tensor_table)
 {
     int *newline_indices;
     const cJSON *ops_json;
@@ -520,4 +520,146 @@ err_json:
     ln_error_handle(&error);
     cJSON_Delete(json);
     return NULL;
+}
+
+#define PRINT_JSON_ERROR ln_error_emit(LN_ERROR, "ln_json_print_ops() failed")
+
+static void add_tensors(cJSON *tensors_json, ln_list *tensors)
+{
+    ln_tensor_list_entry *tle;
+    cJSON *tensor_json = NULL;
+    cJSON *item = NULL;
+
+    LN_LIST_FOREACH(tle, tensors) {
+        tensor_json = cJSON_CreateObject();
+
+        item = cJSON_AddStringToObject(tensor_json, "arg_name", tle->arg_name);
+        if (!item)
+            PRINT_JSON_ERROR;
+        item = cJSON_AddStringToObject(tensor_json, "name", tle->name);
+        if (!item)
+            PRINT_JSON_ERROR;
+
+        cJSON_AddItemToArray(tensors_json, tensor_json);
+    }
+}
+
+static void add_params(cJSON *params_json, ln_list *params)
+{
+    ln_param_entry *pe;
+    cJSON *param_json = NULL;
+    cJSON *item = NULL;
+
+    LN_LIST_FOREACH(pe, params) {
+        param_json = cJSON_CreateObject();
+        if (!param_json)
+            PRINT_JSON_ERROR;
+
+        item = cJSON_AddStringToObject(param_json, "arg_name", pe->arg_name);
+        if (!item)
+            PRINT_JSON_ERROR;
+
+        switch (pe->type) {
+        case LN_PARAM_BOOL:
+            item = cJSON_AddBoolToObject(param_json, "value",
+                                         pe->value_bool ?
+                                         cJSON_True : cJSON_False);
+            break;
+        case LN_PARAM_NULL:
+            item = cJSON_AddNullToObject(param_json, "value");
+            break;
+        case LN_PARAM_NUMBER:
+            item = cJSON_AddNumberToObject(param_json, "value",
+                                           pe->value_double);
+            break;
+        case LN_PARAM_STRING:
+            item = cJSON_AddStringToObject(param_json, "value",
+                                           pe->value_string);
+            break;
+        case LN_PARAM_ARRAY_BOOL:
+            /* TODO: add cJSON_CreateBoolArray() */
+            item = cJSON_CreateIntArray((int *)pe->value_array_bool,
+                                        pe->array_len);
+            break;
+        case LN_PARAM_ARRAY_NUMBER:
+            item = cJSON_CreateDoubleArray(pe->value_array_double,
+                                           pe->array_len);
+            break;
+        case LN_PARAM_ARRAY_STRING:
+            item = cJSON_CreateStringArray(pe->value_array_string,
+                                           pe->array_len);
+            break;
+        default:
+            assert(0 && "unsupported ln_param_type");
+            break;
+        }
+        if (!item)
+            PRINT_JSON_ERROR;
+
+        cJSON_AddItemToArray(params_json, param_json);
+    }
+}
+
+char *ln_json_create_json_str(ln_list *ops)
+{
+    char *str = NULL;
+    ln_op *op;
+    cJSON *json = NULL;
+    cJSON *ops_json = NULL;
+    cJSON *op_json = NULL;
+    cJSON *item = NULL;
+
+    json = cJSON_CreateObject();
+    if (!json)
+        PRINT_JSON_ERROR;
+    ops_json = cJSON_AddArrayToObject(json, "ops");
+    if (!ops_json)
+        PRINT_JSON_ERROR;
+
+    LN_LIST_FOREACH(op, ops) {
+        op_json = cJSON_CreateObject();
+        if (!op_json)
+            PRINT_JSON_ERROR;
+
+        item = cJSON_AddStringToObject(op_json, "name", op->op_arg->name);
+        if (!item)
+            PRINT_JSON_ERROR;
+
+        item = cJSON_AddStringToObject(op_json, "optype", op->op_arg->optype);
+        if (!item)
+            PRINT_JSON_ERROR;
+
+        item = cJSON_AddArrayToObject(op_json, "tensors_in");
+        if (!item)
+            PRINT_JSON_ERROR;
+        add_tensors(item, op->op_arg->tensors_in);
+
+        item = cJSON_AddArrayToObject(op_json, "tensors_out");
+        if (!item)
+            PRINT_JSON_ERROR;
+        add_tensors(item, op->op_arg->tensors_out);
+
+        item = cJSON_AddArrayToObject(op_json, "params");
+        if (!item)
+            PRINT_JSON_ERROR;
+        add_params(item, op->op_arg->params);
+
+        cJSON_AddItemToArray(ops_json, op_json);
+    }
+
+    str = cJSON_Print(json);
+    if (!str)
+        PRINT_JSON_ERROR;
+
+    cJSON_Delete(json);
+    return str;
+}
+
+void ln_json_fprint(FILE *fp, ln_list *ops)
+{
+    char *str;
+
+    str = ln_json_create_json_str(ops);
+    fprintf(fp, "%s", str);
+    ln_free(str);
 }

@@ -20,8 +20,8 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_PARSE_H_
-#define _LN_PARSE_H_
+#ifndef _LN_JSON_H_
+#define _LN_JSON_H_
 
 #include "ln_list.h"
 #include "ln_hash.h"
@@ -30,11 +30,13 @@
 LN_CPPSTART
 #endif
 
-ln_list *ln_parse(const char *json_str, ln_list *registered_ops,
-                  ln_hash *tensor_table);
+ln_list *ln_json_parse(const char *json_str, ln_list *registered_ops,
+                       ln_hash *tensor_table);
+char *ln_json_create_json_str(const ln_list *ops);
+void ln_json_fprint(FILE *fp, ln_list *ops);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif  /* _LN_PARSE_H_ */
+#endif  /* _LN_JSON_H_ */

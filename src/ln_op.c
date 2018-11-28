@@ -118,10 +118,9 @@ void ln_op_list_free_lists_too(ln_list *ops)
 
 static int cmp_by_optype(void *data1, void *data2)
 {
-    ln_op *op1, *op2;
+    ln_op *op1 = data1;
+    ln_op *op2 = data2;
 
-    op1 = (ln_op *)data1;
-    op2 = (ln_op *)data2;
     return strcmp(op1->op_arg->optype, op2->op_arg->optype);
 }
 
@@ -274,16 +273,43 @@ char *ln_op_list_new_opname(ln_list *ops, const char *prefix)
     size_t prefix_len = strlen(prefix);
     size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
     int max_idx = 0;
+    int idx;
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(op, ops) {
-        if (!ln_strneq(op->op_arg->name, prefix, prefix_len))
+        if (!ln_streqn(op->op_arg->name, prefix, prefix_len))
             continue;
         assert(isdigit(op->op_arg->name[prefix_len]) &&
                "subfixed with no digit");
-        int idx = atoi(&op->op_arg->name[prefix_len]);
+        idx = atoi(&op->op_arg->name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
     snprintf(buf, buf_len, "%s%d", prefix, max_idx);
     return buf;
+}
+
+ln_hash *ln_op_table_create(ln_list *ops, const char *key_type)
+{
+    ln_hash *op_table;
+    ln_op *op;
+
+    op_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    if (ln_streq(key_type, "optype")) {
+        LN_LIST_FOREACH(op, ops) {
+            ln_hash_insert(op_table, op->op_arg->optype, op);
+        }
+    } else if (ln_streq(key_type, "name")) {
+        LN_LIST_FOREACH(op, ops) {
+            ln_hash_insert(op_table, op->op_arg->name, op);
+        }
+    } else {
+        assert(0 && "unsupported key_type");
+    }
+
+    return op_table;
+}
+
+void ln_op_table_free(ln_hash *op_table)
+{
+    ln_hash_free(op_table);
 }

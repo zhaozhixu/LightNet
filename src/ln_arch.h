@@ -29,8 +29,8 @@ typedef ln_list *(*ln_peephole_func) (ln_list *ops, int win_size, int *match);
 typedef ln_list *(*ln_post_peephole) (ln_list *ops);
 
 struct ln_arch {
-    ln_op            **ops;       /* NULL terminated */
-    ln_peephole_func  *ph_funcs;  /* NULL terminated */
+    ln_op            **reg_ops;       /* NULL terminated */
+    ln_peephole_func  *ph_funcs;      /* NULL terminated */
     ln_post_peephole   post_ph;
     char              *arch_name;
 };
@@ -40,7 +40,10 @@ typedef struct ln_arch ln_arch;
 LN_CPPSTART
 #endif
 
-ln_list *ln_arch_create_oplist(ln_arch *archs[]);
+ln_list *ln_arch_create_oplist(void);
+ln_list *ln_arch_create_reg_ops(void);
+ln_hash *ln_arch_table_create(void);
+void ln_arch_table_free(ln_hash *arch_table);
 
 #ifdef __cplusplus
 LN_CPPEND

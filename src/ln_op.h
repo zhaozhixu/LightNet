@@ -76,6 +76,9 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
    Need to be freed. `ops` should not be modified */
 char *ln_op_list_new_opname(ln_list *ops, const char *prefix);
 
+ln_hash *ln_op_table_create(ln_list *ops, const char *key_type);
+void ln_op_table_free(ln_hash *op_table);
+
 /* Generate Data Flow Graph, with ops as its nodes and tensor names
    as its edge. A hash of <opname, graph_node> returned in node_table_p
    if it's not NULL */

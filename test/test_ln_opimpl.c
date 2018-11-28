@@ -30,11 +30,9 @@
 static ln_list *reg_ops;
 static ln_hash *tensor_table;
 
-extern ln_arch *ln_archs[];
-
 static void checked_setup(void)
 {
-     reg_ops = ln_arch_create_oplist(ln_archs);
+     reg_ops = ln_arch_create_oplist();
      tensor_table = ln_tensor_table_create();
 }
 
