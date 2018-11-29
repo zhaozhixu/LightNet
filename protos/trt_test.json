@@ -6,93 +6,50 @@
             "tensors_in": [
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "create1_dst"}
+                {"arg_name": "dst", "name": "img1"}
             ],
             "params": [
+                {"arg_name": "dims", "value": [1, 3, 360, 640]},
                 {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "dims", "value": [2, 4]},
-                {"arg_name": "data", "value": [1, 2, 3, 4, 5, 6, 7, 8]}
+                {"arg_name": "data", "value": []}
             ]
         },
         {
-            "name": "slice1",
-            "optype": "slice",
+            "name": "create2",
+            "optype": "create",
             "tensors_in": [
-                {"arg_name": "src", "name": "create1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "slice1_dst"}
+                {"arg_name": "dst", "name": "weight1"}
             ],
             "params": [
-                {"arg_name": "axis", "value": 1},
-                {"arg_name": "start", "value": 1},
-                {"arg_name": "len", "value": 3}
+                {"arg_name": "dims", "value": [1, 64, 3, 3, 3]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"}
             ]
         },
         {
-            "name": "reshape1",
-            "optype": "reshape",
+            "name": "create3",
+            "optype": "create",
             "tensors_in": [
-                {"arg_name": "src", "name": "slice1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "reshape1_dst"}
+                {"arg_name": "dst", "name": "bias1"}
             ],
             "params": [
-                {"arg_name": "dims", "value": [3, 2]}
-            ]
-        },
-        {
-            "name": "maxreduce1",
-            "optype": "maxreduce",
-            "tensors_in": [
-                {"arg_name": "src", "name": "reshape1_dst"}
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "maxreduce1_dst"},
-                {"arg_name": "arg", "name": "maxreduce1_arg"}
-            ],
-            "params": [
-                {"arg_name": "axis", "value": 0}
-            ]
-        },
-        {
-            "name": "elew1",
-            "optype": "elew",
-            "tensors_in": [
-                {"arg_name": "src1", "name": "maxreduce1_dst"},
-                {"arg_name": "src2", "name": "maxreduce1_arg"}
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "elew1_dst"}
-            ],
-            "params": [
-                {"arg_name": "elew_op", "value": "TL_MUL"}
-            ]
-        },
-        {
-            "name": "transpose1",
-            "optype": "transpose",
-            "tensors_in": [
-                {"arg_name": "src", "name": "elew1_dst"}
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "transpose1_dst"}
-            ],
-            "params": [
-                {"arg_name": "axes", "value": [1, 0]}
+                {"arg_name": "dims", "value": [64]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"}
             ]
         },
         {
             "name": "conv2d1",
             "optype": "conv2d",
             "tensors_in": [
-                {"arg_name": "src", "name": "transpose1"},
+                {"arg_name": "src", "name": "img1"},
                 {"arg_name": "weight", "name": "weight1"},
                 {"arg_name": "bias", "name": "bias1"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "conv2d1"}
+                {"arg_name": "dst", "name": "conv2d1_dst"}
             ],
             "params": [
                 {"arg_name": "group", "value": 1},
@@ -106,10 +63,10 @@
             "name": "relu1",
             "optype": "relu",
             "tensors_in": [
-                {"arg_name": "src", "name": "conv2d1"}
+                {"arg_name": "src", "name": "conv2d1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "relu1"}
+                {"arg_name": "dst", "name": "relu1_dst"}
             ],
             "params": [
             ]
@@ -118,10 +75,82 @@
             "name": "maxpool2d1",
             "optype": "maxpool2d",
             "tensors_in": [
-                {"arg_name": "src", "name": "relu1"}
+                {"arg_name": "src", "name": "relu1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "pool1"}
+                {"arg_name": "dst", "name": "pool1_dst"}
+            ],
+            "params": [
+                {"arg_name": "size", "value": [3, 3]},
+                {"arg_name": "stride", "value": [2, 2]},
+                {"arg_name": "padding", "value": [1, 1, 1, 1]}
+            ]
+        },
+        {
+            "name": "create4",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "weight2"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [1, 16, 64, 1, 1]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"}
+            ]
+        },
+        {
+            "name": "create5",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "bias2"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [16]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"}
+            ]
+        },
+        {
+            "name": "conv2d2",
+            "optype": "conv2d",
+            "tensors_in": [
+                {"arg_name": "src", "name": "pool1_dst"},
+                {"arg_name": "weight", "name": "weight2"},
+                {"arg_name": "bias", "name": "bias2"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "conv2d2_dst"}
+            ],
+            "params": [
+                {"arg_name": "group", "value": 1},
+                {"arg_name": "size", "value": [3, 3]},
+                {"arg_name": "stride", "value": [2, 2]},
+                {"arg_name": "padding", "value": [1, 1, 1, 1]},
+                {"arg_name": "dilation", "value": [1, 1]}
+            ]
+        },
+        {
+            "name": "relu1",
+            "optype": "relu",
+            "tensors_in": [
+                {"arg_name": "src", "name": "conv2d1_dst"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "relu1_dst"}
+            ],
+            "params": [
+            ]
+        },
+        {
+            "name": "maxpool2d1",
+            "optype": "maxpool2d",
+            "tensors_in": [
+                {"arg_name": "src", "name": "relu1_dst"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "pool1_dst"}
             ],
             "params": [
                 {"arg_name": "size", "value": [3, 3]},
@@ -133,10 +162,10 @@
             "name": "softmax1",
             "optype": "softmax",
             "tensors_in": [
-                {"arg_name": "src", "name": "pool1"}
+                {"arg_name": "src", "name": "pool1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "softmax1"}
+                {"arg_name": "dst", "name": "softmax1_dst"}
             ],
             "params": [
                 {"arg_name": "axis", "value": 1}
@@ -146,7 +175,7 @@
             "name": "concat1",
             "optype": "concat",
             "tensors_in": [
-                {"arg_name": "src1", "name": ""},
+                {"arg_name": "src1", "name": "softmax1_dst"},
                 {"arg_name": "src2", "name": ""}
             ],
             "tensors_out": [

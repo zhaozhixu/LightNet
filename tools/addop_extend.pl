@@ -15,13 +15,14 @@ Generate operator defination code from operator description JSON.
 Read the JSON string from standard input if JSON_FILE(s) are not given.
 Print the output code to standard output if --dir and --root are omited.
 
-options:
+[options]
   -h, --help              print this message
   -d, --dir=<directory>   save operator defination file(s) in <directory>
   -r, --root=<root>       set project root directory; this option will save
                           operator defination file(s) in <root>/src, and add
                           operator declarations and such to
                           <root>/src/ln_arch_*.c
+Author: Zhao Zhixu
 EOF
 
 my $INDENT_OFFSET = 4;
