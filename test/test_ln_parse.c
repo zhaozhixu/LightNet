@@ -27,16 +27,19 @@
 #include "../src/ln_context.h"
 
 static char *json_str;
+static ln_context *ctx;
 
 static void checked_setup(void)
 {
-     ln_context_init();
+     ln_arch_init();
+     ctx = ln_context_create();
      json_str = ln_read_text("test_ops.json");
 }
 
 static void checked_teardown(void)
 {
-     ln_context_cleanup();
+     ln_arch_cleanup();
+     ln_context_free(ctx);
      ln_free(json_str);
 }
 
@@ -44,7 +47,7 @@ static void assert_op_eq(ln_op *op, char *optype, char *opname)
 {
      ln_op *op_proto;
 
-     op_proto = ln_hash_find(LN_CTX.op_init_table, optype);
+     op_proto = ln_hash_find(LN_INIT.init_op_table, optype);
      ck_assert_ptr_ne(op, NULL);
      ck_assert_ptr_eq(op->pre_run, op_proto->pre_run);
      ck_assert_ptr_eq(op->static_run, op_proto->static_run);
@@ -76,18 +79,16 @@ static void assert_op_eq(ln_op *op, char *optype, char *opname)
 
 START_TEST(test_ln_parse)
 {
-     ln_list *ops;
      ln_op *op;
      ln_param_entry *param_entry;
      char *tensor_name;
-     ln_hash *table;
      /* tl_tensor *tensor1, *tensor2, *tensor_true; */
 
-     table = ln_tensor_table_create();
-     ops = ln_json_parse(json_str, LN_CTX.op_init_table, table);
+     ctx->ops = ln_json_parse(json_str, LN_INIT.init_op_table,
+                              ctx->tensor_table, ctx->op_table);
 
      /* create1 */
-     op = ln_op_list_find_by_name(ops, "create1");
+     op = ln_op_list_find_by_name(ctx->ops, "create1");
      assert_op_eq(op, "create", "create1");
 
      /* tensor_true = tl_tensor_create(ARR(float,1,2,3,4,5,6,7,8), 2, ARR(int,2,4), TL_FLOAT); */
@@ -103,7 +104,7 @@ START_TEST(test_ln_parse)
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,2,4), 2);
 
      /* slice1 */
-     op = ln_op_list_find_by_name(ops, "slice1");
+     op = ln_op_list_find_by_name(ctx->ops, "slice1");
      assert_op_eq(op, "slice", "slice1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "create1", tensor1, NULL); */
@@ -131,7 +132,7 @@ START_TEST(test_ln_parse)
      ck_assert_int_eq(param_entry->value_int, 3);
 
      /* reshape1 */
-     op = ln_op_list_find_by_name(ops, "reshape1");
+     op = ln_op_list_find_by_name(ctx->ops, "reshape1");
      assert_op_eq(op, "reshape", "reshape1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "slice1", tensor1, NULL); */
@@ -151,7 +152,7 @@ START_TEST(test_ln_parse)
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,3,2), 2);
 
      /* maxreduce1 */
-     op = ln_op_list_find_by_name(ops, "maxreduce1");
+     op = ln_op_list_find_by_name(ctx->ops, "maxreduce1");
      assert_op_eq(op, "maxreduce", "maxreduce1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "reshape1", tensor1, NULL); */
@@ -177,7 +178,7 @@ START_TEST(test_ln_parse)
      ck_assert_int_eq(param_entry->value_int, 0);
 
      /* elew1 */
-     op = ln_op_list_find_by_name(ops, "elew1");
+     op = ln_op_list_find_by_name(ctx->ops, "elew1");
      assert_op_eq(op, "elew", "elew1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src1", "maxreduce1_dst", tensor1, NULL); */
@@ -201,7 +202,7 @@ START_TEST(test_ln_parse)
      ck_assert_str_eq(param_entry->value_string, "TL_MUL");
 
      /* transpose1 */
-     op = ln_op_list_find_by_name(ops, "transpose1");
+     op = ln_op_list_find_by_name(ctx->ops, "transpose1");
      assert_op_eq(op, "transpose", "transpose1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "elew1", tensor1, NULL); */
@@ -221,7 +222,7 @@ START_TEST(test_ln_parse)
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,1,0), 2);
 
      /* zeros1 */
-     op = ln_op_list_find_by_name(ops, "zeros1");
+     op = ln_op_list_find_by_name(ctx->ops, "zeros1");
      assert_op_eq(op, "zeros", "zeros1");
 
      /* tensor_true = tl_tensor_create(ARR(float,0,0,0,0,0,0,0,0), 2, ARR(int,2,4), TL_FLOAT); */
@@ -239,9 +240,6 @@ START_TEST(test_ln_parse)
      ck_assert_ptr_ne(param_entry, NULL);
      ck_assert_int_eq(param_entry->type, LN_PARAM_ARRAY_NUMBER);
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,2,4), 2);
-
-     ln_op_list_free_lists_too(ops);
-     ln_tensor_table_free(table);
 }
 END_TEST
 /* end of tests */

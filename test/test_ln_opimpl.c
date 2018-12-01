@@ -27,19 +27,13 @@
 #include "../src/ln_pass.h"
 #include "../src/ln_arch.h"
 
-static ln_list *reg_ops;
-static ln_hash *tensor_table;
 
 static void checked_setup(void)
 {
-     reg_ops = ln_arch_create_oplist();
-     tensor_table = ln_tensor_table_create();
 }
 
 static void checked_teardown(void)
 {
-     ln_tensor_table_free(tensor_table);
-     ln_op_list_free(reg_ops);
 }
 
 START_TEST(test_ln_opimpl_create)

@@ -400,7 +400,7 @@ static int *preprocess(char *json_str)
 }
 
 ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
-                       ln_hash *tensor_table)
+                       ln_hash *tensor_table, ln_hash *op_table)
 {
     int *newline_indices;
     const cJSON *ops_json;
@@ -422,9 +422,12 @@ ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
     if (!cJSON_IsArray(ops_json))
         PARSE_JSON_ERROR("item \"ops\" has to be an Array");
 
-    int i = 0;
+    int i = 0, ret;
     cJSON_ArrayForEach(op_json, ops_json) {
         op = parse_op(op_json, op_init_table, tensor_table, i);
+        ret = ln_op_table_insert(op_table, op->op_arg->name, op);
+        if (!ret)
+            PARSE_JSON_ERROR("op \"%s\"'s name is duplicated");
         ops = ln_list_append(ops, op);
         i++;
     }
@@ -434,13 +437,13 @@ ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
 }
 
 ln_list *ln_json_parse_file(const char *file, ln_hash *op_init_table,
-                            ln_hash *tensor_table)
+                            ln_hash *tensor_table, ln_hash *op_table)
 {
     char *str;
     ln_list *ops;
 
     str = ln_read_text(file);
-    ops = ln_json_parse(str, op_init_table, tensor_table);
+    ops = ln_json_parse(str, op_init_table, tensor_table, op_table);
     ln_free(str);
 
     return ops;

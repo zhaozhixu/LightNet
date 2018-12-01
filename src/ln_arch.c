@@ -71,10 +71,10 @@ static ln_hash *op_table_create(ln_arch *archs[])
     ln_op *op;
     int i, j;
 
-    op_table = ln_op_table_create();
+    op_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     for (i = 0; archs[i]; i++) {
         for (j = 0; (op = archs[i]->reg_ops[j]); j++)
-            ln_op_table_insert(op_table, op->op_arg->optype, op);
+            ln_hash_insert(op_table, op->op_arg->optype, op);
     }
 
     return op_table;
@@ -82,7 +82,7 @@ static ln_hash *op_table_create(ln_arch *archs[])
 
 static void op_table_free(ln_hash *op_init_table)
 {
-    ln_op_table_free(op_init_table);
+    ln_hash_free(op_init_table);
 }
 
 void ln_arch_init(void)

@@ -156,7 +156,7 @@ static inline void error_handle(ln_error **error)
 }
 
 ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs,
-                          ln_post_peephole post_ph)
+                          ln_post_peephole post_ph, ln_hash *op_table)
 {
     ln_peephole_func pf;
     ln_op *op;
@@ -190,9 +190,10 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
                     op = l->data;
                     op->post_run(op->op_arg, &error);
                     error_handle(&error);
-                    ln_op_free_lists_too(op);
+                    ln_op_table_remove(op_table, op->op_arg->name);
                     l->data = l_out->data;
                     op = l->data;
+                    ln_op_table_insert(op_table, op->op_arg->name, op);
                     op->pre_run(op->op_arg, &error);
                     error_handle(&error);
                 }
@@ -200,6 +201,7 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
                     for (; l_out; l_out = l_out->next) {
                         l_ops = ln_list_insert_before(l_ops, l_out->data, l);
                         op = l_out->data;
+                        ln_op_table_insert(op_table, op->op_arg->name, op);
                         op->pre_run(op->op_arg, &error);
                         error_handle(&error);
                     }
@@ -209,7 +211,7 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
                         op->post_run(op->op_arg, &error);
                         error_handle(&error);
                         l_ops = ln_list_remove(l_ops, op);
-                        ln_op_free_lists_too(op);
+                        ln_op_table_remove(op_table, op->op_arg->name);
                         if (!l_ops_pre)
                             ops = l_ops;
                         else

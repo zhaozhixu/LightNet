@@ -35,7 +35,7 @@ LN_CPPSTART
 
 ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools);
 ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs,
-                          ln_post_peephole post_ph);
+                          ln_post_peephole post_ph, ln_hash *op_table);
 
 #ifdef __cplusplus
 LN_CPPEND
