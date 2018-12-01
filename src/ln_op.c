@@ -285,20 +285,31 @@ char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
     return buf;
 }
 
-ln_hash *ln_op_init_table_create(const ln_list *ops)
+ln_hash *ln_op_table_create(void)
 {
-    ln_hash *op_table;
-    ln_op *op;
-
-    op_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-    LN_LIST_FOREACH(op, ops) {
-        ln_hash_insert(op_table, op->op_arg->optype, op);
-    }
-
-    return op_table;
+    return ln_hash_create(ln_str_hash, ln_str_cmp, ln_free,
+                          op_free_lists_too_wrapper);
 }
 
-void ln_op_init_table_free(ln_hash *op_init_table)
+int ln_op_table_insert(ln_hash *table, char *key, ln_op *op)
 {
-    ln_hash_free(op_init_table);
+    char *key_copy;
+
+    key_copy = ln_strdup(key);
+    return ln_hash_insert(table, key_copy, op);
+}
+
+int ln_op_table_remove(ln_hash *table, char *key)
+{
+    return ln_hash_remove(table, key);
+}
+
+ln_op *ln_op_table_find(ln_hash *table, char *key)
+{
+    return ln_hash_find(table, key);
+}
+
+void ln_op_table_free(ln_hash *table)
+{
+    ln_hash_free(table);
 }

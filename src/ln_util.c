@@ -169,6 +169,24 @@ int ln_compute_length(int ndim, const int *dims)
     return len;
 }
 
+static char name_buf[LN_MAX_NAME_LEN] = {0};
+static uint32_t name_idx = 0;
+
+const char *ln_unique_name(const char *prefix)
+{
+    if (strlen(prefix) > LN_MAX_NAME_PREFIX)
+        ln_err_msg("WARNING: ln_unique_name()'s prefix \"%s\" exceeds LN_MAX_NAME_PREFIX limit %d",
+                   prefix, LN_MAX_NAME_PREFIX);
+
+    snprintf(name_buf, LN_MAX_NAME_LEN, "prefix%u", name_idx);
+    name_idx++;
+
+    if (name_idx == LN_MAX_NAME_NUM)
+        ln_err_msg("WARNING: ln_unique_name() exceeds LN_MAX_NAME_NUM limit %s",
+                   LN_MAX_NAME_NUM);
+    return name_buf;
+}
+
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
     char buf[LN_MAXLINE];

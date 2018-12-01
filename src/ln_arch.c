@@ -32,7 +32,7 @@ extern ln_arch ln_arch_cuda;
 extern ln_arch ln_arch_tensorrt;
 #endif
 
-static ln_arch *archs[] = {
+static ln_arch *init_archs[] = {
     &ln_arch_cpu,
 #ifdef LN_CUDA
     &ln_arch_cuda,
@@ -43,26 +43,9 @@ static ln_arch *archs[] = {
     NULL
 };
 
-ln_list *ln_arch_create_oplist(void)
-{
-    ln_list *ops = NULL;
-    int i, j;
+ln_init_tables ln_global_init_tables;
 
-    for (i = 0; archs[i]; i++) {
-        for (j = 0; archs[i]->reg_ops[j]; j++) {
-            ops = ln_list_append(ops, archs[i]->reg_ops[j]);
-        }
-    }
-
-    return ops;
-}
-
-ln_list *ln_arch_create_reg_ops(void)
-{
-    return ln_arch_create_oplist();
-}
-
-ln_hash *ln_arch_table_create(void)
+static ln_hash *arch_table_create(ln_arch *archs[])
 {
     ln_hash *arch_table;
     int i;
@@ -77,7 +60,39 @@ ln_hash *ln_arch_table_create(void)
     return arch_table;
 }
 
-void ln_arch_table_free(ln_hash *arch_table)
+static void arch_table_free(ln_hash *arch_table)
 {
     ln_hash_free(arch_table);
+}
+
+static ln_hash *op_table_create(ln_arch *archs[])
+{
+    ln_hash *op_table;
+    ln_op *op;
+    int i, j;
+
+    op_table = ln_op_table_create();
+    for (i = 0; archs[i]; i++) {
+        for (j = 0; (op = archs[i]->reg_ops[j]); j++)
+            ln_op_table_insert(op_table, op->op_arg->optype, op);
+    }
+
+    return op_table;
+}
+
+static void op_table_free(ln_hash *op_init_table)
+{
+    ln_op_table_free(op_init_table);
+}
+
+void ln_arch_init(void)
+{
+    LN_INIT.init_arch_table = arch_table_create(init_archs);
+    LN_INIT.init_op_table = op_table_create(init_archs);
+}
+
+void ln_arch_cleanup(void)
+{
+    arch_table_free(LN_INIT.init_arch_table);
+    op_table_free(LN_INIT.init_op_table);
 }

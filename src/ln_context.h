@@ -23,25 +23,24 @@
 #ifndef _LN_CONTEXT_H_
 #define _LN_CONTEXT_H_
 
+#include "ln_list.h"
 #include "ln_hash.h"
+#include "ln_tensor.h"
+#include "ln_op.h"
 
 struct ln_context {
-    ln_hash *arch_table;
-    ln_hash *op_init_table;
     ln_hash *tensor_table;
+    ln_hash *op_table;
+    ln_list *ops;
 };
 typedef struct ln_context ln_context;
-
-extern ln_context ln_global_context;
-
-#define LN_CTX ln_global_context
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-void ln_context_init(void);
-void ln_context_cleanup(void);
+ln_context *ln_context_create(void);
+void ln_context_free(ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND

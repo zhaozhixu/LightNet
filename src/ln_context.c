@@ -21,26 +21,22 @@
  */
 
 #include "ln_context.h"
-#include "ln_arch.h"
 
-ln_context ln_global_context;
-
-void ln_context_init(void)
+ln_context *ln_context_create(void)
 {
-    ln_list *init_ops;
+    ln_context *ctx;
 
-    LN_CTX.arch_table = ln_arch_table_create();
+    ctx = ln_alloc(sizeof(ln_context));
+    ctx->tensor_table = ln_tensor_table_create();
+    ctx->op_table = ln_op_table_create();
+    ctx->ops = NULL;
 
-    init_ops = ln_arch_create_oplist();
-    LN_CTX.op_init_table = ln_op_init_table_create(init_ops);
-    ln_op_list_free(init_ops);
-
-    LN_CTX.tensor_table = ln_tensor_table_create();
+    return ctx;
 }
 
-void ln_context_cleanup(void)
+void ln_context_free(ln_context *ctx)
 {
-    ln_arch_table_free(LN_CTX.arch_table);
-    ln_op_init_table_free(LN_CTX.op_init_table);
-    ln_tensor_table_free(LN_CTX.tensor_table);
+    ln_tensor_table_free(ctx->tensor_table);
+    ln_op_table_free(ctx->op_table);
+    ln_op_list_free(ctx->ops);
 }
