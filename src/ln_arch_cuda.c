@@ -71,13 +71,14 @@ static inline int can_replace(const char *optype)
         ln_streq(optype, "zeros") ||
         ln_streq(optype, "elew") ||
         ln_streq(optype, "softmax") ||
-        ln_streq(optype, "concat"))
+        ln_streq(optype, "concat") ||
+        ln_streq(optype, "upsample"))
         return 1;
     return 0;
 }
 
-static ln_list *ph_func_single_replace(const ln_list *ops, int win_size,
-                                       int *match)
+static ln_list *ph_func_single_replace(const ln_list *win_ops, int win_size,
+                                       int *match, const ln_list *ops)
 {
     ln_op *op, *new_op, *op_proto;
     ln_op_arg *op_arg;
@@ -89,7 +90,7 @@ static ln_list *ph_func_single_replace(const ln_list *ops, int win_size,
     *match = 0;
     replace_flag = ln_alloc(sizeof(int) * win_size);
     i = 0;
-    LN_LIST_FOREACH(op, ops) {
+    LN_LIST_FOREACH(op, win_ops) {
         if (can_replace(op->op_arg->optype)) {
             replace_flag[i++] = 1;
             *match = 1;
@@ -104,7 +105,7 @@ static ln_list *ph_func_single_replace(const ln_list *ops, int win_size,
 
     new_ops = NULL;
     i = 0;
-    LN_LIST_FOREACH(op, ops) {
+    LN_LIST_FOREACH(op, win_ops) {
         op_arg = op->op_arg;
         if (!replace_flag[i++]) {
             new_op = ln_op_create_from_proto(op, op_arg->name,
@@ -132,6 +133,10 @@ static ln_list *ph_func_single_replace(const ln_list *ops, int win_size,
     return new_ops;
 }
 
+ln_expander_func ep_funcs_cuda[] = {
+    NULL
+};
+
 ln_peephole_func ph_funcs_cuda[] = {
     ph_func_single_replace,
     NULL
@@ -139,6 +144,7 @@ ln_peephole_func ph_funcs_cuda[] = {
 
 ln_arch ln_arch_cuda = {
     .reg_ops = ops_cuda,
+    .ep_funcs = ep_funcs_cuda,
     .ph_funcs = ph_funcs_cuda,
     .post_ph = NULL,
     .arch_name = "cuda",

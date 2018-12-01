@@ -24,29 +24,23 @@
 #include "../src/ln_pass.h"
 #include "../src/ln_json.h"
 #include "../src/ln_arch.h"
+#include "../src/ln_context.h"
 
-static ln_list *reg_ops;
 static ln_list *ops;
 static char *json_str;
-static ln_hash *tensor_table;
-static ln_hash *arch_table;
 static ln_error *error = NULL;
 
 static void checked_setup(void)
 {
-     reg_ops = ln_arch_create_oplist();
+     ln_context_init();
      json_str = ln_read_text("test_ops.json");
-     tensor_table = ln_tensor_table_create();
-     arch_table = ln_arch_table_create();
-     ops = ln_json_parse(json_str, reg_ops, tensor_table);
+     ops = ln_json_parse(json_str, LN_CTX.op_init_table, LN_CTX.tensor_table);
 }
 
 static void checked_teardown(void)
 {
-     ln_op_list_free(reg_ops);
+     ln_context_cleanup();
      ln_free(json_str);
-     ln_tensor_table_free(tensor_table);
-     ln_arch_table_free(arch_table);
      ln_op_list_free_lists_too(ops);
 }
 
@@ -69,28 +63,28 @@ START_TEST(test_ln_pass_mem)
      ln_error_handle(&error);
      ops = ln_pass_mem(ops, mem_pools);
 
-     te = ln_tensor_table_find(tensor_table, "create1");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "create1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 1);
-     te = ln_tensor_table_find(tensor_table, "slice1");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "slice1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 33);
-     te = ln_tensor_table_find(tensor_table, "reshape1");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "reshape1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 0);
-     te = ln_tensor_table_find(tensor_table, "maxreduce1_dst");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "maxreduce1_dst");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 57);
-     te = ln_tensor_table_find(tensor_table, "maxreduce1_arg");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "maxreduce1_arg");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 65);
-     te = ln_tensor_table_find(tensor_table, "elew1");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "elew1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 33);
-     te = ln_tensor_table_find(tensor_table, "transpose1");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "transpose1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 41);
-     te = ln_tensor_table_find(tensor_table, "zeros1");
+     te = ln_tensor_table_find(LN_CTX.tensor_table, "zeros1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 33);
 
@@ -98,12 +92,11 @@ START_TEST(test_ln_pass_mem)
 }
 END_TEST
 
-static void assert_op_eq(ln_list *reg_ops, ln_op *op, char *optype,
-                         char *opname)
+static void assert_op_eq(ln_op *op, char *optype, char *opname)
 {
      ln_op *op_proto;
 
-     op_proto = ln_op_list_find_by_optype(reg_ops, optype);
+     op_proto = ln_hash_find(LN_CTX.op_init_table, optype);
      ck_assert_ptr_ne(op_proto, NULL);
      ck_assert_ptr_ne(op, NULL);
      ck_assert_str_eq(op->op_arg->optype, op_proto->op_arg->optype);
@@ -128,12 +121,12 @@ START_TEST(test_ln_pass_peephole)
      ln_arch *arch;
 
      ln_op_list_do_pre_run(ops, &error);
-     arch = ln_hash_find(arch_table, "cuda");
+     arch = ln_hash_find(LN_CTX.arch_table, "cuda");
      ops = ln_pass_peephole(ops, 3, arch->ph_funcs, arch->post_ph);
 
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");
-     assert_op_eq(reg_ops, op, "create_cuda", "create1");
+     assert_op_eq(op, "create_cuda", "create1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);
@@ -146,7 +139,7 @@ START_TEST(test_ln_pass_peephole)
 
      /* slice1 */
      op = ln_op_list_find_by_name(ops, "slice1");
-     assert_op_eq(reg_ops, op, "slice_cuda", "slice1");
+     assert_op_eq(op, "slice_cuda", "slice1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src");
      ck_assert_ptr_ne(tensor_name, NULL);
@@ -170,7 +163,7 @@ START_TEST(test_ln_pass_peephole)
 
      /* reshape1 */
      op = ln_op_list_find_by_name(ops, "reshape1");
-     assert_op_eq(reg_ops, op, "reshape_cuda", "reshape1");
+     assert_op_eq(op, "reshape_cuda", "reshape1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src");
      ck_assert_ptr_ne(tensor_name, NULL);
@@ -186,7 +179,7 @@ START_TEST(test_ln_pass_peephole)
 
      /* maxreduce1 */
      op = ln_op_list_find_by_name(ops, "maxreduce1");
-     assert_op_eq(reg_ops, op, "maxreduce_cuda", "maxreduce1");
+     assert_op_eq(op, "maxreduce_cuda", "maxreduce1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src");
      ck_assert_ptr_ne(tensor_name, NULL);
@@ -205,7 +198,7 @@ START_TEST(test_ln_pass_peephole)
 
      /* elew1 */
      op = ln_op_list_find_by_name(ops, "elew1");
-     assert_op_eq(reg_ops, op, "elew_cuda", "elew1");
+     assert_op_eq(op, "elew_cuda", "elew1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src1");
      ck_assert_ptr_ne(tensor_name, NULL);
@@ -224,7 +217,7 @@ START_TEST(test_ln_pass_peephole)
 
      /* transpose1 */
      op = ln_op_list_find_by_name(ops, "transpose1");
-     assert_op_eq(reg_ops, op, "transpose_cuda", "transpose1");
+     assert_op_eq(op, "transpose_cuda", "transpose1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src");
      ck_assert_ptr_ne(tensor_name, NULL);
@@ -240,7 +233,7 @@ START_TEST(test_ln_pass_peephole)
 
      /* zeros1 */
      op = ln_op_list_find_by_name(ops, "zeros1");
-     assert_op_eq(reg_ops, op, "zeros_cuda", "zeros1");
+     assert_op_eq(op, "zeros_cuda", "zeros1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);

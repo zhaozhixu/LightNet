@@ -105,10 +105,7 @@ static void op_free_lists_too_wrapper(void *p)
 {
     ln_op *op = p;
 
-    ln_tensor_list_free(op->op_arg->tensors_in);
-    ln_tensor_list_free(op->op_arg->tensors_out);
-    ln_param_list_free(op->op_arg->params);
-    ln_op_free(p);
+    ln_op_free_lists_too(op);
 }
 
 void ln_op_list_free_lists_too(ln_list *ops)
@@ -266,7 +263,7 @@ ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
     return DFG;
 }
 
-char *ln_op_list_new_opname(ln_list *ops, const char *prefix)
+char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
 {
     ln_op *op;
     char *buf;
@@ -288,28 +285,20 @@ char *ln_op_list_new_opname(ln_list *ops, const char *prefix)
     return buf;
 }
 
-ln_hash *ln_op_table_create(ln_list *ops, const char *key_type)
+ln_hash *ln_op_init_table_create(const ln_list *ops)
 {
     ln_hash *op_table;
     ln_op *op;
 
     op_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-    if (ln_streq(key_type, "optype")) {
-        LN_LIST_FOREACH(op, ops) {
-            ln_hash_insert(op_table, op->op_arg->optype, op);
-        }
-    } else if (ln_streq(key_type, "name")) {
-        LN_LIST_FOREACH(op, ops) {
-            ln_hash_insert(op_table, op->op_arg->name, op);
-        }
-    } else {
-        assert(0 && "unsupported key_type");
+    LN_LIST_FOREACH(op, ops) {
+        ln_hash_insert(op_table, op->op_arg->optype, op);
     }
 
     return op_table;
 }
 
-void ln_op_table_free(ln_hash *op_table)
+void ln_op_init_table_free(ln_hash *op_init_table)
 {
-    ln_hash_free(op_table);
+    ln_hash_free(op_init_table);
 }

@@ -24,28 +24,27 @@
 #include "../src/ln_op.h"
 #include "../src/ln_json.h"
 #include "../src/ln_arch.h"
+#include "../src/ln_context.h"
 
 static char *json_str;
-static ln_list *reg_ops = NULL;
 
 static void checked_setup(void)
 {
+     ln_context_init();
      json_str = ln_read_text("test_ops.json");
-     reg_ops = ln_arch_create_oplist();
 }
 
 static void checked_teardown(void)
 {
+     ln_context_cleanup();
      ln_free(json_str);
-     ln_op_list_free(reg_ops);
 }
 
-static void assert_op_eq(ln_list *registered_ops, ln_op *op,
-                         char *optype, char *opname)
+static void assert_op_eq(ln_op *op, char *optype, char *opname)
 {
      ln_op *op_proto;
 
-     op_proto = ln_op_list_find_by_optype(registered_ops, optype);
+     op_proto = ln_hash_find(LN_CTX.op_init_table, optype);
      ck_assert_ptr_ne(op, NULL);
      ck_assert_ptr_eq(op->pre_run, op_proto->pre_run);
      ck_assert_ptr_eq(op->static_run, op_proto->static_run);
@@ -85,11 +84,11 @@ START_TEST(test_ln_parse)
      /* tl_tensor *tensor1, *tensor2, *tensor_true; */
 
      table = ln_tensor_table_create();
-     ops = ln_json_parse(json_str, reg_ops, table);
+     ops = ln_json_parse(json_str, LN_CTX.op_init_table, table);
 
      /* create1 */
      op = ln_op_list_find_by_name(ops, "create1");
-     assert_op_eq(reg_ops, op, "create", "create1");
+     assert_op_eq(op, "create", "create1");
 
      /* tensor_true = tl_tensor_create(ARR(float,1,2,3,4,5,6,7,8), 2, ARR(int,2,4), TL_FLOAT); */
      /* assert_tensor_eq(TENSORS_OUT, table, "dst", "create1", tensor_true, &tensor1); */
@@ -105,7 +104,7 @@ START_TEST(test_ln_parse)
 
      /* slice1 */
      op = ln_op_list_find_by_name(ops, "slice1");
-     assert_op_eq(reg_ops, op, "slice", "slice1");
+     assert_op_eq(op, "slice", "slice1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "create1", tensor1, NULL); */
      /* tensor_true = tl_tensor_create(ARR(float,0,0,0,0,0,0), 2, ARR(int,2,3), TL_FLOAT); */
@@ -133,7 +132,7 @@ START_TEST(test_ln_parse)
 
      /* reshape1 */
      op = ln_op_list_find_by_name(ops, "reshape1");
-     assert_op_eq(reg_ops, op, "reshape", "reshape1");
+     assert_op_eq(op, "reshape", "reshape1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "slice1", tensor1, NULL); */
      /* tensor_true = tl_tensor_create(ARR(float,0,0,0,0,0,0), 2, ARR(int,3,2), TL_FLOAT); */
@@ -153,7 +152,7 @@ START_TEST(test_ln_parse)
 
      /* maxreduce1 */
      op = ln_op_list_find_by_name(ops, "maxreduce1");
-     assert_op_eq(reg_ops, op, "maxreduce", "maxreduce1");
+     assert_op_eq(op, "maxreduce", "maxreduce1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "reshape1", tensor1, NULL); */
      /* tensor_true = tl_tensor_create(ARR(float,0,0), 2, ARR(int,1,2), TL_FLOAT); */
@@ -179,7 +178,7 @@ START_TEST(test_ln_parse)
 
      /* elew1 */
      op = ln_op_list_find_by_name(ops, "elew1");
-     assert_op_eq(reg_ops, op, "elew", "elew1");
+     assert_op_eq(op, "elew", "elew1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src1", "maxreduce1_dst", tensor1, NULL); */
      /* assert_tensor_eq(TENSORS_IN, table, "src2", "maxreduce1_arg", tensor1, NULL); */
@@ -203,7 +202,7 @@ START_TEST(test_ln_parse)
 
      /* transpose1 */
      op = ln_op_list_find_by_name(ops, "transpose1");
-     assert_op_eq(reg_ops, op, "transpose", "transpose1");
+     assert_op_eq(op, "transpose", "transpose1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "elew1", tensor1, NULL); */
      /* tensor_true = tl_tensor_create(ARR(float,0,0), 2, ARR(int,2,1), TL_FLOAT); */
@@ -223,7 +222,7 @@ START_TEST(test_ln_parse)
 
      /* zeros1 */
      op = ln_op_list_find_by_name(ops, "zeros1");
-     assert_op_eq(reg_ops, op, "zeros", "zeros1");
+     assert_op_eq(op, "zeros", "zeros1");
 
      /* tensor_true = tl_tensor_create(ARR(float,0,0,0,0,0,0,0,0), 2, ARR(int,2,4), TL_FLOAT); */
      /* assert_tensor_eq(TENSORS_OUT, table, "dst", "zeros1", tensor_true, NULL); */

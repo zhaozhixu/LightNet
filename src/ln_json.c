@@ -145,7 +145,7 @@ end:
     return param_list;
 }
 
-static ln_op *parse_op(const cJSON *op_json, ln_list *registered_ops,
+static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
                        ln_hash *tensor_table, int idx, ln_error **error)
 {
     ln_op *op, *proto_op;
@@ -363,8 +363,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_list *registered_ops,
         }
         i++;
     }
-    proto_op = ln_op_list_find_by_optype(registered_ops,
-                                         optype_json->valuestring);
+    proto_op = ln_hash_find(op_init_table, optype_json->valuestring);
     if (!proto_op) {
         *error = ln_error_create(LN_ERROR,
                                  "op \"%s\"'s optype \"%s\" is not registered",
@@ -469,7 +468,7 @@ static int *preprocess(char *json_str)
     return array;
 }
 
-ln_list *ln_json_parse(char *json_str, ln_list *registered_ops,
+ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
                        ln_hash *tensor_table)
 {
     int *newline_indices;
@@ -500,7 +499,7 @@ ln_list *ln_json_parse(char *json_str, ln_list *registered_ops,
 
     int i = 0;
     cJSON_ArrayForEach(op_json, ops_json) {
-        op = parse_op(op_json, registered_ops, tensor_table, i, &error);
+        op = parse_op(op_json, op_init_table, tensor_table, i, &error);
         if (error) {
             assert(!op);
             goto err_op;
@@ -520,6 +519,19 @@ err_json:
     ln_error_handle(&error);
     cJSON_Delete(json);
     return NULL;
+}
+
+ln_list *ln_json_parse_file(const char *file, ln_hash *op_init_table,
+                            ln_hash *tensor_table)
+{
+    char *str;
+    ln_list *ops;
+
+    str = ln_read_text(file);
+    ops = ln_json_parse(str, op_init_table, tensor_table);
+    ln_free(str);
+
+    return ops;
 }
 
 #define PRINT_JSON_ERROR ln_error_emit(LN_ERROR, "ln_json_print_ops() failed")

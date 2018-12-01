@@ -44,7 +44,8 @@ ln_error *ln_error_create(ln_error_level level, const char *fmt, ...)
     vsnprintf(error->err_str, MAX_ERROR_LENGTH-1, fmt, ap);
     va_end(ap);
 
-    if (level == LN_ERROR_SYS || level == LN_WARNING_SYS)
+    if (level == LN_ERROR_SYS || level == LN_WARNING_SYS ||
+        level == LN_INTER_ERROR_SYS)
         snprintf(error->err_str+strlen(error->err_str),
                  MAX_ERROR_LENGTH-strlen(error->err_str)-1, ": %s",
                  strerror(errsv));
@@ -66,23 +67,20 @@ void ln_error_handle(ln_error **error)
     fflush(NULL);
     switch ((*error)->level) {
     case LN_ERROR:
+    case LN_ERROR_SYS:
         fprintf(stderr, "ERROR: %s\n", (*error)->err_str);
         fflush(NULL);
-        abort();
+        exit(EXIT_FAILURE);
         break;
-    case LN_ERROR_SYS:
-        fprintf(stderr, "ERROR_SYS: %s\n", (*error)->err_str);
+    case LN_INTER_ERROR:
+    case LN_INTER_ERROR_SYS:
+        fprintf(stderr, "INTERNAL ERROR: %s\n", (*error)->err_str);
         fflush(NULL);
         abort();
         break;
     case LN_WARNING:
-        fprintf(stderr, "WARNING: %s\n", (*error)->err_str);
-        fflush(NULL);
-        ln_error_free(*error);
-        *error = NULL;
-        return;
     case LN_WARNING_SYS:
-        fprintf(stderr, "WARNING_SYS: %s\n", (*error)->err_str);
+        fprintf(stderr, "WARNING: %s\n", (*error)->err_str);
         fflush(NULL);
         ln_error_free(*error);
         *error = NULL;

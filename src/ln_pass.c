@@ -180,7 +180,7 @@ ln_list *ln_pass_peephole(ln_list *ops, int win_size, ln_peephole_func *ph_funcs
             if (i == 0)
                 continue;
             for (j = 0; (pf = ph_funcs[j]); j++) {
-                win_out = pf(win_in, i, &match);
+                win_out = pf(win_in, i, &match, ops);
                 if (!match)
                     continue;
                 stable = 0;

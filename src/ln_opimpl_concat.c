@@ -90,7 +90,7 @@ static void concat_pre_run(ln_op_arg *op_arg, ln_error **error)
     /* define output tensor shape, tensor data should be NULL */
     int *dims;
     dims = ln_clone(src1_entry->tensor->dims,
-                    tl_size_of(src1_entry->tensor->dtype));
+                    sizeof(int)*src1_entry->tensor->ndim);
     dims[axis] = src1_entry->tensor->dims[axis] + src2_entry->tensor->dims[axis];
     dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim, dims,
                                   src1_entry->tensor->dtype);

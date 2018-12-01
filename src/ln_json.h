@@ -30,8 +30,10 @@
 LN_CPPSTART
 #endif
 
-ln_list *ln_json_parse(const char *json_str, ln_list *registered_ops,
+ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
                        ln_hash *tensor_table);
+ln_list *ln_json_parse_file(const char *file, ln_hash *op_init_table,
+                            ln_hash *tensor_table);
 char *ln_json_create_json_str(const ln_list *ops);
 void ln_json_fprint(FILE *fp, ln_list *ops);
 

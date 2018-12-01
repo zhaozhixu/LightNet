@@ -20,37 +20,27 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_ARCH_H_
-#define _LN_ARCH_H_
+#include "ln_context.h"
+#include "ln_arch.h"
 
-#include "ln_op.h"
+ln_context ln_global_context;
 
-typedef ln_list *(*ln_expander_func) (const ln_list *ops);
-/* TODO: `ops` is just for name creation, temporarily */
-typedef ln_list *(*ln_peephole_func) (const ln_list *win_ops, int win_size,
-                                      int *match, const ln_list *ops);
-typedef ln_list *(*ln_post_peephole) (ln_list *ops);
+void ln_context_init(void)
+{
+    ln_list *init_ops;
 
-struct ln_arch {
-    ln_op            **reg_ops;       /* NULL terminated */
-    ln_expander_func  *ep_funcs;      /* NULL terminated */
-    ln_peephole_func  *ph_funcs;      /* NULL terminated */
-    ln_post_peephole   post_ph;
-    char              *arch_name;
-};
-typedef struct ln_arch ln_arch;
+    LN_CTX.arch_table = ln_arch_table_create();
 
-#ifdef __cplusplus
-LN_CPPSTART
-#endif
+    init_ops = ln_arch_create_oplist();
+    LN_CTX.op_init_table = ln_op_init_table_create(init_ops);
+    ln_op_list_free(init_ops);
 
-ln_list *ln_arch_create_oplist(void);
-ln_list *ln_arch_create_reg_ops(void);
-ln_hash *ln_arch_table_create(void);
-void ln_arch_table_free(ln_hash *arch_table);
+    LN_CTX.tensor_table = ln_tensor_table_create();
+}
 
-#ifdef __cplusplus
-LN_CPPEND
-#endif
-
-#endif  /* _LN_ARCH_H_ */
+void ln_context_cleanup(void)
+{
+    ln_arch_table_free(LN_CTX.arch_table);
+    ln_op_init_table_free(LN_CTX.op_init_table);
+    ln_tensor_table_free(LN_CTX.tensor_table);
+}

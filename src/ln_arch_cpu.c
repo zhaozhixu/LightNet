@@ -60,12 +60,17 @@ static ln_op *ops_cpu[] = {
     NULL
 };
 
+ln_expander_func ep_funcs_cpu[] = {
+    NULL
+};
+
 ln_peephole_func ph_funcs_cpu[] = {
     NULL
 };
 
 ln_arch ln_arch_cpu = {
     .reg_ops = ops_cpu,
+    .ep_funcs = ep_funcs_cpu,
     .ph_funcs = ph_funcs_cpu,
     .post_ph = NULL,
     .arch_name = "cpu",

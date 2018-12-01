@@ -74,10 +74,10 @@ void ln_op_list_do_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
 /* Create a new opname with `prefix` subfixed with the next number.
    Need to be freed. `ops` should not be modified */
-char *ln_op_list_new_opname(ln_list *ops, const char *prefix);
+char *ln_op_list_new_opname(const ln_list *ops, const char *prefix);
 
-ln_hash *ln_op_table_create(ln_list *ops, const char *key_type);
-void ln_op_table_free(ln_hash *op_table);
+ln_hash *ln_op_init_table_create(const ln_list *ops);
+void ln_op_init_table_free(ln_hash *op_init_table);
 
 /* Generate Data Flow Graph, with ops as its nodes and tensor names
    as its edge. A hash of <opname, graph_node> returned in node_table_p

@@ -29,6 +29,7 @@ struct priv_s {
     tl_tensor     *dst;
     char          *dst_name;
     tl_resize_type mode;
+    int           *dims;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -48,6 +49,8 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     tl_dtype         dst_dtype;
     ln_param_entry  *mode_entry;
     tl_resize_type   mode;
+    ln_param_entry  *dims_entry;
+    int             *dims;
     int              tensors_in_n;
     int              tensors_out_n;
     int              params_n;
@@ -72,12 +75,6 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_tensor_mtype_eq(scales_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(scales_entry, TL_FLOAT);
     ln_opck_tensor_satisfy_msg(scales->ndim == 1 && scales->len == src->ndim, "the number of elements of `scales` should be the same as the rank of input `src`");
-    {
-        for (int i = 0; i < scales->len; i++) {
-            ln_opck_tensor_satisfy_msg(((float *)scales->data)[i] >= 1, "`scales` takes values >= 1");
-            ln_opck_tensor_satisfy_msg(floorf(((float *)scales->data)[i]*src->dims[i]) <= INT32_MAX, "scaled dimension exceeds INT32_MAX limit");
-        }
-    }
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -88,30 +85,32 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
     params_n = ln_param_list_length(op_arg->params);
-    ln_opck_params_len_eq(params_n, 1);
+    ln_opck_params_len_eq(params_n, 2);
 
     mode_entry = ln_param_list_find(op_arg->params, "mode");
     ln_opck_param_exist(mode_entry, "mode");
     ln_opck_param_type(mode_entry, LN_PARAM_STRING);
     mode = tl_resize_type_from_str(mode_entry->value_string);
-    ln_opck_param_satisfy_msg(mode != -1, "`mode` should be 'nearest' or 'linear'");
+    ln_opck_param_satisfy_msg(mode != -1, "`mode` should be 'TL_NEAREST' or 'TL_LINEAR'");
+
+    dims_entry = ln_param_list_find(op_arg->params, "dims");
+    ln_opck_param_exist(dims_entry, "dims");
+    ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
+    dims = dims_entry->value_array_int;
+    {
+        for (int i = 0; i < src->ndim; i++)
+            ln_opck_param_satisfy_msg(dims[i] > 0, "`dims` should be positive integers");
+    }
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
+    dst_dims = dims;
     dst_dtype = src->dtype;
-    {
-        dst_dims = ln_alloc(sizeof(int)*dst_ndim);
-        for (int i = 0; i < dst_ndim; i++)
-            dst_dims[i] = (int)floorf(((float *)scales->data)[i] * src->dims[i]);
-    }
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -120,6 +119,7 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     priv->dst = dst;
     priv->dst_name = dst_name;
     priv->mode = mode;
+    priv->dims = dims;
     op_arg->priv = priv;
 }
 
