@@ -988,6 +988,7 @@ static ln_list *ep_tensorrt(const ln_list *ops)
 }
 
 ln_expander_func ep_funcs_tensorrt[] = {
+    ep_func_tensorrt,
     NULL
 };
 

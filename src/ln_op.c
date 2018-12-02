@@ -263,6 +263,43 @@ ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
     return DFG;
 }
 
+static int op_edge_node_cmp_by_edge(void *data1, void *data2)
+{
+    ln_graph_edge_node *en1 = data1;
+    ln_graph_edge_node *en2 = data2;
+
+    return strcmp(en1->edge_data, en2->edge_data);
+}
+
+ln_op *ln_op_DFG_next(ln_hash *node_table, ln_op *op, const char *tensor_name)
+{
+    ln_graph_node *node;
+    ln_graph_edge_node edge_node;
+    ln_graph_edge_node *res;
+
+    node = ln_hash_find(node_table, op->op_arg->name);
+    edge_node.edge_data = (char *)tensor_name;
+    res = ln_list_find_custom(node->edge_nodes, &edge_node,
+                              op_edge_node_cmp_by_edge);
+    return res ? res->node->data : NULL;
+}
+
+ln_op *ln_op_DFG_prev(ln_hash *op_table, ln_op *op, const char *tensor_name)
+{
+    ln_op *res;
+    ln_hash *tensor_table;
+    ln_tensor_entry *te;
+
+    tensor_table = op->op_arg->tensor_table;
+    te = ln_tensor_table_find(tensor_table, tensor_name);
+    if (!te)
+        return NULL;
+    res = ln_op_table_find(op_table, te->creater);
+    if (!res)
+        return NULL;
+    return res;
+}
+
 char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
 {
     ln_op *op;

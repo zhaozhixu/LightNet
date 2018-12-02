@@ -25,10 +25,10 @@
 
 #include "ln_op.h"
 
-typedef ln_list *(*ln_expander_func) (const ln_list *ops);
-/* TODO: `ops` is just for name creation, temporarily */
+typedef ln_list *(*ln_expander_func) (const ln_op *op, ln_hash *op_table,
+                                      ln_hash *node_table);
 typedef ln_list *(*ln_peephole_func) (const ln_list *win_ops, int win_size,
-                                      int *match, const ln_list *ops);
+                                      int *match);
 typedef ln_list *(*ln_post_peephole) (ln_list *ops);
 
 struct ln_arch {
