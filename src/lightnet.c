@@ -49,6 +49,7 @@ int main(int argc, char **argv)
     ctx->ops = ln_json_parse_file(json_file, LN_INIT.init_op_table,
                                   ctx->tensor_table, ctx->op_table);
     ln_op_list_do_pre_run(ctx->ops, &error);
+    ctx->dfg = ln_dfg_create(ctx->ops);
     ln_error_handle(&error);
     arch = ln_hash_find(LN_INIT.init_arch_table, target);
     ctx->ops = ln_pass_peephole(ctx->ops, 3, arch->ph_funcs, arch->post_ph,

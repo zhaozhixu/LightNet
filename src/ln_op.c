@@ -228,78 +228,6 @@ void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
     }
 }
 
-ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p)
-{
-    ln_op *op;
-    ln_op_arg *arg;
-    ln_graph *DFG;
-    ln_graph_node *node;
-    ln_tensor_list_entry *tle;
-    ln_tensor_entry *te;
-    ln_hash *node_table;
-    int ret;
-
-    DFG = ln_graph_create();
-    node_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-    LN_LIST_FOREACH(op, ops) {
-        node = ln_graph_add(DFG, op);
-        ret = ln_hash_insert(node_table, op->op_arg->name, node);
-        assert(ret && "duplicated op name");
-    }
-    LN_LIST_FOREACH(op, ops) {
-        arg = op->op_arg;
-        LN_LIST_FOREACH(tle, arg->tensors_in) {
-            te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            node = ln_hash_find(node_table, te->creater);
-            assert(node);
-            ln_graph_link(DFG, node->data, op, tle->name);
-        }
-    }
-    if (node_table_p)
-        *node_table_p = node_table;
-    else
-        ln_hash_free(node_table);
-
-    return DFG;
-}
-
-static int op_edge_node_cmp_by_edge(void *data1, void *data2)
-{
-    ln_graph_edge_node *en1 = data1;
-    ln_graph_edge_node *en2 = data2;
-
-    return strcmp(en1->edge_data, en2->edge_data);
-}
-
-ln_op *ln_op_DFG_next(ln_hash *node_table, ln_op *op, const char *tensor_name)
-{
-    ln_graph_node *node;
-    ln_graph_edge_node edge_node;
-    ln_graph_edge_node *res;
-
-    node = ln_hash_find(node_table, op->op_arg->name);
-    edge_node.edge_data = (char *)tensor_name;
-    res = ln_list_find_custom(node->edge_nodes, &edge_node,
-                              op_edge_node_cmp_by_edge);
-    return res ? res->node->data : NULL;
-}
-
-ln_op *ln_op_DFG_prev(ln_hash *op_table, ln_op *op, const char *tensor_name)
-{
-    ln_op *res;
-    ln_hash *tensor_table;
-    ln_tensor_entry *te;
-
-    tensor_table = op->op_arg->tensor_table;
-    te = ln_tensor_table_find(tensor_table, tensor_name);
-    if (!te)
-        return NULL;
-    res = ln_op_table_find(op_table, te->creater);
-    if (!res)
-        return NULL;
-    return res;
-}
-
 char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
 {
     ln_op *op;
@@ -324,26 +252,23 @@ char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
 
 ln_hash *ln_op_table_create(void)
 {
-    return ln_hash_create(ln_str_hash, ln_str_cmp, ln_free,
+    return ln_hash_create(ln_str_hash, ln_str_cmp, NULL,
                           op_free_lists_too_wrapper);
 }
 
-int ln_op_table_insert(ln_hash *table, char *key, ln_op *op)
+int ln_op_table_insert(ln_hash *table, ln_op *op)
 {
-    char *key_copy;
-
-    key_copy = ln_strdup(key);
-    return ln_hash_insert(table, key_copy, op);
+    return ln_hash_insert(table, op->op_arg->name, op);
 }
 
-int ln_op_table_remove(ln_hash *table, char *key)
+int ln_op_table_remove(ln_hash *table, const char *name)
 {
-    return ln_hash_remove(table, key);
+    return ln_hash_remove(table, name);
 }
 
-ln_op *ln_op_table_find(ln_hash *table, char *key)
+ln_op *ln_op_table_find(ln_hash *table, const char *name)
 {
-    return ln_hash_find(table, key);
+    return ln_hash_find(table, name);
 }
 
 void ln_op_table_free(ln_hash *table)

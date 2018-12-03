@@ -28,13 +28,6 @@
 #include "ln_hash.h"
 #include "ln_mem.h"
 
-/* tensor entry used in JSON */
-struct ln_tensor_list_entry {
-    char *name;
-    char *arg_name;
-};
-typedef struct ln_tensor_list_entry ln_tensor_list_entry;
-
 /* tensor entry used in tensor table */
 struct ln_tensor_entry {
     char        *name;
@@ -47,15 +40,26 @@ struct ln_tensor_entry {
 };
 typedef struct ln_tensor_entry ln_tensor_entry;
 
+/* tensor entry used in op parameter */
+struct ln_tensor_list_entry {
+    char            *name;
+    char            *arg_name;
+    ln_tensor_entry *te;
+};
+typedef struct ln_tensor_list_entry ln_tensor_list_entry;
+
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
 ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
-                               const char *name);
+                               const char *name, ln_tensor_entry *te);
 void ln_tensor_list_free(ln_list *list);
 ln_list *ln_tensor_list_copy(ln_list *list);
 char *ln_tensor_list_find_name(ln_list *list, char *arg_name);
+ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list,
+                                                      char *arg_name);
+ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, char *name);
 int ln_tensor_list_length(ln_list *list);
 
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);
@@ -72,9 +76,9 @@ void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater);
  * We should always insert tensors with NULL data.
  */
 ln_hash *ln_tensor_table_create(void);
-int ln_tensor_table_insert(ln_hash *table, char *name, ln_tensor_entry *entry);
-int ln_tensor_table_remove(ln_hash *table, char *name);
-ln_tensor_entry *ln_tensor_table_find(ln_hash *table, char *name);
+int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry);
+int ln_tensor_table_remove(ln_hash *table, const char *name)
+ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);
 void ln_tensor_table_free(ln_hash *table);
 
 #ifdef __cplusplus

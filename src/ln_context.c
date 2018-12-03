@@ -29,6 +29,7 @@ ln_context *ln_context_create(void)
     ctx = ln_alloc(sizeof(ln_context));
     ctx->tensor_table = ln_tensor_table_create();
     ctx->op_table = ln_op_table_create();
+    ctx->dfg = NULL;
     ctx->ops = NULL;
 
     return ctx;
@@ -38,5 +39,6 @@ void ln_context_free(ln_context *ctx)
 {
     ln_tensor_table_free(ctx->tensor_table);
     ln_op_table_free(ctx->op_table);
+    ln_dfg_free(ctx->dfg);
     ln_op_list_free(ctx->ops);
 }

@@ -51,6 +51,8 @@ ln_list *ln_list_remove_nth(ln_list *list, int n);
 ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
                                  void (*free_func)(void *));
 ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp);
+ln_list *ln_list_remove_custom_deep(ln_list *list, void *data, ln_cmp_func cmp,
+                                    void (*free_func)(void *));
 ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *llink);
 ln_list *ln_list_insert_nth(ln_list *list, void *data, int n);
 void *ln_list_find(ln_list *list, void *data);

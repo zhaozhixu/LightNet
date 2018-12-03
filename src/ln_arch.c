@@ -65,22 +65,22 @@ static void arch_table_free(ln_hash *arch_table)
     ln_hash_free(arch_table);
 }
 
-static ln_hash *op_table_create(ln_arch *archs[])
+static ln_hash *init_op_table_create(ln_arch *archs[])
 {
-    ln_hash *op_table;
+    ln_hash *init_op_table;
     ln_op *op;
     int i, j;
 
-    op_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    init_op_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     for (i = 0; archs[i]; i++) {
         for (j = 0; (op = archs[i]->reg_ops[j]); j++)
-            ln_hash_insert(op_table, op->op_arg->optype, op);
+            ln_hash_insert(init_op_table, op->op_arg->optype, op);
     }
 
-    return op_table;
+    return init_op_table;
 }
 
-static void op_table_free(ln_hash *op_init_table)
+static void init_op_table_free(ln_hash *op_init_table)
 {
     ln_hash_free(op_init_table);
 }
@@ -88,11 +88,11 @@ static void op_table_free(ln_hash *op_init_table)
 void ln_arch_init(void)
 {
     LN_INIT.init_arch_table = arch_table_create(init_archs);
-    LN_INIT.init_op_table = op_table_create(init_archs);
+    LN_INIT.init_op_table = init_op_table_create(init_archs);
 }
 
 void ln_arch_cleanup(void)
 {
     arch_table_free(LN_INIT.init_arch_table);
-    op_table_free(LN_INIT.init_op_table);
+    init_op_table_free(LN_INIT.init_op_table);
 }

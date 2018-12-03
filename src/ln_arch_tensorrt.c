@@ -941,14 +941,14 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
 {
     ln_op *op;
     ln_op_arg *arg;
-    ln_graph *DFG;
+    ln_graph *dfg;
     ln_hash *node_table;
     ln_graph_node *node;
     ln_tensor_list_entry *tle;
     ln_param_entry *pe;
     char *param_arg_name;
 
-    DFG = ln_op_list_gen_DFG(ops, &node_table);
+    dfg = ln_op_list_gen_dfg(ops, &node_table);
     LN_LIST_FOREACH(op, ops) {
         arg = op->op_arg;
         if (!ln_streq(arg->optype, "tensorrt"))
@@ -977,7 +977,7 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
             ln_free(param_arg_name);
         }
     }
-    ln_graph_free(DFG);
+    ln_graph_free(dfg);
     ln_hash_free(node_table);
     return ops;
 }

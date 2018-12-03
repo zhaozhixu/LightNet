@@ -20,32 +20,30 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_CONTEXT_H_
-#define _LN_CONTEXT_H_
-
-#include "ln_list.h"
+#include "ln_graph.h"
 #include "ln_hash.h"
-#include "ln_tensor.h"
 #include "ln_op.h"
-#include "ln_dfg.h"
 
-struct ln_context {
-    ln_hash *tensor_table;
-    ln_hash *op_table;
-    ln_dfg  *dfg;
-    ln_list *ops;
+struct ln_dfg {
+    ln_graph *graph;
+    ln_hash  *node_table;       /* a hash of <op-name, graph-node> */
 };
-typedef struct ln_context ln_context;
+typedef struct ln_dfg ln_dfg;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_context *ln_context_create(void);
-void ln_context_free(ln_context *ctx);
+/* Generate Data Flow Graph, with ops as its nodes and tensor names
+   as its edge. */
+ln_dfg *ln_dfg_create(ln_list *ops);
+void ln_dfg_free(ln_dfg *dfg);
+void ln_dfg_add(ln_dfg *dfg, ln_op *op);
+void ln_dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, ln_tensor_entry *te);
+void ln_dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, ln_tensor_entry *te);
+ln_op *ln_dfg_next(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te);
+ln_op *ln_dfg_prev(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
-
-#endif  /* _LN_CONTEXT_H_ */

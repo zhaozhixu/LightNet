@@ -72,19 +72,15 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_static_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
+
 /* Create a new opname with `prefix` subfixed with the next number.
    Need to be freed. `ops` should not be modified */
 char *ln_op_list_new_opname(const ln_list *ops, const char *prefix);
 
-/* Generate Data Flow Graph, with ops as its nodes and tensor names
-   as its edge. A hash of <opname, graph_node> returned in node_table_p
-   if it's not NULL */
-ln_graph *ln_op_list_gen_DFG(ln_list *ops, ln_hash **node_table_p);
-
 ln_hash *ln_op_table_create(void);
-int ln_op_table_insert(ln_hash *table, char *key, ln_op *op);
-int ln_op_table_remove(ln_hash *table, char *key);
-ln_op *ln_op_table_find(ln_hash *table, char *key);
+int ln_op_table_insert(ln_hash *table, ln_op *op);
+int ln_op_table_remove(ln_hash *table, const char *name);
+ln_op *ln_op_table_find(ln_hash *table, const char *name);
 void ln_op_table_free(ln_hash *table);
 
 #ifdef __cplusplus
@@ -217,10 +213,10 @@ LN_CPPEND
 #define ln_opck_tensor_satisfy(condition)               \
     ln_opck_tensor_satisfy_msg((condition), #condition)
 
-/* name should be returned by
-   ln_tensor_list_find_name(op_arg->tensors_in, arg_name) */
-#define ln_opck_tensor_in_exist(tensor_name, arg_name)	\
-    ln_opck(LN_ERROR, (tensor_name),                    \
+/* tle should be returned by
+   ln_tensor_list_find_by_arg_name(op_arg->tensors_in, arg_name) */
+#define ln_opck_tensor_in_exist(tle, arg_name)	\
+    ln_opck(LN_ERROR, (tle),                    \
             "%s: `%s` needs a `%s` input tensor",       \
             op_arg->optype, op_arg->name, (arg_name))
 
@@ -250,10 +246,10 @@ LN_CPPEND
             "%s: `%s` needs <= %d input tensors, but gets %d input tensors", \
             op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* name should be returned by
-   ln_tensor_list_find_name(op_arg->tensors_out, arg_name) */
-#define ln_opck_tensor_out_exist(tensor_name, arg_name)	\
-    ln_opck(LN_ERROR, (tensor_name),                    \
+/* tle should be returned by
+   ln_tensor_list_find_by_arg_name(op_arg->tensors_out, arg_name) */
+#define ln_opck_tensor_out_exist(tle, arg_name)	\
+    ln_opck(LN_ERROR, (tle),                    \
             "%s: `%s` needs a `%s` output tensor",      \
             op_arg->optype, op_arg->name, (arg_name))
 

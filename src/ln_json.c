@@ -134,7 +134,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
 }
 
 static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
-                       ln_hash *tensor_table, int idx)
+                       ln_hash *tensor_table, ln_hash *op_table, int idx)
 {
     ln_op *op, *proto_op;
     ln_list *tensors_in = NULL;
@@ -219,7 +219,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
 
         tensors_in = ln_tensor_list_append(tensors_in,
                                            tensor_arg_name_json->valuestring,
-                                           tensor_name_json->valuestring);
+                                           tensor_name_json->valuestring, NULL);
         i++;
     }
     i = 0;
@@ -246,7 +246,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
 
         tensors_out = ln_tensor_list_append(tensors_out,
                                             tensor_arg_name_json->valuestring,
-                                            tensor_name_json->valuestring);
+                                            tensor_name_json->valuestring, NULL);
         i++;
     }
     i = 0;
@@ -313,6 +313,10 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
                                  tensors_out, params, tensor_table);
     if (fixed_json && cJSON_IsTrue(fixed_json))
         op->op_arg->fixed = 1;
+
+    int ret = ln_op_table_insert(op_table, op);
+    if (!ret)
+        PARSE_JSON_ERROR("op \"%s\"'s name is duplicated");
 
     return op;
 }
@@ -424,10 +428,7 @@ ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
 
     int i = 0, ret;
     cJSON_ArrayForEach(op_json, ops_json) {
-        op = parse_op(op_json, op_init_table, tensor_table, i);
-        ret = ln_op_table_insert(op_table, op->op_arg->name, op);
-        if (!ret)
-            PARSE_JSON_ERROR("op \"%s\"'s name is duplicated");
+        op = parse_op(op_json, op_init_table, tensor_table, op_table, i);
         ops = ln_list_append(ops, op);
         i++;
     }

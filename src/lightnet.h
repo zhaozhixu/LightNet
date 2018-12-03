@@ -36,6 +36,7 @@
 #include "ln_json.h"
 #include "ln_pass.h"
 #include "ln_arch.h"
+#include "ln_dfg.h"
 #include "ln_context.h"
 
 #endif  /* _LIGHTNET_H_ */

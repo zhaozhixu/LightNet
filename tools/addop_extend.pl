@@ -250,11 +250,13 @@ sub gen_pre_run_local_vars {
     my @vars = ();
     foreach (@$tensors_in) {
         push @vars, "char *$_->{arg_name}_name;";
+        push @vars, "ln_tensor_list_entry *$_->{arg_name}_list_entry;";
         push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
         push @vars, "tl_tensor *$_->{arg_name};";
     }
     foreach (@$tensors_out) {
         push @vars, "char *$_->{arg_name}_name;";
+        push @vars, "ln_tensor_list_entry *$_->{arg_name}_list_entry;";
         push @vars, "ln_tensor_entry *$_->{arg_name}_entry;";
         push @vars, "tl_tensor *$_->{arg_name};";
         push @vars, "int $_->{arg_name}_ndim;";
@@ -352,10 +354,12 @@ sub gen_pre_run_checks {
     push @states, "";
     foreach my $tensor (@$tensors_in) {
         my $arg_name = $tensor->{arg_name};
-        push @states, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_in, \"${arg_name}\");";
-        push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
+        push @states, "${arg_name}_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, \"${arg_name}\");";
+        push @states, "ln_opck_tensor_in_exist(${arg_name}_list_entry, \"${arg_name}\");";
+        push @states, "${arg_name}_name = ${arg_name}_list_entry->name;";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
+        push @states, "${arg_name}_list_entry->te = ${arg_name}_entry;";
         push @states, "${arg_name} = ${arg_name}_entry->tensor;";
         &err_exit("'$tensor->{arg_name}' needs a `mtype`") unless exists $tensor->{mtype};
         push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});";
@@ -400,8 +404,9 @@ sub gen_pre_run_checks {
     push @states, "";
     foreach my $tensor (@$tensors_out) {
         my $arg_name = $tensor->{arg_name};
-        push @states, "${arg_name}_name = ln_tensor_list_find_name(op_arg->tensors_out, \"${arg_name}\");";
-        push @states, "ln_opck_tensor_in_exist(${arg_name}_name, \"${arg_name}\");";
+        push @states, "${arg_name}_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, \"${arg_name}\");";
+        push @states, "ln_opck_tensor_out_exist(${arg_name}_list_entry, \"${arg_name}\");";
+        push @states, "${arg_name}_name = ${arg_name}_list_entry->name;";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_not_defined(${arg_name}_entry, ${arg_name}_name);";
         push @states, "";
@@ -556,7 +561,8 @@ sub gen_output_tensor_def {
         } else {
             &err_exit("${arg_name} needs a `mtype`");
         }
-        push @states, "ln_tensor_table_insert(op_arg->tensor_table, ${arg_name}_name, ${arg_name}_entry);";
+        push @states, "ln_tensor_table_insert(op_arg->tensor_table, ${arg_name}_entry);";
+        push @states, "${arg_name}_list_entry->te = ${arg_name}_entry;";
         if (exists $tensor->{cleanup}) {
             &add_custom_block($tensor->{cleanup}, \@states);
         }

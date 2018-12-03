@@ -23,13 +23,15 @@
 #include "ln_graph.h"
 #include "ln_queue.h"
 
-ln_graph_node *ln_graph_node_create(void *data)
+ln_graph_node *ln_graph_node_create(void *data, ln_cmp_func node_data_cmp)
 {
     ln_graph_node *gn;
 
     gn = (ln_graph_node *)ln_alloc(sizeof(ln_graph_node));
-    gn->edge_nodes = NULL;
+    gn->in_edge_nodes = NULL;
+    gn->out_edge_nodes = NULL;
     gn->data = data;
+    gn->node_data_cmp = node_data_cmp;
     gn->indegree = 0;
     gn->outdegree = 0;
     return gn;
@@ -43,17 +45,20 @@ static void free_edge_node_wrapper(void *data)
 /* NOTE: should update the whole graph if not called by ln_graph_free */
 void ln_graph_node_free(ln_graph_node *node)
 {
-    ln_list_free_deep(node->edge_nodes, free_edge_node_wrapper);
+    ln_list_free_deep(node->in_edge_nodes, free_edge_node_wrapper);
+    ln_list_free_deep(node->out_edge_nodes, free_edge_node_wrapper);
     ln_free(node);
 }
 
 ln_graph_edge_node *ln_graph_edge_node_create(void *edge_data,
-                                              ln_graph_node *node)
+                                              ln_graph_node *node,
+                                              ln_cmp_func edge_data_cmp)
 {
     ln_graph_edge_node *en;
 
     en = (ln_graph_edge_node *)ln_alloc(sizeof(ln_graph_edge_node));
     en->edge_data = edge_data;
+    en->edge_data_cmp = edge_data_cmp;
     en->node = node;
     return en;
 }
@@ -63,13 +68,15 @@ void ln_graph_edge_node_free(ln_graph_edge_node *edge_node)
     ln_free(edge_node);
 }
 
-ln_graph *ln_graph_create(void)
+ln_graph *ln_graph_create(ln_cmp_func node_data_cmp, ln_cmp_func edge_data_cmp)
 {
     ln_graph *g;
 
     g = (ln_graph *)ln_alloc(sizeof(ln_graph));
     g->nodes = NULL;
     g->size = 0;
+    g->node_data_cmp = node_data_cmp;
+    g->edge_data_cmp = edge_data_cmp;
     return g;
 }
 
@@ -88,18 +95,18 @@ ln_graph_node *ln_graph_add(ln_graph *graph, void *data)
 {
     ln_graph_node *node;
 
-    node = ln_graph_node_create(data);
+    node = ln_graph_node_create(data, graph->node_data_cmp);
     graph->nodes = ln_list_append(graph->nodes, node);
     graph->size++;
     return node;
 }
 
-static int default_cmp(void *a, void *b)
+static int node_cmp(void *a, void *b)
 {
     ln_graph_node *gna = a;
     ln_graph_node *gnb = b;
 
-    return gna->data - gnb->data;
+    return gna->node_data_cmp(gna->data, gnb->data);
 }
 
 ln_graph_node *ln_graph_find(ln_graph *graph, void *data)
@@ -107,23 +114,26 @@ ln_graph_node *ln_graph_find(ln_graph *graph, void *data)
     ln_graph_node n;
 
     n.data = data;
-    return ln_list_find_custom(graph->nodes, &n, default_cmp);
+    return ln_list_find_custom(graph->nodes, &n, node_cmp);
 }
 
 void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
+    ln_graph_edge_node *out_edge_node;
+    ln_graph_edge_node *in_edge_node;
 
     node1 = ln_graph_find(graph, data1);
     node2 = ln_graph_find(graph, data2);
     if (!node1 || !node2)
         return;
 
-    ln_graph_edge_node *edge_node;
-    edge_node = ln_graph_edge_node_create(edge_data, node2);
-    node1->edge_nodes = ln_list_append(node1->edge_nodes, edge_node);
+    out_edge_node = ln_graph_edge_node_create(edge_data, node2);
+    node1->out_edge_nodes = ln_list_append(node1->out_edge_nodes, outedge_node);
     node1->outdegree++;
+    in_edge_node = ln_graph_edge_node_create(edge_data, node1);
+    node2->in_edge_nodes = ln_list_append(node2->in_edge_nodes, in_edge_node);
     node2->indegree++;
 }
 
@@ -132,27 +142,54 @@ static int edge_node_cmp_by_node(void *p1, void *p2)
     ln_graph_edge_node *en1 = p1;
     ln_graph_edge_node *en2 = p2;
 
-    return en1->node - en2->node;
+    return node_cmp(en1->node, en2->node);
 }
 
-void ln_graph_unlink(ln_graph *graph, void *data1, void *data2)
+static int edge_node_cmp(void *p1, void *p2)
+{
+    ln_graph_edge_node *en1 = p1;
+    ln_graph_edge_node *en2 = p2;
+
+    if (node_cmp(en1->node, en2->node) == 0 &&
+        en1->edge_data_cmp(en1->edge_data, en2->edge_data) == 0)
+        return 0;
+    return 1;
+}
+
+void ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
+    ln_graph_edge_node en;
+    ln_cmp_func cmp;
 
     node1 = ln_graph_find(graph, data1);
     node2 = ln_graph_find(graph, data2);
     if (!node1 || !node2)
         return;
 
-    ln_graph_edge_node en;
+    if (edge_data)
+        cmp = edge_node_cmp;
+    else
+        cmp = edge_node_cmp_by_node;
+
+    en.edge_data = edge_data;
     en.node = node2;
-    if (!ln_list_find_custom(node1->edge_nodes, &en, edge_node_cmp_by_node))
+    if (!ln_list_find_custom(node1->out_edge_nodes, &en, cmp))
         return;
 
-    node1->edge_nodes = ln_list_remove_custom(node1->edge_nodes, &en,
-                                              edge_node_cmp_by_node);
+    node1->out_edge_nodes = ln_list_remove_custom_deep(node1->out_edge_nodes,
+                                                       &en, cmp,
+                                                       free_edge_node_wrapper);
     node1->outdegree--;
+
+    en.node = node1;
+    if (!ln_list_find_custom(node2->in_edge_nodes, &en, cmp))
+        return;
+
+    node2->in_edge_nodes = ln_list_remove_custom_deep(node2->in_edge_nodes,
+                                                      &en, cmp,
+                                                      free_edge_node_wrapper);
     node2->indegree--;
 }
 
@@ -169,7 +206,7 @@ ln_graph *ln_graph_copy(ln_graph *graph)
     }
     LN_LIST_FOREACH(node, graph->nodes) {
         data1 = node->data;
-        LN_LIST_FOREACH(edge_node, node->edge_nodes) {
+        LN_LIST_FOREACH(edge_node, node->out_edge_nodes) {
             data2 = edge_node->node->data;
             edge_data = edge_node->edge_data;
             ln_graph_link(g, data1, data2, edge_data);
@@ -235,7 +272,7 @@ int ln_graph_topsort(ln_graph *graph, ln_list **layers)
             node_count++;
             data1 = node->data;
             sub_list = ln_list_append(sub_list, data1);
-            for (ln_list *l = node->edge_nodes; l;) {
+            for (ln_list *l = node->out_edge_nodes; l;) {
                 edge_node = l->data;
                 data2 = edge_node->node->data;
                 /* this must be here, since unlink will remove l */
@@ -267,7 +304,7 @@ void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_node,
     LN_LIST_FOREACH(node, graph->nodes) {
         print_node(fp, node->data);
         fprintf(fp, "-> ");
-        LN_LIST_FOREACH(edge_node, node->edge_nodes) {
+        LN_LIST_FOREACH(edge_node, node->out_edge_nodes) {
             fprintf(fp, "-");
             if (print_edge)
                 print_edge(fp, edge_node->edge_data);

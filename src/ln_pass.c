@@ -30,14 +30,14 @@ ln_list *ln_pass_expand(ln_list *ops, ln_hash *op_table,
     ln_list *l;
     ln_list *new_ops;
     ln_list *ep_ops;
-    ln_graph *DFG;
+    ln_graph *dfg;
     ln_hash *node_table;
     ln_expander_func ep_func;
     int i;
 
     new_ops = NULL;
     ep_ops = NULL;
-    DFG = ln_op_list_gen_DFG(ops, &node_table);
+    dfg = ln_op_list_gen_dfg(ops, &node_table);
     for (l = ops; l; l = l->next) {
         op = l->data;
         for (i = 0; (ep_func = ep_funcs[i]); i++) {
@@ -45,7 +45,7 @@ ln_list *ln_pass_expand(ln_list *ops, ln_hash *op_table,
         }
     }
 
-    ln_graph_free(DFG);
+    ln_graph_free(dfg);
     ln_hash_free(node_table);
 
     return new_ops;
