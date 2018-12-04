@@ -87,14 +87,14 @@ static void maxreduce_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
-    ln_tensor_table_insert(op_arg->tensor_table, dst_name, dst_entry);
+    ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
     if (arg_name) {
         arg_tensor = tl_tensor_create_slice(NULL, src_entry->tensor, axis, 1,
                                             src_entry->tensor->dtype);
         arg_entry = ln_tensor_entry_create(arg_name, arg_tensor);
         ln_tensor_entry_set_creater(arg_entry, op_arg->name);
         arg_entry->mtype = LN_MEM_CUDA;
-        ln_tensor_table_insert(op_arg->tensor_table, arg_name, arg_entry);
+        ln_tensor_table_insert(op_arg->tensor_table, arg_entry);
     }
 
     priv = ln_alloc(sizeof(struct priv_s));

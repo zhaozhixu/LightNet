@@ -55,18 +55,23 @@ LN_CPPSTART
 #endif
 
 /* The graph don't own any of its data, so free it yourself. */
-ln_graph_node *ln_graph_node_create(void *data);
+ln_graph_node *ln_graph_node_create(void *data, ln_cmp_func node_data_cmp);
 void ln_graph_node_free(ln_graph_node *node);
 ln_graph_edge_node *ln_graph_edge_node_create(void *edge_data,
-                                              ln_graph_node *node);
+                                              ln_graph_node *node,
+                                              ln_cmp_func edge_data_cmp);
 void ln_graph_edge_node_free(ln_graph_edge_node *edge_node);
 ln_graph *ln_graph_create(ln_cmp_func node_cmp, ln_cmp_func edge_cmp);
 void ln_graph_free(ln_graph *graph);
 ln_graph_node *ln_graph_add(ln_graph *graph, void *data);
 ln_graph_node *ln_graph_find(ln_graph *graph, void *data);
 void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data);
+void ln_graph_link_node(ln_graph *graph, ln_graph_node *node1,
+                        ln_graph_node *node2, void *edge_data);
 /* if edge_data == NULL, only compare data1 and data2 */
 void ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data);
+void ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
+                          void *edge_data);
 ln_graph *ln_graph_copy(ln_graph *graph);
 int ln_graph_num_outlier(ln_graph *graph);
 void ln_graph_free_topsortlist(ln_list *layers);

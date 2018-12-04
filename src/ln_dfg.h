@@ -20,13 +20,18 @@
  * SOFTWARE.
  */
 
+#ifndef _LN_DFG_H_
+#define _LN_DFG_H_
+
 #include "ln_graph.h"
 #include "ln_hash.h"
 #include "ln_op.h"
 
 struct ln_dfg {
     ln_graph *graph;
-    ln_hash  *node_table;       /* a hash of <op-name, graph-node> */
+    ln_hash  *node_table;         /* a hash of <op_name, graph_node> */
+    ln_hash  *dangling_outs;      /* a hash of <tensor_name, tensor_entry> */
+    ln_hash  *dangling_ins;       /* a hash of <tensor_name, tensor_entry> */
 };
 typedef struct ln_dfg ln_dfg;
 
@@ -39,6 +44,7 @@ LN_CPPSTART
 ln_dfg *ln_dfg_create(ln_list *ops);
 void ln_dfg_free(ln_dfg *dfg);
 void ln_dfg_add(ln_dfg *dfg, ln_op *op);
+void ln_dfg_remove(ln_dfg *dfg, ln_op *op);
 void ln_dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, ln_tensor_entry *te);
 void ln_dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, ln_tensor_entry *te);
 ln_op *ln_dfg_next(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te);
@@ -47,3 +53,5 @@ ln_op *ln_dfg_prev(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te);
 #ifdef __cplusplus
 LN_CPPEND
 #endif
+
+#endif  /* _LN_DFG_H_ */

@@ -29,6 +29,8 @@
 #include "ln_mem.h"
 
 /* tensor entry used in tensor table */
+/* NOTE: ALWAYS access tensor entry via its name in tensor_table, since the
+   entry may be not the same during passes. It is owned by the tensor_table. */
 struct ln_tensor_entry {
     char        *name;
     tl_tensor   *tensor;
@@ -44,7 +46,6 @@ typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_list_entry {
     char            *name;
     char            *arg_name;
-    ln_tensor_entry *te;
 };
 typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 
@@ -77,7 +78,7 @@ void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater);
  */
 ln_hash *ln_tensor_table_create(void);
 int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry);
-int ln_tensor_table_remove(ln_hash *table, const char *name)
+int ln_tensor_table_remove(ln_hash *table, const char *name);
 ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);
 void ln_tensor_table_free(ln_hash *table);
 

@@ -58,6 +58,12 @@ typedef struct ln_error ln_error;
         }                                                               \
     } while (0)
 
+#define ln_error_inter(condition, fmt, varg...)                 \
+    do {                                                        \
+        if (!(condition))                                       \
+            ln_error_emit(LN_INTER_ERROR, (fmt), ##varg);       \
+    } while (0)
+
 #ifdef __cplusplus
 LN_CPPSTART
 #endif

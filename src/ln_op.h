@@ -44,6 +44,9 @@ typedef struct ln_op_arg ln_op_arg;
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
 
+/* The operator used in IR. */
+/* NOTE: It is owned by a op_table. Remove it from a DFG and do post_run()
+   before remove it from the op_table. */
 struct ln_op {
     ln_op_arg   *op_arg;
     ln_op_func   pre_run;

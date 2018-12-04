@@ -263,12 +263,12 @@ int ln_op_table_insert(ln_hash *table, ln_op *op)
 
 int ln_op_table_remove(ln_hash *table, const char *name)
 {
-    return ln_hash_remove(table, name);
+    return ln_hash_remove(table, (char *)name);
 }
 
 ln_op *ln_op_table_find(ln_hash *table, const char *name)
 {
-    return ln_hash_find(table, name);
+    return ln_hash_find(table, (char *)name);
 }
 
 void ln_op_table_free(ln_hash *table)

@@ -121,18 +121,27 @@ void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
-    ln_graph_edge_node *out_edge_node;
-    ln_graph_edge_node *in_edge_node;
 
     node1 = ln_graph_find(graph, data1);
     node2 = ln_graph_find(graph, data2);
     if (!node1 || !node2)
         return;
 
-    out_edge_node = ln_graph_edge_node_create(edge_data, node2);
-    node1->out_edge_nodes = ln_list_append(node1->out_edge_nodes, outedge_node);
+    ln_graph_link_node(graph, node1, node2, edge_data);
+}
+
+void ln_graph_link_node(ln_graph *graph, ln_graph_node *node1,
+                        ln_graph_node *node2, void *edge_data)
+{
+    ln_graph_edge_node *out_edge_node;
+    ln_graph_edge_node *in_edge_node;
+
+    out_edge_node = ln_graph_edge_node_create(edge_data, node2,
+                                              graph->edge_data_cmp);
+    node1->out_edge_nodes = ln_list_append(node1->out_edge_nodes, out_edge_node);
     node1->outdegree++;
-    in_edge_node = ln_graph_edge_node_create(edge_data, node1);
+    in_edge_node = ln_graph_edge_node_create(edge_data, node1,
+                                             graph->edge_data_cmp);
     node2->in_edge_nodes = ln_list_append(node2->in_edge_nodes, in_edge_node);
     node2->indegree++;
 }
@@ -160,13 +169,21 @@ void ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
-    ln_graph_edge_node en;
-    ln_cmp_func cmp;
 
+    /* TODO: inefficient */
     node1 = ln_graph_find(graph, data1);
     node2 = ln_graph_find(graph, data2);
     if (!node1 || !node2)
         return;
+
+    ln_graph_unlink_node(node1, node2, edge_data);
+}
+
+void ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
+                          void *edge_data)
+{
+    ln_graph_edge_node en;
+    ln_cmp_func cmp;
 
     if (edge_data)
         cmp = edge_node_cmp;
@@ -200,7 +217,7 @@ ln_graph *ln_graph_copy(ln_graph *graph)
     ln_graph_edge_node *edge_node;
     void *data1, *data2, *edge_data;
 
-    g = ln_graph_create();
+    g = ln_graph_create(graph->node_data_cmp, graph->edge_data_cmp);
     LN_LIST_FOREACH(node, graph->nodes) {
         ln_graph_add(g, node->data);
     }
@@ -277,7 +294,7 @@ int ln_graph_topsort(ln_graph *graph, ln_list **layers)
                 data2 = edge_node->node->data;
                 /* this must be here, since unlink will remove l */
                 l = l->next;
-                ln_graph_unlink(g, data1, data2);
+                ln_graph_unlink(g, data1, data2, edge_node->edge_data);
                 if (edge_node->node->indegree == 0)
                     ln_queue_enqueue(queue, edge_node->node);
             }

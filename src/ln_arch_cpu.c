@@ -37,6 +37,7 @@ extern ln_op ln_opimpl_concat;
 extern ln_op ln_opimpl_batchnorm;
 extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_bn2scale_wts;
+extern ln_op ln_opimpl_upsample_cuda;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
@@ -56,6 +57,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_batchnorm,
     &ln_opimpl_upsample,
     &ln_opimpl_bn2scale_wts,
+    &ln_opimpl_upsample_cuda,
 /* end of init cpu ops */
     NULL
 };

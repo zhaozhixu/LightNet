@@ -23,32 +23,36 @@
 #include <assert.h>
 #include "ln_pass.h"
 
-ln_list *ln_pass_expand(ln_list *ops, ln_hash *op_table,
+static inline void ep_error_handle(ln_error **error)
+{
+    if (*error) {
+        fprintf(stderr, "Infomation generated in ln_pass_expand():\n");
+        ln_error_handle(error);
+    }
+}
+
+ln_list *ln_pass_expand(ln_list *ops, ln_hash *op_table, ln_dfg *dfg,
                         ln_expander_func *ep_funcs)
 {
     ln_op *op;
     ln_list *l;
-    ln_list *new_ops;
     ln_list *ep_ops;
-    ln_graph *dfg;
-    ln_hash *node_table;
     ln_expander_func ep_func;
+    ln_error *error = NULL;
     int i;
 
-    new_ops = NULL;
     ep_ops = NULL;
-    dfg = ln_op_list_gen_dfg(ops, &node_table);
     for (l = ops; l; l = l->next) {
         op = l->data;
         for (i = 0; (ep_func = ep_funcs[i]); i++) {
-            ep_ops = ep_func(op, op_table, node_table);
+            ep_ops = ep_func(op, dfg);
+            op->post_run(op->op_arg, &error);
+            ep_error_handle(&error);
+            ln_op_table_remove(op_table, op->op_arg->name);
         }
     }
 
-    ln_graph_free(dfg);
-    ln_hash_free(node_table);
-
-    return new_ops;
+    return ops;
 }
 
 static inline void ph_error_handle(ln_error **error)
@@ -56,6 +60,25 @@ static inline void ph_error_handle(ln_error **error)
     if (*error) {
         fprintf(stderr, "Infomation generated in ln_pass_peephole():\n");
         ln_error_handle(error);
+    }
+}
+
+static void replace_win(ln_list **start_p, size_t len, ln_list *win_out,
+                        ln_hash *op_table, ln_dfg *dfg,
+                        void (*error_handle)(ln_error **))
+{
+    ln_list *l;
+    ln_op *op;
+    ln_error *error = NULL;
+    size_t i = 0;
+
+    for (l = *start_p; l && i < len; l = l->next, i++) {
+        op = l->data;
+        ln_dfg_remove(dfg, op);
+        op->post_run(op->op_arg, &error);
+        error_handle(&error);
+        ln_op_table_remove(op_table, op->op_arg->name);
+        *start_p = ln_list_remove(*start_p, op);
     }
 }
 
