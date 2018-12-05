@@ -359,7 +359,6 @@ sub gen_pre_run_checks {
         push @states, "${arg_name}_name = ${arg_name}_list_entry->name;";
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
-        push @states, "${arg_name}_list_entry->te = ${arg_name}_entry;";
         push @states, "${arg_name} = ${arg_name}_entry->tensor;";
         &err_exit("'$tensor->{arg_name}' needs a `mtype`") unless exists $tensor->{mtype};
         push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});";
@@ -562,7 +561,6 @@ sub gen_output_tensor_def {
             &err_exit("${arg_name} needs a `mtype`");
         }
         push @states, "ln_tensor_table_insert(op_arg->tensor_table, ${arg_name}_entry);";
-        push @states, "${arg_name}_list_entry->te = ${arg_name}_entry;";
         if (exists $tensor->{cleanup}) {
             &add_custom_block($tensor->{cleanup}, \@states);
         }

@@ -28,7 +28,7 @@
 
 typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg);
 typedef ln_list *(*ln_peephole_func) (const ln_list *win_ops, int win_size,
-                                      int *match);
+                                      const ln_dfg *dfg, int *match);
 typedef ln_list *(*ln_post_peephole) (ln_list *ops);
 
 struct ln_arch {

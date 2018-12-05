@@ -54,7 +54,7 @@ LN_CPPSTART
 #endif
 
 ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
-                               const char *name, ln_tensor_entry *te);
+                               const char *name);
 void ln_tensor_list_free(ln_list *list);
 ln_list *ln_tensor_list_copy(ln_list *list);
 char *ln_tensor_list_find_name(ln_list *list, char *arg_name);

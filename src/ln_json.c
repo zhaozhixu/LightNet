@@ -219,7 +219,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
 
         tensors_in = ln_tensor_list_append(tensors_in,
                                            tensor_arg_name_json->valuestring,
-                                           tensor_name_json->valuestring, NULL);
+                                           tensor_name_json->valuestring);
         i++;
     }
     i = 0;
@@ -246,7 +246,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
 
         tensors_out = ln_tensor_list_append(tensors_out,
                                             tensor_arg_name_json->valuestring,
-                                            tensor_name_json->valuestring, NULL);
+                                            tensor_name_json->valuestring);
         i++;
     }
     i = 0;
@@ -426,7 +426,7 @@ ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
     if (!cJSON_IsArray(ops_json))
         PARSE_JSON_ERROR("item \"ops\" has to be an Array");
 
-    int i = 0, ret;
+    int i = 0;
     cJSON_ArrayForEach(op_json, ops_json) {
         op = parse_op(op_json, op_init_table, tensor_table, op_table, i);
         ops = ln_list_append(ops, op);

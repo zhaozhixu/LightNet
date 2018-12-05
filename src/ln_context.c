@@ -42,3 +42,58 @@ void ln_context_free(ln_context *ctx)
     ln_dfg_free(ctx->dfg);
     ln_op_list_free(ctx->ops);
 }
+
+static void init_op(ln_context *ctx, ln_op *op)
+{
+    int ret;
+    ln_error *error = NULL;
+
+    op->pre_run(op->op_arg, &error);
+    ln_error_handle(&error);
+    ret = ln_op_table_insert(ctx->op_table, op);
+    assert(ret);
+    ln_dfg_add(ctx->dfg, op);
+}
+
+static void cleanup_op(ln_context *ctx, ln_op *op)
+{
+    int ret;
+    ln_error *error = NULL
+
+    ln_dfg_remove(ctx->dfg, op);
+    op->post_run(op->op_arg, &error);
+    ln_error_handle(&error);
+    ret = ln_op_table_remove(ctx->op_table, op->op_arg->name);
+    assert(ret);
+}
+
+void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
+                            ln_list *new_ops)
+{
+    ln_op *op;
+    size_t i = 0;
+    ln_list *l;
+    ln_list **lp;
+    ln_list *tmp;
+
+    for (i = 0, l = *start_p; i < len && l; i++) {
+        op = l->data;
+        cleanup_op(ctx, op);
+        tmp = l;
+        l = l->next;
+        ln_free(tmp);
+    }
+
+    tmp = (*start_p)->next;
+    (*start_p)->next = new_ops;
+    for (lp = start_p; *lp; lp = &(*lp)->next) {
+        op = (*lp)->data;
+        init_op(ctx, op);
+    }
+    *lp = tmp;
+}
+
+int ln_context_check(ln_context *ctx)
+{
+    return ln_dfg_check(ctx->dfg);
+}

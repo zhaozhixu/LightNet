@@ -85,17 +85,17 @@ void ln_error_handle(ln_error **error)
         ln_error_free(*error);
         *error = NULL;
         return;
-    case LN_DEBUG_INFO:
-#ifdef LN_DEBUG
-        fprintf(stderr, "DEBUG: %s\n", (*error)->err_str);
-        fflush(NULL);
-#endif
-        ln_error_free(*error);
-        *error = NULL;
-        return;
     case LN_INFO:
         fprintf(stderr, "INFO: %s\n", (*error)->err_str);
         fflush(NULL);
+        ln_error_free(*error);
+        *error = NULL;
+        return;
+    case LN_DEBUG_INFO:
+#ifdef LN_DEBUG
+        fprintf(stderr, "DEBUG INFO: %s\n", (*error)->err_str);
+        fflush(NULL);
+#endif
         ln_error_free(*error);
         *error = NULL;
         return;

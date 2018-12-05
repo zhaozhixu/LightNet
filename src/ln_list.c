@@ -152,6 +152,26 @@ ln_list *ln_list_remove_custom_deep(ln_list *list, void *data, ln_cmp_func cmp,
     return list;
 }
 
+ln_list *ln_list_remove_all_custom_deep(ln_list *list, void *data,
+                                        ln_cmp_func cmp,
+                                        void (*free_func)(void *))
+{
+    ln_list **lp;
+    ln_list *tmp;
+
+    for (lp = &list; *lp;) {
+        if (cmp((*lp)->data, data) == 0) {
+            tmp = *lp;
+            *lp = tmp->next;
+            free_func(tmp->data);
+            ln_free(tmp);
+            continue;
+        }
+        lp = &(*lp)->next;
+    }
+    return list;
+}
+
 ln_list *ln_list_remove_nth(ln_list *list, int n)
 {
     ln_list **lp;

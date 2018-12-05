@@ -24,15 +24,13 @@
 #include "ln_util.h"
 
 static ln_tensor_list_entry *list_entry_create(const char *arg_name,
-                                               const char *name,
-                                               ln_tensor_entry *te)
+                                               const char *name)
 {
     ln_tensor_list_entry *entry;
 
     entry = ln_alloc(sizeof(ln_tensor_list_entry));
     entry->arg_name = ln_strdup(arg_name);
     entry->name = ln_strdup(name);
-    entry->te = te;
     return entry;
 }
 
@@ -49,11 +47,11 @@ static void list_entry_free_wrapper(void *entry)
 }
 
 ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
-                               const char *name, ln_tensor_entry *te)
+                               const char *name)
 {
     ln_tensor_list_entry *entry;
 
-    entry = list_entry_create(arg_name, name, te);
+    entry = list_entry_create(arg_name, name);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -69,8 +67,7 @@ ln_list *ln_tensor_list_copy(ln_list *list)
     ln_tensor_list_entry *entry;
 
     LN_LIST_FOREACH(entry, list) {
-        new_list = ln_tensor_list_append(new_list, entry->arg_name, entry->name,
-                                         entry->te);
+        new_list = ln_tensor_list_append(new_list, entry->arg_name, entry->name);
     }
     return new_list;
 }

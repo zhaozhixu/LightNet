@@ -63,7 +63,6 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_name = src_list_entry->name;
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
-    src_list_entry->te = src_entry;
     src = src_entry->tensor;
     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
 
@@ -104,7 +103,6 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    dst_list_entry->te = dst_entry;
     {
         ln_free(dst_dims);
     }

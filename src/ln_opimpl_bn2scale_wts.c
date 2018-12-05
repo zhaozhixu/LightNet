@@ -93,7 +93,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_mean_name = src_mean_list_entry->name;
     src_mean_entry = ln_tensor_table_find(op_arg->tensor_table, src_mean_name);
     ln_opck_tensor_defined(src_mean_entry, src_mean_name);
-    src_mean_list_entry->te = src_mean_entry;
     src_mean = src_mean_entry->tensor;
     ln_opck_tensor_mtype_eq(src_mean_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_mean_entry, TL_FLOAT);
@@ -105,7 +104,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_var_name = src_var_list_entry->name;
     src_var_entry = ln_tensor_table_find(op_arg->tensor_table, src_var_name);
     ln_opck_tensor_defined(src_var_entry, src_var_name);
-    src_var_list_entry->te = src_var_entry;
     src_var = src_var_entry->tensor;
     ln_opck_tensor_mtype_eq(src_var_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_var_entry, TL_FLOAT);
@@ -117,7 +115,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_scale_name = src_scale_list_entry->name;
     src_scale_entry = ln_tensor_table_find(op_arg->tensor_table, src_scale_name);
     ln_opck_tensor_defined(src_scale_entry, src_scale_name);
-    src_scale_list_entry->te = src_scale_entry;
     src_scale = src_scale_entry->tensor;
     ln_opck_tensor_mtype_eq(src_scale_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_scale_entry, TL_FLOAT);
@@ -129,7 +126,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_offset_name = src_offset_list_entry->name;
     src_offset_entry = ln_tensor_table_find(op_arg->tensor_table, src_offset_name);
     ln_opck_tensor_defined(src_offset_entry, src_offset_name);
-    src_offset_list_entry->te = src_offset_entry;
     src_offset = src_offset_entry->tensor;
     ln_opck_tensor_mtype_eq(src_offset_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_offset_entry, TL_FLOAT);
@@ -176,7 +172,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst_scale_entry->isstatic = 1;
     dst_scale_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_scale_entry);
-    dst_scale_list_entry->te = dst_scale_entry;
 
     dst_shift_ndim = 1;
     dst_shift_dims = src_mean->dims;
@@ -187,7 +182,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst_shift_entry->isstatic = 1;
     dst_shift_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_shift_entry);
-    dst_shift_list_entry->te = dst_shift_entry;
 
     dst_power_ndim = 1;
     dst_power_dims = src_mean->dims;
@@ -198,7 +192,6 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst_power_entry->isstatic = 1;
     dst_power_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_power_entry);
-    dst_power_list_entry->te = dst_power_entry;
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
