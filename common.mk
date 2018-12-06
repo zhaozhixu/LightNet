@@ -28,7 +28,7 @@ CUFLAGS += -O3
 LDFLAGS += -O3
 endif
 
-INCPATHS = -I/usr/local/include `pkg-config --cflags tensorlight`
+INCPATHS = -I/usr/local/include -I. `pkg-config --cflags tensorlight`
 LDFLAGS += -L/usr/local/lib -lm `pkg-config --libs tensorlight`
 
 ifeq ($(WITH_CUDA), yes)
