@@ -1,0 +1,69 @@
+{
+    "ops": [
+        {
+            "optype": "concat",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src1", "mtype": "LN_MEM_NONE"},
+                {"arg_name": "src2", "mtype": "LN_MEM_NONE", "sametype": "src1"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src1->ndim", "dtype": "src1->dtype",
+                 "custom": "dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);\ndst_dims[axis] = src1->dims[axis] + src2->dims[axis];",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int",
+                 "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
+            ],
+            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
+        },
+        {
+            "optype": "concat_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src1", "mtype": "LN_MEM_CPU"},
+                {"arg_name": "src2", "mtype": "LN_MEM_CPU", "sametype": "src1"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src1->ndim", "dtype": "src1->dtype",
+                 "custom": "dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);\ndst_dims[axis] = src1->dims[axis] + src2->dims[axis];",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int",
+                 "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
+            ],
+            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
+            "run": ""
+        },
+        {
+            "optype": "concat_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src1", "mtype": "LN_MEM_CUDA"},
+                {"arg_name": "src2", "mtype": "LN_MEM_CUDA", "sametype": "src1"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "ndim": "src1->ndim", "dtype": "src1->dtype",
+                 "custom": "dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);\ndst_dims[axis] = src1->dims[axis] + src2->dims[axis];",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int",
+                 "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
+            ],
+            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
+            "run": ""
+        }
+    ]
+}

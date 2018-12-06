@@ -42,7 +42,7 @@ struct priv_s {
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
-static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void create_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char *dst_name;
     ln_tensor_entry *dst_entry;
@@ -105,7 +105,7 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
                                   dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_NONE;
+    dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
     dst_entry->isstatic = 1;
 
@@ -118,10 +118,37 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
     op_arg->priv = priv;
 }
 
+/* This function runs only once per instance right after memory allocation. */
+static void create_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+    struct priv_s *priv;
+    ln_param_entry *data_entry;
+    int dtype;
+    size_t size;
+    void *data;
+
+    priv = op_arg->priv;
+    data_entry = priv->data_entry;
+
+    dtype = priv->dtype;
+    size = tl_size_of(dtype) * data_entry->array_len;
+    data = ln_alloc(size);
+    if (data_entry->type == LN_PARAM_NULL) {
+        memset(data, 0, size);
+    } else {
+        for (int i = 0; i < data_entry->array_len; i++) {
+            tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
+                       &data_entry->value_array_double[i], TL_DOUBLE);
+        }
+    }
+    memmove(priv->dst->data, data, size);
+    ln_free(data);
+}
+
 /*
  * This function should undo everything done by pre_run().
  */
-static void create_post_run(ln_op_arg *op_arg, ln_error **error)
+static void create_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv;
 
@@ -131,15 +158,15 @@ static void create_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_create = {
-    .optype = "create",
+static ln_op_arg op_arg_create_cpu = {
+    .optype = "create_cpu",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_create = {
-    .op_arg = &op_arg_create,
-    .pre_run = create_pre_run,
-    .static_run = NULL,
+ln_op ln_opimpl_create_cpu = {
+    .op_arg = &op_arg_create_cpu,
+    .pre_run = create_cpu_pre_run,
+    .static_run = create_cpu_static_run,
     .run = NULL,
-    .post_run = create_post_run
+    .post_run = create_cpu_post_run
 };

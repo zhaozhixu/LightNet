@@ -135,7 +135,7 @@ ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)
     entry->creater = NULL;
     entry->offset = 0;
     entry->isstatic = 0;
-    entry->mtype = LN_MEM_UNDEF;
+    entry->mtype = LN_MEM_NONE;
 
     return entry;
 }

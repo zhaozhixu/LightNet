@@ -32,7 +32,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void upsample_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -64,7 +64,7 @@ static void upsample_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -102,7 +102,7 @@ static void upsample_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_NONE;
+    dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
     {
         ln_free(dst_dims);
@@ -119,7 +119,7 @@ static void upsample_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should only do the calculations. */
-static void upsample_run(ln_op_arg *op_arg, ln_error **error)
+static void upsample_cpu_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -129,7 +129,7 @@ static void upsample_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void upsample_post_run(ln_op_arg *op_arg, ln_error **error)
+static void upsample_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -138,15 +138,15 @@ static void upsample_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_upsample = {
-    .optype = "upsample",
+static ln_op_arg op_arg_upsample_cpu = {
+    .optype = "upsample_cpu",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_upsample = {
-    .op_arg = &op_arg_upsample,
-    .pre_run = upsample_pre_run,
+ln_op ln_opimpl_upsample_cpu = {
+    .op_arg = &op_arg_upsample_cpu,
+    .pre_run = upsample_cpu_pre_run,
     .static_run = NULL,
-    .run = upsample_run,
-    .post_run = upsample_post_run
+    .run = upsample_cpu_run,
+    .post_run = upsample_cpu_post_run
 };

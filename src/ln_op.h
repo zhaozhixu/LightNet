@@ -148,6 +148,132 @@ LN_CPPEND
             op_arg->optype, op_arg->name, (entry)->arg_name,            \
             ln_param_type_name((param_type)), ln_param_type_name((entry)->type))
 
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_int_eq(entry, expect)                             \
+    ln_opck(LN_ERROR, (entry)->value_int == (expect),                   \
+            "%s: `%s`'s `%s` param's value should be == %d, but gets a %d", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_int)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_int_gt(entry, expect)                             \
+    ln_opck(LN_ERROR, (entry)->value_int > (expect),                    \
+            "%s: `%s`'s `%s` param's value should be > %d, but gets a %d", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_int)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_int_ge(entry, expect)                             \
+    ln_opck(LN_ERROR, (entry)->value_int >= (expect),                   \
+            "%s: `%s`'s `%s` param's value should be >= %d, but gets a %d", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_int)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_int_lt(entry, expect)                             \
+    ln_opck(LN_ERROR, (entry)->value_int < (expect),                    \
+            "%s: `%s`'s `%s` param's value should be < %d, but gets a %d", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_int)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_int_le(entry, expect)                             \
+    ln_opck(LN_ERROR, (entry)->value_int == (expect),                   \
+            "%s: `%s`'s `%s` param's value should be <= %d, but gets a %d", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_int)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_int_ne(entry, expect)                             \
+    ln_opck(LN_ERROR, (entry)->value_int != (expect),                   \
+            "%s: `%s`'s `%s` param's value should be != %d, but gets a %d", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_int)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_float_eq(entry, expect)                           \
+    ln_opck(LN_ERROR, (entry)->value_float == (expect),                 \
+            "%s: `%s`'s `%s` param's value should be == %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_float)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_float_gt(entry, expect)                           \
+    ln_opck(LN_ERROR, (entry)->value_float > (expect),                  \
+            "%s: `%s`'s `%s` param's value should be > %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_float)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_float_ge(entry, expect)                           \
+    ln_opck(LN_ERROR, (entry)->value_float >= (expect),                 \
+            "%s: `%s`'s `%s` param's value should be >= %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_float)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_float_lt(entry, expect)                           \
+    ln_opck(LN_ERROR, (entry)->value_float < (expect),                  \
+            "%s: `%s`'s `%s` param's value should be < %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_float)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_float_le(entry, expect)                           \
+    ln_opck(LN_ERROR, (entry)->value_float == (expect),                 \
+            "%s: `%s`'s `%s` param's value should be <= %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_float)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_float_ne(entry, expect)                           \
+    ln_opck(LN_ERROR, (entry)->value_float != (expect),                 \
+            "%s: `%s`'s `%s` param's value should be != %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_float)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_double_eq(entry, expect)                          \
+    ln_opck(LN_ERROR, (entry)->value_double == (expect),                \
+            "%s: `%s`'s `%s` param's value should be == %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_double)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_double_gt(entry, expect)                          \
+    ln_opck(LN_ERROR, (entry)->value_double > (expect),                 \
+            "%s: `%s`'s `%s` param's value should be > %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_double)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_double_ge(entry, expect)                          \
+    ln_opck(LN_ERROR, (entry)->value_double >= (expect),                \
+            "%s: `%s`'s `%s` param's value should be >= %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_double)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_double_lt(entry, expect)                          \
+    ln_opck(LN_ERROR, (entry)->value_double < (expect),                 \
+            "%s: `%s`'s `%s` param's value should be < %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_double)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_double_le(entry, expect)                          \
+    ln_opck(LN_ERROR, (entry)->value_double == (expect),                \
+            "%s: `%s`'s `%s` param's value should be <= %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_double)
+
+/* entry should be a LN_PARAM_NUMBER */
+#define ln_opck_param_double_ne(entry, expect)                          \
+    ln_opck(LN_ERROR, (entry)->value_double != (expect),                \
+            "%s: `%s`'s `%s` param's value should be != %f, but gets a %f", \
+            op_arg->optype, op_arg->name, (entry)->arg_name,            \
+            (expect), (entry)->value_double)
+
 /* entry should have been checked with ln_opck_param_exist */
 #define ln_opck_param_array_len_eq(entry, expect_len)                   \
     ln_opck(LN_ERROR, (entry)->array_len == (expect_len),               \
@@ -178,6 +304,168 @@ LN_CPPEND
             "%s: `%s`'s `%s` param needs <= %d elements, but gets %d elements", \
             op_arg->optype, op_arg->name, (entry)->arg_name,            \
             (expect_len), (entry)->array_len)
+
+#define ln_opck_param_array_int_eq(entry, expect)                       \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_int[i] == (expect),  \
+                    "%s: `%s`'s `%s` param[%d] should be == %d, but gets %d ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_int[i]);             \
+    } while (0)
+
+#define ln_opck_param_array_int_gt(entry, expect)                       \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_int[i] > (expect),   \
+                    "%s: `%s`'s `%s` param[%d] should be > %d, but gets %d ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_int[i]);             \
+    } while (0)
+
+#define ln_opck_param_array_int_ge(entry, expect)                       \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_int[i] >= (expect),  \
+                    "%s: `%s`'s `%s` param[%d] should be >= %d, but gets %d ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_int[i]);             \
+    } while (0)
+
+#define ln_opck_param_array_int_lt(entry, expect)                       \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_int[i] < (expect),   \
+                    "%s: `%s`'s `%s` param[%d] should be < %d, but gets %d ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_int[i]);             \
+    } while (0)
+
+#define ln_opck_param_array_int_le(entry, expect)                       \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_int[i] <= (expect),  \
+                    "%s: `%s`'s `%s` param[%d] should be <= %d, but gets %d ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_int[i]);             \
+    } while (0)
+
+#define ln_opck_param_array_int_ne(entry, expect)                       \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_int[i] != (expect),  \
+                    "%s: `%s`'s `%s` param[%d] should be != %d, but gets %d ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_int[i]);             \
+    } while (0)
+
+#define ln_opck_param_array_float_eq(entry, expect)                     \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_float[i] == (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be == %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_float[i]);           \
+    } while (0)
+
+#define ln_opck_param_array_float_gt(entry, expect)                     \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_float[i] > (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be > %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_float[i]);           \
+    } while (0)
+
+#define ln_opck_param_array_float_ge(entry, expect)                     \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_float[i] >= (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be >= %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_float[i]);           \
+    } while (0)
+
+#define ln_opck_param_array_float_lt(entry, expect)                     \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_float[i] < (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be < %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_float[i]);           \
+    } while (0)
+
+#define ln_opck_param_array_float_le(entry, expect)                     \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_float[i] <= (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be <= %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_float[i]);           \
+                    } while (0)
+
+#define ln_opck_param_array_float_ne(entry, expect)                     \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_float[i] != (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be != %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_float[i]);           \
+    } while (0)
+
+#define ln_opck_param_array_double_eq(entry, expect)                    \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_double[i] == (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be == %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_double[i]);          \
+    } while (0)
+
+#define ln_opck_param_array_double_gt(entry, expect)                    \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_double[i] > (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be > %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_double[i]);          \
+    } while (0)
+
+#define ln_opck_param_array_double_ge(entry, expect)                    \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_double[i] >= (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be >= %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_double[i]);          \
+    } while (0)
+
+#define ln_opck_param_array_double_lt(entry, expect)                    \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_double[i] < (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be < %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_double[i]);          \
+    } while (0)
+
+#define ln_opck_param_array_double_le(entry, expect)                    \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_double[i] <= (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be <= %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_double[i]);          \
+    } while (0)
+
+#define ln_opck_param_array_double_ne(entry, expect)                    \
+    do {                                                                \
+        for (int i = 0; i < (entry)->array_len; i++)                    \
+            ln_opck(LN_ERROR, (entry)->value_array_double[i] != (expect), \
+                    "%s: `%s`'s `%s` param[%d] should be != %f, but gets %f ", \
+                    op_arg->optype, op_arg->name, (entry)->arg_name, i, \
+                    (expect), (entry)->value_array_double[i]);          \
+    } while (0)
 
 /* list_len should be returned by ln_param_list_length(op_arg->params) */
 #define ln_opck_params_len_eq(list_len, expect_len)                     \
@@ -217,8 +505,8 @@ LN_CPPEND
 
 /* tle should be returned by
    ln_tensor_list_find_by_arg_name(op_arg->tensors_in, arg_name) */
-#define ln_opck_tensor_in_exist(tle, arg_name)	\
-    ln_opck(LN_ERROR, (tle),                    \
+#define ln_opck_tensor_in_exist(tle, arg_name)          \
+    ln_opck(LN_ERROR, (tle),                            \
             "%s: `%s` needs a `%s` input tensor",       \
             op_arg->optype, op_arg->name, (arg_name))
 
@@ -250,8 +538,8 @@ LN_CPPEND
 
 /* tle should be returned by
    ln_tensor_list_find_by_arg_name(op_arg->tensors_out, arg_name) */
-#define ln_opck_tensor_out_exist(tle, arg_name)	\
-    ln_opck(LN_ERROR, (tle),                    \
+#define ln_opck_tensor_out_exist(tle, arg_name)         \
+    ln_opck(LN_ERROR, (tle),                            \
             "%s: `%s` needs a `%s` output tensor",      \
             op_arg->optype, op_arg->name, (arg_name))
 
@@ -291,6 +579,18 @@ LN_CPPEND
     ln_opck(LN_ERROR, (entry),                                          \
             "%s: `%s`'s tensor `%s` should have been defined before",   \
             op_arg->optype, op_arg->name, (entry_name))
+
+/* entry should have been checked with ln_opck_tensor_defined */
+#define ln_opck_tensor_ndim(entry, expect_ndim)                         \
+    ln_opck(LN_ERROR, (entry)->tensor->ndim == (expect_ndim),           \
+            "%s: `%s`'s tensor `%s` should be a %d-dimensional tensor", \
+            op_arg->optype, op_arg->name, (entry)->name, expect_ndim)
+
+/* entry should have been checked with ln_opck_tensor_defined */
+#define ln_opck_tensor_len(entry, expect_len)                           \
+    ln_opck(LN_ERROR, (entry)->tensor->len == (expect_len),             \
+            "%s: `%s`'s tensor `%s` should have %d elements",           \
+            op_arg->optype, op_arg->name, (entry)->name, expect_len)
 
 /* entry1 and entry2 should have been checked with ln_opck_tensor_defined */
 #define ln_opck_tensor_issameshape(entry1, entry2)                      \

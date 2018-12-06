@@ -38,7 +38,7 @@ struct mem_info {
 };
 
 static const char *mtype_name[] = {
-    "LN_MEM_UNDEF",
+    "LN_MEM_NONE",
     "LN_MEM_DIFF",
     "LN_MEM_CPU",
     "LN_MEM_CUDA"

@@ -2,6 +2,30 @@
     "ops": [
         {
             "optype": "upsample",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "dtype": "src->dtype", "ndim": "src->ndim",
+                 "custom": "dst_dims = ln_alloc(sizeof(int)*dst_ndim);\nfor (int i = 0; i < dst_ndim; i++)\n    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
+                 "realtype": "tl_resize_type",
+                 "from_func": "tl_resize_type_from_str",
+                 "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
+                {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "float", "gt": 0,
+                 "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+            ]
+        },
+        {
+            "optype": "upsample_cpu",
+            "author": "Zhao Zhixu",
             "arch": "cpu",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU"}
@@ -18,14 +42,15 @@
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "float",
+                 "realtype": "float", "gt": 0,
                  "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
             ],
             "run": "tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);"
         },
         {
             "optype": "upsample_cuda",
-            "arch": "cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
             ],
@@ -41,10 +66,10 @@
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "float",
+                 "realtype": "float", "gt": 0,
                  "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
             ],
-            "run": "tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);"
+            "run": "tl_tensor_resize_cuda(priv->src, priv->dst, priv->dst->dims, priv->mode);"
         }
     ]
 }

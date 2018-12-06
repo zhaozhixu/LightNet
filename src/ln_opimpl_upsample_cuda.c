@@ -88,6 +88,7 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(scales_entry, "scales");
     ln_opck_param_type(scales_entry, LN_PARAM_ARRAY_NUMBER);
     scales = scales_entry->value_array_float;
+    ln_opck_param_array_float_gt(scales_entry, 0);
     ln_opck_param_satisfy_msg(scales_entry->array_len == src->ndim, "the length of `scales` should be the same as the rank of input `src`");
 
     /* define output tensor shape, tensor data should be NULL */

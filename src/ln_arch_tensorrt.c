@@ -274,8 +274,8 @@ static int check_conv(ln_op *op)
     ln_param_entry *pe;
 
     pe = ln_param_list_find(op->op_arg->params, "padding");
-    if (pe->value_array_int[0] != pe->value_array_int[1]
-        || pe->value_array_int[2] != pe->value_array_int[3]) {
+    if (pe->value_array_int[0] != pe->value_array_int[2]
+        || pe->value_array_int[1] != pe->value_array_int[3]) {
         ln_error_emit_once(error_hash, op->op_arg->name, LN_WARNING,
                            "cannot convert '%s' with asymmetrical padding to TensorRT conv op",
                            op->op_arg->name);
@@ -391,8 +391,8 @@ static int check_pooling(ln_op *op)
     ln_param_entry *pe;
 
     pe = ln_param_list_find(op->op_arg->params, "padding");
-    if (pe->value_array_int[0] != pe->value_array_int[1]
-        || pe->value_array_int[2] != pe->value_array_int[3]) {
+    if (pe->value_array_int[0] != pe->value_array_int[2]
+        || pe->value_array_int[1] != pe->value_array_int[3]) {
         ln_error_emit_once(error_hash, op->op_arg->name, LN_WARNING,
                            "cannot convert '%s' with asymmetrical padding to TensorRT pooling op",
                            op->op_arg->name);

@@ -35,15 +35,12 @@ extern ln_op ln_opimpl_maxpool2d;
 extern ln_op ln_opimpl_softmax;
 extern ln_op ln_opimpl_concat;
 extern ln_op ln_opimpl_batchnorm;
-extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_bn2scale_wts;
-extern ln_op ln_opimpl_upsample_cuda;
-extern ln_op ln_opimpl_bn2scale_wts_cpu;
-extern ln_op ln_opimpl_upsample_cpu;
-/* end of declare cpu ops */
+extern ln_op ln_opimpl_upsample;
+/* end of declare none ops */
 
 /* TODO: use a hash */
-static ln_op *ops_cpu[] = {
+static ln_op *ops_none[] = {
     &ln_opimpl_slice,
     &ln_opimpl_reshape,
     &ln_opimpl_maxreduce,
@@ -57,27 +54,25 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_softmax,
     &ln_opimpl_concat,
     &ln_opimpl_batchnorm,
-    &ln_opimpl_upsample,
     &ln_opimpl_bn2scale_wts,
-    &ln_opimpl_bn2scale_wts_cpu,
-    &ln_opimpl_upsample_cpu,
-/* end of init cpu ops */
+    &ln_opimpl_upsample,
+/* end of init none ops */
     NULL
 };
 
-ln_expander_func ep_funcs_cpu[] = {
+ln_expander_func ep_funcs_none[] = {
     NULL
 };
 
-ln_peephole_func ph_funcs_cpu[] = {
+ln_peephole_func ph_funcs_none[] = {
     NULL
 };
 
-ln_arch ln_arch_cpu = {
-    .reg_ops = ops_cpu,
+ln_arch ln_arch_none = {
+    .reg_ops = ops_none,
     .init_func = NULL,
     .cleanup_func = NULL,
-    .ep_funcs = ep_funcs_cpu,
-    .ph_funcs = ph_funcs_cpu,
-    .arch_name = "cpu",
+    .ep_funcs = ep_funcs_none,
+    .ph_funcs = ph_funcs_none,
+    .arch_name = "none",
 };

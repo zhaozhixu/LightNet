@@ -1,0 +1,75 @@
+{
+    "ops": [
+        {
+            "optype": "slice",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = len;",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 0, "lt": "src->ndim"},
+                {"arg_name": "start", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 0, "lt": "src->dims[axis]"},
+                {"arg_name": "len", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0, "le": "src->dims[axis]",
+                 "check": "len + start <= src->dims[axis]"}
+            ]
+        },
+        {
+            "optype": "slice_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = len;",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 0, "lt": "src->ndim"},
+                {"arg_name": "start", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 0, "lt": "src->dims[axis]"},
+                {"arg_name": "len", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0, "le": "src->dims[axis]",
+                 "check": "len + start <= src->dims[axis]"}
+            ],
+            "run": "tl_tensor_slice(priv->src, priv->dst, priv->axis, priv->start, priv->len);"
+        },
+        {
+            "optype": "slice_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = len;",
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 0, "lt": "src->ndim"},
+                {"arg_name": "start", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 0, "lt": "src->dims[axis]"},
+                {"arg_name": "len", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0, "le": "src->dims[axis]",
+                 "check": "len + start <= src->dims[axis]"}
+            ],
+            "run": "tl_tensor_slice_cuda(priv->src, priv->dst, priv->axis, priv->start, priv->len);"
+        }
+    ]
+}

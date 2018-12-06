@@ -38,7 +38,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char                 *src_mean_name;
     ln_tensor_list_entry *src_mean_list_entry;
@@ -96,8 +96,8 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_mean = src_mean_entry->tensor;
     ln_opck_tensor_mtype_eq(src_mean_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_mean_entry, TL_FLOAT);
+    ln_opck_tensor_ndim(src_mean_entry, 1);
     ln_opck_tensor_isstatic(src_mean_entry);
-    ln_opck_tensor_satisfy_msg(src_mean->ndim == 1, "`src_mean` should have only 1 dimension");
 
     src_var_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src_var");
     ln_opck_tensor_in_exist(src_var_list_entry, "src_var");
@@ -107,7 +107,7 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_var = src_var_entry->tensor;
     ln_opck_tensor_mtype_eq(src_var_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_var_entry, TL_FLOAT);
-    ln_opck_tensor_issameshape(src_var_entry, src_mean_entry);
+    ln_opck_tensor_ndim(src_var_entry, 1);
     ln_opck_tensor_isstatic(src_var_entry);
 
     src_scale_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src_scale");
@@ -118,7 +118,7 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_scale = src_scale_entry->tensor;
     ln_opck_tensor_mtype_eq(src_scale_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_scale_entry, TL_FLOAT);
-    ln_opck_tensor_issameshape(src_scale_entry, src_mean_entry);
+    ln_opck_tensor_ndim(src_scale_entry, 1);
     ln_opck_tensor_isstatic(src_scale_entry);
 
     src_offset_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src_offset");
@@ -129,7 +129,7 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_offset = src_offset_entry->tensor;
     ln_opck_tensor_mtype_eq(src_offset_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_offset_entry, TL_FLOAT);
-    ln_opck_tensor_issameshape(src_offset_entry, src_mean_entry);
+    ln_opck_tensor_ndim(src_offset_entry, 1);
     ln_opck_tensor_isstatic(src_offset_entry);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
@@ -160,7 +160,7 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(epsilon_entry, "epsilon");
     ln_opck_param_type(epsilon_entry, LN_PARAM_NUMBER);
     epsilon = epsilon_entry->value_float;
-    ln_opck_param_satisfy_msg(epsilon > 0, "`epsilon` should be positive");
+    ln_opck_param_float_gt(epsilon_entry, 0);
 
     /* define output tensor shape, tensor data should be NULL */
     dst_scale_ndim = 1;
@@ -210,7 +210,7 @@ static void bn2scale_wts_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function blocks only once per instance right after memory allocation. */
-static void bn2scale_wts_static_run(ln_op_arg *op_arg, ln_error **error)
+static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -224,7 +224,7 @@ static void bn2scale_wts_static_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void bn2scale_wts_post_run(ln_op_arg *op_arg, ln_error **error)
+static void bn2scale_wts_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -235,15 +235,15 @@ static void bn2scale_wts_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_bn2scale_wts = {
-    .optype = "bn2scale_wts",
+static ln_op_arg op_arg_bn2scale_wts_cpu = {
+    .optype = "bn2scale_wts_cpu",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_bn2scale_wts = {
-    .op_arg = &op_arg_bn2scale_wts,
-    .pre_run = bn2scale_wts_pre_run,
-    .static_run = bn2scale_wts_static_run,
+ln_op ln_opimpl_bn2scale_wts_cpu = {
+    .op_arg = &op_arg_bn2scale_wts_cpu,
+    .pre_run = bn2scale_wts_cpu_pre_run,
+    .static_run = bn2scale_wts_cpu_static_run,
     .run = NULL,
-    .post_run = bn2scale_wts_post_run
+    .post_run = bn2scale_wts_cpu_post_run
 };

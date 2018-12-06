@@ -53,7 +53,8 @@ if (@json_files == 0) {
 
 sub parse_and_generate {
     my $json_text = shift;
-    my $json = decode_json($json_text);
+    my $json_obj = JSON->new->relaxed();
+    my $json = $json_obj->decode($json_text);
     if (exists $json->{ops}) {
         foreach my $op (@{$json->{ops}}) {
             &gen_code($op);
@@ -75,13 +76,13 @@ sub gen_code {
     &err_exit("'${optype}' needs a `params`") unless exists $op->{params};
     my $params = $op->{params};
 
-    my $arch = "";
     &err_exit("'${optype}' needs an `arch`") unless exists $op->{arch};
-    $arch = $op->{arch};
-    if ($arch ne "cpu" and $arch ne "cuda") {
+    my $arch = $op->{arch};
+    if ($arch ne "none" and $arch ne "cpu" and $arch ne "cuda" and
+        $arch ne "tensorrt") {
         &err_exit("'${optype}' has unsupported `arch` '${arch}'");
     }
-    if ($arch ne "cpu" and not $optype =~ /\w+_$arch$/) {
+    if ($arch ne "none" and not $optype =~ /\w+_$arch$/) {
         &err_exit("'${optype}' doesn't match `arch` '${arch}'");
     }
 
@@ -106,14 +107,7 @@ sub gen_code {
     if ($root) {
         my $src_file = "${root}/src/ln_opimpl_${optype}.c";
         &backup_write($src_file, $code_str);
-        my $arch_file = "";
-        if ($arch eq "cpu") {
-            $arch_file = "${root}/src/ln_arch_cpu.c";
-        } elsif ($arch eq "cuda") {
-            $arch_file = "${root}/src/ln_arch_cuda.c";
-        } else {
-            &err_exit("${optype}: unsupported `arch` '${arch}'");
-        }
+        my $arch_file = "${root}/src/ln_arch_${arch}.c";
         &add_to_arch_file($arch_file, $optype, $arch);
     }
 }
@@ -163,9 +157,12 @@ sub add_to_arch_file {
 }
 
 sub gen_head_block {
+    my $op = shift;
+    &err_exit("'$op->{optype}' needs an `author`") unless exists $op->{author};
+    my $author = $op->{author};
     my $head_block_tpl = <<EOF;
 /*
- * Copyright (c) 2018 Zhao Zhixu
+ * Copyright (c) 2018 $author
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -193,18 +190,18 @@ EOF
 
 # TODO: replace tl_tensor to ln_tensor_entry
 sub gen_struct_def {
-    my $op = $_[0];
+    my $op = shift;
     my $tensors_in = $op->{tensors_in};
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
 
     my @defs = ();
     foreach (@$tensors_in) {
-        &err_exit("'$op->{optype}' needs a `arg_name` in one of the  `tensors_in`") unless exists $_->{arg_name};
+        &err_exit("'$op->{optype}' needs an `arg_name` in one of the  `tensors_in`") unless exists $_->{arg_name};
         push @defs, "tl_tensor *$_->{arg_name};";
     }
     foreach (@$tensors_out) {
-        &err_exit("'$op->{optype}' needs a `arg_name` in one of the `tensors_out`") unless exists $_->{arg_name};
+        &err_exit("'$op->{optype}' needs an `arg_name` in one of the `tensors_out`") unless exists $_->{arg_name};
         push @defs, "tl_tensor *$_->{arg_name};";
         push @defs, "char *$_->{arg_name}_name;";
     }
@@ -365,6 +362,12 @@ sub gen_pre_run_checks {
         if (exists $tensor->{dtype}) {
             push @states, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $tensor->{dtype});";
         }
+        if (exists $tensor->{ndim}) {
+            push @states, "ln_opck_tensor_ndim(${arg_name}_entry, $tensor->{ndim});";
+        }
+        if (exists $tensor->{len}) {
+            push @states, "ln_opck_tensor_len(${arg_name}_entry, $tensor->{len});";
+        }
         if (exists $tensor->{sametype}) {
             push @states, "ln_opck_tensor_issametype(${arg_name}_entry, $tensor->{sametype}_entry);";
         }
@@ -379,13 +382,21 @@ sub gen_pre_run_checks {
             }
         }
         if (exists $tensor->{check}) {
-            push @states, "ln_opck_tensor_satisfy_msg($tensor->{check});";
+            if ($tensor->{check} =~ /,/) {
+                push @states, "ln_opck_tensor_satisfy_msg($tensor->{check});";
+            } else {
+                push @states, "ln_opck_tensor_satisfy($tensor->{check});";
+            }
         }
         if (exists $tensor->{checks}) {
             my $checks = $tensor->{checks};
             foreach (@$checks) {
                 if (exists $_->{check}) {
-                    push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
+                    if ($_->{check} =~ /,/) {
+                        push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
+                    } else {
+                        push @states, "ln_opck_tensor_satisfy($_->{check});";
+                    }
                 } else {
                     &err_exit("tensor '${arg_name}' expects a `check` in `checks`");
                 }
@@ -440,6 +451,24 @@ sub gen_pre_run_checks {
                     $param->{realtype} eq "double"||
                     $param->{realtype} eq "int") {
                     push @states, "${arg_name} = ${arg_name}_entry->value_$param->{realtype};";
+                    if (exists $param->{eq}) {
+                        push @states, "ln_opck_param_$param->{realtype}_eq(${arg_name}_entry, $param->{eq});";
+                    }
+                    if (exists $param->{gt}) {
+                        push @states, "ln_opck_param_$param->{realtype}_gt(${arg_name}_entry, $param->{gt});";
+                    }
+                    if (exists $param->{ge}) {
+                        push @states, "ln_opck_param_$param->{realtype}_ge(${arg_name}_entry, $param->{ge});";
+                    }
+                    if (exists $param->{lt}) {
+                        push @states, "ln_opck_param_$param->{realtype}_lt(${arg_name}_entry, $param->{lt});";
+                    }
+                    if (exists $param->{le}) {
+                        push @states, "ln_opck_param_$param->{realtype}_le(${arg_name}_entry, $param->{le});";
+                    }
+                    if (exists $param->{ne}) {
+                        push @states, "ln_opck_param_$param->{realtype}_ne(${arg_name}_entry, $param->{ne});";
+                    }
                 } else {
                     &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
                 }
@@ -470,7 +499,25 @@ sub gen_pre_run_checks {
               if ($param->{realtype} eq "float" ||
                   $param->{realtype} eq "double"||
                   $param->{realtype} eq "int") {
-                push @states, "${arg_name} = ${arg_name}_entry->value_array_$param->{realtype};";
+                  push @states, "${arg_name} = ${arg_name}_entry->value_array_$param->{realtype};";
+                  if (exists $param->{eq}) {
+                        push @states, "ln_opck_param_array_$param->{realtype}_eq(${arg_name}_entry, $param->{eq});";
+                    }
+                    if (exists $param->{gt}) {
+                        push @states, "ln_opck_param_array_$param->{realtype}_gt(${arg_name}_entry, $param->{gt});";
+                    }
+                    if (exists $param->{ge}) {
+                        push @states, "ln_opck_param_array_$param->{realtype}_ge(${arg_name}_entry, $param->{ge});";
+                    }
+                    if (exists $param->{lt}) {
+                        push @states, "ln_opck_param_array_$param->{realtype}_lt(${arg_name}_entry, $param->{lt});";
+                    }
+                    if (exists $param->{le}) {
+                        push @states, "ln_opck_param_array_$param->{realtype}_le(${arg_name}_entry, $param->{le});";
+                    }
+                    if (exists $param->{ne}) {
+                        push @states, "ln_opck_param_array_$param->{realtype}_ne(${arg_name}_entry, $param->{ne});";
+                    }
               } else {
                 &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
               }
@@ -483,13 +530,21 @@ sub gen_pre_run_checks {
             }
         }
         if (exists $param->{check}) {
-            push @states, "ln_opck_param_satisfy_msg($param->{check});";
+            if ($param->{check} =~ /,/) {
+                push @states, "ln_opck_param_satisfy_msg($param->{check});";
+            } else {
+                push @states, "ln_opck_param_satisfy($param->{check});";
+            }
         }
         if (exists $param->{checks}) {
             my $checks = $param->{checks};
             foreach (@$checks) {
                 if (exists $_->{check}) {
-                    push @states, "ln_opck_param_satisfy_msg($_->{check});";
+                    if ($_->{check} =~ /,/) {
+                        push @states, "ln_opck_param_satisfy_msg($_->{check});";
+                    } else {
+                        push @states, "ln_opck_param_satisfy($_->{check});";
+                    }
                 } else {
                     &err_exit("$param->{arg_name} expects a `check` in `checks`");
                 }
@@ -501,22 +556,26 @@ sub gen_pre_run_checks {
         push @states, "";
     }
 
-    if (exists $op->{extra_checks}) {
-        my $checks = $op->{extra_checks};
+    if (exists $op->{checks}) {
+        my $checks = $op->{checks};
         foreach (@$checks) {
             if (exists $_->{cktype} and exists $_->{check}) {
                 if ($_->{cktype} ne "param" and $_->{cktype} ne "tensor") {
-                    &err_exit("`extra_checks`'s `cktype` should be 'param' or 'tensor'");
+                    &err_exit("`checks`'s `cktype` should be 'param' or 'tensor'");
                 }
-                push @states, "ln_opck_$_->{cktype}_satisfy_msg($_->{check});";
+                if ($_->{check} =~ /,/) {
+                    push @states, "ln_opck_$_->{cktype}_satisfy_msg($_->{check});";
+                } else {
+                    push @states, "ln_opck_$_->{cktype}_satisfy($_->{check});";
+                }
             } else {
-                &err_exit("`extra_checks` expects a `cktype` and a `check`");
+                &err_exit("$op->{optype}'s `checks` expects a `cktype` and a `check`");
             }
         }
         push @states, "";
     }
-    if (exists $op->{extra_custom}) {
-        &add_custom_block($op->{extra_custom}, \@states);
+    if (exists $op->{custom}) {
+        &add_custom_block($op->{custom}, \@states);
         push @states, "";
     }
 

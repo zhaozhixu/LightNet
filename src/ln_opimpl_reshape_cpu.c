@@ -33,7 +33,7 @@ struct priv_s {
 /*
  * This function should do the parameter checking and memory allocation.
  */
-static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void reshape_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char *dst_name, *src_name;
     ln_tensor_entry *dst_entry, *src_entry;
@@ -54,7 +54,7 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_tensor_in_exist(src_name, "src");
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
 
     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
     ln_opck_tensor_out_exist(dst_name, "dst");
@@ -82,7 +82,7 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst_tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
     dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_NONE;
+    dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, src_name);
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
 
@@ -94,10 +94,19 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
     op_arg->priv = priv;
 }
 
+/* This function runs only once per instance right after memory allocation. */
+static void reshape_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
+{
+    struct priv_s *priv;
+
+    priv = op_arg->priv;
+    priv->dst_tensor->data = priv->src_tensor->data;
+}
+
 /*
  * This function should undo everything done by pre_run().
  */
-static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
+static void reshape_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv;
 
@@ -107,14 +116,14 @@ static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_reshape = {
-    .optype = "reshape",
+static ln_op_arg op_arg_reshape_cpu = {
+    .optype = "reshape_cpu",
 };
 
-ln_op ln_opimpl_reshape = {
-    .op_arg = &op_arg_reshape,
-    .pre_run = reshape_pre_run,
-    .static_run = NULL,
+ln_op ln_opimpl_reshape_cpu = {
+    .op_arg = &op_arg_reshape_cpu,
+    .pre_run = reshape_cpu_pre_run,
+    .static_run = reshape_cpu_static_run,
     .run = NULL,
-    .post_run = reshape_post_run
+    .post_run = reshape_cpu_post_run
 };

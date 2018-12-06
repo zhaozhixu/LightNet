@@ -22,6 +22,7 @@
 
 #include "ln_arch.h"
 
+extern ln_arch ln_arch_none;
 extern ln_arch ln_arch_cpu;
 
 #ifdef LN_CUDA
@@ -33,6 +34,7 @@ extern ln_arch ln_arch_tensorrt;
 #endif
 
 static ln_arch *archs[] = {
+    &ln_arch_none,
     &ln_arch_cpu,
 #ifdef LN_CUDA
     &ln_arch_cuda,
