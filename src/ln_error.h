@@ -32,6 +32,8 @@ enum ln_error_level {
     LN_INTER_ERROR_SYS,
     LN_WARNING,
     LN_WARNING_SYS,
+    LN_INTER_WARNING,
+    LN_INTER_WARNING_SYS,
     LN_DEBUG_INFO,
     LN_INFO
 };

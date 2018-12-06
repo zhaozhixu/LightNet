@@ -27,22 +27,22 @@
 #include "ln_dfg.h"
 
 typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg);
-typedef ln_list *(*ln_peephole_func) (const ln_list *win_ops, int win_size,
+typedef ln_list *(*ln_peephole_func) (const ln_list *ops, size_t size,
                                       const ln_dfg *dfg, int *match);
-typedef ln_list *(*ln_post_peephole) (ln_list *ops);
 
 struct ln_arch {
     ln_op            **reg_ops;       /* NULL terminated */
+    void (*init_func)(void);
+    void (*cleanup_func)(void);
     ln_expander_func  *ep_funcs;      /* NULL terminated */
     ln_peephole_func  *ph_funcs;      /* NULL terminated */
-    ln_post_peephole   post_ph;
     char              *arch_name;
 };
 typedef struct ln_arch ln_arch;
 
 struct ln_init_tables {
-    ln_hash *init_arch_table;
-    ln_hash *init_op_table;
+    ln_hash *arch_table;
+    ln_hash *op_proto_table;
 };
 typedef struct ln_init_tables ln_init_tables;
 

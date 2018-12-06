@@ -58,7 +58,7 @@ static void init_op(ln_context *ctx, ln_op *op)
 static void cleanup_op(ln_context *ctx, ln_op *op)
 {
     int ret;
-    ln_error *error = NULL
+    ln_error *error = NULL;
 
     ln_dfg_remove(ctx->dfg, op);
     op->post_run(op->op_arg, &error);

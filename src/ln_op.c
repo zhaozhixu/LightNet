@@ -37,7 +37,6 @@ static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
     op_arg->params = params;
     op_arg->priv = NULL;
     op_arg->tensor_table = tensor_table;
-    op_arg->fixed = 0;
 
     return op_arg;
 }

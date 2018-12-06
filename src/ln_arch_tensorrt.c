@@ -30,11 +30,76 @@ extern ln_op ln_opimpl_tensorrt;
 
 static ln_op *ops_tensorrt[] = {
     &ln_opimpl_tensorrt,
+/* end of init tensorrt ops */
     NULL
 };
 
-/* TODO: add a private field to ln_arch and put this there? */
+static int check_conv(ln_op *op);
+static void add_conv_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                            ln_list **new_ops_p);
+static void add_activation_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                                  ln_list **new_ops_p);
+static int check_pooling(ln_op *op);
+static void add_pooling_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                               ln_list **new_ops_p);
+static int check_softmax(ln_op *op);
+static void add_softmax_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                               ln_list **new_ops_p);
+static int check_concat(ln_op *op);
+static void add_concat_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                              ln_list **new_ops_p);
+static void add_batchnorm_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                                 ln_list **new_ops_p);
+static void add_trt_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                           ln_list **new_ops_p);
+
+typedef int (*check_func)(ln_op *op);
+static ln_hash_init_entry init_check_funcs[] = {
+    {"conv2d", check_conv},
+    {"relu", NULL},
+    {"maxpool2d", check_pooling},
+    {"softmax", check_softmax},
+    {"concat", check_concat},
+    {"batchnorm", NULL},
+    {"tensorrt", NULL},
+    LN_HASH_INIT_ENTRY_NULL
+};
+static ln_hash *check_funcs_hash = NULL;
+
+typedef void (*add_to_trt_func)(ln_op *trt_op, ln_op *op, const ln_list *ops,
+                                ln_list **new_ops_p);
+static ln_hash_init_entry init_add_funcs[] = {
+    {"conv2d", add_conv_to_trt},
+    {"relu", add_activation_to_trt},
+    {"maxpool2d", add_pooling_to_trt},
+    {"softmax", add_softmax_to_trt},
+    {"concat", add_concat_to_trt},
+    {"batchnorm", add_batchnorm_to_trt},
+    {"tensorrt", add_trt_to_trt},
+    LN_HASH_INIT_ENTRY_NULL
+};
+static ln_hash *add_funcs_hash = NULL;
+
 static ln_hash *error_hash = NULL;
+
+static void init(void)
+{
+    add_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    ln_hash_init(add_funcs_hash, init_add_funcs);
+
+    check_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    ln_hash_init(check_funcs_hash, init_check_funcs);
+
+    error_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+}
+
+static void cleanup(void)
+{
+    ln_hash_free(add_funcs_hash);
+    ln_hash_free(check_funcs_hash);
+    ln_hash_free(error_hash);
+}
+
 /* TODO: use char[] to replace ln_strcat() etc. */
 /* TODO: add a global op name hash */
 static ln_op *create_trt_op(const ln_list *ops, ln_op *from_op)
@@ -808,33 +873,6 @@ static void add_trt_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
     }
 }
 
-typedef int (*check_func)(ln_op *op);
-static ln_hash_init_entry init_check_funcs[] = {
-    {"conv2d", check_conv},
-    {"relu", NULL},
-    {"maxpool2d", check_pooling},
-    {"softmax", check_softmax},
-    {"concat", check_concat},
-    {"batchnorm", NULL},
-    {"tensorrt", NULL},
-    LN_HASH_INIT_ENTRY_NULL
-};
-static ln_hash *check_funcs_hash = NULL;
-
-typedef void (*add_to_trt_func)(ln_op *trt_op, ln_op *op, const ln_list *ops,
-                                ln_list **new_ops_p);
-static ln_hash_init_entry init_add_funcs[] = {
-    {"conv2d", add_conv_to_trt},
-    {"relu", add_activation_to_trt},
-    {"maxpool2d", add_pooling_to_trt},
-    {"softmax", add_softmax_to_trt},
-    {"concat", add_concat_to_trt},
-    {"batchnorm", add_batchnorm_to_trt},
-    {"tensorrt", add_trt_to_trt},
-    LN_HASH_INIT_ENTRY_NULL
-};
-static ln_hash *add_funcs_hash = NULL;
-
 static int is_win_match(const ln_list *win_ops)
 {
     ln_op *op;
@@ -869,18 +907,6 @@ static int is_win_match(const ln_list *win_ops)
 static ln_list *ph_tensorrt(const ln_list *win_ops, int win_size,
                                  int *match, const ln_list *ops)
 {
-    /* TODO: multithread safety */
-    if (!add_funcs_hash) {
-        add_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-        ln_hash_init(add_funcs_hash, init_add_funcs);
-    }
-    if (!check_funcs_hash) {
-        check_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-        ln_hash_init(check_funcs_hash, init_check_funcs);
-    }
-    if (!error_hash)
-        error_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-
     *match = 0;
     if (is_win_match(win_ops))
         *match = 1;
@@ -982,8 +1008,16 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
     return ops;
 }
 
-static ln_list *ep_tensorrt(const ln_list *ops)
+static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg)
 {
+    ln_list *new_ops = NULL;
+    ln_op *new_op;
+    ln_op *op_proto;
+
+    if (ln_streq(op->op_arg->name, "create")) {
+        op_proto = ln_hash_find(LN_INIT.init_op_table, "create_cuda");
+    }
+
     return NULL;
 }
 
@@ -999,8 +1033,9 @@ ln_peephole_func ph_funcs_tensorrt[] = {
 
 ln_arch ln_arch_tensorrt = {
     .reg_ops = ops_tensorrt,
+    .init_func = init,
+    .cleanup_func = cleanup;
     .ep_funcs = ep_funcs_tensorrt,
     .ph_funcs = ph_funcs_tensorrt,
-    .post_ph = post_ph_tensorrt,
     .arch_name = "tensorrt",
 };

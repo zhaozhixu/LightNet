@@ -34,9 +34,9 @@
 LN_CPPSTART
 #endif
 
-ln_list *ln_pass_expand(ln_context *ctx, ln_expander_func *ep_funcs);
-ln_list *ln_pass_peephole(ln_context *ctx, int win_size,
-                          ln_peephole_func *ph_funcs);
+void ln_pass_expand(ln_context *ctx, ln_expander_func *ep_funcs);
+void ln_pass_peephole(ln_context *ctx, size_t win_size,
+                      ln_peephole_func *ph_funcs);
 ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools);
 
 #ifdef __cplusplus

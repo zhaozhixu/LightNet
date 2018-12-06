@@ -72,8 +72,9 @@ ln_peephole_func ph_funcs_cpu[] = {
 
 ln_arch ln_arch_cpu = {
     .reg_ops = ops_cpu,
+    .init_func = NULL,
+    .cleanup_func = NULL,
     .ep_funcs = ep_funcs_cpu,
     .ph_funcs = ph_funcs_cpu,
-    .post_ph = NULL,
     .arch_name = "cpu",
 };

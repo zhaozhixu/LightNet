@@ -143,7 +143,6 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
 
     cJSON *name_json = cJSON_GetObjectItem(op_json, "name");
     cJSON *optype_json = cJSON_GetObjectItem(op_json, "optype");
-    cJSON *fixed_json = cJSON_GetObjectItem(op_json, "fixed");
     cJSON *tensors_in_json = cJSON_GetObjectItem(op_json, "tensors_in");
     cJSON *tensors_out_json = cJSON_GetObjectItem(op_json, "tensors_out");
     cJSON *params_json = cJSON_GetObjectItem(op_json, "params");
@@ -161,12 +160,6 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
     if (!cJSON_IsString(optype_json))
         PARSE_JSON_ERROR("op \"%s\"'s \"optype\" is not a String",
                          name_json->valuestring);
-
-    if (fixed_json) {
-        if (!cJSON_IsBool(fixed_json))
-            PARSE_JSON_ERROR("op \"%s\"'s \"fixed\" is not a Bool",
-                             name_json->valuestring);
-    }
 
     if (!tensors_in_json)
         PARSE_JSON_ERROR("op \"%s\" doesn't have a \"tensors_in\" key",
@@ -311,8 +304,6 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
 
     op = ln_op_create_from_proto(proto_op, name_json->valuestring, tensors_in,
                                  tensors_out, params, tensor_table);
-    if (fixed_json && cJSON_IsTrue(fixed_json))
-        op->op_arg->fixed = 1;
 
     int ret = ln_op_table_insert(op_table, op);
     if (!ret)
