@@ -27,11 +27,10 @@ struct priv_s {
     tl_tensor *src;
     tl_tensor *dst;
     char      *dst_name;
-    int        axis;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void maxreduce_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void relu_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -44,8 +43,6 @@ static void maxreduce_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *axis_entry;
-    int                   axis;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -61,7 +58,7 @@ static void maxreduce_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -73,51 +70,37 @@ static void maxreduce_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
     params_n = ln_param_list_length(op_arg->params);
-    ln_opck_params_len_eq(params_n, 1);
-
-    axis_entry = ln_param_list_find(op_arg->params, "axis");
-    ln_opck_param_exist(axis_entry, "axis");
-    ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
-    axis = axis_entry->value_int;
-    ln_opck_param_satisfy_msg(axis >= 0 && axis < src->ndim, "`axis` should match the dimensions of `src`");
+    ln_opck_params_len_eq(params_n, 0);
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
+    dst_dims = src->dims;
     dst_dtype = src->dtype;
-    {
-        dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);
-        dst_dims[axis] = 1;
-    }
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_CUDA;
+    dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
     priv->src = src;
     priv->dst = dst;
     priv->dst_name = dst_name;
-    priv->axis = axis;
     op_arg->priv = priv;
 }
 
 /* This function should only do the calculations. */
-static void maxreduce_cuda_run(ln_op_arg *op_arg, ln_error **error)
+static void relu_cpu_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
     {
-        tl_tensor_maxreduce_cuda(priv->src, priv->dst, NULL, priv->axis);
     }
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void maxreduce_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
+static void relu_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -126,15 +109,15 @@ static void maxreduce_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_maxreduce_cuda = {
-    .optype = "maxreduce_cuda",
+static ln_op_arg op_arg_relu_cpu = {
+    .optype = "relu_cpu",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_maxreduce_cuda = {
-    .op_arg = &op_arg_maxreduce_cuda,
-    .pre_run = maxreduce_cuda_pre_run,
+ln_op ln_opimpl_relu_cpu = {
+    .op_arg = &op_arg_relu_cpu,
+    .pre_run = relu_cpu_pre_run,
     .static_run = NULL,
-    .run = maxreduce_cuda_run,
-    .post_run = maxreduce_cuda_post_run
+    .run = relu_cpu_run,
+    .post_run = relu_cpu_post_run
 };

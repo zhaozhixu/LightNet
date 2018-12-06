@@ -24,49 +24,66 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor  *src1;
-    tl_tensor  *src2;
-    tl_tensor  *dst;
-    char       *dst_name;
-    tl_elew_op  elew_op;
+    tl_tensor *src1;
+    tl_tensor *src2;
+    tl_tensor *dst;
+    char      *dst_name;
+    int        elew_op;
 };
 
-/*
- * This function should do the parameter checking and tensor shape inference.
- */
+/* This function should do the parameter checking and tensor shape inference. */
 static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-    char *src1_name, *src2_name, *dst_name;
-    ln_tensor_entry *src1_entry, *src2_entry, *dst_entry;
-    ln_param_entry *elew_op_entry;
-    int tensors_n, params_n;
-    tl_elew_op elew_op;
-    tl_tensor *dst_tensor;
-    struct priv_s *priv;
+    char                 *src1_name;
+    ln_tensor_list_entry *src1_list_entry;
+    ln_tensor_entry      *src1_entry;
+    tl_tensor            *src1;
+    char                 *src2_name;
+    ln_tensor_list_entry *src2_list_entry;
+    ln_tensor_entry      *src2_entry;
+    tl_tensor            *src2;
+    char                 *dst_name;
+    ln_tensor_list_entry *dst_list_entry;
+    ln_tensor_entry      *dst_entry;
+    tl_tensor            *dst;
+    int                   dst_ndim;
+    int                  *dst_dims;
+    tl_dtype              dst_dtype;
+    ln_param_entry       *elew_op_entry;
+    int                   elew_op;
+    int                   tensors_in_n;
+    int                   tensors_out_n;
+    int                   params_n;
+    struct priv_s        *priv;
 
     /* check tensors and parameters */
-    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-    ln_opck_tensors_in_len_eq(tensors_n, 2);
+    tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_eq(tensors_in_n, 2);
 
-    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-    ln_opck_tensors_out_len_eq(tensors_n, 1);
-
-    src1_name = ln_tensor_list_find_name(op_arg->tensors_in, "src1");
-    ln_opck_tensor_in_exist(src1_name, "src1");
+    src1_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src1");
+    ln_opck_tensor_in_exist(src1_list_entry, "src1");
+    src1_name = src1_list_entry->name;
     src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
     ln_opck_tensor_defined(src1_entry, src1_name);
-    ln_opck_tensor_mtype_eq(src1_entry, LN_MEM_CPU);
+    src1 = src1_entry->tensor;
+    ln_opck_tensor_mtype_eq(src1_entry, LN_MEM_NONE);
 
-    src2_name = ln_tensor_list_find_name(op_arg->tensors_in, "src2");
-    ln_opck_tensor_in_exist(src2_name, "src2");
+    src2_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src2");
+    ln_opck_tensor_in_exist(src2_list_entry, "src2");
+    src2_name = src2_list_entry->name;
     src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
     ln_opck_tensor_defined(src2_entry, src2_name);
-    ln_opck_tensor_mtype_eq(src2_entry, LN_MEM_CPU);
-    ln_opck_tensor_issameshape(src1_entry, src2_entry);
-    ln_opck_tensor_issametype(src1_entry, src2_entry);
+    src2 = src2_entry->tensor;
+    ln_opck_tensor_mtype_eq(src2_entry, LN_MEM_NONE);
+    ln_opck_tensor_issametype(src2_entry, src1_entry);
+    ln_opck_tensor_issameshape(src2_entry, src1_entry);
 
-    dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-    ln_opck_tensor_out_exist(dst_name, "dst");
+    tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_eq(tensors_out_n, 1);
+
+    dst_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst");
+    ln_opck_tensor_out_exist(dst_list_entry, "dst");
+    dst_name = dst_list_entry->name;
     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
@@ -76,49 +93,34 @@ static void elew_pre_run(ln_op_arg *op_arg, ln_error **error)
     elew_op_entry = ln_param_list_find(op_arg->params, "elew_op");
     ln_opck_param_exist(elew_op_entry, "elew_op");
     ln_opck_param_type(elew_op_entry, LN_PARAM_STRING);
-
     elew_op = tl_elew_op_from_str(elew_op_entry->value_string);
-    ln_opck_param_satisfy_msg(elew_op != -1,
-                              "`elew_op` param should be a supported tl_elew_op");
+    ln_opck_param_satisfy_msg(elew_op != -1, "`elew_op` param should be a supported tl_elew_op");
 
     /* define output tensor shape, tensor data should be NULL */
-    dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim,
-                                  src2_entry->tensor->dims,
-                                  src1_entry->tensor->dtype);
-    dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+    dst_ndim = src1->ndim;
+    dst_dims = src1->dims;
+    dst_dtype = src1->dtype;
+    dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
+    dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_CPU;
+    dst_entry->mtype = LN_MEM_NONE;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src1 = src1_entry->tensor;
-    priv->src2 = src2_entry->tensor;
-    priv->dst = dst_tensor;
+    priv->src1 = src1;
+    priv->src2 = src2;
+    priv->dst = dst;
     priv->dst_name = dst_name;
     priv->elew_op = elew_op;
     op_arg->priv = priv;
 }
 
-/*
- * This function should only do the calculations.
- */
-static void elew_run(ln_op_arg *op_arg, ln_error **error)
-{
-    struct priv_s *priv;
-
-    priv = op_arg->priv;
-    tl_tensor_elew(priv->src1, priv->src2, priv->dst, priv->elew_op);
-}
-
-/*
- * This function should undo everything done by pre_run().
- */
+/* This function should free all the memory allocated by other *_run()s. */
 static void elew_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-    struct priv_s *priv;
+    struct priv_s *priv = op_arg->priv;
 
-    priv = op_arg->priv;
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
     ln_free(op_arg->priv);
 }
@@ -133,6 +135,6 @@ ln_op ln_opimpl_elew = {
     .op_arg = &op_arg_elew,
     .pre_run = elew_pre_run,
     .static_run = NULL,
-    .run = elew_run,
+    .run = NULL,
     .post_run = elew_post_run
 };

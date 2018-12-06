@@ -35,7 +35,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void batchnorm_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -81,7 +81,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(src_entry, 4);
 
     scale_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "scale");
@@ -90,7 +90,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     scale_entry = ln_tensor_table_find(op_arg->tensor_table, scale_name);
     ln_opck_tensor_defined(scale_entry, scale_name);
     scale = scale_entry->tensor;
-    ln_opck_tensor_mtype_eq(scale_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(scale_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(scale_entry, 1);
     ln_opck_tensor_len(scale_entry, src->dims[1]);
     ln_opck_tensor_issametype(scale_entry, src_entry);
@@ -101,7 +101,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     offset_entry = ln_tensor_table_find(op_arg->tensor_table, offset_name);
     ln_opck_tensor_defined(offset_entry, offset_name);
     offset = offset_entry->tensor;
-    ln_opck_tensor_mtype_eq(offset_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(offset_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(offset_entry, 1);
     ln_opck_tensor_len(offset_entry, src->dims[1]);
     ln_opck_tensor_issametype(offset_entry, src_entry);
@@ -112,7 +112,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     mean_entry = ln_tensor_table_find(op_arg->tensor_table, mean_name);
     ln_opck_tensor_defined(mean_entry, mean_name);
     mean = mean_entry->tensor;
-    ln_opck_tensor_mtype_eq(mean_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(mean_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(mean_entry, 1);
     ln_opck_tensor_len(mean_entry, src->dims[1]);
     ln_opck_tensor_issametype(mean_entry, src_entry);
@@ -123,7 +123,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     var_entry = ln_tensor_table_find(op_arg->tensor_table, var_name);
     ln_opck_tensor_defined(var_entry, var_name);
     var = var_entry->tensor;
-    ln_opck_tensor_mtype_eq(var_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(var_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(var_entry, 1);
     ln_opck_tensor_len(var_entry, src->dims[1]);
     ln_opck_tensor_issametype(var_entry, src_entry);
@@ -153,7 +153,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_NONE;
+    dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
 
     /* use op_arg->priv to store private data to be used in other functions */
@@ -169,8 +169,17 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     op_arg->priv = priv;
 }
 
+/* This function should only do the calculations. */
+static void batchnorm_cpu_run(ln_op_arg *op_arg, ln_error **error)
+{
+    struct priv_s *priv = op_arg->priv;
+
+    {
+    }
+}
+
 /* This function should free all the memory allocated by other *_run()s. */
-static void batchnorm_post_run(ln_op_arg *op_arg, ln_error **error)
+static void batchnorm_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -179,15 +188,15 @@ static void batchnorm_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_batchnorm = {
-    .optype = "batchnorm",
+static ln_op_arg op_arg_batchnorm_cpu = {
+    .optype = "batchnorm_cpu",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_batchnorm = {
-    .op_arg = &op_arg_batchnorm,
-    .pre_run = batchnorm_pre_run,
+ln_op ln_opimpl_batchnorm_cpu = {
+    .op_arg = &op_arg_batchnorm_cpu,
+    .pre_run = batchnorm_cpu_pre_run,
     .static_run = NULL,
-    .run = NULL,
-    .post_run = batchnorm_post_run
+    .run = batchnorm_cpu_run,
+    .post_run = batchnorm_cpu_post_run
 };

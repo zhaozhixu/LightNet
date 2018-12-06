@@ -118,16 +118,6 @@ static void upsample_pre_run(ln_op_arg *op_arg, ln_error **error)
     op_arg->priv = priv;
 }
 
-/* This function should only do the calculations. */
-static void upsample_run(ln_op_arg *op_arg, ln_error **error)
-{
-    struct priv_s *priv = op_arg->priv;
-
-    {
-        tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);
-    }
-}
-
 /* This function should free all the memory allocated by other *_run()s. */
 static void upsample_post_run(ln_op_arg *op_arg, ln_error **error)
 {
@@ -147,6 +137,6 @@ ln_op ln_opimpl_upsample = {
     .op_arg = &op_arg_upsample,
     .pre_run = upsample_pre_run,
     .static_run = NULL,
-    .run = upsample_run,
+    .run = NULL,
     .post_run = upsample_post_run
 };

@@ -37,7 +37,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -83,7 +83,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(src_entry, 4);
 
     weight_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "weight");
@@ -92,7 +92,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
     ln_opck_tensor_defined(weight_entry, weight_name);
     weight = weight_entry->tensor;
-    ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(weight_entry, 5);
     ln_opck_tensor_satisfy_msg(weight->dims[2] == src->dims[1], "`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`");
 
@@ -102,7 +102,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     bias_entry = ln_tensor_table_find(op_arg->tensor_table, bias_name);
     ln_opck_tensor_defined(bias_entry, bias_name);
     bias = bias_entry->tensor;
-    ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_NONE);
+    ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(bias_entry, 1);
     ln_opck_tensor_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` should have the size of the 2nd dimision of `weight`");
 
@@ -168,7 +168,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_NONE;
+    dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
     {
         ln_free(dst_dims);
@@ -189,8 +189,17 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     op_arg->priv = priv;
 }
 
+/* This function should only do the calculations. */
+static void conv2d_cpu_run(ln_op_arg *op_arg, ln_error **error)
+{
+    struct priv_s *priv = op_arg->priv;
+
+    {
+    }
+}
+
 /* This function should free all the memory allocated by other *_run()s. */
-static void conv2d_post_run(ln_op_arg *op_arg, ln_error **error)
+static void conv2d_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -199,15 +208,15 @@ static void conv2d_post_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_conv2d = {
-    .optype = "conv2d",
+static ln_op_arg op_arg_conv2d_cpu = {
+    .optype = "conv2d_cpu",
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_conv2d = {
-    .op_arg = &op_arg_conv2d,
-    .pre_run = conv2d_pre_run,
+ln_op ln_opimpl_conv2d_cpu = {
+    .op_arg = &op_arg_conv2d_cpu,
+    .pre_run = conv2d_cpu_pre_run,
     .static_run = NULL,
-    .run = NULL,
-    .post_run = conv2d_post_run
+    .run = conv2d_cpu_run,
+    .post_run = conv2d_cpu_post_run
 };

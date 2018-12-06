@@ -124,7 +124,7 @@ static void upsample_cuda_run(ln_op_arg *op_arg, ln_error **error)
     struct priv_s *priv = op_arg->priv;
 
     {
-        tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);
+        tl_tensor_resize_cuda(priv->src, priv->dst, priv->dst->dims, priv->mode);
     }
 }
 

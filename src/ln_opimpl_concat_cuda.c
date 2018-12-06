@@ -31,41 +31,58 @@ struct priv_s {
     int        axis;
 };
 
-/*
- * This function should do the parameter checking and tensor shape inference.
- */
+/* This function should do the parameter checking and tensor shape inference. */
 static void concat_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-    char *src1_name, *src2_name, *dst_name;
-    ln_tensor_entry *src1_entry, *src2_entry, *dst_entry;
-    tl_tensor *dst_tensor;
-    ln_param_entry *axis_entry;
-    int axis;
-    int tensors_n, params_n;
-    struct priv_s *priv;
+    char                 *src1_name;
+    ln_tensor_list_entry *src1_list_entry;
+    ln_tensor_entry      *src1_entry;
+    tl_tensor            *src1;
+    char                 *src2_name;
+    ln_tensor_list_entry *src2_list_entry;
+    ln_tensor_entry      *src2_entry;
+    tl_tensor            *src2;
+    char                 *dst_name;
+    ln_tensor_list_entry *dst_list_entry;
+    ln_tensor_entry      *dst_entry;
+    tl_tensor            *dst;
+    int                   dst_ndim;
+    int                  *dst_dims;
+    tl_dtype              dst_dtype;
+    ln_param_entry       *axis_entry;
+    int                   axis;
+    int                   tensors_in_n;
+    int                   tensors_out_n;
+    int                   params_n;
+    struct priv_s        *priv;
 
     /* check tensors and parameters */
-    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-    ln_opck_tensors_in_len_eq(tensors_n, 2);
+    tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_eq(tensors_in_n, 2);
 
-    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-    ln_opck_tensors_out_len_eq(tensors_n, 1);
-
-    src1_name = ln_tensor_list_find_name(op_arg->tensors_in, "src1");
-    ln_opck_tensor_in_exist(src1_name, "src1");
+    src1_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src1");
+    ln_opck_tensor_in_exist(src1_list_entry, "src1");
+    src1_name = src1_list_entry->name;
     src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
     ln_opck_tensor_defined(src1_entry, src1_name);
+    src1 = src1_entry->tensor;
     ln_opck_tensor_mtype_eq(src1_entry, LN_MEM_CUDA);
 
-    src2_name = ln_tensor_list_find_name(op_arg->tensors_in, "src2");
-    ln_opck_tensor_in_exist(src2_name, "src2");
+    src2_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src2");
+    ln_opck_tensor_in_exist(src2_list_entry, "src2");
+    src2_name = src2_list_entry->name;
     src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
     ln_opck_tensor_defined(src2_entry, src2_name);
+    src2 = src2_entry->tensor;
     ln_opck_tensor_mtype_eq(src2_entry, LN_MEM_CUDA);
-    ln_opck_tensor_issametype(src1_entry, src2_entry);
+    ln_opck_tensor_issametype(src2_entry, src1_entry);
 
-    dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-    ln_opck_tensor_out_exist(dst_name, "dst");
+    tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_eq(tensors_out_n, 1);
+
+    dst_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst");
+    ln_opck_tensor_out_exist(dst_list_entry, "dst");
+    dst_name = dst_list_entry->name;
     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
@@ -76,55 +93,56 @@ static void concat_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(axis_entry, "axis");
     ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
     axis = axis_entry->value_int;
-    ln_opck_param_satisfy_msg(axis >= 0 && axis < src1_entry->tensor->ndim,
-                              "`axis` should match the dimensions of `src1` and `src2`");
+    ln_opck_param_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` should match the dimensions of `src1` and `src2`");
 
-    for (int i = 0; i < src1_entry->tensor->ndim; i++) {
-        if (i == axis)
-            continue;
-        ln_opck_tensor_satisfy_msg(src1_entry->tensor->dims[i] == src2_entry->tensor->dims[i],
-                                   "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
+    {
+        for (int i = 0; i < src1->ndim; i++) {
+            if (i == axis)
+                continue;
+            ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
+        }
     }
 
     /* define output tensor shape, tensor data should be NULL */
-    int *dims;
-    dims = ln_clone(src1_entry->tensor->dims,
-                    tl_size_of(src1_entry->tensor->dtype));
-    dims[axis] = src1_entry->tensor->dims[axis] + src2_entry->tensor->dims[axis];
-    dst_tensor = tl_tensor_create(NULL, src1_entry->tensor->ndim, dims,
-                                  src1_entry->tensor->dtype);
-    dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+    dst_ndim = src1->ndim;
+    dst_dtype = src1->dtype;
+    {
+        dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);
+        dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
+    }
+    dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
+    dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    ln_free(dims);
+    {
+        ln_free(dst_dims);
+    }
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->axis = axis;
-    priv->dst = dst_tensor;
+    priv->src1 = src1;
+    priv->src2 = src2;
+    priv->dst = dst;
     priv->dst_name = dst_name;
-    priv->src1 = src1_entry->tensor;
-    priv->src2 = src2_entry->tensor;
+    priv->axis = axis;
     op_arg->priv = priv;
 }
 
-/*
- * This function should only do the calculations.
- */
+/* This function should only do the calculations. */
 static void concat_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
-    /* TODO: add concat_cuda_run */
+    struct priv_s *priv = op_arg->priv;
+
+    {
+    }
 }
 
-/*
- * This function should free all the memory allocated by other *_run()s.
- */
+/* This function should free all the memory allocated by other *_run()s. */
 static void concat_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-    struct priv_s *priv;
+    struct priv_s *priv = op_arg->priv;
 
-    priv = op_arg->priv;
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
     ln_free(op_arg->priv);
 }

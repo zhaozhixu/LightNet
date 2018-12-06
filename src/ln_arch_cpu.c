@@ -22,45 +22,42 @@
 
 #include "ln_arch.h"
 
-extern ln_op ln_opimpl_slice;
-extern ln_op ln_opimpl_reshape;
-extern ln_op ln_opimpl_maxreduce;
-extern ln_op ln_opimpl_elew;
-extern ln_op ln_opimpl_transpose;
-extern ln_op ln_opimpl_zeros;
-extern ln_op ln_opimpl_create;
-extern ln_op ln_opimpl_conv2d;
-extern ln_op ln_opimpl_relu;
-extern ln_op ln_opimpl_maxpool2d;
-extern ln_op ln_opimpl_softmax;
-extern ln_op ln_opimpl_concat;
-extern ln_op ln_opimpl_batchnorm;
-extern ln_op ln_opimpl_upsample;
-extern ln_op ln_opimpl_bn2scale_wts;
-extern ln_op ln_opimpl_upsample_cuda;
+extern ln_op ln_opimpl_reshape_cpu;
+extern ln_op ln_opimpl_create_cpu;
 extern ln_op ln_opimpl_bn2scale_wts_cpu;
 extern ln_op ln_opimpl_upsample_cpu;
+extern ln_op ln_opimpl_batchnorm_cpu;
+extern ln_op ln_opimpl_concat_cpu;
+extern ln_op ln_opimpl_conv2d_cpu;
+extern ln_op ln_opimpl_elew_cpu;
+extern ln_op ln_opimpl_maxpool2d_cpu;
+extern ln_op ln_opimpl_maxreduce_arg_cpu;
+extern ln_op ln_opimpl_maxreduce_cpu;
+extern ln_op ln_opimpl_relu_cpu;
+extern ln_op ln_opimpl_slice_cpu;
+extern ln_op ln_opimpl_softmax_cpu;
+extern ln_op ln_opimpl_transpose_cpu;
+extern ln_op ln_opimpl_zeros_cpu;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
 static ln_op *ops_cpu[] = {
-    &ln_opimpl_slice,
-    &ln_opimpl_reshape,
-    &ln_opimpl_maxreduce,
-    &ln_opimpl_elew,
-    &ln_opimpl_transpose,
-    &ln_opimpl_zeros,
-    &ln_opimpl_create,
-    &ln_opimpl_conv2d,
-    &ln_opimpl_relu,
-    &ln_opimpl_maxpool2d,
-    &ln_opimpl_softmax,
-    &ln_opimpl_concat,
-    &ln_opimpl_batchnorm,
-    &ln_opimpl_upsample,
-    &ln_opimpl_bn2scale_wts,
+    &ln_opimpl_reshape_cpu,
+    &ln_opimpl_create_cpu,
     &ln_opimpl_bn2scale_wts_cpu,
     &ln_opimpl_upsample_cpu,
+    &ln_opimpl_batchnorm_cpu,
+    &ln_opimpl_concat_cpu,
+    &ln_opimpl_conv2d_cpu,
+    &ln_opimpl_elew_cpu,
+    &ln_opimpl_maxpool2d_cpu,
+    &ln_opimpl_maxreduce_arg_cpu,
+    &ln_opimpl_maxreduce_cpu,
+    &ln_opimpl_relu_cpu,
+    &ln_opimpl_slice_cpu,
+    &ln_opimpl_softmax_cpu,
+    &ln_opimpl_transpose_cpu,
+    &ln_opimpl_zeros_cpu,
 /* end of init cpu ops */
     NULL
 };

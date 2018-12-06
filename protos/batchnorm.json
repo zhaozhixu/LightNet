@@ -7,13 +7,13 @@
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_NONE", "ndim": 4},
                 {"arg_name": "scale", "mtype": "LN_MEM_NONE", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "offset", "mtype": "LN_MEM_NONE", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "mean", "mtype": "LN_MEM_NONE", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "var", "mtype": "LN_MEM_NONE", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"}
+                 "ndim": 1, "len": "src->dims[1]"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
@@ -31,13 +31,13 @@
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU", "ndim": 4},
                 {"arg_name": "scale", "mtype": "LN_MEM_CPU", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "offset", "mtype": "LN_MEM_CPU", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "mean", "mtype": "LN_MEM_CPU", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "var", "mtype": "LN_MEM_CPU", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"}
+                 "ndim": 1, "len": "src->dims[1]"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
@@ -56,13 +56,13 @@
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CUDA", "ndim": 4},
                 {"arg_name": "scale", "mtype": "LN_MEM_CUDA", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "offset", "mtype": "LN_MEM_CUDA", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "mean", "mtype": "LN_MEM_CUDA", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"},
+                 "ndim": 1, "len": "src->dims[1]"},
                 {"arg_name": "var", "mtype": "LN_MEM_CUDA", "sametype": "src",
-                 "ndim": 1, "len": "src->dims[i]"}
+                 "ndim": 1, "len": "src->dims[1]"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",

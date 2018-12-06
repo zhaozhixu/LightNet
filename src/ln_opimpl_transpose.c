@@ -30,34 +30,45 @@ struct priv_s {
     int       *axes;
 };
 
-/*
- * This function should do the parameter checking and tensor memory allocation.
- */
+/* This function should do the parameter checking and tensor shape inference. */
 static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-    char *src_name, *dst_name;
-    ln_tensor_entry *src_entry, *dst_entry;
-    tl_tensor *dst_tensor;
-    ln_param_entry *axes_entry;
-    int tensors_n, params_n;
-    int *axes;
-    struct priv_s *priv;
+    char                 *src_name;
+    ln_tensor_list_entry *src_list_entry;
+    ln_tensor_entry      *src_entry;
+    tl_tensor            *src;
+    char                 *dst_name;
+    ln_tensor_list_entry *dst_list_entry;
+    ln_tensor_entry      *dst_entry;
+    tl_tensor            *dst;
+    int                   dst_ndim;
+    int                  *dst_dims;
+    tl_dtype              dst_dtype;
+    ln_param_entry       *axes_entry;
+    int                  *axes;
+    int                   tensors_in_n;
+    int                   tensors_out_n;
+    int                   params_n;
+    struct priv_s        *priv;
 
     /* check tensors and parameters */
-    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-    ln_opck_tensors_in_len_eq(tensors_n, 1);
+    tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_eq(tensors_in_n, 1);
 
-    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-    ln_opck_tensors_out_len_eq(tensors_n, 1);
-
-    src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-    ln_opck_tensor_in_exist(src_name, "src");
+    src_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src");
+    ln_opck_tensor_in_exist(src_list_entry, "src");
+    src_name = src_list_entry->name;
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
+    src = src_entry->tensor;
+    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
 
-    dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-    ln_opck_tensor_out_exist(dst_name, "dst");
+    tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_eq(tensors_out_n, 1);
+
+    dst_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst");
+    ln_opck_tensor_out_exist(dst_list_entry, "dst");
+    dst_name = dst_list_entry->name;
     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
@@ -67,56 +78,49 @@ static void transpose_pre_run(ln_op_arg *op_arg, ln_error **error)
     axes_entry = ln_param_list_find(op_arg->params, "axes");
     ln_opck_param_exist(axes_entry, "axes");
     ln_opck_param_type(axes_entry, LN_PARAM_ARRAY_NUMBER);
-
     axes = axes_entry->value_array_int;
-    int *tmp = ln_alloc(src_entry->tensor->ndim * sizeof(int));
-    memset(tmp, 0, src_entry->tensor->ndim * sizeof(int));
-    int i;
-    for (i = 0; i < src_entry->tensor->ndim; i++)
-        tmp[axes[i]] = 1;
-    for (i = 0; i < src_entry->tensor->ndim; i++)
-        ln_opck_param_satisfy_msg(tmp[i],
-                                  "`axes` should match `src` tensor's shape");
-    ln_free(tmp);
+    ln_opck_param_array_int_ge(axes_entry, 0);
+    {
+        int *tmp = ln_alloc(src->ndim*sizeof(int));
+        memset(tmp, 0, src->ndim*sizeof(int));
+        for (int i = 0; i < src->ndim; i++)
+            tmp[axes[i]] = 1;
+        for (int i = 0; i < src->ndim; i++)
+            ln_opck_param_satisfy_msg(tmp[i], "`axes` should match `src`'s shape");
+        ln_free(tmp);
+    }
 
-    int *d_dims = ln_alloc(src_entry->tensor->ndim * sizeof(int));
-    for (i = 0; i < src_entry->tensor->ndim; i++)
-        d_dims[i] = src_entry->tensor->dims[axes[i]];
-    dst_tensor = tl_tensor_create(NULL, src_entry->tensor->ndim, d_dims,
-                                  src_entry->tensor->dtype);
-    ln_free(d_dims);
-    dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+    /* define output tensor shape, tensor data should be NULL */
+    dst_ndim = src->ndim;
+    dst_dtype = src->dtype;
+    {
+        dst_dims = ln_alloc(src->ndim*sizeof(int));
+        for (int i = 0; i < src->ndim; i++)
+            dst_dims[i] = src->dims[axes[i]];
+    }
+    dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
+    dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_CPU;
+    dst_entry->mtype = LN_MEM_NONE;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
+    {
+        ln_free(dst_dims);
+    }
 
+    /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src_entry->tensor;
-    priv->dst = dst_entry->tensor;
+    priv->src = src;
+    priv->dst = dst;
     priv->dst_name = dst_name;
     priv->axes = axes;
     op_arg->priv = priv;
 }
 
-/*
- * This function should only do the calculations.
- */
-static void transpose_run(ln_op_arg *op_arg, ln_error **error)
-{
-    struct priv_s *priv;
-
-    priv = op_arg->priv;
-    tl_tensor_transpose(priv->src, priv->dst, priv->axes);
-}
-
-/*
- * This function should free all the memory other *_run()s allocated.
- */
+/* This function should free all the memory allocated by other *_run()s. */
 static void transpose_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-    struct priv_s *priv;
+    struct priv_s *priv = op_arg->priv;
 
-    priv = op_arg->priv;
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
     ln_free(op_arg->priv);
 }
@@ -131,6 +135,6 @@ ln_op ln_opimpl_transpose = {
     .op_arg = &op_arg_transpose,
     .pre_run = transpose_pre_run,
     .static_run = NULL,
-    .run = transpose_run,
+    .run = NULL,
     .post_run = transpose_post_run
 };

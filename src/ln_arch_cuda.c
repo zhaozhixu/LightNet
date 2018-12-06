@@ -37,6 +37,7 @@ extern ln_op ln_opimpl_softmax_cuda;
 extern ln_op ln_opimpl_concat_cuda;
 extern ln_op ln_opimpl_batchnorm_cuda;
 extern ln_op ln_opimpl_upsample_cuda;
+extern ln_op ln_opimpl_maxreduce_arg_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -54,6 +55,7 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_concat_cuda,
     &ln_opimpl_batchnorm_cuda,
     &ln_opimpl_upsample_cuda,
+    &ln_opimpl_maxreduce_arg_cuda,
 /* end of init cuda ops */
     NULL
 };
