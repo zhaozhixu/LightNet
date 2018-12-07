@@ -105,6 +105,50 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
                                    tensors_out, params, tensor_table);
 }
 
+ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)
+{
+    ln_list *tensors_in = NULL;
+    ln_list *tensors_out = NULL;
+    ln_list *params = NULL;     /* TODO: not create it yet */
+    const char *arg_name;
+    char opname[LN_MAX_NAME_LEN];
+    int i;
+
+    strncpy(opname, ln_unique_name(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
+    for (i = 0; (arg_name = op_proto->op_info->in_arg_names[i]); i++)
+        ln_tensor_list_append(tensors_in, arg_name, NULL);
+
+    for (i = 0; (arg_name = op_proto->op_info->out_arg_names[i]); i++)
+        ln_tensor_list_append(tensors_out, arg_name, NULL);
+
+    return ln_op_create_from_proto(op_proto, opname, tensors_in,
+                                   tensors_out, params, tensor_table);
+}
+
+ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name)
+{
+    char *tname;
+
+    tname = ln_tensor_list_find_name(op->op_arg->tensors_in, arg_name);
+    if (!tname)
+        tname = ln_tensor_list_find_name(op->op_arg->tensors_out, arg_name);
+    if (!tname)
+        return NULL;
+
+    return ln_tensor_table_find(op->op_arg->tensor_table, tname);
+}
+
+ln_tensor_list_entry *ln_op_find_tensor_list_entry(const ln_op *op,
+                                                   const char *arg_name)
+{
+    ln_tensor_list_entry *tle;
+
+    tle = ln_tensor_list_find_by_arg_name(op->op_arg->tensors_in, arg_name);
+    if (!tle)
+        tle = ln_tensor_list_find_by_arg_name(op->op_arg->tensors_out, arg_name);
+    return tle;
+}
+
 void ln_op_free_lists_too(ln_op *op)
 {
     if (!op)

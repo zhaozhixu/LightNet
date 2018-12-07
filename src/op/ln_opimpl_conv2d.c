@@ -83,7 +83,6 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(src_entry, 4);
 
     weight_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "weight");
@@ -92,7 +91,6 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
     ln_opck_tensor_defined(weight_entry, weight_name);
     weight = weight_entry->tensor;
-    ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(weight_entry, 5);
     ln_opck_tensor_satisfy_msg(weight->dims[2] == src->dims[1], "`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`");
 
@@ -102,7 +100,6 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     bias_entry = ln_tensor_table_find(op_arg->tensor_table, bias_name);
     ln_opck_tensor_defined(bias_entry, bias_name);
     bias = bias_entry->tensor;
-    ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(bias_entry, 1);
     ln_opck_tensor_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` should have the size of the 2nd dimision of `weight`");
 

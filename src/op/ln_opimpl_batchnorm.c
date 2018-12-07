@@ -81,7 +81,6 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(src_entry, 4);
 
     scale_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "scale");
@@ -90,7 +89,6 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     scale_entry = ln_tensor_table_find(op_arg->tensor_table, scale_name);
     ln_opck_tensor_defined(scale_entry, scale_name);
     scale = scale_entry->tensor;
-    ln_opck_tensor_mtype_eq(scale_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(scale_entry, 1);
     ln_opck_tensor_len(scale_entry, src->dims[1]);
     ln_opck_tensor_issametype(scale_entry, src_entry);
@@ -101,7 +99,6 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     offset_entry = ln_tensor_table_find(op_arg->tensor_table, offset_name);
     ln_opck_tensor_defined(offset_entry, offset_name);
     offset = offset_entry->tensor;
-    ln_opck_tensor_mtype_eq(offset_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(offset_entry, 1);
     ln_opck_tensor_len(offset_entry, src->dims[1]);
     ln_opck_tensor_issametype(offset_entry, src_entry);
@@ -112,7 +109,6 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     mean_entry = ln_tensor_table_find(op_arg->tensor_table, mean_name);
     ln_opck_tensor_defined(mean_entry, mean_name);
     mean = mean_entry->tensor;
-    ln_opck_tensor_mtype_eq(mean_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(mean_entry, 1);
     ln_opck_tensor_len(mean_entry, src->dims[1]);
     ln_opck_tensor_issametype(mean_entry, src_entry);
@@ -123,7 +119,6 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     var_entry = ln_tensor_table_find(op_arg->tensor_table, var_name);
     ln_opck_tensor_defined(var_entry, var_name);
     var = var_entry->tensor;
-    ln_opck_tensor_mtype_eq(var_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(var_entry, 1);
     ln_opck_tensor_len(var_entry, src->dims[1]);
     ln_opck_tensor_issametype(var_entry, src_entry);

@@ -26,7 +26,8 @@
 #include "ln_op.h"
 #include "ln_dfg.h"
 
-typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg);
+typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg,
+                                      int *match);
 typedef ln_list *(*ln_peephole_func) (const ln_list *ops, size_t size,
                                       const ln_dfg *dfg, int *match);
 

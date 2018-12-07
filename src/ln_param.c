@@ -27,8 +27,7 @@
 #include "ln_param.h"
 #include "ln_util.h"
 
-static ln_param_entry *ln_param_entry_create(const char *arg_name,
-                                             ln_param_type type)
+ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type)
 {
     ln_param_entry *entry;
 
@@ -51,7 +50,7 @@ static ln_param_entry *ln_param_entry_create(const char *arg_name,
     return entry;
 }
 
-static void ln_param_entry_free(ln_param_entry *entry)
+void ln_param_entry_free(ln_param_entry *entry)
 {
     ln_free(entry->arg_name);
     ln_free(entry->value_string);

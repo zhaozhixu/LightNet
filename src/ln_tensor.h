@@ -53,6 +53,9 @@ typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 LN_CPPSTART
 #endif
 
+ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
+                                                  const char *name);
+void ln_tensor_list_entry_free(ln_tensor_list_entry *entry);
 ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
                                const char *name);
 void ln_tensor_list_free(ln_list *list);

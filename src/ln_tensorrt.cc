@@ -188,6 +188,7 @@ static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
     check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
+    // axis is optional
 }
 
 static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)

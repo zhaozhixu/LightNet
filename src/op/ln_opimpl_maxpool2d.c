@@ -67,7 +67,6 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
     ln_opck_tensor_ndim(src_entry, 4);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);

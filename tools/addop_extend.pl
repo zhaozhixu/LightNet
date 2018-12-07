@@ -359,7 +359,8 @@ sub gen_pre_run_checks {
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
         push @states, "${arg_name} = ${arg_name}_entry->tensor;";
         &err_exit("'$tensor->{arg_name}' needs a `mtype`") unless exists $tensor->{mtype};
-        push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});";
+        # maybe not so strict in none arch
+        push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});" unless $tensor->{mtype} eq "LN_MEM_NONE";
         if (exists $tensor->{dtype}) {
             push @states, "ln_opck_tensor_dtype_eq(${arg_name}_entry, $tensor->{dtype});";
         }

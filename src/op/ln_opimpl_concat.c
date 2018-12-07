@@ -66,7 +66,6 @@ static void concat_pre_run(ln_op_arg *op_arg, ln_error **error)
     src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
     ln_opck_tensor_defined(src1_entry, src1_name);
     src1 = src1_entry->tensor;
-    ln_opck_tensor_mtype_eq(src1_entry, LN_MEM_NONE);
 
     src2_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src2");
     ln_opck_tensor_in_exist(src2_list_entry, "src2");
@@ -74,7 +73,6 @@ static void concat_pre_run(ln_op_arg *op_arg, ln_error **error)
     src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
     ln_opck_tensor_defined(src2_entry, src2_name);
     src2 = src2_entry->tensor;
-    ln_opck_tensor_mtype_eq(src2_entry, LN_MEM_NONE);
     ln_opck_tensor_issametype(src2_entry, src1_entry);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);

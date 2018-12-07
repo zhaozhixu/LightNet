@@ -72,10 +72,15 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
                                ln_list *tensors_in, ln_list *tensors_out,
                                ln_list *params, ln_hash *tensor_table);
 void ln_op_free(ln_op *op);
-
 /* create with tensors_in, tensors_out, and with auto-generated unique op name
    and tensor names */
 ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table);
+/* create with tensors_in, tensors_out, and with auto-generated unique op name */
+ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table);
+ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name);
+ln_tensor_list_entry *ln_op_find_tensor_list_entry(const ln_op *op,
+                                                   const char *arg_name);
+
 void ln_op_free_lists_too(ln_op *op);
 ln_list *ln_op_list_create_from_array(ln_op **op_array);
 void ln_op_list_free(ln_list *op_list);
@@ -87,7 +92,6 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_static_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
-
 /* Create a new opname with `prefix` subfixed with the next number.
    Need to be freed. `ops` should not be modified */
 char *ln_op_list_new_opname(const ln_list *ops, const char *prefix);

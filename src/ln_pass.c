@@ -31,13 +31,17 @@ void ln_pass_expand(ln_context *ctx, ln_expander_func *ep_funcs)
     ln_list **lp;
     ln_list *ep_ops;
     ln_expander_func ep_func;
+    int match;
     int i;
 
     ep_ops = NULL;
     for (lp = &ctx->ops; *lp; lp = &(*lp)->next) {
         op = (*lp)->data;
         for (i = 0; (ep_func = ep_funcs[i]); i++) {
-            ep_ops = ep_func(op, ctx->dfg);
+            match = 0;
+            ep_ops = ep_func(op, ctx->dfg, &match);
+            if (!match)
+                continue;
             ln_context_replace_ops(ctx, lp, 1, ep_ops);
             ln_context_check(ctx);
         }
@@ -61,6 +65,7 @@ void ln_pass_peephole(ln_context *ctx, size_t win_size,
             if (ln_list_length(*lp) < win_size)
                 break;
             for (i = 0; (pf = ph_funcs[i]); i++) {
+                match = 0;
                 win_out = pf(*lp, win_size, ctx->dfg, &match);
                 if (!match)
                     continue;

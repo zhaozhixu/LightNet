@@ -54,7 +54,6 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_tensor_in_exist(src_name, "src");
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_NONE);
 
     dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
     ln_opck_tensor_out_exist(dst_name, "dst");
