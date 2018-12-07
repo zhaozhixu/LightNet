@@ -183,9 +183,35 @@ static ln_op_arg op_arg_batchnorm = {
     .optype = "batchnorm",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    "scale",
+    "offset",
+    "mean",
+    "var",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "epsilon",
+    NULL
+};
+
+static ln_op_info op_info_batchnorm = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_batchnorm = {
     .op_arg = &op_arg_batchnorm,
+    .op_info = &op_info_batchnorm,
     .pre_run = batchnorm_pre_run,
     .static_run = NULL,
     .run = NULL,

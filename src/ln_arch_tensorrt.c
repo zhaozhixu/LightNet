@@ -23,6 +23,7 @@
 #include <ctype.h>
 
 #include "ln_arch.h"
+#include "ln_name.h"
 #include "ln_tensorrt.h"
 
 extern ln_op ln_opimpl_tensorrt;
@@ -34,24 +35,62 @@ static ln_op *ops_tensorrt[] = {
     NULL
 };
 
+static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_conv2d(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_maxpool2d(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_softmax(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_concat(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_batchnorm(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_elew(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_maxreduce(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_maxreduce_arg(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_slice(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_transpose(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_upsample(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_zeros(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg);
+static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg);
+
 static int check_conv(ln_op *op);
+static int check_pooling(ln_op *op);
+static int check_softmax(ln_op *op);
+static int check_concat(ln_op *op);
+
 static void add_conv_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                             ln_list **new_ops_p);
 static void add_activation_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                                   ln_list **new_ops_p);
-static int check_pooling(ln_op *op);
 static void add_pooling_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                                ln_list **new_ops_p);
-static int check_softmax(ln_op *op);
 static void add_softmax_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                                ln_list **new_ops_p);
-static int check_concat(ln_op *op);
 static void add_concat_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                               ln_list **new_ops_p);
 static void add_batchnorm_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                                  ln_list **new_ops_p);
 static void add_trt_to_trt(ln_op *trt_op, ln_op *op, const ln_list *ops,
                            ln_list **new_ops_p);
+
+static ln_hash_init_entry init_ep_funcs[] = {
+    {"create", ep_create},
+    {"conv2d", ep_conv2d},
+    {"relu", ep_relu},
+    {"maxpool2d", ep_maxpool2d},
+    {"softmax", ep_softmax},
+    {"concat", ep_concat},
+    {"batchnorm", ep_batchnorm},
+    {"elew", ep_elew},
+    {"maxreduce", ep_maxreduce},
+    {"slice", ep_slice},
+    {"transpose", ep_transpose},
+    {"upsample", ep_upsample},
+    {"zeros", ep_zeros},
+    {"reshape", ep_reshape},
+    {"tensorrt", ep_tensorrt},
+    LN_HASH_INIT_ENTRY_NULL
+};
+static ln_hash *ep_funcs_hash = NULL;
 
 typedef int (*check_func)(ln_op *op);
 static ln_hash_init_entry init_check_funcs[] = {
@@ -84,6 +123,9 @@ static ln_hash *error_hash = NULL;
 
 static void init(void)
 {
+    ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    ln_hash_init(ep_funcs_hash, init_ep_funcs);
+
     add_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     ln_hash_init(add_funcs_hash, init_add_funcs);
 
@@ -95,6 +137,7 @@ static void init(void)
 
 static void cleanup(void)
 {
+    ln_hash_free(ep_funcs_hash);
     ln_hash_free(add_funcs_hash);
     ln_hash_free(check_funcs_hash);
     ln_hash_free(error_hash);
@@ -905,7 +948,7 @@ static int is_win_match(const ln_list *win_ops)
 }
 
 static ln_list *ph_tensorrt(const ln_list *win_ops, int win_size,
-                                 int *match, const ln_list *ops)
+                            int *match, const ln_list *ops)
 {
     *match = 0;
     if (is_win_match(win_ops))
@@ -1008,21 +1051,165 @@ static ln_list *post_ph_tensorrt(ln_list *ops)
     return ops;
 }
 
-static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg)
+static ln_op *op_create_by_optype(const ln_op *op, const char *new_optype)
+{
+    ln_op *new_op_proto;
+    ln_op *new_op;
+
+    new_op_proto = ln_hash_find(LN_ARCH.op_proto_table, new_optype);
+    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name,
+                                     ln_tensor_list_copy(op->op_arg->tensors_in),
+                                     ln_tensor_list_copy(op->op_arg->tensors_out),
+                                     ln_param_list_copy(op->op_arg->params),
+                                     op->op_arg->tensor_table);
+    return new_op;
+}
+
+static ln_list *simple_replace(const ln_op *op, const char *new_optype)
 {
     ln_list *new_ops = NULL;
+    ln_op *new_op_proto;
     ln_op *new_op;
+
+    new_op = op_create_by_optype(op, new_optype);
+    new_ops = ln_list_append(new_ops, new_op);
+    return new_ops;
+}
+
+static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg)
+{
+    ln_op *next_op;
+    ln_tensor_list_entry *tle;
+    ln_tensor_list_entry *tle_next;
+    char *new_optype;
+
+    tle = ln_tensor_list_find_by_arg_name(op->op_arg->tensors_out, "dst");
+    next_op = ln_dfg_next(dfg, op, tle->name);
+    assert(next_op);
+    tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in,
+                                           tle->name);
+    assert(tle_next);
+
+    /* TODO: this may not be right in the future */
+    if (ln_streqn(tle_next->arg_name, "src", 3))
+        new_optype = "create_cuda";
+    else
+        new_optype = "create_cpu";
+
+    return simple_replace(op, new_optype);
+}
+
+static ln_list *ep_conv2d(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "conv2d_cuda");
+}
+
+static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "relu_cuda");
+}
+
+static ln_list *ep_maxpool2d(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "maxpool2d_cuda");
+}
+
+static ln_list *ep_softmax(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "softmax_cuda");
+}
+
+static ln_list *ep_concat(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "concat_cuda");
+}
+
+static ln_list *ep_batchnorm(const ln_op *op, const ln_dfg *dfg)
+{
+    ln_list *new_ops = NULL;
+    ln_op *bn2scale_op, trt_op;
     ln_op *op_proto;
+    ln_list *tensors_in = NULL;
+    ln_list *tensors_out = NULL;
+    ln_list *params = NULL;
+    ln_param_entry *pe;
 
-    if (ln_streq(op->op_arg->name, "create")) {
-        op_proto = ln_hash_find(LN_INIT.init_op_table, "create_cuda");
-    }
+    op_proto = ln_hash_find(LN_ARCH.op_proto_table, "bn2scale_wts_cpu");
+    assert(op_proto);
+    bn2scale_op = ln_op_create_with_names(op_proto, op->op_arg->tensor_table);
+    pe = ln_param_list_find(op->op_arg->params, "epsilon");
+    params = ln_param_list_append_float(params, "epsilon", pe->value_float);
+    bn2scale_op->op_arg->params = params;
+    new_ops = ln_list_append(new_ops, bn2scale_op);
 
-    return NULL;
+    op_proto = &ln_opimpl_tensorrt;
+    trt_op = ln_op_create_with_names(op_proto, op->op_arg->tensor_table);
+
+    new_ops = ln_list_append(new_ops, trt_op);
+}
+
+static ln_list *ep_elew(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "elew_cuda");
+}
+
+static ln_list *ep_maxreduce(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "maxreduce_cuda");
+}
+
+static ln_list *ep_maxreduce_arg(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "maxreduce_arg_cuda");
+}
+
+static ln_list *ep_slice(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "slice_cuda");
+}
+
+static ln_list *ep_transpose(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "transpose_cuda");
+}
+
+static ln_list *ep_upsample(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "upsample_cuda");
+}
+
+static ln_list *ep_zeros(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "zeros_cuda");
+}
+
+static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg)
+{
+    return simple_replace(op, "reshape_cuda");
+}
+
+static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg)
+{
+}
+
+static ln_list *ep_func_tensorrt(const ln_op *op, const ln_dfg *dfg)
+{
+    ln_list *new_ops;
+    ln_expander_func ep_func;
+    void *value;
+
+    if (!ln_hash_find_extended(ep_funcs_hash, op->op_arg->optype, NULL, &value))
+        ln_error_inter(1, "unsupported optype \"%s\" for TensorRT optimization",
+                       op->op_arg->optype);
+
+    ep_func = value;
+    new_ops = ep_func(op, dfg);
+
+    return new_ops;
 }
 
 ln_expander_func ep_funcs_tensorrt[] = {
-    ep_tensorrt,
+    ep_func_tensorrt,
     NULL
 };
 

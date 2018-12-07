@@ -154,9 +154,33 @@ static ln_op_arg op_arg_slice_cpu = {
     .optype = "slice_cpu",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "axis",
+    "start",
+    "len",
+    NULL
+};
+
+static ln_op_info op_info_slice_cpu = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_slice_cpu = {
     .op_arg = &op_arg_slice_cpu,
+    .op_info = &op_info_slice_cpu,
     .pre_run = slice_cpu_pre_run,
     .static_run = NULL,
     .run = slice_cpu_run,

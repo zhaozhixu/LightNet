@@ -110,9 +110,31 @@ static ln_op_arg op_arg_zeros = {
     .optype = "zeros",
 };
 
+static const char *in_arg_names[] = {
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "dtype",
+    "dims",
+    NULL
+};
+
+static ln_op_info op_info_zeros = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_zeros = {
     .op_arg = &op_arg_zeros,
+    .op_info = &op_info_zeros,
     .pre_run = zeros_pre_run,
     .static_run = NULL,
     .run = NULL,

@@ -20,41 +20,29 @@
  * SOFTWARE.
  */
 
-#include <getopt.h>
-#include "lightnet.h"
+#ifndef _LN_NAME_H_
+#define _LN_NAME_H_
 
-static const struct option longopts[] = {
-    {"", 1, NULL, 'e'},
-    {"video", 1, NULL, 'v'},
-    {"bbox-dir", 1, NULL, 'b'},
-    {"x-shift", 1, NULL, 'x'},
-    {"y-shift", 1, NULL, 'y'},
-    {"help", 0, NULL, 'h'},
-    {0, 0, 0, 0}
-};
+#include "ln_hash.h"
 
-int main(int argc, char **argv)
-{
-    char *json_file;
-    char *target;
-    ln_arch *arch;
-    ln_error *error = NULL;
-    ln_context *ctx;
+#define LN_MAX_NAME_LEN 64      /* including the terminating null byte ('\0') */
+#define LN_MAX_NAME_IDX (UINT32_MAX)
+#define LN_MAX_NAME_IDX_LEN 10  /* 2^32 =  4294967296, 10 chars*/
+#define LN_MAX_NAME_SUBFIX (LN_MAX_NAME_IDX_LEN)
+#define LN_MAX_NAME_PREFIX (LN_MAX_NAME_LEN - LN_MAX_NAME_SUBFIX - 1)
 
-    ln_arch_init();
-    ctx = ln_context_create();
+#ifdef __cplusplus
+LN_CPPSTART
+#endif
 
-    json_file = argv[1];
-    target = argv[2];
-    ctx->ops = ln_json_parse_file(json_file, LN_ARCH.op_proto_table,
-                                  ctx->tensor_table, ctx->op_table);
-    ln_op_list_do_pre_run(ctx->ops, &error);
-    ctx->dfg = ln_dfg_create(ctx->ops);
-    ln_error_handle(&error);
-    arch = ln_hash_find(LN_ARCH.arch_table, target);
-    ln_pass_peephole(ctx, 3, arch->ph_funcs);
-    ln_json_fprint(stdout, ctx->ops);
+void ln_name_init(void);
+void ln_name_cleanup(void);
+/* copy before using */
+const char *ln_unique_name(const char *prefix);
+void ln_name_set_idx(const char *prefix, uint32_t idx);
 
-    ln_arch_cleanup();
-    ln_context_free(ctx);
-}
+#ifdef __cplusplus
+LN_CPPEND
+#endif
+
+#endif  /* _LN_NAME_H_ */

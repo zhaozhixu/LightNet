@@ -212,9 +212,37 @@ static ln_op_arg op_arg_conv2d_cuda = {
     .optype = "conv2d_cuda",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    "weight",
+    "bias",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "group",
+    "size",
+    "stride",
+    "padding",
+    "dilation",
+    NULL
+};
+
+static ln_op_info op_info_conv2d_cuda = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_conv2d_cuda = {
     .op_arg = &op_arg_conv2d_cuda,
+    .op_info = &op_info_conv2d_cuda,
     .pre_run = conv2d_cuda_pre_run,
     .static_run = NULL,
     .run = conv2d_cuda_run,

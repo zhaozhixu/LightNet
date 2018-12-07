@@ -163,9 +163,32 @@ static ln_op_arg op_arg_maxreduce_arg_cpu = {
     .optype = "maxreduce_arg_cpu",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    "arg",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "axis",
+    NULL
+};
+
+static ln_op_info op_info_maxreduce_arg_cpu = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_maxreduce_arg_cpu = {
     .op_arg = &op_arg_maxreduce_arg_cpu,
+    .op_info = &op_info_maxreduce_arg_cpu,
     .pre_run = maxreduce_arg_cpu_pre_run,
     .static_run = NULL,
     .run = maxreduce_arg_cpu_run,

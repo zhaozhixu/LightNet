@@ -40,14 +40,14 @@ struct ln_arch {
 };
 typedef struct ln_arch ln_arch;
 
-struct ln_init_tables {
+struct ln_arch_tables {
     ln_hash *arch_table;
     ln_hash *op_proto_table;
 };
-typedef struct ln_init_tables ln_init_tables;
+typedef struct ln_arch_tables ln_arch_tables;
 
-extern ln_init_tables ln_global_init_tables;
-#define LN_INIT ln_global_init_tables
+extern ln_arch_tables ln_global_arch_tables;
+#define LN_ARCH ln_global_arch_tables
 
 #ifdef __cplusplus
 LN_CPPSTART

@@ -130,9 +130,31 @@ static ln_op_arg op_arg_maxreduce_cuda = {
     .optype = "maxreduce_cuda",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "axis",
+    NULL
+};
+
+static ln_op_info op_info_maxreduce_cuda = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_maxreduce_cuda = {
     .op_arg = &op_arg_maxreduce_cuda,
+    .op_info = &op_info_maxreduce_cuda,
     .pre_run = maxreduce_cuda_pre_run,
     .static_run = NULL,
     .run = maxreduce_cuda_run,

@@ -260,7 +260,7 @@ static int edge_node_cmp_by_edge(void *data1, void *data2)
     return en1->edge_data_cmp(data1, data2);
 }
 
-ln_op *ln_dfg_next(ln_dfg *dfg, ln_op *op, const char *tname)
+ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)
 {
     ln_graph_node *node;
     ln_graph_edge_node edge_node;
@@ -273,7 +273,7 @@ ln_op *ln_dfg_next(ln_dfg *dfg, ln_op *op, const char *tname)
     return res ? res->node->data : NULL;
 }
 
-ln_op *ln_dfg_prev(ln_dfg *dfg, ln_op *op, const char *tname)
+ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname)
 {
     ln_graph_node *node;
     ln_graph_edge_node edge_node;

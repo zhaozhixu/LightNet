@@ -45,7 +45,7 @@ static ln_arch *archs[] = {
     NULL
 };
 
-ln_init_tables ln_global_init_tables;
+ln_arch_tables ln_global_arch_tables;
 
 void ln_arch_init(void)
 {
@@ -53,17 +53,17 @@ void ln_arch_init(void)
     int ret;
     int i, j;
 
-    LN_INIT.arch_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-    LN_INIT.op_proto_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    LN_ARCH.arch_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    LN_ARCH.op_proto_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
 
     for (i = 0; archs[i]; i++) {
         if (archs[i]->init_func)
             archs[i]->init_func();
-        ret = ln_hash_insert(LN_INIT.arch_table, archs[i]->arch_name, archs[i]);
+        ret = ln_hash_insert(LN_ARCH.arch_table, archs[i]->arch_name, archs[i]);
         ln_error_inter(ret, "duplicated arch name \"%s\"", archs[i]->arch_name);
 
         for (j = 0; (op = archs[i]->reg_ops[j]); j++) {
-            ret = ln_hash_insert(LN_INIT.op_proto_table, op->op_arg->optype, op);
+            ret = ln_hash_insert(LN_ARCH.op_proto_table, op->op_arg->optype, op);
             ln_error_inter(ret && "duplicated optype \"%s\"",
                            op->op_arg->optype);
         }
@@ -79,6 +79,6 @@ void ln_arch_cleanup(void)
             archs[i]->cleanup_func();
     }
 
-    ln_hash_free(LN_INIT.arch_table);
-    ln_hash_free(LN_INIT.op_proto_table);
+    ln_hash_free(LN_ARCH.arch_table);
+    ln_hash_free(LN_ARCH.op_proto_table);
 }

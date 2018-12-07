@@ -239,9 +239,36 @@ static ln_op_arg op_arg_bn2scale_wts_cpu = {
     .optype = "bn2scale_wts_cpu",
 };
 
+static const char *in_arg_names[] = {
+    "src_mean",
+    "src_var",
+    "src_scale",
+    "src_offset",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst_scale",
+    "dst_shift",
+    "dst_power",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "epsilon",
+    NULL
+};
+
+static ln_op_info op_info_bn2scale_wts_cpu = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_bn2scale_wts_cpu = {
     .op_arg = &op_arg_bn2scale_wts_cpu,
+    .op_info = &op_info_bn2scale_wts_cpu,
     .pre_run = bn2scale_wts_cpu_pre_run,
     .static_run = bn2scale_wts_cpu_static_run,
     .run = NULL,

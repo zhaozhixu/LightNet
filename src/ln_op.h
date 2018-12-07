@@ -36,10 +36,18 @@ struct ln_op_arg {
     ln_list         *tensors_in;
     ln_list         *tensors_out;
     ln_list         *params;
-    ln_hash         *tensor_table;   /* TODO: put this in ln_global.c */
+    ln_hash         *tensor_table;   /* TODO: goes outside ln_op? */
     void            *priv;           /* for other private data storage */
 };
 typedef struct ln_op_arg ln_op_arg;
+
+/* This staticly resides in op_proto's struct. */
+struct ln_op_info {
+    const char **in_arg_names;       /* NULL terminated array, as belows */
+    const char **out_arg_names;
+    const char **param_arg_names;
+};
+typedef struct ln_op_info ln_op_info;
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
 
@@ -48,6 +56,7 @@ typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
    before remove it from the op_table. */
 struct ln_op {
     ln_op_arg   *op_arg;
+    ln_op_info  *op_info;
     ln_op_func   pre_run;
     ln_op_func   static_run;
     ln_op_func   run;
@@ -63,6 +72,10 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
                                ln_list *tensors_in, ln_list *tensors_out,
                                ln_list *params, ln_hash *tensor_table);
 void ln_op_free(ln_op *op);
+
+/* create with tensors_in, tensors_out, and with auto-generated unique op name
+   and tensor names */
+ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table);
 void ln_op_free_lists_too(ln_op *op);
 ln_list *ln_op_list_create_from_array(ln_op **op_array);
 void ln_op_list_free(ln_list *op_list);

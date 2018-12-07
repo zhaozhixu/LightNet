@@ -140,9 +140,32 @@ static ln_op_arg op_arg_elew_cuda = {
     .optype = "elew_cuda",
 };
 
+static const char *in_arg_names[] = {
+    "src1",
+    "src2",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "elew_op",
+    NULL
+};
+
+static ln_op_info op_info_elew_cuda = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_elew_cuda = {
     .op_arg = &op_arg_elew_cuda,
+    .op_info = &op_info_elew_cuda,
     .pre_run = elew_cuda_pre_run,
     .static_run = NULL,
     .run = elew_cuda_run,

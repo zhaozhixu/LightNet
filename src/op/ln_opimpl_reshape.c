@@ -111,8 +111,30 @@ static ln_op_arg op_arg_reshape = {
     .optype = "reshape",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "dims",
+    NULL
+};
+
+static ln_op_info op_info_reshape = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 ln_op ln_opimpl_reshape = {
     .op_arg = &op_arg_reshape,
+    .op_info = &op_info_reshape,
     .pre_run = reshape_pre_run,
     .static_run = NULL,
     .run = NULL,

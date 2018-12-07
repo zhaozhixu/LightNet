@@ -110,9 +110,28 @@ static ln_op_arg op_arg_tensorrt = {
     .optype = "tensorrt",
 };
 
+static const char *in_arg_names[] = {
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    NULL
+};
+
+static ln_op_info op_info_tensorrt = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_tensorrt = {
     .op_arg = &op_arg_tensorrt,
+    .op_info = &op_info_tensorrt,
     .pre_run = tensorrt_pre_run,
     .static_run = tensorrt_static_run,
     .run = tensorrt_run,

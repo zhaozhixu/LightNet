@@ -22,6 +22,7 @@
 
 #include <ctype.h>
 #include "ln_op.h"
+#include "ln_name.h"
 
 static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
                                    ln_list *tensors_in, ln_list *tensors_out,
@@ -57,6 +58,7 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
     op = ln_alloc(sizeof(ln_op));
     op->op_arg = ln_op_arg_create(name, op_proto->op_arg->optype, tensors_in,
                                   tensors_out, params, tensor_table);
+    op->op_info = op_proto->op_info;
     op->pre_run = op_proto->pre_run;
     op->static_run = op_proto->static_run;
     op->run = op_proto->run;
@@ -71,6 +73,36 @@ void ln_op_free(ln_op *op)
         return;
     ln_op_arg_free(op->op_arg);
     ln_free(op);
+}
+
+ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
+{
+    ln_list *tensors_in = NULL;
+    ln_list *tensors_out = NULL;
+    ln_list *params = NULL;     /* TODO: not create it yet */
+    const char *arg_name;
+    char opname[LN_MAX_NAME_LEN];
+    char tensor_name[LN_MAX_NAME_LEN];
+    int i;
+
+    strncpy(opname, ln_unique_name(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
+    for (i = 0; (arg_name = op_proto->op_info->in_arg_names[i]); i++) {
+        if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
+            snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
+        else
+            strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
+        ln_tensor_list_append(tensors_in, arg_name, tensor_name);
+    }
+    for (i = 0; (arg_name = op_proto->op_info->out_arg_names[i]); i++) {
+        if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
+            snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
+        else
+            strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
+        ln_tensor_list_append(tensors_out, arg_name, tensor_name);
+    }
+
+    return ln_op_create_from_proto(op_proto, opname, tensors_in,
+                                   tensors_out, params, tensor_table);
 }
 
 void ln_op_free_lists_too(ln_op *op)

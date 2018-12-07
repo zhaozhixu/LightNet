@@ -94,6 +94,7 @@ sub gen_code {
     push @blocks, &gen_run($op) if exists $op->{run};
     push @blocks, &gen_post_run($op);
     push @blocks, &gen_op_arg($op);
+    push @blocks, &gen_op_info($op);
     push @blocks, &gen_op_impl($op);
 
     my $code_str = join "\n", @blocks;
@@ -729,6 +730,57 @@ static ln_op_arg op_arg_$op->{optype} = {
 EOF
 }
 
+sub gen_op_info {
+    my $op = $_[0];
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
+
+    my @in_declares = ();
+    foreach (@$tensors_in) {
+        push @in_declares, "\"$_->{arg_name}\",";
+    }
+    push @in_declares, "NULL";
+    &indent_block($INDENT_OFFSET, \@in_declares);
+    my $in_str = join "\n", @in_declares;
+
+    my @out_declares = ();
+    foreach (@$tensors_out) {
+        push @out_declares, "\"$_->{arg_name}\",";
+    }
+    push @out_declares, "NULL";
+    &indent_block($INDENT_OFFSET, \@out_declares);
+    my $out_str = join "\n", @out_declares;
+
+    my @param_declares = ();
+    foreach (@$params) {
+        push @param_declares, "\"$_->{arg_name}\",";
+    }
+    push @param_declares, "NULL";
+    &indent_block($INDENT_OFFSET, \@param_declares);
+    my $param_str = join "\n", @param_declares;
+
+    my $op_info_tpl = <<EOF;
+static const char *in_arg_names[] = {
+$in_str
+};
+
+static const char *out_arg_names[] = {
+$out_str
+};
+
+static const char *param_arg_names[] = {
+$param_str
+};
+
+static ln_op_info op_info_$op->{optype} = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+EOF
+}
+
 sub gen_op_impl {
     my $op = $_[0];
     my $static_run_func = exists $op->{static_run} ? "$op->{optype}_static_run" : "NULL";
@@ -738,6 +790,7 @@ sub gen_op_impl {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_$op->{optype} = {
     .op_arg = &op_arg_$op->{optype},
+    .op_info = &op_info_$op->{optype},
     .pre_run = $op->{optype}_pre_run,
     .static_run = ${static_run_func},
     .run = ${run_func},

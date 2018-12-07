@@ -140,9 +140,31 @@ static ln_op_arg op_arg_transpose_cpu = {
     .optype = "transpose_cpu",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "axes",
+    NULL
+};
+
+static ln_op_info op_info_transpose_cpu = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_transpose_cpu = {
     .op_arg = &op_arg_transpose_cpu,
+    .op_info = &op_info_transpose_cpu,
     .pre_run = transpose_cpu_pre_run,
     .static_run = NULL,
     .run = transpose_cpu_run,

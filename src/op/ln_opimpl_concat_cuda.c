@@ -152,9 +152,32 @@ static ln_op_arg op_arg_concat_cuda = {
     .optype = "concat_cuda",
 };
 
+static const char *in_arg_names[] = {
+    "src1",
+    "src2",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "axis",
+    NULL
+};
+
+static ln_op_info op_info_concat_cuda = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_concat_cuda = {
     .op_arg = &op_arg_concat_cuda,
+    .op_info = &op_info_concat_cuda,
     .pre_run = concat_cuda_pre_run,
     .static_run = NULL,
     .run = concat_cuda_run,

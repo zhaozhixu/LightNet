@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 
 enum ln_bool {
     LN_FALSE = 0,
@@ -40,11 +41,6 @@ typedef void (*ln_fprint_func) (FILE *, void *);
 #define ln_free free
 
 #define LN_MAXLINE 4096
-#define LN_MAX_NAME_LEN 64      /* including the terminating null byte ('\0') */
-#define LN_MAX_NAME_NUM (UINT32_MAX)
-#define LN_MAX_NAME_NUM_LEN 10  /* 2^32 =  4294967296, 10 chars*/
-#define LN_MAX_NAME_SUBFIX (LN_MAX_NAME_NUM_LEN)
-#define LN_MAX_NAME_PREFIX (LN_MAX_NAME_LEN - LN_MAX_NAME_SUBFIX - 1)
 
 #ifdef __cplusplus
 #define LN_CPPSTART extern "C" {
@@ -66,7 +62,6 @@ int ln_streq(const char *s1, const char *s2);
 int ln_streqn(const char *s1, const char *s2, size_t n);
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding);
 int ln_compute_length(int ndim, const int *dims);
-const char *ln_unique_name(const char *prefix);
 
 void ln_err_msg(const char *fmt, ...);
 void ln_err_cont(int error, const char *fmt, ...);

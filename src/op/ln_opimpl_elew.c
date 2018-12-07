@@ -130,9 +130,32 @@ static ln_op_arg op_arg_elew = {
     .optype = "elew",
 };
 
+static const char *in_arg_names[] = {
+    "src1",
+    "src2",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "elew_op",
+    NULL
+};
+
+static ln_op_info op_info_elew = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_elew = {
     .op_arg = &op_arg_elew,
+    .op_info = &op_info_elew,
     .pre_run = elew_pre_run,
     .static_run = NULL,
     .run = NULL,

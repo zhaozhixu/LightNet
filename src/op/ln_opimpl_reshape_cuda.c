@@ -119,9 +119,31 @@ static ln_op_arg op_arg_reshape_cuda = {
     .optype = "reshape_cuda",
 };
 
+static const char *in_arg_names[] = {
+    "src",
+    NULL
+};
+
+static const char *out_arg_names[] = {
+    "dst",
+    NULL
+};
+
+static const char *param_arg_names[] = {
+    "dims",
+    NULL
+};
+
+static ln_op_info op_info_reshape_cuda = {
+    .in_arg_names = in_arg_names,
+    .out_arg_names = out_arg_names,
+    .param_arg_names = param_arg_names,
+};
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_reshape_cuda = {
     .op_arg = &op_arg_reshape_cuda,
+    .op_info = &op_info_reshape_cuda,
     .pre_run = reshape_cuda_pre_run,
     .static_run = reshape_cuda_static_run,
     .run = NULL,
