@@ -37,11 +37,11 @@ struct hash_entry {
     uint32_t    hash_value;
 };
 
-static hash_entry *hash_entry_create(void *key, void *value,
+static hash_entry *hash_entry_create(const void *key, void *value,
                                      uint32_t hash_value, hash_entry *next)
 {
     hash_entry *entry = ln_alloc(sizeof(hash_entry));
-    entry->key = key;
+    entry->key = (void *)key;
     entry->value = value;
     entry->hash_value = hash_value;
     entry->next = next;
@@ -174,7 +174,7 @@ static void hash_resize(ln_hash *hash, int new_capacity)
     hash->thresh = (int)(new_capacity * DEFAULT_LOAD_FACTOR);
 }
 
-int ln_hash_insert(ln_hash *hash, void *key, void *value)
+int ln_hash_insert(ln_hash *hash, const void *key, void *value)
 {
     int hash_value = hash->hash_func(key);
     int idx = index_of(hash_value, hash->capacity);
@@ -185,7 +185,7 @@ int ln_hash_insert(ln_hash *hash, void *key, void *value)
                 return 1;
             hash->free_k_func(e->key);
             hash->free_v_func(e->value);
-            e->key = key;
+            e->key = (void *)key;
             e->value = value;
             return 0;
         }
@@ -199,7 +199,7 @@ int ln_hash_insert(ln_hash *hash, void *key, void *value)
     return 1;
 }
 
-void *ln_hash_find(ln_hash *hash, void *key)
+void *ln_hash_find(ln_hash *hash, const void *key)
 {
     int hash_value = hash->hash_func(key);
     int idx = index_of(hash_value, hash->capacity);
@@ -211,7 +211,7 @@ void *ln_hash_find(ln_hash *hash, void *key)
 }
 
 /* in case of NULL value */
-int ln_hash_find_extended(ln_hash *hash, void *key,
+int ln_hash_find_extended(ln_hash *hash, const void *key,
                           void **origin_key, void **value)
 {
     int hash_value = hash->hash_func(key);
@@ -228,7 +228,7 @@ int ln_hash_find_extended(ln_hash *hash, void *key,
     return 0;
 }
 
-int ln_hash_remove(ln_hash *hash, void *key)
+int ln_hash_remove(ln_hash *hash, const void *key)
 {
     int hash_value = hash->hash_func(key);
     int idx = index_of(hash_value, hash->capacity);
@@ -249,17 +249,17 @@ int ln_hash_size(ln_hash *hash)
     return hash->size;
 }
 
-uint32_t ln_direct_hash(void *key)
+uint32_t ln_direct_hash(const void *key)
 {
     return (uint32_t)(long)key;
 }
 
-int ln_direct_cmp(void *p1, void *p2)
+int ln_direct_cmp(const void *p1, const void *p2)
 {
     return (long)p1 - (long)p2;
 }
 
-uint32_t ln_str_hash(void *key)
+uint32_t ln_str_hash(const void *key)
 {
     const char *p;
     uint32_t h = 5381;
@@ -270,7 +270,7 @@ uint32_t ln_str_hash(void *key)
     return h;
 }
 
-int ln_str_cmp(void *p1, void *p2)
+int ln_str_cmp(const void *p1, const void *p2)
 {
     return strcmp(p1, p2);
 }

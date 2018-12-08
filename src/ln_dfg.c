@@ -50,10 +50,10 @@ static void *table_find(ln_hash *table, const char *key)
     return ln_hash_find(table, (char *)key);
 }
 
-static int en_cmp(void *p1, void *p2)
+static int en_cmp(const void *p1, const void *p2)
 {
-    ln_graph_edge_node *en1 = p1;
-    ln_graph_edge_node *en2 = p2;
+    const ln_graph_edge_node *en1 = p1;
+    const ln_graph_edge_node *en2 = p2;
 
     if (strcmp(en1->edge_data, en2->edge_data) == 0 &&
         en1->node == en2->node)
@@ -61,10 +61,10 @@ static int en_cmp(void *p1, void *p2)
     return 1;
 }
 
-static int en_cmp_edge(void *p1, void *p2)
+static int en_cmp_edge(const void *p1, const void *p2)
 {
-    ln_graph_edge_node *en1 = p1;
-    ln_graph_edge_node *en2 = p2;
+    const ln_graph_edge_node *en1 = p1;
+    const ln_graph_edge_node *en2 = p2;
 
     return strcmp(en1->edge_data, en2->edge_data);
 }
@@ -253,9 +253,9 @@ void ln_dfg_remove(ln_dfg *dfg, ln_op *op)
     dfg->graph->nodes = ln_list_remove(dfg->graph->nodes, node);
 }
 
-static int edge_node_cmp_by_edge(void *data1, void *data2)
+static int edge_node_cmp_by_edge(const void *data1, const void *data2)
 {
-    ln_graph_edge_node *en1 = data1;
+    const ln_graph_edge_node *en1 = data1;
 
     return en1->edge_data_cmp(data1, data2);
 }

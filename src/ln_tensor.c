@@ -72,30 +72,28 @@ ln_list *ln_tensor_list_copy(ln_list *list)
     return new_list;
 }
 
-static int cmp_by_arg_name(void *data1, void *data2)
+static int cmp_by_arg_name(const void *data1, const void *data2)
 {
-    ln_tensor_list_entry *e1, *e2;
+    const ln_tensor_list_entry *e1 = data1;
+    const ln_tensor_list_entry *e2 = data2;
 
-    e1 = data1;
-    e2 = data2;
     return strcmp(e1->arg_name, e2->arg_name);
 }
 
-static int cmp_by_name(void *data1, void *data2)
+static int cmp_by_name(const void *data1, const void *data2)
 {
-    ln_tensor_list_entry *e1, *e2;
+    const ln_tensor_list_entry *e1 = data1;
+    const ln_tensor_list_entry *e2 = data2;
 
-    e1 = data1;
-    e2 = data2;
     return strcmp(e1->name, e2->name);
 }
 
-char *ln_tensor_list_find_name(ln_list *list, char *arg_name)
+char *ln_tensor_list_find_name(ln_list *list, const char *arg_name)
 {
     ln_tensor_list_entry cmp_entry;
     ln_tensor_list_entry *result_entry;
 
-    cmp_entry.arg_name = arg_name;
+    cmp_entry.arg_name = (char *)arg_name;
     result_entry = ln_list_find_custom(list, &cmp_entry, cmp_by_arg_name);
     if (!result_entry)
         return NULL;
@@ -103,19 +101,20 @@ char *ln_tensor_list_find_name(ln_list *list, char *arg_name)
 }
 
 ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list,
-                                                      char *arg_name)
+                                                      const char *arg_name)
 {
     ln_tensor_list_entry cmp_entry;
 
-    cmp_entry.arg_name = arg_name;
+    cmp_entry.arg_name = (char *)arg_name;
     return ln_list_find_custom(list, &cmp_entry, cmp_by_arg_name);
 }
 
-ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, char *name)
+ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
+                                                  const char *name)
 {
     ln_tensor_list_entry cmp_entry;
 
-    cmp_entry.name = name;
+    cmp_entry.name = (char *)name;
     return ln_list_find_custom(list, &cmp_entry, cmp_by_name);
 }
 

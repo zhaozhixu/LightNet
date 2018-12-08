@@ -60,10 +60,11 @@ ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
                                const char *name);
 void ln_tensor_list_free(ln_list *list);
 ln_list *ln_tensor_list_copy(ln_list *list);
-char *ln_tensor_list_find_name(ln_list *list, char *arg_name);
+char *ln_tensor_list_find_name(ln_list *list, const char *arg_name);
 ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list,
-                                                      char *arg_name);
-ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, char *name);
+                                                      const char *arg_name);
+ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
+                                                  const char *name);
 int ln_tensor_list_length(ln_list *list);
 
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);

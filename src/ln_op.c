@@ -125,6 +125,15 @@ ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)
                                    tensors_out, params, tensor_table);
 }
 
+ln_op *ln_op_copy(const ln_op *op)
+{
+    return ln_op_create_from_proto(op, op->op_arg->name,
+                                   ln_tensor_list_copy(op->op_arg->tensors_in),
+                                   ln_tensor_list_copy(op->op_arg->tensors_out),
+                                   ln_param_list_copy(op->op_arg->params),
+                                   op->op_arg->tensor_table);
+}
+
 ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name)
 {
     char *tname;
@@ -188,10 +197,10 @@ void ln_op_list_free_lists_too(ln_list *ops)
     ln_list_free_deep(ops, op_free_lists_too_wrapper);
 }
 
-static int cmp_by_optype(void *data1, void *data2)
+static int cmp_by_optype(const void *data1, const void *data2)
 {
-    ln_op *op1 = data1;
-    ln_op *op2 = data2;
+    const ln_op *op1 = data1;
+    const ln_op *op2 = data2;
 
     return strcmp(op1->op_arg->optype, op2->op_arg->optype);
 }
@@ -226,12 +235,11 @@ ln_op *ln_op_array_find_by_optype(ln_op *ops[], char *optype)
     return result_op;
 }
 
-static int cmp_by_name(void *data1, void *data2)
+static int cmp_by_name(const void *data1, const void *data2)
 {
-    ln_op *op1, *op2;
+    const ln_op *op1 = data1;
+    const ln_op *op2 = data2;
 
-    op1 = (ln_op *)data1;
-    op2 = (ln_op *)data2;
     return strcmp(op1->op_arg->name, op2->op_arg->name);
 }
 

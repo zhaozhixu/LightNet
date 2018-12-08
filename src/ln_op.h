@@ -77,6 +77,7 @@ void ln_op_free(ln_op *op);
 ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table);
 /* create with tensors_in, tensors_out, and with auto-generated unique op name */
 ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table);
+ln_op *ln_op_copy(const ln_op *op);
 ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name);
 ln_tensor_list_entry *ln_op_find_tensor_list_entry(const ln_op *op,
                                                    const char *arg_name);

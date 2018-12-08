@@ -35,7 +35,6 @@ extern ln_op ln_opimpl_maxpool2d;
 extern ln_op ln_opimpl_softmax;
 extern ln_op ln_opimpl_concat;
 extern ln_op ln_opimpl_batchnorm;
-extern ln_op ln_opimpl_bn2scale_wts;
 extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_maxreduce_arg;
 /* end of declare none ops */
@@ -55,7 +54,6 @@ static ln_op *ops_none[] = {
     &ln_opimpl_softmax,
     &ln_opimpl_concat,
     &ln_opimpl_batchnorm,
-    &ln_opimpl_bn2scale_wts,
     &ln_opimpl_upsample,
     &ln_opimpl_maxreduce_arg,
 /* end of init none ops */

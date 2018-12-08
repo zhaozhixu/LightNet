@@ -101,10 +101,10 @@ ln_graph_node *ln_graph_add(ln_graph *graph, void *data)
     return node;
 }
 
-static int node_cmp(void *a, void *b)
+static int node_cmp(const void *a, const void *b)
 {
-    ln_graph_node *gna = a;
-    ln_graph_node *gnb = b;
+    const ln_graph_node *gna = a;
+    const ln_graph_node *gnb = b;
 
     return gna->node_data_cmp(gna->data, gnb->data);
 }
@@ -146,18 +146,18 @@ void ln_graph_link_node(ln_graph *graph, ln_graph_node *node1,
     node2->indegree++;
 }
 
-static int edge_node_cmp_by_node(void *p1, void *p2)
+static int edge_node_cmp_by_node(const void *p1, const void *p2)
 {
-    ln_graph_edge_node *en1 = p1;
-    ln_graph_edge_node *en2 = p2;
+    const ln_graph_edge_node *en1 = p1;
+    const ln_graph_edge_node *en2 = p2;
 
     return node_cmp(en1->node, en2->node);
 }
 
-static int edge_node_cmp(void *p1, void *p2)
+static int edge_node_cmp(const void *p1, const void *p2)
 {
-    ln_graph_edge_node *en1 = p1;
-    ln_graph_edge_node *en2 = p2;
+    const ln_graph_edge_node *en1 = p1;
+    const ln_graph_edge_node *en2 = p2;
 
     if (node_cmp(en1->node, en2->node) == 0 &&
         en1->edge_data_cmp(en1->edge_data, en2->edge_data) == 0)

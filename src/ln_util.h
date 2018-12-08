@@ -34,7 +34,7 @@ enum ln_bool {
 };
 typedef enum ln_bool ln_bool;
 
-typedef int (*ln_cmp_func)(void *, void *);
+typedef int (*ln_cmp_func)(const void *, const void *);
 typedef void (*ln_free_func)(void *);
 typedef void (*ln_fprint_func) (FILE *, void *);
 

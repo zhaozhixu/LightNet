@@ -352,12 +352,11 @@ void ln_param_list_free(ln_list *list)
     ln_list_free_deep(list, param_entry_free_wrapper);
 }
 
-static int find_by_arg_name(void *data1, void *data2)
+static int find_by_arg_name(const void *data1, const void *data2)
 {
-    ln_param_entry *p1, *p2;
+    const ln_param_entry *p1 = data1;
+    const ln_param_entry *p2 = data2;
 
-    p1 = (ln_param_entry *)data1;
-    p2 = (ln_param_entry *)data2;
     return strcmp(p1->arg_name, p2->arg_name);
 }
 
