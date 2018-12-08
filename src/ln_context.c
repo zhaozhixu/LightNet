@@ -29,7 +29,7 @@ ln_context *ln_context_create(void)
     ctx = ln_alloc(sizeof(ln_context));
     ctx->tensor_table = ln_tensor_table_create();
     ctx->op_table = ln_op_table_create();
-    ctx->dfg = NULL;
+    ctx->dfg = ln_dfg_create();
     ctx->ops = NULL;
 
     return ctx;
@@ -48,6 +48,7 @@ static void init_op(ln_context *ctx, ln_op *op)
     int ret;
     ln_error *error = NULL;
 
+    /* ln_error_debug("init_op: %s %s\n", op->op_arg->name, op->op_arg->optype); */
     op->pre_run(op->op_arg, &error);
     ln_error_handle(&error);
     ret = ln_op_table_insert(ctx->op_table, op);
@@ -60,6 +61,7 @@ static void cleanup_op(ln_context *ctx, ln_op *op)
     int ret;
     ln_error *error = NULL;
 
+    /* ln_error_debug("cleanup_op: %s %s\n", op->op_arg->name, op->op_arg->optype); */
     ln_dfg_remove(ctx->dfg, op);
     op->post_run(op->op_arg, &error);
     ln_error_handle(&error);
@@ -67,30 +69,41 @@ static void cleanup_op(ln_context *ctx, ln_op *op)
     assert(ret);
 }
 
+void ln_context_init_ops(ln_context *ctx)
+{
+    ln_op *op;
+
+    LN_LIST_FOREACH(op, ctx->ops) {
+        init_op(ctx, op);
+    }
+    ln_context_check(ctx);
+}
+
 void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
                             ln_list *new_ops)
 {
     ln_op *op;
-    size_t i = 0;
-    ln_list *l;
+    size_t i;
     ln_list **lp;
     ln_list *tmp;
 
-    for (i = 0, l = *start_p; i < len && l; i++) {
-        op = l->data;
+    for (i = 0, lp = start_p; i < len && *lp; i++) {
+        op = (*lp)->data;
         cleanup_op(ctx, op);
-        tmp = l;
-        l = l->next;
+        tmp = *lp;
+        *lp = tmp->next;
         ln_free(tmp);
     }
 
-    tmp = (*start_p)->next;
-    (*start_p)->next = new_ops;
+    tmp = *start_p;
+    *start_p = new_ops;
     for (lp = start_p; *lp; lp = &(*lp)->next) {
         op = (*lp)->data;
         init_op(ctx, op);
     }
     *lp = tmp;
+
+    ln_context_check(ctx);
 }
 
 int ln_context_check(ln_context *ctx)

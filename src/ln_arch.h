@@ -27,17 +27,17 @@
 #include "ln_dfg.h"
 
 typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg,
-                                      int *match);
-typedef ln_list *(*ln_peephole_func) (const ln_list *ops, size_t size,
-                                      const ln_dfg *dfg, int *match);
+                                    int *match);
+typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
+                                     const ln_dfg *dfg, int *match);
 
 struct ln_arch {
-    ln_op            **reg_ops;       /* NULL terminated */
+    ln_op             **reg_ops;        /* NULL terminated */
     void (*init_func)(void);
     void (*cleanup_func)(void);
-    ln_expander_func  *ep_funcs;      /* NULL terminated */
-    ln_peephole_func  *ph_funcs;      /* NULL terminated */
-    char              *arch_name;
+    ln_expander_func    *ep_funcs;      /* NULL terminated */
+    ln_combiner_func    *cb_funcs;      /* NULL terminated */
+    char                *arch_name;
 };
 typedef struct ln_arch ln_arch;
 

@@ -38,6 +38,7 @@ extern ln_op ln_opimpl_slice_cpu;
 extern ln_op ln_opimpl_softmax_cpu;
 extern ln_op ln_opimpl_transpose_cpu;
 extern ln_op ln_opimpl_zeros_cpu;
+extern ln_op ln_opimpl_print_cpu;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
@@ -58,6 +59,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_softmax_cpu,
     &ln_opimpl_transpose_cpu,
     &ln_opimpl_zeros_cpu,
+    &ln_opimpl_print_cpu,
 /* end of init cpu ops */
     NULL
 };
@@ -66,7 +68,7 @@ ln_expander_func ep_funcs_cpu[] = {
     NULL
 };
 
-ln_peephole_func ph_funcs_cpu[] = {
+ln_combiner_func cb_funcs_cpu[] = {
     NULL
 };
 
@@ -75,6 +77,6 @@ ln_arch ln_arch_cpu = {
     .init_func = NULL,
     .cleanup_func = NULL,
     .ep_funcs = ep_funcs_cpu,
-    .ph_funcs = ph_funcs_cpu,
+    .cb_funcs = cb_funcs_cpu,
     .arch_name = "cpu",
 };

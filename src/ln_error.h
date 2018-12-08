@@ -49,7 +49,6 @@ typedef struct ln_error ln_error;
     do {                                                                \
         ln_error *err = ln_error_create((level), (fmt), ##varg);        \
         ln_error_handle(&err);                                          \
-        ln_error_free(err);                                             \
     } while (0)
 
 #define ln_error_emit_once(hash, key, level, fmt, varg...)              \
@@ -66,11 +65,8 @@ typedef struct ln_error ln_error;
             ln_error_emit(LN_INTER_ERROR, (fmt), ##varg);       \
     } while (0)
 
-#define ln_error_debug(condition, fmt, varg...)                 \
-    do {                                                        \
-        if (!(condition))                                       \
+#define ln_error_debug(fmt, varg...)                           \
             ln_error_emit(LN_DEBUG_INFO, (fmt), ##varg);       \
-    } while (0)
 
 #ifdef __cplusplus
 LN_CPPSTART

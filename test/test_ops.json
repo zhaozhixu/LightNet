@@ -43,14 +43,14 @@
             ]
         },
         {
-            "name": "maxreduce1",
-            "optype": "maxreduce",
+            "name": "maxreduce_arg1",
+            "optype": "maxreduce_arg",
             "tensors_in": [
                 {"arg_name": "src", "name": "reshape1"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "maxreduce1_dst"},
-                {"arg_name": "arg", "name": "maxreduce1_arg"}
+                {"arg_name": "dst", "name": "maxreduce_arg1_dst"},
+                {"arg_name": "arg", "name": "maxreduce_arg1_arg"}
             ],
             "params": [
                 {"arg_name": "axis", "value": 0}
@@ -60,8 +60,8 @@
             "name": "elew1",
             "optype": "elew",
             "tensors_in": [
-                {"arg_name": "src1", "name": "maxreduce1_dst"},
-                {"arg_name": "src2", "name": "maxreduce1_arg"}
+                {"arg_name": "src1", "name": "maxreduce_arg1_dst"},
+                {"arg_name": "src2", "name": "maxreduce_arg1_arg"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "name": "elew1"}
@@ -94,6 +94,28 @@
             "params": [
                 {"arg_name": "dims", "value": [2, 4]},
                 {"arg_name": "dtype", "value": "TL_FLOAT"}
+            ]
+        },
+        {
+            "name": "print1",
+            "optype": "print",
+            "tensors_in": [
+                {"arg_name": "src", "name": "transpose1"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+            ]
+        },
+        {
+            "name": "print2",
+            "optype": "print",
+            "tensors_in": [
+                {"arg_name": "src", "name": "zeros1"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
             ]
         }
     ]

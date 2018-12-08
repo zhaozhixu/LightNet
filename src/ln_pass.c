@@ -25,7 +25,7 @@
 
 const int MAX_PEEPHOLE_PASSES = 3;
 
-void ln_pass_expand(ln_context *ctx, ln_expander_func *ep_funcs)
+void ln_pass_expander(ln_context *ctx, const ln_expander_func *ep_funcs)
 {
     ln_op *op;
     ln_list **lp;
@@ -43,15 +43,14 @@ void ln_pass_expand(ln_context *ctx, ln_expander_func *ep_funcs)
             if (!match)
                 continue;
             ln_context_replace_ops(ctx, lp, 1, ep_ops);
-            ln_context_check(ctx);
         }
     }
 }
 
-void ln_pass_peephole(ln_context *ctx, size_t win_size,
-                      ln_peephole_func *ph_funcs)
+void ln_pass_combiner(ln_context *ctx, size_t win_size,
+                      const ln_combiner_func *cb_funcs)
 {
-    ln_peephole_func pf;
+    ln_combiner_func cb;
     ln_list *win_out;
     ln_list **lp;
     int stable = 0;
@@ -64,14 +63,13 @@ void ln_pass_peephole(ln_context *ctx, size_t win_size,
         for (lp = &ctx->ops; *lp; lp = &(*lp)->next) {
             if (ln_list_length(*lp) < win_size)
                 break;
-            for (i = 0; (pf = ph_funcs[i]); i++) {
+            for (i = 0; (cb = cb_funcs[i]); i++) {
                 match = 0;
-                win_out = pf(*lp, win_size, ctx->dfg, &match);
+                win_out = cb(*lp, win_size, ctx->dfg, &match);
                 if (!match)
                     continue;
                 stable = 0;
                 ln_context_replace_ops(ctx, lp, win_size, win_out);
-                ln_context_check(ctx);
             }
         }
         count++;

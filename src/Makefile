@@ -3,6 +3,7 @@ include ../common.mk
 
 TARGET ?= lightnet
 TARGET_BIN = $(TARGET)
+LIBTARGET_A = lib$(TARGET).a
 
 SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
@@ -31,14 +32,20 @@ OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(TENSORRT_SRC)))
 endif
 endif
 
-.PHONY: all bin clean
-all: bin
+.PHONY: all bin liba clean
+all: bin liba
 
 bin: $(OBJDIR)/$(TARGET_BIN)
+
+liba: $(OBJDIR)/$(LIBTARGET_A)
 
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
 	$(ECHO) Linking: $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/$(LIBTARGET_A): $(OBJS)
+	$(ECHO) Packing: $@
+	$(AT)$(AR) $@ $^
 
 $(OBJDIR)/%.o: %.c
 	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/op; fi

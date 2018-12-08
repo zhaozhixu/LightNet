@@ -38,6 +38,7 @@ extern ln_op ln_opimpl_concat_cuda;
 extern ln_op ln_opimpl_batchnorm_cuda;
 extern ln_op ln_opimpl_upsample_cuda;
 extern ln_op ln_opimpl_maxreduce_arg_cuda;
+extern ln_op ln_opimpl_print_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -56,6 +57,7 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_batchnorm_cuda,
     &ln_opimpl_upsample_cuda,
     &ln_opimpl_maxreduce_arg_cuda,
+    &ln_opimpl_print_cuda,
 /* end of init cuda ops */
     NULL
 };
@@ -66,6 +68,7 @@ static inline int can_replace(const char *optype)
         ln_streq(optype, "conv2d") ||
         ln_streq(optype, "maxpool2d") ||
         ln_streq(optype, "maxreduce") ||
+        ln_streq(optype, "maxreduce_arg") ||
         ln_streq(optype, "relu") ||
         ln_streq(optype, "reshape") ||
         ln_streq(optype, "slice") ||
@@ -74,12 +77,13 @@ static inline int can_replace(const char *optype)
         ln_streq(optype, "elew") ||
         ln_streq(optype, "softmax") ||
         ln_streq(optype, "concat") ||
-        ln_streq(optype, "upsample"))
+        ln_streq(optype, "upsample") ||
+        ln_streq(optype, "print"))
         return 1;
     return 0;
 }
 
-static ln_list *ph_func_single_replace(const ln_list *ops, size_t size,
+static ln_list *cb_func_single_replace(const ln_list *ops, size_t size,
                                        const ln_dfg *dfg, int *match)
 {
     ln_op *op, *new_op, *op_proto;
@@ -87,12 +91,14 @@ static ln_list *ph_func_single_replace(const ln_list *ops, size_t size,
     ln_list *new_ops;
     char *optype_cuda;
     int *replace_flag;
-    int i;
+    size_t i;
 
     *match = 0;
     replace_flag = ln_alloc(sizeof(int) * size);
     i = 0;
     LN_LIST_FOREACH(op, ops) {
+        if (i >= size)
+            break;
         if (can_replace(op->op_arg->optype)) {
             replace_flag[i++] = 1;
             *match = 1;
@@ -108,13 +114,11 @@ static ln_list *ph_func_single_replace(const ln_list *ops, size_t size,
     new_ops = NULL;
     i = 0;
     LN_LIST_FOREACH(op, ops) {
+        if (i >= size)
+            break;
         op_arg = op->op_arg;
         if (!replace_flag[i++]) {
-            new_op = ln_op_create_from_proto(op, op_arg->name,
-                                             ln_tensor_list_copy(op_arg->tensors_in),
-                                             ln_tensor_list_copy(op_arg->tensors_out),
-                                             ln_param_list_copy(op_arg->params),
-                                             op_arg->tensor_table);
+            new_op = ln_op_copy(op);
         } else {
             optype_cuda = ln_alloc(sizeof(char)*(strlen(op_arg->optype)+10));
             strcpy(optype_cuda, op_arg->optype);
@@ -139,8 +143,8 @@ ln_expander_func ep_funcs_cuda[] = {
     NULL
 };
 
-ln_peephole_func ph_funcs_cuda[] = {
-    ph_func_single_replace,
+ln_combiner_func cb_funcs_cuda[] = {
+    cb_func_single_replace,
     NULL
 };
 
@@ -149,6 +153,6 @@ ln_arch ln_arch_cuda = {
     .init_func = NULL,
     .cleanup_func = NULL,
     .ep_funcs = ep_funcs_cuda,
-    .ph_funcs = ph_funcs_cuda,
+    .cb_funcs = cb_funcs_cuda,
     .arch_name = "cuda",
 };

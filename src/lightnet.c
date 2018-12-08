@@ -38,7 +38,6 @@ int main(int argc, char **argv)
     char *json_file;
     char *target;
     ln_arch *arch;
-    ln_error *error = NULL;
     ln_context *ctx;
 
     ln_arch_init();
@@ -46,14 +45,11 @@ int main(int argc, char **argv)
 
     json_file = argv[1];
     target = argv[2];
-    ctx->ops = ln_json_parse_file(json_file, LN_ARCH.op_proto_table,
-                                  ctx->tensor_table, ctx->op_table);
-    ln_op_list_do_pre_run(ctx->ops, &error);
-    ctx->dfg = ln_dfg_create(ctx->ops);
-    ln_error_handle(&error);
+    ln_json_parse_file(json_file, ctx);
+    ln_context_init_ops(ctx);
     arch = ln_hash_find(LN_ARCH.arch_table, target);
-    ln_pass_peephole(ctx, 3, arch->ph_funcs);
-    ln_json_fprint(stdout, ctx->ops);
+    ln_pass_combiner(ctx, 3, arch->cb_funcs);
+    ln_json_fprint(stdout, ctx);
 
     ln_arch_cleanup();
     ln_context_free(ctx);

@@ -74,7 +74,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
 static ln_hash *ep_funcs_hash = NULL;
 
 static ln_list *ep_func_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
-static ln_list *ph_func_tensorrt(const ln_list *win_ops, size_t win_size,
+static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
                                  const ln_dfg *dfg, int *match);
 static void init(void);
 static void cleanup(void);
@@ -84,8 +84,8 @@ ln_expander_func ep_funcs_tensorrt[] = {
     NULL
 };
 
-ln_peephole_func ph_funcs_tensorrt[] = {
-    ph_func_tensorrt,
+ln_combiner_func cb_funcs_tensorrt[] = {
+    cb_func_tensorrt,
     NULL
 };
 
@@ -94,7 +94,7 @@ ln_arch ln_arch_tensorrt = {
     .init_func = init,
     .cleanup_func = cleanup,
     .ep_funcs = ep_funcs_tensorrt,
-    .ph_funcs = ph_funcs_tensorrt,
+    .cb_funcs = cb_funcs_tensorrt,
     .arch_name = "tensorrt",
 };
 
@@ -872,7 +872,7 @@ static ln_list *ep_func_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)
     void *value;
 
     if (!ln_hash_find_extended(ep_funcs_hash, op->op_arg->optype, NULL, &value))
-        ln_error_inter(1, "unsupported optype \"%s\" for TensorRT optimization",
+        ln_error_inter(0, "unsupported optype \"%s\" for TensorRT optimization",
                        op->op_arg->optype);
 
     ep_func = value;
@@ -1088,7 +1088,7 @@ static int is_win_match(const ln_list *win_ops, size_t win_size)
     return 0;
 }
 
-static ln_list *ph_func_tensorrt(const ln_list *win_ops, size_t win_size,
+static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
                                  const ln_dfg *dfg, int *match)
 {
     ln_list *new_ops = NULL;

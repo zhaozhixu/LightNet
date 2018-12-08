@@ -196,7 +196,7 @@ LN_CPPEND
 
 /* entry should be a LN_PARAM_NUMBER */
 #define ln_opck_param_int_le(entry, expect)                             \
-    ln_opck(LN_ERROR, (entry)->value_int == (expect),                   \
+    ln_opck(LN_ERROR, (entry)->value_int <= (expect),                   \
             "%s: `%s`'s `%s` param's value should be <= %d, but gets a %d", \
             op_arg->optype, op_arg->name, (entry)->arg_name,            \
             (expect), (entry)->value_int)
@@ -238,7 +238,7 @@ LN_CPPEND
 
 /* entry should be a LN_PARAM_NUMBER */
 #define ln_opck_param_float_le(entry, expect)                           \
-    ln_opck(LN_ERROR, (entry)->value_float == (expect),                 \
+    ln_opck(LN_ERROR, (entry)->value_float <= (expect),                 \
             "%s: `%s`'s `%s` param's value should be <= %f, but gets a %f", \
             op_arg->optype, op_arg->name, (entry)->arg_name,            \
             (expect), (entry)->value_float)
@@ -280,7 +280,7 @@ LN_CPPEND
 
 /* entry should be a LN_PARAM_NUMBER */
 #define ln_opck_param_double_le(entry, expect)                          \
-    ln_opck(LN_ERROR, (entry)->value_double == (expect),                \
+    ln_opck(LN_ERROR, (entry)->value_double <= (expect),                \
             "%s: `%s`'s `%s` param's value should be <= %f, but gets a %f", \
             op_arg->optype, op_arg->name, (entry)->arg_name,            \
             (expect), (entry)->value_double)

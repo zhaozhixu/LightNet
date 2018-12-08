@@ -114,6 +114,7 @@ ln_graph_node *ln_graph_find(ln_graph *graph, void *data)
     ln_graph_node n;
 
     n.data = data;
+    n.node_data_cmp = graph->node_data_cmp;
     return ln_list_find_custom(graph->nodes, &n, node_cmp);
 }
 

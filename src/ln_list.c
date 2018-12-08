@@ -272,7 +272,7 @@ void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)
     ln_list *l;
 
     for (l = list; l; l = l->next)
-        if (cmp(data, l->data) == 0)
+        if (cmp(l->data, data) == 0)
             return l->data;
     return NULL;
 }
@@ -305,7 +305,7 @@ int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp)
     int i;
 
     for (i = 0, l = list; l; l = l->next, i++)
-        if (cmp(data, l->data) == 0)
+        if (cmp(l->data, data) == 0)
             return i;
     return -1;
 }

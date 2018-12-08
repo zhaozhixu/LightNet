@@ -56,7 +56,7 @@ static void checked_teardown(void)
      ln_list_free(list);
 }
 
-static int cmp(void *p1, void *p2)
+static int cmp(const void *p1, const void *p2)
 {
      return *(int *)p1 - *(int *)p2;
 }
@@ -120,7 +120,30 @@ START_TEST(test_ln_list_remove_custom)
      list = ln_list_remove_custom(list, &num, cmp);
      for (i = 0; i < data_len; i++)
           ck_assert_int_eq(*(int *)ln_list_nth_data(list, i), data[i]);
+}
+END_TEST
 
+static int cmp_remove_all(const void *p1, const void *p2)
+{
+     const int *a1 = p1;
+
+     if (*a1 > 2)
+          return 0;
+     return 1;
+}
+
+static void empty_free(void *p)
+{
+}
+
+START_TEST(test_ln_list_remove_all_custom_deep)
+{
+     list = ln_list_remove_all_custom_deep(list, &data[0], cmp_remove_all,
+                                           empty_free);
+     ck_assert_int_eq(*(int *)ln_list_nth_data(list, 0), 0);
+     ck_assert_int_eq(*(int *)ln_list_nth_data(list, 1), 1);
+     ck_assert_int_eq(*(int *)ln_list_nth_data(list, 2), 2);
+     ck_assert_ptr_eq(ln_list_nth_data(list, 3), NULL);
 }
 END_TEST
 
@@ -301,6 +324,7 @@ Suite *make_list_suite(void)
      tcase_add_test(tc_list, test_ln_list_append_nth);
      tcase_add_test(tc_list, test_ln_list_remove);
      tcase_add_test(tc_list, test_ln_list_remove_custom);
+     tcase_add_test(tc_list, test_ln_list_remove_all_custom_deep);
      tcase_add_test(tc_list, test_ln_list_remove_insert_nth);
      tcase_add_test(tc_list, test_ln_list_find);
      tcase_add_test(tc_list, test_ln_list_find_custom);

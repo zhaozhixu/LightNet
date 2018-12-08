@@ -22,8 +22,8 @@
 
 #include <string.h>
 #include <assert.h>
-#include "ln_op.h"
 #include "cJSON.h"
+#include "ln_json.h"
 
 #define PARSE_JSON_ERROR(varg...) ln_error_emit(LN_ERROR, ##varg)
 
@@ -133,8 +133,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
     return param_list;
 }
 
-static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
-                       ln_hash *tensor_table, ln_hash *op_table, int idx)
+static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
 {
     ln_op *op, *proto_op;
     ln_list *tensors_in = NULL;
@@ -295,7 +294,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
         }
         i++;
     }
-    proto_op = ln_hash_find(op_init_table, optype_json->valuestring);
+    proto_op = ln_hash_find(LN_ARCH.op_proto_table, optype_json->valuestring);
     if (!proto_op) {
         PARSE_JSON_ERROR("op \"%s\"'s optype \"%s\" is not registered",
                          name_json->valuestring,
@@ -303,9 +302,9 @@ static ln_op *parse_op(const cJSON *op_json, ln_hash *op_init_table,
     }
 
     op = ln_op_create_from_proto(proto_op, name_json->valuestring, tensors_in,
-                                 tensors_out, params, tensor_table);
+                                 tensors_out, params, ctx->tensor_table);
 
-    int ret = ln_op_table_insert(op_table, op);
+    int ret = ln_op_table_insert(ctx->op_table, op);
     if (!ret)
         PARSE_JSON_ERROR("op \"%s\"'s name is duplicated");
 
@@ -394,8 +393,7 @@ static int *preprocess(char *json_str)
     return array;
 }
 
-ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
-                       ln_hash *tensor_table, ln_hash *op_table)
+ln_list *ln_json_parse(char *json_str, ln_context *ctx)
 {
     int *newline_indices;
     const cJSON *ops_json;
@@ -419,23 +417,23 @@ ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
 
     int i = 0;
     cJSON_ArrayForEach(op_json, ops_json) {
-        op = parse_op(op_json, op_init_table, tensor_table, op_table, i);
+        op = parse_op(op_json, ctx, i);
         ops = ln_list_append(ops, op);
         i++;
     }
 
+    ctx->ops = ops;
     cJSON_Delete(json);
     return ops;
 }
 
-ln_list *ln_json_parse_file(const char *file, ln_hash *op_init_table,
-                            ln_hash *tensor_table, ln_hash *op_table)
+ln_list *ln_json_parse_file(const char *file, ln_context *ctx)
 {
     char *str;
     ln_list *ops;
 
     str = ln_read_text(file);
-    ops = ln_json_parse(str, op_init_table, tensor_table, op_table);
+    ops = ln_json_parse(str, ctx);
     ln_free(str);
 
     return ops;
@@ -519,7 +517,7 @@ static void add_params(cJSON *params_json, ln_list *params)
     }
 }
 
-char *ln_json_create_json_str(ln_list *ops)
+char *ln_json_create_json_str(const ln_context *ctx)
 {
     char *str = NULL;
     ln_op *op;
@@ -535,7 +533,7 @@ char *ln_json_create_json_str(ln_list *ops)
     if (!ops_json)
         PRINT_JSON_ERROR;
 
-    LN_LIST_FOREACH(op, ops) {
+    LN_LIST_FOREACH(op, ctx->ops) {
         op_json = cJSON_CreateObject();
         if (!op_json)
             PRINT_JSON_ERROR;
@@ -574,11 +572,11 @@ char *ln_json_create_json_str(ln_list *ops)
     return str;
 }
 
-void ln_json_fprint(FILE *fp, ln_list *ops)
+void ln_json_fprint(FILE *fp, const ln_context *ctx)
 {
     char *str;
 
-    str = ln_json_create_json_str(ops);
+    str = ln_json_create_json_str(ctx);
     fprintf(fp, "%s", str);
     ln_free(str);
 }

@@ -23,19 +23,18 @@
 #ifndef _LN_JSON_H_
 #define _LN_JSON_H_
 
-#include "ln_list.h"
-#include "ln_hash.h"
+#include "ln_op.h"
+#include "ln_arch.h"
+#include "ln_context.h"
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_list *ln_json_parse(char *json_str, ln_hash *op_init_table,
-                       ln_hash *tensor_table, ln_hash *op_table);
-ln_list *ln_json_parse_file(const char *file, ln_hash *op_init_table,
-                            ln_hash *tensor_table, ln_hash *op_table);
-char *ln_json_create_json_str(const ln_list *ops);
-void ln_json_fprint(FILE *fp, ln_list *ops);
+ln_list *ln_json_parse(char *json_str, ln_context *ctx);
+ln_list *ln_json_parse_file(const char *file, ln_context *ctx);
+char *ln_json_create_json_str(const ln_context *ctx);
+void ln_json_fprint(FILE *fp, const ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND

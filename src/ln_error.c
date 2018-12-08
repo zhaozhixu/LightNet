@@ -82,32 +82,26 @@ void ln_error_handle(ln_error **error)
     case LN_WARNING_SYS:
         fprintf(stderr, "WARNING: %s\n", (*error)->err_str);
         fflush(NULL);
-        ln_error_free(*error);
-        *error = NULL;
-        return;
+        break;
     case LN_INTER_WARNING:
     case LN_INTER_WARNING_SYS:
         fprintf(stderr, "INTERNAL WARNING: %s\n", (*error)->err_str);
         fflush(NULL);
-        ln_error_free(*error);
-        *error = NULL;
-        return;
+        break;
     case LN_INFO:
         fprintf(stderr, "INFO: %s\n", (*error)->err_str);
         fflush(NULL);
-        ln_error_free(*error);
-        *error = NULL;
-        return;
+        break;
     case LN_DEBUG_INFO:
 #ifdef LN_DEBUG
         fprintf(stderr, "DEBUG INFO: %s\n", (*error)->err_str);
         fflush(NULL);
 #endif
-        ln_error_free(*error);
-        *error = NULL;
-        return;
+        break;
     default :
         assert(0 && "shouldn't get here, unsupported ln_error_level");
-        return;
+        break;
     }
+    ln_error_free(*error);
+    *error = NULL;
 }

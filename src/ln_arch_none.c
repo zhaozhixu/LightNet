@@ -37,6 +37,7 @@ extern ln_op ln_opimpl_concat;
 extern ln_op ln_opimpl_batchnorm;
 extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_maxreduce_arg;
+extern ln_op ln_opimpl_print;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -56,6 +57,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_batchnorm,
     &ln_opimpl_upsample,
     &ln_opimpl_maxreduce_arg,
+    &ln_opimpl_print,
 /* end of init none ops */
     NULL
 };
@@ -64,7 +66,7 @@ ln_expander_func ep_funcs_none[] = {
     NULL
 };
 
-ln_peephole_func ph_funcs_none[] = {
+ln_combiner_func cb_funcs_none[] = {
     NULL
 };
 
@@ -73,6 +75,6 @@ ln_arch ln_arch_none = {
     .init_func = NULL,
     .cleanup_func = NULL,
     .ep_funcs = ep_funcs_none,
-    .ph_funcs = ph_funcs_none,
+    .cb_funcs = cb_funcs_none,
     .arch_name = "none",
 };

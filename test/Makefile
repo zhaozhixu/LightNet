@@ -3,6 +3,7 @@ include ../common.mk
 
 TARGET ?= lightnet
 TARGET_TEST = test_$(TARGET)
+LIBTARGET_A = lib$(TARGET).a
 
 INCPATHS += `pkg-config --cflags check`
 LDFLAGS += `pkg-config --libs check` -lpthread
@@ -32,14 +33,15 @@ OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDNN_SRC)))
 endif
 endif
 
-SRCOBJS = $(filter-out %$(TARGET).o,$(wildcard ../src/obj/*.o))
+SRCOBJ = ../src/obj/$(LIBTARGET_A)
 
 .PHONY: all clean
+
 all: $(TARGET_TEST)
 	$(ECHO) Running tests...
 	$(AT)./$(TARGET_TEST)
 
-$(TARGET_TEST): $(OBJS) $(SRCOBJS)
+$(TARGET_TEST): $(OBJS) $(SRCOBJ)
 	$(ECHO) Linking: $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 

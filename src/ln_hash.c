@@ -248,29 +248,3 @@ int ln_hash_size(ln_hash *hash)
 {
     return hash->size;
 }
-
-uint32_t ln_direct_hash(const void *key)
-{
-    return (uint32_t)(long)key;
-}
-
-int ln_direct_cmp(const void *p1, const void *p2)
-{
-    return (long)p1 - (long)p2;
-}
-
-uint32_t ln_str_hash(const void *key)
-{
-    const char *p;
-    uint32_t h = 5381;
-
-    for (p = key; *p != '\0'; p++)
-        h = (h << 5) + h + *p;
-
-    return h;
-}
-
-int ln_str_cmp(const void *p1, const void *p2)
-{
-    return strcmp(p1, p2);
-}

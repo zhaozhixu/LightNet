@@ -41,7 +41,7 @@ LN_CPPSTART
 
 /* Generate Data Flow Graph, with ops as its nodes and tensor names
    as its edge. */
-ln_dfg *ln_dfg_create(ln_list *ops);
+ln_dfg *ln_dfg_create(void);
 void ln_dfg_free(ln_dfg *dfg);
 void ln_dfg_add(ln_dfg *dfg, ln_op *op);
 void ln_dfg_remove(ln_dfg *dfg, ln_op *op);

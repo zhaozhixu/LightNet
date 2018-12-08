@@ -66,11 +66,11 @@ START_TEST(test_ln_tensor_table)
      e2 = ln_tensor_entry_create("t2", t2);
      table = ln_tensor_table_create();
 
-     ret = ln_tensor_table_insert(table, "t1", e1);
+     ret = ln_tensor_table_insert(table, e1);
      ck_assert_int_eq(ret, 1);
-     ret = ln_tensor_table_insert(table, "t2", e2);
+     ret = ln_tensor_table_insert(table, e2);
      ck_assert_int_eq(ret, 1);
-     ret = ln_tensor_table_insert(table, "t2", e2);
+     ret = ln_tensor_table_insert(table, e2);
      ck_assert_int_eq(ret, 1);
 
      e = ln_tensor_table_find(table, "t1");

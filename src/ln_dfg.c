@@ -88,7 +88,7 @@ static void add_dangling(ln_list **danglings, const char *tname,
     *danglings = ln_list_prepend(*danglings, en);
 }
 
-/* if node == NULL, remove all danglings that have tname */
+/* if node == NULL, remove all danglings that have tname as edge*/
 static void remove_dangling(ln_list **danglings, const char *tname,
                             ln_graph_node *node)
 {
@@ -111,20 +111,15 @@ static void free_danglings(ln_list *danglings)
     ln_list_free_deep(danglings, en_free);
 }
 
-ln_dfg *ln_dfg_create(ln_list *ops)
+ln_dfg *ln_dfg_create(void)
 {
     ln_dfg *dfg;
-    ln_op *op;
 
     dfg = ln_alloc(sizeof(ln_dfg));
     dfg->graph = ln_graph_create(ln_direct_cmp, ln_str_cmp);
     dfg->node_table = table_create();
     dfg->dangling_outs = NULL;
     dfg->dangling_ins = NULL;
-
-    LN_LIST_FOREACH(op, ops) {
-        ln_dfg_add(dfg, op);
-    }
 
     return dfg;
 }
@@ -210,7 +205,7 @@ void ln_dfg_add(ln_dfg *dfg, ln_op *op)
         assert(te);
         refered = 0;
         LN_LIST_FOREACH(en, dfg->dangling_ins) {
-            if (strcmp(en->edge_data, te->name) == 0) {
+            if (ln_streq(en->edge_data, te->name)) {
                 dfg_link(dfg, op, en->node->data, te->name);
                 refered = 1;
             }
@@ -218,9 +213,9 @@ void ln_dfg_add(ln_dfg *dfg, ln_op *op)
         if (!refered) {
             node = table_find(dfg->node_table, op->op_arg->name);
             add_dangling(&dfg->dangling_outs, te->name, node);
-        }
-        else
+        } else {
             remove_dangling(&dfg->dangling_ins, te->name, NULL);
+        }
     }
 }
 
@@ -228,6 +223,7 @@ void ln_dfg_remove(ln_dfg *dfg, ln_op *op)
 {
     ln_graph_node *node;
     ln_graph_edge_node *en;
+    ln_tensor_list_entry *tle;
     ln_list *l;
 
     node = ln_hash_find(dfg->node_table, op->op_arg->name);
@@ -241,12 +237,19 @@ void ln_dfg_remove(ln_dfg *dfg, ln_op *op)
             add_dangling(&dfg->dangling_outs, en->edge_data, en->node);
         dfg_unlink(dfg, en->node->data, op, en->edge_data);
     }
+    LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
+        remove_dangling(&dfg->dangling_ins, tle->name, node);
+    }
 
     for (l = node->out_edge_nodes; l;) {
         en = l->data;
         l = l->next;
+        add_dangling(&dfg->dangling_ins, en->edge_data, en->node);
         dfg_unlink(dfg, op, en->node->data, en->edge_data);
-        add_dangling(&dfg->dangling_ins, en->edge_data, en->node->data);
+    }
+
+    LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
+        remove_dangling(&dfg->dangling_outs, tle->name, NULL);
     }
 
     table_remove(dfg->node_table, op->op_arg->name);
@@ -295,15 +298,15 @@ int ln_dfg_check(const ln_dfg *dfg)
     LN_LIST_FOREACH(en, dfg->dangling_ins) {
         op = en->node->data;
         tname = en->edge_data;
-        ln_error_inter(1, "unsolved input tensor \"%s\" of op \"%s\"",
-                       tname, op->op_arg->name);
+        ln_error_inter(0, "unsolved input tensor \"%s\" of op \"%s\" type \"%s\"",
+                       tname, op->op_arg->name, op->op_arg->optype);
     }
 
     LN_LIST_FOREACH(en, dfg->dangling_outs) {
         op = en->node->data;
         tname = en->edge_data;
-        ln_error_emit(LN_WARNING, "unsolved output tensor \"%s\" of op \"%s\"",
-                      tname, op->op_arg->name);
+        ln_error_emit(LN_WARNING, "unused output tensor \"%s\" of op \"%s\" type \"%s\"",
+                      tname, op->op_arg->name, op->op_arg->optype);
     }
     return 1;
 }
