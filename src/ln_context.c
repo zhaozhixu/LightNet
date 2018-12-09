@@ -79,6 +79,16 @@ void ln_context_init_ops(ln_context *ctx)
     ln_context_check(ctx);
 }
 
+void ln_context_cleanup_ops(ln_context *ctx)
+{
+    ln_op *op;
+
+    LN_LIST_FOREACH(op, ctx->ops) {
+        cleanup_op(ctx, op);
+    }
+    ln_context_check(ctx);
+}
+
 void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
                             ln_list *new_ops)
 {
@@ -109,4 +119,14 @@ void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
 int ln_context_check(ln_context *ctx)
 {
     return ln_dfg_check(ctx->dfg);
+}
+
+void ln_context_run(ln_context *ctx)
+{
+    ln_error *error = NULL;
+
+    ln_op_list_do_static_run(ctx->ops, &error);
+    ln_error_handle(&error);
+    ln_op_list_do_run(ctx->ops, &error);
+    ln_error_handle(&error);
 }

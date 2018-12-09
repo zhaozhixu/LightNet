@@ -44,9 +44,11 @@ LN_CPPSTART
 ln_context *ln_context_create(void);
 void ln_context_free(ln_context *ctx);
 void ln_context_init_ops(ln_context *ctx);
+void ln_context_cleanup_ops(ln_context *ctx);
 void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
                             ln_list *new_ops);
 int ln_context_check(ln_context *ctx);
+void ln_context_run(ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND

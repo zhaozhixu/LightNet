@@ -48,11 +48,15 @@ int main(int argc, char **argv)
     target = argv[2];
     ln_json_parse_file(json_file, ctx);
     ln_context_init_ops(ctx);
+
     arch = ln_hash_find(LN_ARCH.arch_table, target);
     ln_pass_expander(ctx, arch->ep_funcs);
     /* ln_json_fprint(stdout, ctx); */
     ln_pass_combiner(ctx, 3, arch->cb_funcs);
     ln_json_fprint(stdout, ctx);
+
+    ln_context_run(ctx);
+    ln_context_cleanup_ops(ctx);
 
     ln_arch_cleanup();
     ln_name_cleanup();
