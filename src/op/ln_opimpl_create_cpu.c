@@ -141,7 +141,8 @@ static void create_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
                        &data_entry->value_array_double[i], TL_DOUBLE);
         }
     }
-    priv->dst->data = data;
+    memmove(priv->dst->data, data, size);
+    ln_free(data);
 }
 
 /*

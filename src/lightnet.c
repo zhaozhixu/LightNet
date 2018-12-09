@@ -39,10 +39,16 @@ int main(int argc, char **argv)
     char *target;
     ln_arch *arch;
     ln_context *ctx;
+    ln_hash *mem_pools;
+    void *cpu_mem;
+    void *cuda_mem;
 
     ln_arch_init();
     ln_name_init();
     ctx = ln_context_create();
+    mem_pools = ln_mem_pool_table_create();
+    cpu_mem = ln_alloc(1073741824);
+    cuda_mem = ln_alloc_cuda(1073741824);
 
     json_file = argv[1];
     target = argv[2];
@@ -55,10 +61,15 @@ int main(int argc, char **argv)
     ln_pass_combiner(ctx, 3, arch->cb_funcs);
     ln_json_fprint(stdout, ctx);
 
+    ln_pass_mem(ctx->ops, mem_pools);
+    ln_context_static_run(ctx);
     ln_context_run(ctx);
     ln_context_cleanup_ops(ctx);
 
+    ln_free(cpu_mem);
+    ln_free_cuda(cuda_mem);
     ln_arch_cleanup();
     ln_name_cleanup();
     ln_context_free(ctx);
+    ln_mem_pool_table_free(mem_pools);
 }

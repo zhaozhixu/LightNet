@@ -25,6 +25,7 @@
 
 #include "ln_list.h"
 #include "ln_hash.h"
+#include "ln_mem.h"
 #include "ln_tensor.h"
 #include "ln_op.h"
 #include "ln_dfg.h"
@@ -34,6 +35,7 @@ struct ln_context {
     ln_hash *op_table;
     ln_dfg  *dfg;
     ln_list *ops;
+    ln_hash *mem_pool_table;
 };
 typedef struct ln_context ln_context;
 
@@ -49,6 +51,7 @@ void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
                             ln_list *new_ops);
 int ln_context_check(ln_context *ctx);
 void ln_context_run(ln_context *ctx);
+void ln_context_static_run(ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND

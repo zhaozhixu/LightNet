@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include "ln_list.h"
+#include "ln_hash.h"
 
 /* NOTE: keep this sync with mtype_name in ln_mem.c */
 #define LN_MEM_TYPE_SIZE 4
@@ -54,6 +55,8 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size);
 void ln_mem_free(ln_mem_pool *mem_pool, size_t addr);
 int ln_mem_exist(ln_mem_pool *mem_pool, size_t addr);
 void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp);
+ln_hash *ln_mem_pool_table_create(void);
+void ln_mem_pool_table_free(ln_hash *mpt);
 
 #ifdef __cplusplus
 LN_CPPEND

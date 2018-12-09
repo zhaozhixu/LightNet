@@ -215,9 +215,9 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
     struct priv_s *priv = op_arg->priv;
 
     {
-        priv->dst_scale->data = ln_alloc(tl_tensor_size(priv->dst_scale));
-        priv->dst_shift->data = ln_alloc(tl_tensor_size(priv->dst_shift));
-        priv->dst_power->data = ln_alloc(tl_tensor_size(priv->dst_power));
+        /* priv->dst_scale->data = ln_alloc(tl_tensor_size(priv->dst_scale)); */
+        /* priv->dst_shift->data = ln_alloc(tl_tensor_size(priv->dst_shift)); */
+        /* priv->dst_power->data = ln_alloc(tl_tensor_size(priv->dst_power)); */
         float *dst_scale = priv->dst_scale->data;
         float *dst_shift = priv->dst_shift->data;
         float *dst_power = priv->dst_power->data;

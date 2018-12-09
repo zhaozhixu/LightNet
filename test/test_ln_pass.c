@@ -213,7 +213,7 @@ START_TEST(test_ln_pass_mem)
      ln_mem_pool *mem_pool_none;
      ln_tensor_entry *te;
 
-     mem_pools = ln_hash_create(ln_direct_hash , ln_direct_cmp, NULL, mem_pools_free_wrapper);
+     mem_pools = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, mem_pools_free_wrapper);
      mem_pool_none = ln_mem_pool_create(4096, 1);
      ln_hash_insert(mem_pools, (void *)LN_MEM_NONE, mem_pool_none);
 

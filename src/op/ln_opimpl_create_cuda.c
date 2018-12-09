@@ -143,7 +143,6 @@ static void create_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
         tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
                    &data_entry->value_array_double[i], TL_DOUBLE);
     }
-    priv->dst->data = ln_alloc_cuda(size);
     ln_memcpy_h2d(priv->dst->data, data, size);
     ln_free(data);
 }
