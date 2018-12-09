@@ -215,10 +215,21 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
     struct priv_s *priv = op_arg->priv;
 
     {
+        priv->dst_scale->data = ln_alloc(tl_tensor_size(priv->dst_scale));
+        priv->dst_shift->data = ln_alloc(tl_tensor_size(priv->dst_shift));
+        priv->dst_power->data = ln_alloc(tl_tensor_size(priv->dst_power));
+        float *dst_scale = priv->dst_scale->data;
+        float *dst_shift = priv->dst_shift->data;
+        float *dst_power = priv->dst_power->data;
+        float *src_mean = priv->src_mean->data;
+        float *src_var = priv->src_var->data;
+        float *src_scale = priv->src_scale->data;
+        float *src_offset = priv->src_offset->data;
         for (int i = 0; i < priv->dst_scale->len; i++) {
-            ((float *)priv->dst_scale->data)[i] = ((float *)priv->src_scale->data)[i] / (((float *)priv->src_var->data)[i] + priv->epsilon);
-            ((float *)priv->dst_shift->data)[i] = ((float *)priv->src_offset->data)[i] - ((float *)priv->src_mean->data)[i] * ((float *)priv->src_scale->data)[i] / (((float *)priv->src_var->data)[i] + priv->epsilon);
-            ((float *)priv->dst_power->data)[i] = 1;
+            /* printf("%d: %p %p %p %p\n", i, src_scale, src_mean, src_offset, src_var); */
+            dst_scale[i] = src_scale[i] / (src_var[i] + priv->epsilon);
+            dst_shift[i] = src_offset[i] - src_mean[i] * src_scale[i] / (src_var[i] + priv->epsilon);
+            dst_power[i] = 1;
         }
     }
 }

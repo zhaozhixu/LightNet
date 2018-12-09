@@ -518,7 +518,8 @@ static void add_softmax_to_trt(ln_op *trt_op, const ln_op *op)
     pe = ln_param_list_find(op->op_arg->params, "axis");
 
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
-        axes |= 1 << (pe->value_int - 1);
+        /* axes |= 1 << (pe->value_int - 1); */
+        axes |= 1 << (pe->value_int); /* TODO: FIXME: - 1 or not?? */
         param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "axes", '_');
         trt_arg->params = ln_param_list_append_number(trt_arg->params,
                                                       param_arg_name, axes);
@@ -591,7 +592,8 @@ static void add_concat_to_trt(ln_op *trt_op, const ln_op *op)
     pe = ln_param_list_find(op->op_arg->params, "axis");
 
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") >= 0) {
-        axis = pe->value_int - 1;
+        /* axis = pe->value_int - 1; */
+        axis = pe->value_int;   /* TODO: FIXME: - 1 or not?? */
         param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "axis", '_');
         trt_arg->params = ln_param_list_append_number(trt_arg->params,
                                                       param_arg_name, axis);

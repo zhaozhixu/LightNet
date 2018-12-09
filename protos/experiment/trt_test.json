@@ -104,7 +104,7 @@
             "tensors_in": [
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "mean1"}
+                {"arg_name": "dst", "name": "var1"}
             ],
             "params": [
                 {"arg_name": "dims", "value": [80]},
@@ -118,7 +118,7 @@
             "tensors_in": [
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "var1"}
+                {"arg_name": "dst", "name": "mean1"}
             ],
             "params": [
                 {"arg_name": "dims", "value": [80]},

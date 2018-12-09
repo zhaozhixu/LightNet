@@ -24,5 +24,5 @@
         {"arg_name": "epsilon", "ptype": "LN_PARAM_NUMBER", "realtype": "float",
          "gt": 0}
     ],
-    "static_run": "for (int i = 0; i < priv->dst_scale->len; i++) {\n    ((float *)priv->dst_scale->data)[i] = ((float *)priv->src_scale->data)[i] / (((float *)priv->src_var->data)[i] + priv->epsilon);\n    ((float *)priv->dst_shift->data)[i] = ((float *)priv->src_offset->data)[i] - ((float *)priv->src_mean->data)[i] * ((float *)priv->src_scale->data)[i] / (((float *)priv->src_var->data)[i] + priv->epsilon);\n    ((float *)priv->dst_power->data)[i] = 1;\n}"
+    "static_run": "priv->dst_scale->data = ln_alloc(tl_tensor_size(priv->dst_scale));\npriv->dst_shift->data = ln_alloc(tl_tensor_size(priv->dst_shift));\npriv->dst_power->data = ln_alloc(tl_tensor_size(priv->dst_power));\nfloat *dst_scale = priv->dst_scale->data;\nfloat *dst_shift = priv->dst_shift->data;\nfloat *dst_power = priv->dst_power->data;\nfloat *src_mean = priv->src_mean->data;\nfloat *src_var = priv->src_var->data;\nfloat *src_scale = priv->src_scale->data;\nfloat *src_offset = priv->src_offset->data;\nfor (int i = 0; i < priv->dst_scale->len; i++) {\n    dst_scale[i] = src_scale[i] / (src_var[i] + priv->epsilon);\n    dst_shift[i] = src_offset[i] - src_mean[i] * src_scale[i] / (src_var[i] + priv->epsilon);\n    dst_power[i] = 1;\n}"
 }

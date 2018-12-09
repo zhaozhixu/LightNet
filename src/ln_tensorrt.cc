@@ -524,6 +524,13 @@ static void add_softmax(INetworkDefinition *network,
     tensors[dst] = softmax->getOutput(0);
 }
 
+// static void print_dims(const Dims &dims)
+// {
+//     for (int i = 0; i < dims.nbDims; i++)
+//         printf("%d ", dims.d[i]);
+//     printf("\n");
+// }
+
 static void add_concat(INetworkDefinition *network,
                        std::map<std::string, ITensor*> &tensors,
                        char *opname, ln_op_arg *op_arg)
@@ -546,6 +553,8 @@ static void add_concat(INetworkDefinition *network,
     dst = pe->value_string;
 
     IConcatenationLayer *concat;
+    // print_dims(tensors[src1]->getDimensions());
+    // print_dims(tensors[src2]->getDimensions());
     ITensor *concat_tensors[2] = {tensors[src1], tensors[src2]};
     concat = network->addConcatenation(concat_tensors, 2);
     assert(concat);
@@ -679,7 +688,9 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
     int index;
 
     engine = create_engine(op_arg);
+    assert(engine);
     context = engine->createExecutionContext();
+    assert(context);
     bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;

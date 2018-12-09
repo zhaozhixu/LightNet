@@ -143,6 +143,7 @@ static void create_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
         tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
                    &data_entry->value_array_double[i], TL_DOUBLE);
     }
+    priv->dst->data = ln_alloc_cuda(size);
     ln_memcpy_h2d(priv->dst->data, data, size);
     ln_free(data);
 }
@@ -155,6 +156,7 @@ static void create_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
     struct priv_s *priv;
 
     priv = op_arg->priv;
+    ln_free_cuda(priv->dst->data);
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
     ln_free(op_arg->priv);
 }

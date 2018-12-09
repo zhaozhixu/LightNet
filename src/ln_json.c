@@ -580,6 +580,6 @@ void ln_json_fprint(FILE *fp, const ln_context *ctx)
     char *str;
 
     str = ln_json_create_json_str(ctx);
-    fprintf(fp, "%s", str);
+    fprintf(fp, "%s\n", str);
     ln_free(str);
 }
