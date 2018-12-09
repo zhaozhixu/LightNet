@@ -21,22 +21,21 @@
             ],
             "params": [
                 {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0,
+                 "realtype": "int", "ge": 1,
                  "check": "group == weight->dims[0], \"`group` should be equal to the 1st dimension of `weight`\""},
                 # [height, width]
                 {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,
-                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimension of `weight`\""},
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimensions of `weight`\""},
                 # [height, width]
                 {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,
-                 "check": "stride[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimension of `weight`\""},
+                 "realtype": "int", "len": 2, "ge": 1},
                 # [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 4, "gt": 0},
+                 "realtype": "int", "len": 4, "ge": 0},
                 # [height, width]
                 {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0}
+                 "realtype": "int", "len": 2, "ge": 1}
             ]
         },
         {
@@ -60,22 +59,21 @@
             ],
             "params": [
                 {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0,
+                 "realtype": "int", "ge": 1,
                  "check": "group == weight->dims[0], \"`group` should be equal to the 1st dimension of `weight`\""},
                 # [height, width]
                 {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,
-                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimension of `weight`\""},
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimensions of `weight`\""},
                 # [height, width]
                 {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,
-                 "check": "stride[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimension of `weight`\""},
+                 "realtype": "int", "len": 2, "ge": 1},
                 # [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 4, "gt": 0},
+                 "realtype": "int", "len": 4, "ge": 0},
                 # [height, width]
                 {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0}
+                 "realtype": "int", "len": 2, "ge": 1}
             ],
             "run": ""
         },
@@ -100,22 +98,21 @@
             ],
             "params": [
                 {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0,
+                 "realtype": "int", "ge": 1,
                  "check": "group == weight->dims[0], \"`group` should be equal to the 1st dimension of `weight`\""},
                 # [height, weight]
                 {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,
-                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimension of `weight`\""},
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimensions of `weight`\""},
                 # [height, weight]
                 {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,
-                 "check": "stride[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimension of `weight`\""},
+                 "realtype": "int", "len": 2, "ge": 1},
                 # [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 4, "gt": 0},
+                 "realtype": "int", "len": 4, "ge": 0},
                 # [height, weight]
                 {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "gt": 0,}
+                 "realtype": "int", "len": 2, "ge": 1,}
             ],
             "run": ""
         }

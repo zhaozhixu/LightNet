@@ -122,7 +122,7 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(group_entry, "group");
     ln_opck_param_type(group_entry, LN_PARAM_NUMBER);
     group = group_entry->value_int;
-    ln_opck_param_int_gt(group_entry, 0);
+    ln_opck_param_int_ge(group_entry, 1);
     ln_opck_param_satisfy_msg(group == weight->dims[0], "`group` should be equal to the 1st dimension of `weight`");
 
     size_entry = ln_param_list_find(op_arg->params, "size");
@@ -130,30 +130,29 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(size_entry, LN_PARAM_ARRAY_NUMBER);
     ln_opck_param_array_len_eq(size_entry, 2);
     size = size_entry->value_array_int;
-    ln_opck_param_array_int_gt(size_entry, 0);
-    ln_opck_param_satisfy_msg(size[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimension of `weight`");
+    ln_opck_param_array_int_ge(size_entry, 1);
+    ln_opck_param_satisfy_msg(size[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimensions of `weight`");
 
     stride_entry = ln_param_list_find(op_arg->params, "stride");
     ln_opck_param_exist(stride_entry, "stride");
     ln_opck_param_type(stride_entry, LN_PARAM_ARRAY_NUMBER);
     ln_opck_param_array_len_eq(stride_entry, 2);
     stride = stride_entry->value_array_int;
-    ln_opck_param_array_int_gt(stride_entry, 0);
-    ln_opck_param_satisfy_msg(stride[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimension of `weight`");
+    ln_opck_param_array_int_ge(stride_entry, 1);
 
     padding_entry = ln_param_list_find(op_arg->params, "padding");
     ln_opck_param_exist(padding_entry, "padding");
     ln_opck_param_type(padding_entry, LN_PARAM_ARRAY_NUMBER);
     ln_opck_param_array_len_eq(padding_entry, 4);
     padding = padding_entry->value_array_int;
-    ln_opck_param_array_int_gt(padding_entry, 0);
+    ln_opck_param_array_int_ge(padding_entry, 0);
 
     dilation_entry = ln_param_list_find(op_arg->params, "dilation");
     ln_opck_param_exist(dilation_entry, "dilation");
     ln_opck_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
     ln_opck_param_array_len_eq(dilation_entry, 2);
     dilation = dilation_entry->value_array_int;
-    ln_opck_param_array_int_gt(dilation_entry, 0);
+    ln_opck_param_array_int_ge(dilation_entry, 1);
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;

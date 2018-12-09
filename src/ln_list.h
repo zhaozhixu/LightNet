@@ -60,6 +60,7 @@ ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *llink);
 ln_list *ln_list_insert_nth(ln_list *list, void *data, int n);
 void *ln_list_find(ln_list *list, void *data);
 void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp);
+ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp);
 int ln_list_position(ln_list *list, ln_list *llink);
 int ln_list_index(ln_list *list, void *data);
 int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp);

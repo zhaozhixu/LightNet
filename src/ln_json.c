@@ -497,14 +497,17 @@ static void add_params(cJSON *params_json, ln_list *params)
             /* TODO: add cJSON_CreateBoolArray() */
             item = cJSON_CreateIntArray((int *)pe->value_array_bool,
                                         pe->array_len);
+            cJSON_AddItemToObject(param_json, "value", item);
             break;
         case LN_PARAM_ARRAY_NUMBER:
             item = cJSON_CreateDoubleArray(pe->value_array_double,
                                            pe->array_len);
+            cJSON_AddItemToObject(param_json, "value", item);
             break;
         case LN_PARAM_ARRAY_STRING:
             item = cJSON_CreateStringArray((const char**)pe->value_array_string,
                                            pe->array_len);
+            cJSON_AddItemToObject(param_json, "value", item);
             break;
         default:
             assert(0 && "unsupported ln_param_type");

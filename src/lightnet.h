@@ -38,5 +38,6 @@
 #include "ln_arch.h"
 #include "ln_dfg.h"
 #include "ln_context.h"
+#include "ln_name.h"
 
 #endif  /* _LIGHTNET_H_ */

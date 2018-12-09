@@ -310,12 +310,14 @@ ln_list *ln_param_list_copy(ln_list *list)
                                                        entry->value_array_bool);
             break;
         case LN_PARAM_ARRAY_NUMBER:
-            new_list = ln_param_list_append_array_number(new_list, entry->arg_name,
+            new_list = ln_param_list_append_array_number(new_list,
+                                                         entry->arg_name,
                                                          entry->array_len,
                                                          entry->value_array_double);
             break;
         case LN_PARAM_ARRAY_STRING:
-            new_list = ln_param_list_append_array_string(new_list, entry->arg_name,
+            new_list = ln_param_list_append_array_string(new_list,
+                                                         entry->arg_name,
                                                          entry->array_len,
                                                          entry->value_array_string);
             break;

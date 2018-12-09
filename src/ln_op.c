@@ -91,14 +91,14 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
             snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         else
             strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
-        ln_tensor_list_append(tensors_in, arg_name, tensor_name);
+        tensors_in = ln_tensor_list_append(tensors_in, arg_name, tensor_name);
     }
     for (i = 0; (arg_name = op_proto->op_info->out_arg_names[i]); i++) {
         if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
             snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         else
             strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
-        ln_tensor_list_append(tensors_out, arg_name, tensor_name);
+        tensors_out = ln_tensor_list_append(tensors_out, arg_name, tensor_name);
     }
 
     return ln_op_create_from_proto(op_proto, opname, tensors_in,

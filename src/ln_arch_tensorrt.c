@@ -50,6 +50,7 @@ static ln_list *ep_transpose(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_upsample(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_zeros(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
 
 static ln_hash_init_entry init_ep_funcs[] = {
@@ -68,6 +69,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"upsample", ep_upsample},
     {"zeros", ep_zeros},
     {"reshape", ep_reshape},
+    {"print", ep_print},
     {"tensorrt", ep_tensorrt},
     LN_HASH_INIT_ENTRY_NULL
 };
@@ -113,7 +115,7 @@ static void cleanup(void)
 static char *create_arg_name_in_tensors(ln_list *tensors, const char *prefix)
 {
     ln_tensor_list_entry *tle;
-    int max_idx = 0;
+    int max_idx = -1;
     char *buf;
     size_t prefix_len = strlen(prefix);
     size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
@@ -127,14 +129,14 @@ static char *create_arg_name_in_tensors(ln_list *tensors, const char *prefix)
         int idx = atoi(&tle->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
-    snprintf(buf, buf_len, "%s%d", prefix, max_idx);
+    snprintf(buf, buf_len, "%s%d", prefix, max_idx+1);
     return buf;
 }
 
 static char *create_arg_name_in_params(ln_list *params, const char *prefix)
 {
     ln_param_entry *pe;
-    int max_idx = 0;
+    int max_idx = -1;
     char *buf;
     size_t prefix_len = strlen(prefix);
     size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
@@ -148,7 +150,7 @@ static char *create_arg_name_in_params(ln_list *params, const char *prefix)
         int idx = atoi(&pe->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
-    snprintf(buf, buf_len, "%s%d", prefix, max_idx);
+    snprintf(buf, buf_len, "%s%d", prefix, max_idx+1);
     return buf;
 }
 
@@ -296,7 +298,7 @@ static void add_conv_to_trt(ln_op *trt_op, const ln_op *op)
     add_src(trt_arg, op_arg, param_op_arg_name, "src", "src");
     add_weight(trt_arg, op_arg, param_op_arg_name, "weight", "weight");
     add_weight(trt_arg, op_arg, param_op_arg_name, "bias", "bias");
-    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
@@ -351,6 +353,7 @@ static void add_activation_to_trt(ln_op *trt_op, const ln_op *op)
 {
     ln_op_arg *trt_arg = trt_op->op_arg;
     ln_op_arg *op_arg = op->op_arg;
+    ln_tensor_entry *te;
     char *param_op_arg_name;
     const char *atype;
     char *param_arg_name;
@@ -360,7 +363,9 @@ static void add_activation_to_trt(ln_op *trt_op, const ln_op *op)
                                                   param_op_arg_name, "activation");
 
     add_src(trt_arg, op_arg, param_op_arg_name, "src", "src");
-    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "dst");
+    te = ln_op_find_tensor_entry(op, "src");
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
 
     if (ln_streq(op_arg->optype, "relu"))
         atype = "kRELU";
@@ -410,7 +415,7 @@ static void add_pooling_to_trt(ln_op *trt_op, const ln_op *op)
                                                   param_op_arg_name, "pooling");
 
     add_src(trt_arg, op_arg, param_op_arg_name, "src", "src");
-    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
@@ -504,7 +509,7 @@ static void add_softmax_to_trt(ln_op *trt_op, const ln_op *op)
                                                   param_op_arg_name, "softmax");
 
     add_src(trt_arg, op_arg, param_op_arg_name, "src", "src");
-    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "dst");
 
     tensor_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
     te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
@@ -793,7 +798,7 @@ static ln_list *ep_batchnorm(const ln_op *op, const ln_dfg *dfg, int *match)
     trt_op->op_arg->params = ln_param_list_append_string(trt_op->op_arg->params,
                                                          op_arg_name, "scale");
     add_src(trt_op->op_arg, op->op_arg, op_arg_name, "src", "src");
-    add_dst(trt_op->op_arg, op->op_arg, op_arg_name, "dst", "src");
+    add_dst(trt_op->op_arg, op->op_arg, op_arg_name, "dst", "dst");
     add_batchnorm_weight(trt_op->op_arg, bn2scale_op->op_arg, op_arg_name,
                          "dst_shift", "shift");
     add_batchnorm_weight(trt_op->op_arg, bn2scale_op->op_arg, op_arg_name,
@@ -856,6 +861,12 @@ static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg, int *match)
 {
     *match = 1;
     return simple_replace(op, "reshape_cuda");
+}
+
+static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "print_cuda");
 }
 
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)
@@ -984,10 +995,37 @@ static void pe_free(void *p)
     ln_param_entry_free(p);
 }
 
-/* remove dsts that don't have a successor */
+static int have_successor_except(const ln_op *trt_op, const char *tname,
+                                 const ln_op *op, const ln_dfg *dfg)
+{
+    ln_list *suc_ens;
+    ln_graph_edge_node *en;
+    ln_op *suc_op;
+    int ret = 0;
+
+    suc_ens = ln_dfg_nexts(dfg, trt_op, tname);
+    if (!suc_ens) {
+        ret = 0;
+        goto end;
+    }
+    LN_LIST_FOREACH(en, suc_ens) {
+        suc_op = en->node->data;
+        if (!ln_streq(suc_op->op_arg->name, op->op_arg->name)) {
+            ret = 1;
+            goto end;
+        }
+    }
+    ret = 0;
+
+end:
+    ln_list_free(suc_ens);
+    return ret;
+}
+
+/* remove dsts that don't have a successor except `op` */
 /* NOTE: Unable to remove the lastest-added op's dst, which usually always have
    a successor. But if not, this will waste a little GPU memory for that dst. */
-static void remove_extra_dst(ln_op *trt_op, const ln_dfg *dfg)
+static void remove_extra_dst(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg)
 {
     ln_list **lp;
     ln_list *tmp;
@@ -997,7 +1035,7 @@ static void remove_extra_dst(ln_op *trt_op, const ln_dfg *dfg)
 
     for (lp = &trt_op->op_arg->tensors_out; *lp;) {
         tle = (*lp)->data;
-        if (ln_dfg_next(dfg, trt_op, tle->name)) { /* have a successor */
+        if (have_successor_except(trt_op, tle->name, op, dfg)) {
             lp = &(*lp)->next;
             continue;
         }
@@ -1049,11 +1087,11 @@ static void add_trt_to_trt(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg)
             add_trt_weight(trt_arg, op_arg, tle->name);
     }
 
+    remove_extra_dst(trt_op, op, dfg);
+
     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
         add_trt_dst(trt_arg, op_arg, tle->name);
     }
-
-    remove_extra_dst(trt_op, dfg);
 
     param_op_arg_name = create_arg_name_in_params(trt_arg->params, "op");
     base_idx = atoi(&param_op_arg_name[2]);
@@ -1095,6 +1133,7 @@ static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
     ln_list *l;
     ln_op *op;
     ln_op *trt_op;
+    ln_op *no_trt_op;
     size_t i;
 
     *match = 0;
@@ -1107,6 +1146,8 @@ static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
         op = l->data;
         if (!ln_streq(op->op_arg->optype, "tensorrt")) {
             i++, l = l->next;
+            no_trt_op = ln_op_copy(op);
+            new_ops = ln_list_append(new_ops, no_trt_op);
             continue;
         }
         trt_op = ln_op_copy(op);

@@ -70,7 +70,8 @@ void ln_error_handle(ln_error **error)
     case LN_ERROR_SYS:
         fprintf(stderr, "ERROR: %s\n", (*error)->err_str);
         fflush(NULL);
-        exit(EXIT_FAILURE);
+        /* exit(EXIT_FAILURE); */
+        abort();
         break;
     case LN_INTER_ERROR:
     case LN_INTER_ERROR_SYS:

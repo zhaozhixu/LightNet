@@ -43,90 +43,6 @@
             ]
         },
         {
-            "name": "create4",
-            "optype": "create",
-            "tensors_in": [
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "weight2"}
-            ],
-            "params": [
-                {"arg_name": "dims", "value": [1, 16, 64, 1, 1]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "data", "value": null}
-            ]
-        },
-        {
-            "name": "create5",
-            "optype": "create",
-            "tensors_in": [
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "bias2"}
-            ],
-            "params": [
-                {"arg_name": "dims", "value": [16]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "data", "value": null}
-            ]
-        },
-                {
-            "name": "create6",
-            "optype": "create",
-            "tensors_in": [
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "scale1"}
-            ],
-            "params": [
-                {"arg_name": "dims", "value": [80]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "data", "value": null}
-            ]
-        },
-        {
-            "name": "create7",
-            "optype": "create",
-            "tensors_in": [
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "offset1"}
-            ],
-            "params": [
-                {"arg_name": "dims", "value": [80]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "data", "value": null}
-            ]
-        },
-        {
-            "name": "create8",
-            "optype": "create",
-            "tensors_in": [
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "mean1"}
-            ],
-            "params": [
-                {"arg_name": "dims", "value": [80]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "data", "value": null}
-            ]
-        },
-        {
-            "name": "create9",
-            "optype": "create",
-            "tensors_in": [
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "var1"}
-            ],
-            "params": [
-                {"arg_name": "dims", "value": [80]},
-                {"arg_name": "dtype", "value": "TL_FLOAT"},
-                {"arg_name": "data", "value": null}
-            ]
-        },
-        {
             "name": "conv2d1",
             "optype": "conv2d",
             "tensors_in": [
@@ -155,6 +71,34 @@
                 {"arg_name": "dst", "name": "relu1_dst"}
             ],
             "params": [
+            ]
+        },
+        {
+            "name": "create4",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "weight2"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [1, 16, 64, 1, 1]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "data", "value": null}
+            ]
+        },
+        {
+            "name": "create5",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "bias2"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [16]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "data", "value": null}
             ]
         },
         {
@@ -215,6 +159,62 @@
                 {"arg_name": "size", "value": [3, 3]},
                 {"arg_name": "stride", "value": [2, 2]},
                 {"arg_name": "padding", "value": [1, 1, 1, 1]}
+            ]
+        },
+        {
+            "name": "create6",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "scale1"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [80]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "data", "value": null}
+            ]
+        },
+        {
+            "name": "create7",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "offset1"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [80]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "data", "value": null}
+            ]
+        },
+        {
+            "name": "create8",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "mean1"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [80]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "data", "value": null}
+            ]
+        },
+        {
+            "name": "create9",
+            "optype": "create",
+            "tensors_in": [
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "name": "var1"}
+            ],
+            "params": [
+                {"arg_name": "dims", "value": [80]},
+                {"arg_name": "dtype", "value": "TL_FLOAT"},
+                {"arg_name": "data", "value": null}
             ]
         },
         {

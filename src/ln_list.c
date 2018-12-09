@@ -277,6 +277,18 @@ void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)
     return NULL;
 }
 
+ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)
+{
+    ln_list *l;
+    ln_list *res = NULL;
+
+    for (l = list; l; l = l->next) {
+        if (cmp(l->data, data) == 0)
+            res = ln_list_prepend(res, l->data);
+    }
+    return res;
+}
+
 int ln_list_position(ln_list *list, ln_list *llink)
 {
     ln_list *l;

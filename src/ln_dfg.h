@@ -46,8 +46,11 @@ void ln_dfg_free(ln_dfg *dfg);
 void ln_dfg_add(ln_dfg *dfg, ln_op *op);
 void ln_dfg_remove(ln_dfg *dfg, ln_op *op);
 ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname);
+ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname);
 ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname);
 int ln_dfg_check(const ln_dfg *dfg);
+void ln_dfg_fprint(FILE *fp, const ln_dfg *dfg);
+void ln_dfg_print(const ln_dfg *dfg);
 
 #ifdef __cplusplus
 LN_CPPEND

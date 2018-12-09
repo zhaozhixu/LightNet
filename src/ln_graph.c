@@ -323,7 +323,7 @@ void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_node,
         print_node(fp, node->data);
         fprintf(fp, "-> ");
         LN_LIST_FOREACH(edge_node, node->out_edge_nodes) {
-            fprintf(fp, "-");
+            fprintf(fp, "--");
             if (print_edge)
                 print_edge(fp, edge_node->edge_data);
             fprintf(fp, "-");

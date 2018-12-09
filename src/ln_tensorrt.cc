@@ -116,8 +116,9 @@ static int str_to_scale_mode(const char *str)
     return -1;
 }
 
-static void check_param(const char *name1, const char *name2, ln_param_type ptype,
-                        int plen ,ln_op_arg *op_arg, ln_error **error)
+static void check_param(const char *name1, const char *name2,
+                        ln_param_type ptype, int plen ,ln_op_arg *op_arg,
+                        ln_error **error)
 {
     char *full_name;
     ln_param_entry *pe;
@@ -198,7 +199,7 @@ static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)
     check_param(opname, "scale", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "power", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
-    check_param(opname, "scale_mode", LN_PARAM_NUMBER, 0, op_arg, error);
+    check_param(opname, "scale_mode", LN_PARAM_STRING, 0, op_arg, error);
 
     ln_param_entry *pe;
     pe = ln_param_list_find2(op_arg->params, opname, "scale_mode");
@@ -291,7 +292,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
         arg_name = ln_strcat_delim_alloc(tle->arg_name, "dtype", '_');
         pe = ln_param_list_find(op_arg->params, arg_name);
         ln_opck_param_exist(pe, arg_name);
-        ln_opck_param_type(pe, LN_PARAM_ARRAY_STRING);
+        ln_opck_param_type(pe, LN_PARAM_STRING);
         dtype = tl_dtype_from_str(pe->value_string);
         ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
                 "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",

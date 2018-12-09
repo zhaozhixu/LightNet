@@ -56,7 +56,7 @@ const char *ln_unique_name(const char *prefix)
         ln_err_msg("WARNING: ln_name_create()'s prefix \"%s\" exceeds LN_MAX_NAME_PREFIX limit %d",
                    prefix, LN_MAX_NAME_PREFIX);
 
-    snprintf(nr->name_buf, LN_MAX_NAME_LEN, "prefix%u", nr->name_idx);
+    snprintf(nr->name_buf, LN_MAX_NAME_LEN, "%s%u", prefix, nr->name_idx);
     nr->name_idx++;
 
     if (nr->name_idx == LN_MAX_NAME_IDX)

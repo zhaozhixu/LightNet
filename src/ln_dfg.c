@@ -256,13 +256,6 @@ void ln_dfg_remove(ln_dfg *dfg, ln_op *op)
     dfg->graph->nodes = ln_list_remove(dfg->graph->nodes, node);
 }
 
-static int edge_node_cmp_by_edge(const void *data1, const void *data2)
-{
-    const ln_graph_edge_node *en1 = data1;
-
-    return en1->edge_data_cmp(data1, data2);
-}
-
 ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)
 {
     ln_graph_node *node;
@@ -271,9 +264,20 @@ ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)
 
     node = ln_hash_find(dfg->node_table, op->op_arg->name);
     edge_node.edge_data = (char *)tname;
-    res = ln_list_find_custom(node->out_edge_nodes, &edge_node,
-                              edge_node_cmp_by_edge);
+    res = ln_list_find_custom(node->out_edge_nodes, &edge_node, en_cmp_edge);
     return res ? res->node->data : NULL;
+}
+
+ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname)
+{
+    ln_graph_node *node;
+    ln_graph_edge_node edge_node;
+    ln_list *res;
+
+    node = ln_hash_find(dfg->node_table, op->op_arg->name);
+    edge_node.edge_data = (char *)tname;
+    res = ln_list_find_all_custom(node->out_edge_nodes, &edge_node, en_cmp_edge);
+    return res;
 }
 
 ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname)
@@ -284,8 +288,7 @@ ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname)
 
     node = ln_hash_find(dfg->node_table, op->op_arg->name);
     edge_node.edge_data = (char *)tname;
-    res = ln_list_find_custom(node->in_edge_nodes, &edge_node,
-                              edge_node_cmp_by_edge);
+    res = ln_list_find_custom(node->in_edge_nodes, &edge_node, en_cmp_edge);
     return res ? res->node->data : NULL;
 }
 
@@ -298,7 +301,7 @@ int ln_dfg_check(const ln_dfg *dfg)
     LN_LIST_FOREACH(en, dfg->dangling_ins) {
         op = en->node->data;
         tname = en->edge_data;
-        ln_error_inter(0, "unsolved input tensor \"%s\" of op \"%s\" type \"%s\"",
+        ln_error_inter(0, "unresolved input tensor \"%s\" of op \"%s\" type \"%s\"",
                        tname, op->op_arg->name, op->op_arg->optype);
     }
 
@@ -309,4 +312,26 @@ int ln_dfg_check(const ln_dfg *dfg)
                       tname, op->op_arg->name, op->op_arg->optype);
     }
     return 1;
+}
+
+static void fprint_node(FILE *fp, const void *p)
+{
+    const ln_op *op = p;
+    fprintf(fp, "%s(%s)", op->op_arg->name, op->op_arg->optype);
+}
+
+static void fprint_edge(FILE *fp, const void *p)
+{
+    const char *s = p;
+    fprintf(fp, "%s", s);
+}
+
+void ln_dfg_fprint(FILE *fp, const ln_dfg *dfg)
+{
+    ln_graph_fprint(fp, dfg->graph, fprint_node, fprint_edge);
+}
+
+void ln_dfg_print(const ln_dfg *dfg)
+{
+    ln_dfg_fprint(stdout, dfg);
 }
