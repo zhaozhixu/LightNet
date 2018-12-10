@@ -129,6 +129,7 @@ void ln_pass_mem_plan(ln_context *ctx)
     ln_hash *mem_plans;
     ln_mem_plan *mp;
     ln_list *unused_tles;
+    size_t water_level;
 
     mem_plans = ln_mem_plan_table_create();
     use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
@@ -144,9 +145,12 @@ void ln_pass_mem_plan(ln_context *ctx)
                 continue;
             if (te->isstatic) {
                 te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
+                water_level = te->offset + tl_tensor_size(te->tensor) - 1;
                 ctx->mem_sizes[te->mtype] =
-                    ctx->mem_sizes[te->mtype] > te->offset ?
-                    ctx->mem_sizes[te->mtype] : te->offset;
+                    ctx->mem_sizes[te->mtype] > water_level ?
+                    ctx->mem_sizes[te->mtype] : water_level;
+                if (ln_streq(te->name, "mean1"))
+                    ln_mem_plan_dump(mp, stdout);
                 continue;
             }
             if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
@@ -178,12 +182,12 @@ void ln_pass_mem_plan(ln_context *ctx)
                 continue;
             if (ln_mem_plan_exist(mp, te->offset)) {
                 use_count_dec(use_counts, te->name);
-            }
-            else {
+            } else {
                 te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
+                water_level = te->offset + tl_tensor_size(te->tensor) - 1;
                 ctx->mem_sizes[te->mtype] =
-                    ctx->mem_sizes[te->mtype] > te->offset ?
-                    ctx->mem_sizes[te->mtype] : te->offset;
+                    ctx->mem_sizes[te->mtype] > water_level ?
+                    ctx->mem_sizes[te->mtype] : water_level;
             }
             if (use_count_of(use_counts, te->name) == 0)
                 unused_tles = ln_list_prepend(unused_tles, tle);
@@ -212,7 +216,9 @@ void ln_pass_mem_plan(ln_context *ctx)
         }
     }
     assert(ctx->mem_sizes[LN_MEM_NONE] == 0);
-
+    mp = ln_hash_find(mem_plans, (void *)LN_MEM_CPU);
+    printf("max cpu size %lu\n", ctx->mem_sizes[LN_MEM_CPU]);
+    ln_mem_plan_dump(mp, stdout);
     ln_hash_free(use_counts);
     ln_mem_plan_table_free(mem_plans);
 }

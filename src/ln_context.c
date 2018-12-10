@@ -131,16 +131,21 @@ void ln_context_alloc_mem(ln_context *ctx)
     int i;
 
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        ln_error_debug("allocate memory of mtype %s: %lu bytes",
-                       ln_mem_type_name(i), ctx->mem_sizes[i]);
         ctx->mem_starts[i] = ln_mtype_infos[i].alloc_func(ctx->mem_sizes[i]);
+        ln_error_debug("allocate memory of mtype %s %lu bytes at address %p",
+                       ln_mem_type_name(i), ctx->mem_sizes[i],
+                       ctx->mem_starts[i]);
         assert(ctx->mem_starts[i]);
     }
     LN_LIST_FOREACH(op, ctx->ops) {
         LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
             te = ln_tensor_table_find(op->op_arg->tensor_table, tle->name);
             assert(te);
+            if (ln_streq(te->name, "mean1"))
+                printf("te->tensor->data = %p\n", te->tensor->data);
             te->tensor->data = te->offset + ctx->mem_starts[te->mtype];
+            if (ln_streq(te->name, "mean1"))
+                printf("te->tensor->data = %p\n", te->tensor->data);
         }
     }
 }

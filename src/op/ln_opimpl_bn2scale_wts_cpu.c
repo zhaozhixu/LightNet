@@ -35,6 +35,7 @@ struct priv_s {
     tl_tensor *dst_power;
     char      *dst_power_name;
     float      epsilon;
+    ln_tensor_entry *src_mean_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -206,7 +207,9 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     priv->dst_power = dst_power;
     priv->dst_power_name = dst_power_name;
     priv->epsilon = epsilon;
+    priv->src_mean_entry = src_mean_entry;
     op_arg->priv = priv;
+    printf("%lu\n", priv->src_mean_entry->isstatic);
 }
 
 /* This function blocks only once per instance right after memory allocation. */
@@ -215,6 +218,7 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
     struct priv_s *priv = op_arg->priv;
 
     {
+        printf("%d\n", priv->src_mean_entry->isstatic);
         float *dst_scale = priv->dst_scale->data;
         float *dst_shift = priv->dst_shift->data;
         float *dst_power = priv->dst_power->data;
@@ -223,6 +227,9 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
         float *src_scale = priv->src_scale->data;
         float *src_offset = priv->src_offset->data;
         for (int i = 0; i < priv->dst_scale->len; i++) {
+            printf("%p %p %p\n", dst_scale, dst_power, dst_shift);
+            printf("%p %p %p %p\n", src_scale, src_mean, src_offset, src_var);
+            printf("%f\n", priv->epsilon);
             dst_scale[i] = src_scale[i] / (src_var[i] + priv->epsilon);
             dst_shift[i] = src_offset[i] - src_mean[i] * src_scale[i] / (src_var[i] + priv->epsilon);
             dst_power[i] = 1;
