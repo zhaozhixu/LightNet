@@ -216,7 +216,8 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
-
+    ln_tensor_entry *te = ln_tensor_table_find(op_arg->tensor_table, "mean1");
+    printf("in static run %p\n", te->tensor->data);
     {
         printf("%d\n", priv->src_mean_entry->isstatic);
         float *dst_scale = priv->dst_scale->data;

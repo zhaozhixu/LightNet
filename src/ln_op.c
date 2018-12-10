@@ -277,6 +277,11 @@ void ln_op_list_do_static_run(ln_list *ops, ln_error **error)
         op = l->data;
         if (!op->static_run)
             continue;
+        if (ln_streq(op->op_arg->name, "bn2scale_wts_cpu0")) {
+            ln_tensor_entry *te = ln_op_find_tensor_entry(op, "src_mean");
+            printf("before static run %p\n", te->tensor->data);
+        }
+
         op->static_run(op->op_arg, error);
         if (*error)
             return;

@@ -162,18 +162,20 @@ void ln_context_dealloc_mem(ln_context *ctx)
     }
 }
 
-void ln_context_static_run(ln_context *ctx)
-{
-    ln_error *error = NULL;
-
-    ln_op_list_do_static_run(ctx->ops, &error);
-    ln_error_handle(&error);
-}
-
 void ln_context_run(ln_context *ctx)
 {
     ln_error *error = NULL;
 
+    ln_op_list_do_post_run(ctx->ops, &error);
+    ln_error_handle(&error);
+    ln_op_list_do_pre_run(ctx->ops, &error);
+    ln_error_handle(&error);
+    ln_context_alloc_mem(ctx);
+    ln_op_list_do_static_run(ctx->ops, &error);
+    ln_error_handle(&error);
     ln_op_list_do_run(ctx->ops, &error);
     ln_error_handle(&error);
+    ln_op_list_do_post_run(ctx->ops, &error);
+    ln_error_handle(&error);
+    ln_context_dealloc_mem(ctx);
 }
