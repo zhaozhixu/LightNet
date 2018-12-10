@@ -92,12 +92,15 @@ ln_combiner_func cb_funcs_tensorrt[] = {
 };
 
 ln_arch ln_arch_tensorrt = {
-    .reg_ops = ops_tensorrt,
     .init_func = init,
     .cleanup_func = cleanup,
+    .reg_ops = ops_tensorrt,
     .ep_funcs = ep_funcs_tensorrt,
     .cb_funcs = cb_funcs_tensorrt,
     .arch_name = "tensorrt",
+    .align_mem_size = 1,
+    .default_mem_size = 4294967296, /* 4GB */
+    .mtype = LN_MEM_CUDA,
 };
 
 static void init(void)

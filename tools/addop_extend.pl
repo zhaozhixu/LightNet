@@ -108,7 +108,7 @@ sub gen_code {
     if ($root) {
         my $src_file = "${root}/src/op/ln_opimpl_${optype}.c";
         &backup_write($src_file, $code_str);
-        my $arch_file = "${root}/src/ln_arch_${arch}.c";
+        my $arch_file = "${root}/src/arch/ln_arch_${arch}.c";
         &add_to_arch_file($arch_file, $optype, $arch);
     }
 }

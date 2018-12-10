@@ -71,10 +71,13 @@ ln_combiner_func cb_funcs_none[] = {
 };
 
 ln_arch ln_arch_none = {
-    .reg_ops = ops_none,
     .init_func = NULL,
     .cleanup_func = NULL,
+    .reg_ops = ops_none,
     .ep_funcs = ep_funcs_none,
     .cb_funcs = cb_funcs_none,
     .arch_name = "none",
+    .align_mem_size = 1,
+    .default_mem_size = 4294967296, /* 4GB */
+    .mtype = LN_MEM_NONE,
 };

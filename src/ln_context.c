@@ -31,6 +31,7 @@ ln_context *ln_context_create(void)
     ctx->op_table = ln_op_table_create();
     ctx->dfg = ln_dfg_create();
     ctx->ops = NULL;
+    ctx->mem_plan_table = ln_mem_plan_table_create();
 
     return ctx;
 }
@@ -41,6 +42,7 @@ void ln_context_free(ln_context *ctx)
     ln_op_table_free(ctx->op_table);
     ln_dfg_free(ctx->dfg);
     ln_op_list_free(ctx->ops);
+    ln_mem_plan_table_free(ctx->mem_plan_table);
 }
 
 static void init_op(ln_context *ctx, ln_op *op)
@@ -119,6 +121,11 @@ void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
 int ln_context_check(ln_context *ctx)
 {
     return ln_dfg_check(ctx->dfg);
+}
+
+void ln_context_plan_mem(ln_context *ctx)
+{
+
 }
 
 void ln_context_static_run(ln_context *ctx)

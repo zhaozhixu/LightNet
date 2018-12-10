@@ -33,7 +33,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
                                   ln_list *param_list)
 {
     ln_param_type first_type = LN_PARAM_INVALID;
-    ln_param_type type;
+    ln_param_type type = LN_PARAM_INVALID;
     cJSON *element_json;
     int array_len = cJSON_GetArraySize(array_json);
     char **array_string = NULL;

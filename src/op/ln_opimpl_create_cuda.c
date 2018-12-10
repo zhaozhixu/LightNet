@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_cuda.h"
 
 static int compute_length(int ndim, const int *dims)
 {

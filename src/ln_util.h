@@ -37,7 +37,7 @@ typedef enum ln_bool ln_bool;
 typedef int (*ln_cmp_func)(const void *, const void *);
 typedef void (*ln_free_func)(void *);
 typedef void (*ln_fprint_func) (FILE *, const void *);
-typedef uint32_t (*ln_hash_func)(const void *);;
+typedef uint32_t (*ln_hash_func)(const void *);
 
 #define ln_free free
 
@@ -76,32 +76,6 @@ void ln_err_bt(const char *fmt, ...);
 void ln_err_exit(int error, const char *fmt, ...);
 void ln_err_sys(const char *fmt, ...);
 void ln_err_dump(const char *fmt, ...);
-
-#ifdef LN_CUDA
-
-typedef struct ln_cuda_stream ln_cuda_stream;
-
-#define LN_MAX_CUDA_DEVICE 15
-
-void ln_cuda_set_device(int n);
-int ln_cuda_get_device();
-int ln_is_device_mem(const void *ptr);
-void *ln_alloc_cuda(size_t size);
-void ln_memset_cuda(void *dst, int c, size_t n);
-void ln_memcpy_h2d(void *dst, const void *src, size_t size);
-void ln_memcpy_d2h(void *dst, const void *src, size_t size);
-void ln_memcpy_d2d(void *dst, const void *src, size_t size);
-void ln_free_cuda(void *p);
-void *ln_clone_h2d(const void *src, size_t size);
-void *ln_clone_d2h(const void *src, size_t size);
-void *ln_clone_d2d(const void *src, size_t size);
-void *ln_repeat_h2d(void *data, size_t size, int times);
-void *ln_repeat_d2h(void *data, size_t size, int times);
-void *ln_repeat_d2d(void *data, size_t size, int times);
-void ln_cuda_stream_create(ln_cuda_stream *pstream);
-void ln_cuda_stream_sync(ln_cuda_stream stream);
-
-#endif  /* LN_CUDA */
 
 #ifdef __cplusplus
 LN_CPPEND

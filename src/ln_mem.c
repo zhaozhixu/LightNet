@@ -37,6 +37,13 @@ struct mem_info {
     size_t   size;
 };
 
+typedef struct ln_mem_plan ln_mem_plan;
+struct ln_mem_plan {
+    size_t   size;
+    size_t   align_size;
+    ln_list *mem_blocks;
+};
+
 static const char *mtype_name[] = {
     "LN_MEM_NONE",
     "LN_MEM_DIFF",
@@ -69,19 +76,19 @@ static void mem_info_free(mem_info *minfo)
     ln_free(minfo);
 }
 
-ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)
+ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size)
 {
-    ln_mem_pool *mem_pool;
+    ln_mem_plan *mem_plan;
     mem_info *minfo;
 
     assert(size > 0 && align_size > 0);
-    mem_pool = ln_alloc(sizeof(ln_mem_pool));
-    mem_pool->size = size;
-    mem_pool->align_size = align_size;
+    mem_plan = ln_alloc(sizeof(ln_mem_plan));
+    mem_plan->size = size;
+    mem_plan->align_size = align_size;
     minfo = mem_info_create(HOLE, 1, size);
-    mem_pool->mem_blocks = ln_list_append(NULL, minfo);
+    mem_plan->mem_blocks = ln_list_append(NULL, minfo);
 
-    return mem_pool;
+    return mem_plan;
 }
 
 static void mem_info_free_wrapper(void *minfo)
@@ -89,22 +96,22 @@ static void mem_info_free_wrapper(void *minfo)
     mem_info_free((mem_info *)minfo);
 }
 
-void ln_mem_pool_free(ln_mem_pool *mem_pool)
+void ln_mem_plan_free(ln_mem_plan *mem_plan)
 {
-    ln_list_free_deep(mem_pool->mem_blocks, mem_info_free_wrapper);
-    ln_free(mem_pool);
+    ln_list_free_deep(mem_plan->mem_blocks, mem_info_free_wrapper);
+    ln_free(mem_plan);
 }
 
-static int best_fit(ln_mem_pool *mem_pool, size_t size)
+static int best_fit(ln_mem_plan *mem_plan, size_t size)
 {
     int first_hole = 0;
     size_t min_size;
-    size_t align_size = mem_pool->align_size;
+    size_t align_size = mem_plan->align_size;
     int min_idx;
     ln_list *l;
     int i;
 
-    for (l = mem_pool->mem_blocks, i = 0; l; l = l->next, i++) {
+    for (l = mem_plan->mem_blocks, i = 0; l; l = l->next, i++) {
         mem_info *minfo = l->data;
         size_t align_start = minfo->start % align_size == 0 ? minfo->start :
             align_size - minfo->start % align_size + minfo->start;
@@ -128,28 +135,28 @@ static int best_fit(ln_mem_pool *mem_pool, size_t size)
     return min_idx;
 }
 
-size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
+size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size)
 {
     assert(size > 0);
-    int fit_idx = best_fit(mem_pool, size);
+    int fit_idx = best_fit(mem_plan, size);
     if (fit_idx < 0) {
         ln_error *error = ln_error_create(LN_ERROR,
-                                          "ln_mem_alloc(): out of virtual memory pool when allocating %ld bytes", size);
+                                          "ln_mem_plan_alloc(): out of virtual memory pool when allocating %ld bytes", size);
         ln_error_handle(&error);
     }
 
-    mem_info *minfo = ln_list_nth_data(mem_pool->mem_blocks, fit_idx);
-    size_t align_size = mem_pool->align_size;
+    mem_info *minfo = ln_list_nth_data(mem_plan->mem_blocks, fit_idx);
+    size_t align_size = mem_plan->align_size;
     size_t align_start = minfo->start % align_size == 0 ? minfo->start :
         align_size - minfo->start % align_size + minfo->start;
     size_t mem_size = size + align_start - minfo->start;
     mem_info *new_minfo = mem_info_create(SYMBOL, minfo->start, mem_size);
-    mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
+    mem_plan->mem_blocks = ln_list_insert_nth(mem_plan->mem_blocks,
                                               new_minfo, fit_idx);
     minfo->start += mem_size;
     minfo->size -= mem_size;
     if (minfo->size == 0)
-        mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
+        mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
                                                        fit_idx + 1,
                                                        mem_info_free_wrapper);
 
@@ -157,33 +164,33 @@ size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size)
     if (hole_size == 0)
         return align_start;
     mem_info *hole_minfo = mem_info_create(HOLE, new_minfo->start, hole_size);
-    mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
+    mem_plan->mem_blocks = ln_list_insert_nth(mem_plan->mem_blocks,
                                               hole_minfo, fit_idx);
     new_minfo->start = align_start;
     new_minfo->size -= hole_size;
     return align_start;
 }
 
-void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
+void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr)
 {
     int i;
     ln_list *l, *l_next, *l_before = NULL;
     mem_info *minfo;
-    for (l = mem_pool->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
+    for (l = mem_plan->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
         minfo = l->data;
         if (minfo->flag != SYMBOL || minfo->start != addr)
             continue;
         l_next = l->next;
         if (l_next && ((mem_info *)l_next->data)->flag == HOLE) {
             minfo->size += ((mem_info *)l_next->data)->size;
-            mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
+            mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
                                                            i + 1,
                                                            mem_info_free_wrapper);
         }
         if (l_before && ((mem_info *)l_before->data)->flag == HOLE) {
             minfo->start -= ((mem_info *)l_before->data)->size;
             minfo->size += ((mem_info *)l_before->data)->size;
-            mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
+            mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
                                                            i - 1,
                                                            mem_info_free_wrapper);
         }
@@ -192,180 +199,61 @@ void ln_mem_free(ln_mem_pool *mem_pool, size_t addr)
     }
     if (!l) {
         ln_error *error = ln_error_create(LN_ERROR,
-                                          "ln_mem_free(): invalid address: 0x%012lx",
+                                          "ln_mem_plan_dealloc(): invalid address: 0x%012lx",
                                           addr);
         ln_error_handle(&error);
     }
 }
 
-int ln_mem_exist(ln_mem_pool *mem_pool, size_t addr)
+int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr)
 {
     mem_info *minfo;
 
-    LN_LIST_FOREACH(minfo, mem_pool->mem_blocks) {
+    LN_LIST_FOREACH(minfo, mem_plan->mem_blocks) {
         if (minfo->flag == SYMBOL && minfo->start == addr)
             return 1;
     }
     return 0;
 }
 
-void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp)
+void ln_mem_plan_dump(ln_mem_plan *mem_plan, FILE *fp)
 {
     mem_info *minfo;
 
-    fprintf(fp, "======= Lightnet Memory map: =======\n");
-    LN_LIST_FOREACH(minfo, mem_pool->mem_blocks) {
+    fprintf(fp, "======= Lightnet Memory Plan Map: =======\n");
+    LN_LIST_FOREACH(minfo, mem_plan->mem_blocks) {
         fprintf(fp, "0x%012lx-0x%012lx %s\n", minfo->start,
                 minfo->start+minfo->size-1, minfo->flag==HOLE?"H":"S");
     }
 }
 
-static void mem_pool_free_wrapper(void *p)
+static void mem_plan_free_wrapper(void *p)
 {
-    ln_mem_pool_free(p);
+    ln_mem_plan_free(p);
 }
 
-/* TODO: custom size and align size */
-ln_hash *ln_mem_pool_table_create(void)
+ln_hash *ln_mem_plan_table_create(void)
 {
     ln_hash *mpt;
-    ln_mem_pool *mp;
-    int i;
 
     mpt = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL,
-                         mem_pool_free_wrapper);
-    for (i = LN_MEM_NONE; i < LN_MEM_TYPE_SIZE; i++) {
-        mp = ln_mem_pool_create(1073741824, 1);
-        ln_hash_insert(mpt, (void *)(size_t)i, mp);
-    }
+                         mem_plan_free_wrapper);
     return mpt;
 }
 
-void ln_mem_pool_table_free(ln_hash *mpt)
+int ln_mem_plan_table_insert(ln_hash *table, ln_mem_type mt, size_t size,
+                             size_t align_size)
+{
+    mp = ln_mem_plan_create(size, align_size);
+    return ln_hash_insert(table, (void *)(size_t)mt, mp);
+}
+
+int ln_mem_plan_table_remove(ln_hash *table, ln_mem_type mt)
+{
+    return ln_hash_remove(table, (void *)(size_t)mt)
+}
+
+void ln_mem_plan_table_free(ln_hash *mpt)
 {
     ln_hash_free(mpt);
-}
-
-static inline void use_count_zero(ln_hash *use_counts, char *name)
-{
-    ln_hash_insert(use_counts, name, (void *)0);
-}
-
-static inline ssize_t use_count_inc(ln_hash *use_counts, char *name)
-{
-    int found;
-    ssize_t uc;
-
-    found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
-    assert(found);
-    ln_hash_insert(use_counts, name, (void *)(++uc));
-    return uc;
-}
-
-static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
-{
-    int found;
-    ssize_t uc;
-
-    found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
-    assert(found);
-    ln_hash_insert(use_counts, name, (void *)(--uc));
-    assert(uc >= 0);
-    return uc;
-}
-
-static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
-{
-    int found;
-    ssize_t uc;
-
-    found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
-    assert(found);
-    return uc;
-}
-
-ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools)
-{
-    ln_op *op;
-    ln_op_arg *arg;
-    ln_hash *use_counts;
-    ln_tensor_entry *te;
-    ln_tensor_list_entry *tle;
-    ln_mem_pool *mp;
-    ln_list *unused_tles;
-
-    use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-    LN_LIST_FOREACH(op, ops) {
-        arg = op->op_arg;
-        LN_LIST_FOREACH(tle, arg->tensors_out) {
-            te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
-            if (te->owner)
-                continue;
-            if (te->isstatic) {
-                te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
-                continue;
-            }
-            if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
-                use_count_inc(use_counts, te->name);
-            else
-                use_count_zero(use_counts, te->name);
-        }
-        LN_LIST_FOREACH(tle, arg->tensors_in) {
-            te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            if (te->owner) {
-                use_count_inc(use_counts, te->owner);
-                continue;
-            }
-            if (te->isstatic)
-                continue;
-            use_count_inc(use_counts, te->name);
-        }
-    }
-
-    LN_LIST_FOREACH(op, ops) {
-        arg = op->op_arg;
-        unused_tles = NULL;
-        LN_LIST_FOREACH(tle, arg->tensors_out) {
-            te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
-            if (te->owner)
-                continue;
-            if (te->isstatic)
-                continue;
-            if (ln_mem_exist(mp, te->offset)) {
-                use_count_dec(use_counts, te->name);
-            }
-            else {
-                te->offset = ln_mem_alloc(mp, tl_tensor_size(te->tensor));
-            }
-            if (use_count_of(use_counts, te->name) == 0)
-                unused_tles = ln_list_prepend(unused_tles, tle);
-        }
-        LN_LIST_FOREACH(tle, unused_tles) {
-            te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
-            ln_mem_free(mp, te->offset);
-        }
-        ln_list_free(unused_tles);
-        LN_LIST_FOREACH(tle, arg->tensors_in) {
-            te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
-            if (te->owner) {
-                if (use_count_dec(use_counts, te->owner) == 0) {
-                    te = ln_tensor_table_find(arg->tensor_table, te->owner);
-                    ln_mem_free(mp, te->offset);
-                }
-                continue;
-            }
-            if (te->isstatic)
-                continue;
-            if (use_count_dec(use_counts, te->name) == 0) {
-                ln_mem_free(mp, te->offset);
-            }
-        }
-    }
-
-    ln_hash_free(use_counts);
-    return ops;
 }

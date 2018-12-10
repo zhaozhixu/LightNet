@@ -20,44 +20,39 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_MEM_H_
-#define _LN_MEM_H_
+#ifndef _LN_CUDA_H_
+#define _LN_CUDA_H_
 
-#include <stdlib.h>
-#include "ln_list.h"
-#include "ln_hash.h"
+#include "ln_util.h"
 
-/* NOTE: keep this sync with mtype_name in ln_mem.c */
-#define LN_MEM_TYPE_SIZE 4
-enum ln_mem_type {
-    LN_MEM_NONE = 0,
-    LN_MEM_DIFF,
-    LN_MEM_CPU,
-    LN_MEM_CUDA,
-};
-typedef enum ln_mem_type ln_mem_type;
+typedef struct ln_cuda_stream ln_cuda_stream;
 
-typedef struct ln_mem_plan ln_mem_plan;
+#define LN_MAX_CUDA_DEVICE 15
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-const char *ln_mem_type_name(ln_mem_type mtype);
-ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size);
-void ln_mem_plan_free(ln_mem_plan *mem_plan);
-size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size);
-void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr);
-int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr);
-void ln_mem_plan_dump(ln_mem_plan *mem_plan, FILE *fp);
-ln_hash *ln_mem_plan_table_create(void);
-int ln_mem_plan_table_insert(ln_hash *table, ln_mem_type mt, size_t size,
-                             size_t align_size);
-int ln_mem_plan_table_remove(ln_hash *table, ln_mem_type mt);
-void ln_mem_plan_table_free(ln_hash *mpt);
+void ln_cuda_set_device(int n);
+int ln_cuda_get_device();
+int ln_is_device_mem(const void *ptr);
+void *ln_alloc_cuda(size_t size);
+void ln_memset_cuda(void *dst, int c, size_t n);
+void ln_memcpy_h2d(void *dst, const void *src, size_t size);
+void ln_memcpy_d2h(void *dst, const void *src, size_t size);
+void ln_memcpy_d2d(void *dst, const void *src, size_t size);
+void ln_free_cuda(void *p);
+void *ln_clone_h2d(const void *src, size_t size);
+void *ln_clone_d2h(const void *src, size_t size);
+void *ln_clone_d2d(const void *src, size_t size);
+void *ln_repeat_h2d(void *data, size_t size, int times);
+void *ln_repeat_d2h(void *data, size_t size, int times);
+void *ln_repeat_d2d(void *data, size_t size, int times);
+void ln_cuda_stream_create(ln_cuda_stream *pstream);
+void ln_cuda_stream_sync(ln_cuda_stream stream);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif  /* _LN_MEM_H_ */
+#endif  /* _LN_CUDA_H_ */

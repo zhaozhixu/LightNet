@@ -39,5 +39,6 @@
 #include "ln_dfg.h"
 #include "ln_context.h"
 #include "ln_name.h"
+#include "ln_cuda.h"
 
 #endif  /* _LIGHTNET_H_ */

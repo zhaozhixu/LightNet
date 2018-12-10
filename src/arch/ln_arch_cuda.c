@@ -149,10 +149,13 @@ ln_combiner_func cb_funcs_cuda[] = {
 };
 
 ln_arch ln_arch_cuda = {
-    .reg_ops = ops_cuda,
     .init_func = NULL,
     .cleanup_func = NULL,
+    .reg_ops = ops_cuda,
     .ep_funcs = ep_funcs_cuda,
     .cb_funcs = cb_funcs_cuda,
     .arch_name = "cuda",
+    .align_mem_size = 1,
+    .default_mem_size = 4294967296, /* 4GB */
+    .mtype = LN_MEM_CUDA,
 };

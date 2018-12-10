@@ -35,7 +35,7 @@ struct ln_context {
     ln_hash *op_table;
     ln_dfg  *dfg;
     ln_list *ops;
-    ln_hash *mem_pool_table;
+    ln_hash *mem_plan_table;
 };
 typedef struct ln_context ln_context;
 

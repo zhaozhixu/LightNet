@@ -37,7 +37,7 @@ LN_CPPSTART
 void ln_pass_expander(ln_context *ctx, const ln_expander_func *ep_funcs);
 void ln_pass_combiner(ln_context *ctx, size_t win_size,
                       const ln_combiner_func *cb_funcs);
-ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_pools);
+ln_list *ln_pass_mem(ln_list *ops, ln_hash *mem_plans);
 
 #ifdef __cplusplus
 LN_CPPEND

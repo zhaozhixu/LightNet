@@ -202,22 +202,22 @@ START_TEST(test_ln_pass_combiner)
 }
 END_TEST
 
-static void mem_pools_free_wrapper(void *p)
+static void mem_plans_free_wrapper(void *p)
 {
-     ln_mem_pool_free(p);
+     ln_mem_plan_free(p);
 }
 
 START_TEST(test_ln_pass_mem)
 {
-     ln_hash *mem_pools;
-     ln_mem_pool *mem_pool_none;
+     ln_hash *mem_plans;
+     ln_mem_plan *mem_plan_none;
      ln_tensor_entry *te;
 
-     mem_pools = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, mem_pools_free_wrapper);
-     mem_pool_none = ln_mem_pool_create(4096, 1);
-     ln_hash_insert(mem_pools, (void *)LN_MEM_NONE, mem_pool_none);
+     mem_plans = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, mem_plans_free_wrapper);
+     mem_plan_none = ln_mem_plan_create(4096, 1);
+     ln_hash_insert(mem_plans, (void *)LN_MEM_NONE, mem_plan_none);
 
-     ctx->ops = ln_pass_mem(ctx->ops, mem_pools);
+     ctx->ops = ln_pass_mem(ctx->ops, mem_plans);
 
      te = ln_tensor_table_find(ctx->tensor_table, "create1");
      ck_assert_ptr_ne(te, NULL);
@@ -244,7 +244,7 @@ START_TEST(test_ln_pass_mem)
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 49);
 
-     ln_hash_free(mem_pools);
+     ln_hash_free(mem_plans);
 }
 END_TEST
 /* end of tests */

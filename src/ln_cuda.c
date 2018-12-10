@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include <cuda_runtime.h>
 
-#include "ln_util.h"
+#include "ln_cuda.h"
 
 struct ln_cuda_stream {
     cudaStream_t stream;
