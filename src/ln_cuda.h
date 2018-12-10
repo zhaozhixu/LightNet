@@ -22,6 +22,7 @@
 
 #ifndef _LN_CUDA_H_
 #define _LN_CUDA_H_
+#ifdef LN_CUDA
 
 #include "ln_util.h"
 
@@ -55,4 +56,5 @@ void ln_cuda_stream_sync(ln_cuda_stream stream);
 LN_CPPEND
 #endif
 
+#endif  /* LN_CUDA */
 #endif  /* _LN_CUDA_H_ */

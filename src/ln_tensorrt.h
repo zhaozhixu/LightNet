@@ -20,6 +20,10 @@
  * SOFTWARE.
  */
 
+#ifndef _LN_TENSORRT_H_
+#define _LN_TENSORRT_H_
+#ifdef LN_TENSORRT
+
 #include "ln_util.h"
 
 struct ln_tensorrt_bundle;
@@ -38,3 +42,6 @@ void ln_tensorrt_bundle_execute(ln_tensorrt_bundle *bundle);
 #ifdef __cplusplus
 LN_CPPEND
 #endif
+
+#endif  /* LN_TENSORRT */
+#endif  /* _LN_TENSORRT_H_ */

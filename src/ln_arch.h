@@ -32,26 +32,23 @@ typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
                                      const ln_dfg *dfg, int *match);
 
 struct ln_arch {
-    void (*init_func)(void);
-    void (*cleanup_func)(void);
+    void              (*init_func)(void);
+    void              (*cleanup_func)(void);
     ln_op             **reg_ops;       /* NULL terminated */
     ln_expander_func   *ep_funcs;      /* NULL terminated */
     ln_combiner_func   *cb_funcs;      /* NULL terminated */
     char               *arch_name;
-    size_t              align_mem_size;
-    size_t              default_mem_size;
-    ln_mem_type         mtype;
 };
 typedef struct ln_arch ln_arch;
 
-struct ln_arch_tables {
-    ln_hash *arch_table;
-    ln_hash *op_proto_table;
+struct ln_arch_info {
+    ln_hash  *arch_table;
+    ln_hash  *op_proto_table;
 };
-typedef struct ln_arch_tables ln_arch_tables;
+typedef struct ln_arch_info ln_arch_info;
 
-extern ln_arch_tables ln_global_arch_tables;
-#define LN_ARCH ln_global_arch_tables
+extern ln_arch_info ln_global_arch_info;
+#define LN_ARCH ln_global_arch_info
 
 #ifdef __cplusplus
 LN_CPPSTART

@@ -45,7 +45,7 @@ static ln_arch *archs[] = {
     NULL
 };
 
-ln_arch_tables ln_global_arch_tables;
+ln_arch_info ln_global_arch_info;
 
 void ln_arch_init(void)
 {

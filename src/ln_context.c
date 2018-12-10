@@ -31,7 +31,8 @@ ln_context *ln_context_create(void)
     ctx->op_table = ln_op_table_create();
     ctx->dfg = ln_dfg_create();
     ctx->ops = NULL;
-    ctx->mem_plan_table = ln_mem_plan_table_create();
+    memset(ctx->mem_starts, 0, sizeof(ctx->mem_starts));
+    memset(ctx->mem_sizes, 0, sizeof(ctx->mem_sizes));
 
     return ctx;
 }
@@ -42,7 +43,6 @@ void ln_context_free(ln_context *ctx)
     ln_op_table_free(ctx->op_table);
     ln_dfg_free(ctx->dfg);
     ln_op_list_free(ctx->ops);
-    ln_mem_plan_table_free(ctx->mem_plan_table);
 }
 
 static void init_op(ln_context *ctx, ln_op *op)
@@ -123,9 +123,38 @@ int ln_context_check(ln_context *ctx)
     return ln_dfg_check(ctx->dfg);
 }
 
-void ln_context_plan_mem(ln_context *ctx)
+void ln_context_alloc_mem(ln_context *ctx)
 {
+    ln_op *op;
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
+    int i;
 
+    for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
+        ln_error_debug("allocate memory of mtype %s: %lu bytes",
+                       ln_mem_type_name(i), ctx->mem_sizes[i]);
+        ctx->mem_starts[i] = ln_mtype_infos[i].alloc_func(ctx->mem_sizes[i]);
+        assert(ctx->mem_starts[i]);
+    }
+    LN_LIST_FOREACH(op, ctx->ops) {
+        LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
+            te = ln_tensor_table_find(op->op_arg->tensor_table, tle->name);
+            assert(te);
+            te->tensor->data = te->offset + ctx->mem_starts[te->mtype];
+        }
+    }
+}
+
+void ln_context_dealloc_mem(ln_context *ctx)
+{
+    int i;
+
+    for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
+        ln_error_debug("free memory of mtype %s: %lu bytes",
+                       ln_mem_type_name(i), ctx->mem_sizes[i]);
+        ln_mtype_infos[i].free_func(ctx->mem_starts[i]);
+        ctx->mem_starts[i] = 0;
+    }
 }
 
 void ln_context_static_run(ln_context *ctx)

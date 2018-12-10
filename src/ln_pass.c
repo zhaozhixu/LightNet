@@ -119,26 +119,34 @@ static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
     return uc;
 }
 
-ln_list *ln_pass_mem_plan(ln_list *ops, ln_hash *mem_plans)
+void ln_pass_mem_plan(ln_context *ctx)
 {
     ln_op *op;
     ln_op_arg *arg;
     ln_hash *use_counts;
     ln_tensor_entry *te;
     ln_tensor_list_entry *tle;
+    ln_hash *mem_plans;
     ln_mem_plan *mp;
     ln_list *unused_tles;
 
+    mem_plans = ln_mem_plan_table_create();
     use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
-    LN_LIST_FOREACH(op, ops) {
+    LN_LIST_FOREACH(op, ctx->ops) {
         arg = op->op_arg;
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             mp = ln_hash_find(mem_plans, (void *)te->mtype);
+            ln_error_inter(te->mtype != LN_MEM_NONE,
+                           "tensor \"%s\" has an unresolved memory type %s",
+                           te->name, ln_mem_type_name(te->mtype));
             if (te->owner)
                 continue;
             if (te->isstatic) {
                 te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
+                ctx->mem_sizes[te->mtype] =
+                    ctx->mem_sizes[te->mtype] > te->offset ?
+                    ctx->mem_sizes[te->mtype] : te->offset;
                 continue;
             }
             if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
@@ -158,7 +166,7 @@ ln_list *ln_pass_mem_plan(ln_list *ops, ln_hash *mem_plans)
         }
     }
 
-    LN_LIST_FOREACH(op, ops) {
+    LN_LIST_FOREACH(op, ctx->ops) {
         arg = op->op_arg;
         unused_tles = NULL;
         LN_LIST_FOREACH(tle, arg->tensors_out) {
@@ -173,6 +181,9 @@ ln_list *ln_pass_mem_plan(ln_list *ops, ln_hash *mem_plans)
             }
             else {
                 te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
+                ctx->mem_sizes[te->mtype] =
+                    ctx->mem_sizes[te->mtype] > te->offset ?
+                    ctx->mem_sizes[te->mtype] : te->offset;
             }
             if (use_count_of(use_counts, te->name) == 0)
                 unused_tles = ln_list_prepend(unused_tles, tle);
@@ -200,7 +211,8 @@ ln_list *ln_pass_mem_plan(ln_list *ops, ln_hash *mem_plans)
             }
         }
     }
+    assert(ctx->mem_sizes[LN_MEM_NONE] == 0);
 
     ln_hash_free(use_counts);
-    return ops;
+    ln_mem_plan_table_free(mem_plans);
 }

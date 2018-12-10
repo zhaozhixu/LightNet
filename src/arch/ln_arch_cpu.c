@@ -79,7 +79,4 @@ ln_arch ln_arch_cpu = {
     .ep_funcs = ep_funcs_cpu,
     .cb_funcs = cb_funcs_cpu,
     .arch_name = "cpu",
-    .align_mem_size = 1,
-    .default_mem_size = 4294967296, /* 4GB */
-    .mtype = LN_MEM_CPU,
 };

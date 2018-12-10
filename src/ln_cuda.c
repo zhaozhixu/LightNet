@@ -71,9 +71,13 @@ int ln_is_device_mem(const void *ptr)
 void *ln_alloc_cuda(size_t size)
 {
     void *p;
+    cudaError_t status;
 
     assert(size > 0);
-    LN_CUDA_CK(cudaMalloc(&p, size));
+    status = cudaMalloc(&p, size);
+    if (status != cudaSuccess)
+        ln_err_msg("ln_alloc_cuda: cudaMalloc(%lu) failed", size);
+    LN_CUDA_CK(status);
     assert(p);
 
     return p;

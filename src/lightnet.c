@@ -61,10 +61,12 @@ int main(int argc, char **argv)
     ln_pass_combiner(ctx, 3, arch->cb_funcs);
     ln_json_fprint(stdout, ctx);
 
-    ln_pass_mem(ctx->ops, mem_plans);
+    ln_pass_mem_plan(ctx);
+    ln_context_alloc_mem(ctx);
     ln_context_static_run(ctx);
     ln_context_run(ctx);
     ln_context_cleanup_ops(ctx);
+    ln_context_dealloc_mem(ctx);
 
     ln_free(cpu_mem);
     ln_free_cuda(cuda_mem);

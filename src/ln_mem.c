@@ -23,6 +23,7 @@
 #include <assert.h>
 #include "ln_mem.h"
 #include "ln_error.h"
+#include "ln_cuda.h"
 
 typedef enum mem_flag mem_flag;
 enum mem_flag {
@@ -44,11 +45,23 @@ struct ln_mem_plan {
     ln_list *mem_blocks;
 };
 
-static const char *mtype_name[] = {
+static const char *mtype_names[] = {
     "LN_MEM_NONE",
-    "LN_MEM_DIFF",
     "LN_MEM_CPU",
     "LN_MEM_CUDA"
+};
+
+#define DEFAULT_MAX_SIZE 17179869184 /* 16GB */
+#define DEFAULT_ALIGN_SIZE 1
+
+const ln_mtype_info ln_mtype_infos[] = {
+    {NULL, NULL, 0, 0},
+    {ln_alloc, ln_free, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
+#ifdef LN_CUDA
+    {ln_alloc_cuda, ln_free_cuda, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
+#else
+    {NULL, NULL, 0, 0},
+#endif  /* LN_CUDA */
 };
 
 #define ln_check_mem_type(mtype)                        \
@@ -57,7 +70,7 @@ static const char *mtype_name[] = {
 const char *ln_mem_type_name(ln_mem_type mtype)
 {
     ln_check_mem_type(mtype);
-    return mtype_name[mtype];
+    return mtype_names[mtype];
 }
 
 static mem_info *mem_info_create(mem_flag flag, size_t start, size_t size)
@@ -235,22 +248,17 @@ static void mem_plan_free_wrapper(void *p)
 ln_hash *ln_mem_plan_table_create(void)
 {
     ln_hash *mpt;
+    ln_mem_plan *mp;
+    int i;
 
     mpt = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL,
                          mem_plan_free_wrapper);
+    for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
+        mp = ln_mem_plan_create(ln_mtype_infos[i].max_size,
+                                ln_mtype_infos[i].align_size);
+        ln_hash_insert(mpt, (void *)(size_t)i, mp);
+    }
     return mpt;
-}
-
-int ln_mem_plan_table_insert(ln_hash *table, ln_mem_type mt, size_t size,
-                             size_t align_size)
-{
-    mp = ln_mem_plan_create(size, align_size);
-    return ln_hash_insert(table, (void *)(size_t)mt, mp);
-}
-
-int ln_mem_plan_table_remove(ln_hash *table, ln_mem_type mt)
-{
-    return ln_hash_remove(table, (void *)(size_t)mt)
 }
 
 void ln_mem_plan_table_free(ln_hash *mpt)
