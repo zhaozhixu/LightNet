@@ -59,9 +59,9 @@ int main(int argc, char **argv)
     ln_pass_expander(ctx, arch->ep_funcs);
     /* ln_json_fprint(stdout, ctx); */
     ln_pass_combiner(ctx, 3, arch->cb_funcs);
+    ln_pass_mem_plan(ctx);
     ln_json_fprint(stdout, ctx);
 
-    ln_pass_mem_plan(ctx);
     /* ln_context_alloc_mem(ctx); */
     /* ln_context_static_run(ctx); */
     /* ln_context_run(ctx); */

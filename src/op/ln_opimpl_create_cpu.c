@@ -131,19 +131,19 @@ static void create_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
     data_entry = priv->data_entry;
 
     dtype = priv->dtype;
-    size = tl_size_of(dtype) * data_entry->array_len;
+    size = tl_tensor_size(priv->dst);
     data = ln_alloc(size);
     if (data_entry->type == LN_PARAM_NULL) {
         memset(data, 0, size);
+        ((float *)data)[0] = 99;
     } else {
         for (int i = 0; i < data_entry->array_len; i++) {
             tl_convert(tl_padd(data, i, tl_size_of(dtype)), dtype,
                        &data_entry->value_array_double[i], TL_DOUBLE);
         }
     }
-    if (ln_streq(op_arg->name, "create9"))
-        printf("%p\n", priv->dst->data);
     memmove(priv->dst->data, data, size);
+    printf("%s: %lu %f %f\n", op_arg->name, size, ((float *)data)[0], ((float *)priv->dst->data)[0]);
     ln_free(data);
 }
 
@@ -158,11 +158,6 @@ static void create_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
     ln_free(op_arg->priv);
 }
-
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_create_cpu = {
-    .optype = "create_cpu",
-};
 
 static const char *in_arg_names[] = {
     NULL
@@ -179,7 +174,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_create_cpu = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_create_cpu = {
+    .optype = "create_cpu",
+    .arch = "cpu",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -188,7 +186,6 @@ static ln_op_info op_info_create_cpu = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_create_cpu = {
     .op_arg = &op_arg_create_cpu,
-    .op_info = &op_info_create_cpu,
     .pre_run = create_cpu_pre_run,
     .static_run = create_cpu_static_run,
     .run = NULL,

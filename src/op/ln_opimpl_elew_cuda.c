@@ -135,11 +135,6 @@ static void elew_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_elew_cuda = {
-    .optype = "elew_cuda",
-};
-
 static const char *in_arg_names[] = {
     "src1",
     "src2",
@@ -156,7 +151,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_elew_cuda = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_elew_cuda = {
+    .optype = "elew_cuda",
+    .arch = "cuda",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -165,7 +163,6 @@ static ln_op_info op_info_elew_cuda = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_elew_cuda = {
     .op_arg = &op_arg_elew_cuda,
-    .op_info = &op_info_elew_cuda,
     .pre_run = elew_cuda_pre_run,
     .static_run = NULL,
     .run = elew_cuda_run,

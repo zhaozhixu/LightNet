@@ -130,11 +130,6 @@ static void create_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_create = {
-    .optype = "create",
-};
-
 static const char *in_arg_names[] = {
     NULL
 };
@@ -150,7 +145,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_create = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_create = {
+    .optype = "create",
+    .arch = "none",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -159,7 +157,6 @@ static ln_op_info op_info_create = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_create = {
     .op_arg = &op_arg_create,
-    .op_info = &op_info_create,
     .pre_run = create_pre_run,
     .static_run = NULL,
     .run = NULL,

@@ -100,6 +100,18 @@ ln_arch ln_arch_tensorrt = {
     .arch_name = "tensorrt",
 };
 
+static int check_conv(const ln_op *op);
+static int check_pooling(const ln_op *op);
+static int check_softmax(const ln_op *op);
+static int check_concat(const ln_op *op);
+
+static void add_conv_to_trt(ln_op *trt_op, const ln_op *op);
+static void add_activation_to_trt(ln_op *trt_op, const ln_op *op);
+static void add_pooling_to_trt(ln_op *trt_op, const ln_op *op);
+static void add_softmax_to_trt(ln_op *trt_op, const ln_op *op);
+static void add_concat_to_trt(ln_op *trt_op, const ln_op *op);
+static void add_trt_to_trt(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg);
+
 static void init(void)
 {
     ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
@@ -667,8 +679,14 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match)
                                            tle->name);
     assert(tle_next);
 
-    /* TODO: this may not be right in the future */
-    if (ln_streqn(tle_next->arg_name, "src", 3))
+    /* TODO: FIXME: this may not be right in the future */
+    if (ln_streqn(tle_next->arg_name, "src", 3) &&
+        (ln_streq(next_op->op_arg->optype, "conv2d") ||
+         ln_streq(next_op->op_arg->optype, "relu") ||
+         ln_streq(next_op->op_arg->optype, "maxpool2d") ||
+         ln_streq(next_op->op_arg->optype, "softmax") ||
+         ln_streq(next_op->op_arg->optype, "concat") ||
+         ln_streq(next_op->op_arg->optype, "tensorrt")))
         new_optype = "create_cuda";
     else
         new_optype = "create_cpu";
@@ -867,8 +885,22 @@ static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg, int *match)
 
 static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match)
 {
+    ln_tensor_list_entry *tle;
+    ln_op *prev_op;
+    const char *optype;
+
     *match = 1;
-    return simple_replace(op, "print_cuda");
+    tle = ln_tensor_list_find_by_arg_name(op->op_arg->tensors_in, "src");
+    prev_op = ln_dfg_prev(dfg, op, tle->name);
+    assert(prev_op);
+    if (ln_streq(prev_op->op_arg->arch, "cpu"))
+        optype = "print_cpu";
+    else if (ln_streq(prev_op->op_arg->arch, "cuda"))
+        optype = "print_cuda";
+    else
+        assert(0 && "print's prev op is either of cpu or cuda");
+
+    return simple_replace(op, optype);
 }
 
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)

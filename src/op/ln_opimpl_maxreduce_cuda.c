@@ -125,11 +125,6 @@ static void maxreduce_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_maxreduce_cuda = {
-    .optype = "maxreduce_cuda",
-};
-
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -145,7 +140,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_maxreduce_cuda = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_maxreduce_cuda = {
+    .optype = "maxreduce_cuda",
+    .arch = "cuda",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -154,7 +152,6 @@ static ln_op_info op_info_maxreduce_cuda = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_maxreduce_cuda = {
     .op_arg = &op_arg_maxreduce_cuda,
-    .op_info = &op_info_maxreduce_cuda,
     .pre_run = maxreduce_cuda_pre_run,
     .static_run = NULL,
     .run = maxreduce_cuda_run,

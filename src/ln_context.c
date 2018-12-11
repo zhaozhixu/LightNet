@@ -132,7 +132,7 @@ void ln_context_alloc_mem(ln_context *ctx)
 
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
         ctx->mem_starts[i] = ln_mtype_infos[i].alloc_func(ctx->mem_sizes[i]);
-        ln_error_debug("allocate memory of mtype %s %lu bytes at address %p",
+        ln_error_debug("%s: allocate %lu bytes at address %p",
                        ln_mem_type_name(i), ctx->mem_sizes[i],
                        ctx->mem_starts[i]);
         assert(ctx->mem_starts[i]);
@@ -141,11 +141,7 @@ void ln_context_alloc_mem(ln_context *ctx)
         LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
             te = ln_tensor_table_find(op->op_arg->tensor_table, tle->name);
             assert(te);
-            if (ln_streq(te->name, "mean1"))
-                printf("te->tensor->data = %p\n", te->tensor->data);
             te->tensor->data = te->offset + ctx->mem_starts[te->mtype];
-            if (ln_streq(te->name, "mean1"))
-                printf("te->tensor->data = %p\n", te->tensor->data);
         }
     }
 }
@@ -155,8 +151,9 @@ void ln_context_dealloc_mem(ln_context *ctx)
     int i;
 
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        ln_error_debug("free memory of mtype %s: %lu bytes",
-                       ln_mem_type_name(i), ctx->mem_sizes[i]);
+        ln_error_debug("%s: free %lu bytes at address %p",
+                       ln_mem_type_name(i), ctx->mem_sizes[i],
+                       ctx->mem_starts[i]);
         ln_mtype_infos[i].free_func(ctx->mem_starts[i]);
         ctx->mem_starts[i] = 0;
     }
@@ -166,16 +163,23 @@ void ln_context_run(ln_context *ctx)
 {
     ln_error *error = NULL;
 
-    ln_op_list_do_post_run(ctx->ops, &error);
-    ln_error_handle(&error);
-    ln_op_list_do_pre_run(ctx->ops, &error);
-    ln_error_handle(&error);
+    /* ln_op_list_do_post_run(ctx->ops, &error); */
+    /* ln_error_handle(&error); */
+    /* assert(ln_hash_size(ctx->tensor_table) == 0); */
+
+    /* ln_op_list_do_pre_run(ctx->ops, &error); */
+    /* ln_error_handle(&error); */
+
     ln_context_alloc_mem(ctx);
+
     ln_op_list_do_static_run(ctx->ops, &error);
     ln_error_handle(&error);
+
     ln_op_list_do_run(ctx->ops, &error);
     ln_error_handle(&error);
+
     ln_op_list_do_post_run(ctx->ops, &error);
     ln_error_handle(&error);
+
     ln_context_dealloc_mem(ctx);
 }

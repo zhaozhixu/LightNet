@@ -141,11 +141,6 @@ static void maxpool2d_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_maxpool2d = {
-    .optype = "maxpool2d",
-};
-
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -163,7 +158,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_maxpool2d = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_maxpool2d = {
+    .optype = "maxpool2d",
+    .arch = "none",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -172,7 +170,6 @@ static ln_op_info op_info_maxpool2d = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_maxpool2d = {
     .op_arg = &op_arg_maxpool2d,
-    .op_info = &op_info_maxpool2d,
     .pre_run = maxpool2d_pre_run,
     .static_run = NULL,
     .run = NULL,

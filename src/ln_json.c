@@ -441,9 +441,11 @@ ln_list *ln_json_parse_file(const char *file, ln_context *ctx)
 
 #define PRINT_JSON_ERROR ln_error_emit(LN_ERROR, "ln_json_print_ops() failed")
 
-static void add_tensors(cJSON *tensors_json, ln_list *tensors)
+static void add_tensors(cJSON *tensors_json, ln_list *tensors,
+                        ln_hash *tensor_table)
 {
     ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
     cJSON *tensor_json = NULL;
     cJSON *item = NULL;
 
@@ -456,6 +458,17 @@ static void add_tensors(cJSON *tensors_json, ln_list *tensors)
         item = cJSON_AddStringToObject(tensor_json, "name", tle->name);
         if (!item)
             PRINT_JSON_ERROR;
+
+        /* optionally print tensor shape */
+        if (tensor_table) {
+            te = ln_tensor_table_find(tensor_table, tle->name);
+            if (te) {
+                item = cJSON_CreateIntArray(te->tensor->dims, te->tensor->ndim);
+                if (!item)
+                    PRINT_JSON_ERROR;
+                cJSON_AddItemToObject(tensor_json, "dims", item);
+            }
+        }
 
         cJSON_AddItemToArray(tensors_json, tensor_json);
     }
@@ -528,6 +541,7 @@ char *ln_json_create_json_str(const ln_context *ctx)
     cJSON *ops_json = NULL;
     cJSON *op_json = NULL;
     cJSON *item = NULL;
+    int i;
 
     json = cJSON_CreateObject();
     if (!json)
@@ -552,12 +566,12 @@ char *ln_json_create_json_str(const ln_context *ctx)
         item = cJSON_AddArrayToObject(op_json, "tensors_in");
         if (!item)
             PRINT_JSON_ERROR;
-        add_tensors(item, op->op_arg->tensors_in);
+        add_tensors(item, op->op_arg->tensors_in, op->op_arg->tensor_table);
 
         item = cJSON_AddArrayToObject(op_json, "tensors_out");
         if (!item)
             PRINT_JSON_ERROR;
-        add_tensors(item, op->op_arg->tensors_out);
+        add_tensors(item, op->op_arg->tensors_out, op->op_arg->tensor_table);
 
         item = cJSON_AddArrayToObject(op_json, "params");
         if (!item)

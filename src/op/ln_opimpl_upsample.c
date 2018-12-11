@@ -126,11 +126,6 @@ static void upsample_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_upsample = {
-    .optype = "upsample",
-};
-
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -147,7 +142,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_upsample = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_upsample = {
+    .optype = "upsample",
+    .arch = "none",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -156,7 +154,6 @@ static ln_op_info op_info_upsample = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_upsample = {
     .op_arg = &op_arg_upsample,
-    .op_info = &op_info_upsample,
     .pre_run = upsample_pre_run,
     .static_run = NULL,
     .run = NULL,

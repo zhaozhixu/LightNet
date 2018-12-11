@@ -24,20 +24,25 @@
 #include "ln_op.h"
 #include "ln_name.h"
 
-static ln_op_arg *ln_op_arg_create(const char *name, const char *optype,
-                                   ln_list *tensors_in, ln_list *tensors_out,
-                                   ln_list *params, ln_hash *tensor_table)
+static ln_op_arg *ln_op_arg_create(const char *name, ln_list *tensors_in,
+                                   ln_list *tensors_out, ln_list *params,
+                                   ln_hash *tensor_table,
+                                   const ln_op_arg *proto_arg)
 {
     ln_op_arg *op_arg;
 
     op_arg = ln_alloc(sizeof(ln_op_arg));
     op_arg->name = ln_strdup(name);
-    op_arg->optype = ln_strdup(optype);
+    op_arg->optype = ln_strdup(proto_arg->optype);
+    op_arg->arch = ln_strdup(proto_arg->arch),
     op_arg->tensors_in = tensors_in;
     op_arg->tensors_out = tensors_out;
     op_arg->params = params;
     op_arg->priv = NULL;
     op_arg->tensor_table = tensor_table;
+    op_arg->in_arg_names = proto_arg->in_arg_names;
+    op_arg->out_arg_names = proto_arg->out_arg_names;
+    op_arg->param_arg_names = proto_arg->param_arg_names;
 
     return op_arg;
 }
@@ -46,6 +51,7 @@ static void ln_op_arg_free(ln_op_arg *op_arg)
 {
     ln_free(op_arg->name);
     ln_free(op_arg->optype);
+    ln_free(op_arg->arch);
     ln_free(op_arg);
 }
 
@@ -56,9 +62,8 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
     ln_op *op;
 
     op = ln_alloc(sizeof(ln_op));
-    op->op_arg = ln_op_arg_create(name, op_proto->op_arg->optype, tensors_in,
-                                  tensors_out, params, tensor_table);
-    op->op_info = op_proto->op_info;
+    op->op_arg = ln_op_arg_create(name, tensors_in, tensors_out, params,
+                                  tensor_table, op_proto->op_arg);
     op->pre_run = op_proto->pre_run;
     op->static_run = op_proto->static_run;
     op->run = op_proto->run;
@@ -86,14 +91,14 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
     int i;
 
     strncpy(opname, ln_unique_name(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
-    for (i = 0; (arg_name = op_proto->op_info->in_arg_names[i]); i++) {
+    for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++) {
         if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
             snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         else
             strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
         tensors_in = ln_tensor_list_append(tensors_in, arg_name, tensor_name);
     }
-    for (i = 0; (arg_name = op_proto->op_info->out_arg_names[i]); i++) {
+    for (i = 0; (arg_name = op_proto->op_arg->out_arg_names[i]); i++) {
         if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
             snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         else
@@ -115,10 +120,10 @@ ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)
     int i;
 
     strncpy(opname, ln_unique_name(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
-    for (i = 0; (arg_name = op_proto->op_info->in_arg_names[i]); i++)
+    for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++)
         ln_tensor_list_append(tensors_in, arg_name, NULL);
 
-    for (i = 0; (arg_name = op_proto->op_info->out_arg_names[i]); i++)
+    for (i = 0; (arg_name = op_proto->op_arg->out_arg_names[i]); i++)
         ln_tensor_list_append(tensors_out, arg_name, NULL);
 
     return ln_op_create_from_proto(op_proto, opname, tensors_in,
@@ -205,32 +210,34 @@ static int cmp_by_optype(const void *data1, const void *data2)
     return strcmp(op1->op_arg->optype, op2->op_arg->optype);
 }
 
-ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype)
+ln_op *ln_op_list_find_by_optype(ln_list *ops, const char *optype)
 {
-    ln_op cmp_op;
-    ln_op *result_op;
+    ln_op op_hint;
+    ln_op_arg op_arg_hint;
+    ln_op *result_op = NULL;
 
-    cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
-    result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_optype);
-    ln_op_arg_free(cmp_op.op_arg);
+    op_arg_hint.optype = (char *)optype;
+    op_hint.op_arg = &op_arg_hint;
+    result_op = ln_list_find_custom(ops, &op_hint, cmp_by_optype);
 
     return result_op;
 }
 
-ln_op *ln_op_array_find_by_optype(ln_op *ops[], char *optype)
+ln_op *ln_op_array_find_by_optype(ln_op *ops[], const char *optype)
 {
-    ln_op cmp_op;
+    ln_op op_hint;
+    ln_op_arg op_arg_hint;
     ln_op *result_op = NULL;
     int i;
 
-    cmp_op.op_arg = ln_op_arg_create("", optype, NULL, NULL, NULL, NULL);
+    op_arg_hint.optype = (char *)optype;
+    op_hint.op_arg = &op_arg_hint;
     for (i = 0; ops[i]; i++) {
-        if (!cmp_by_optype(ops[i], &cmp_op)) {
+        if (!cmp_by_optype(ops[i], &op_hint)) {
             result_op = ops[i];
             break;
         }
     }
-    ln_op_arg_free(cmp_op.op_arg);
 
     return result_op;
 }
@@ -243,14 +250,15 @@ static int cmp_by_name(const void *data1, const void *data2)
     return strcmp(op1->op_arg->name, op2->op_arg->name);
 }
 
-ln_op *ln_op_list_find_by_name(ln_list *ops, char *name)
+ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name)
 {
-    ln_op cmp_op;
-    ln_op *result_op;
+    ln_op op_hint;
+    ln_op_arg op_arg_hint;
+    ln_op *result_op = NULL;
 
-    cmp_op.op_arg = ln_op_arg_create(name, "", NULL, NULL, NULL, NULL);
-    result_op = ln_list_find_custom(ops, &cmp_op, cmp_by_name);
-    ln_op_arg_free(cmp_op.op_arg);
+    op_arg_hint.name = (char *)name;
+    op_hint.op_arg = &op_arg_hint;
+    result_op = ln_list_find_custom(ops, &op_hint, cmp_by_name);
 
     return result_op;
 }
@@ -277,11 +285,6 @@ void ln_op_list_do_static_run(ln_list *ops, ln_error **error)
         op = l->data;
         if (!op->static_run)
             continue;
-        if (ln_streq(op->op_arg->name, "bn2scale_wts_cpu0")) {
-            ln_tensor_entry *te = ln_op_find_tensor_entry(op, "src_mean");
-            printf("before static run %p\n", te->tensor->data);
-        }
-
         op->static_run(op->op_arg, error);
         if (*error)
             return;

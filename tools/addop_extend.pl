@@ -94,7 +94,6 @@ sub gen_code {
     push @blocks, &gen_run($op) if exists $op->{run};
     push @blocks, &gen_post_run($op);
     push @blocks, &gen_op_arg($op);
-    push @blocks, &gen_op_info($op);
     push @blocks, &gen_op_impl($op);
 
     my $code_str = join "\n", @blocks;
@@ -722,17 +721,6 @@ EOF
 
 sub gen_op_arg {
     my $op = $_[0];
-
-    my $op_arg_tpl = <<EOF;
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_$op->{optype} = {
-    .optype = "$op->{optype}",
-};
-EOF
-}
-
-sub gen_op_info {
-    my $op = $_[0];
     my $tensors_in = $op->{tensors_in};
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
@@ -761,7 +749,7 @@ sub gen_op_info {
     &indent_block($INDENT_OFFSET, \@param_declares);
     my $param_str = join "\n", @param_declares;
 
-    my $op_info_tpl = <<EOF;
+    my $op_arg_tpl = <<EOF;
 static const char *in_arg_names[] = {
 $in_str
 };
@@ -774,7 +762,10 @@ static const char *param_arg_names[] = {
 $param_str
 };
 
-static ln_op_info op_info_$op->{optype} = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_$op->{optype} = {
+    .optype = "$op->{optype}",
+    .arch = "$op->{arch}",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -791,7 +782,6 @@ sub gen_op_impl {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_$op->{optype} = {
     .op_arg = &op_arg_$op->{optype},
-    .op_info = &op_info_$op->{optype},
     .pre_run = $op->{optype}_pre_run,
     .static_run = ${static_run_func},
     .run = ${run_func},

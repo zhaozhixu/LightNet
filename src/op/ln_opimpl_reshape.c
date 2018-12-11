@@ -105,11 +105,6 @@ static void reshape_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_reshape = {
-    .optype = "reshape",
-};
-
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -125,7 +120,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_reshape = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_reshape = {
+    .optype = "reshape",
+    .arch = "none",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -133,7 +131,6 @@ static ln_op_info op_info_reshape = {
 
 ln_op ln_opimpl_reshape = {
     .op_arg = &op_arg_reshape,
-    .op_info = &op_info_reshape,
     .pre_run = reshape_pre_run,
     .static_run = NULL,
     .run = NULL,

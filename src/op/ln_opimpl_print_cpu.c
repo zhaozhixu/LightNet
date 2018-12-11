@@ -83,11 +83,6 @@ static void print_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_free(op_arg->priv);
 }
 
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_print_cpu = {
-    .optype = "print_cpu",
-};
-
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -101,7 +96,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_print_cpu = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_print_cpu = {
+    .optype = "print_cpu",
+    .arch = "cpu",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -110,7 +108,6 @@ static ln_op_info op_info_print_cpu = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_print_cpu = {
     .op_arg = &op_arg_print_cpu,
-    .op_info = &op_info_print_cpu,
     .pre_run = print_cpu_pre_run,
     .static_run = NULL,
     .run = print_cpu_run,

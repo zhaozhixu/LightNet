@@ -83,7 +83,11 @@ static void post_run2 (ln_op_arg *op_arg, ln_error **error)
 
 static ln_op_arg op_arg0 = {
      .optype = "test_optype0",
+     .arch = "none",
      .name = "test_opname0",
+     .in_arg_names = NULL,
+     .out_arg_names = NULL,
+     .param_arg_names = NULL,
 };
 
 static ln_op opimpl0 = {
@@ -97,6 +101,10 @@ static ln_op opimpl0 = {
 static ln_op_arg op_arg1 = {
      .optype = "test_optype1",
      .name = "test_opname1",
+     .arch = "none",
+     .in_arg_names = NULL,
+     .out_arg_names = NULL,
+     .param_arg_names = NULL,
 };
 
 static ln_op opimpl1 = {
@@ -110,6 +118,10 @@ static ln_op opimpl1 = {
 static ln_op_arg op_arg2 = {
      .optype = "test_optype2",
      .name = "test_opname2",
+     .arch = "none",
+     .in_arg_names = NULL,
+     .out_arg_names = NULL,
+     .param_arg_names = NULL,
 };
 
 static ln_op opimpl2 = {

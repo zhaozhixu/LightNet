@@ -129,6 +129,7 @@ void ln_pass_mem_plan(ln_context *ctx)
     ln_hash *mem_plans;
     ln_mem_plan *mp;
     ln_list *unused_tles;
+    size_t total_sums[LN_MEM_TYPE_SIZE] = {0};
     size_t water_level;
 
     mem_plans = ln_mem_plan_table_create();
@@ -149,8 +150,10 @@ void ln_pass_mem_plan(ln_context *ctx)
                 ctx->mem_sizes[te->mtype] =
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
-                if (ln_streq(te->name, "mean1"))
-                    ln_mem_plan_dump(mp, stdout);
+                total_sums[te->mtype] += tl_tensor_size(te->tensor);
+                ln_error_debug("%s: alloc %s %lu bytes",
+                               ln_mem_type_name(te->mtype), tle->name,
+                               tl_tensor_size(te->tensor));
                 continue;
             }
             if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
@@ -188,6 +191,10 @@ void ln_pass_mem_plan(ln_context *ctx)
                 ctx->mem_sizes[te->mtype] =
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
+                total_sums[te->mtype] += tl_tensor_size(te->tensor);
+                ln_error_debug("%s: alloc %s %lu bytes",
+                               ln_mem_type_name(te->mtype), tle->name,
+                               tl_tensor_size(te->tensor));
             }
             if (use_count_of(use_counts, te->name) == 0)
                 unused_tles = ln_list_prepend(unused_tles, tle);
@@ -216,9 +223,16 @@ void ln_pass_mem_plan(ln_context *ctx)
         }
     }
     assert(ctx->mem_sizes[LN_MEM_NONE] == 0);
-    mp = ln_hash_find(mem_plans, (void *)LN_MEM_CPU);
-    printf("max cpu size %lu\n", ctx->mem_sizes[LN_MEM_CPU]);
-    ln_mem_plan_dump(mp, stdout);
+
+#ifdef LN_DEBUG
+    for (int i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
+        ln_error_debug("planned memory usage of %s: %lu bytes",
+                       ln_mem_type_name(i), ctx->mem_sizes[i]);
+        ln_error_debug("counted memory usage of %s: %lu bytes",
+                       ln_mem_type_name(i), total_sums[i]);
+    }
+#endif  /* LN_DEBUG */
+
     ln_hash_free(use_counts);
     ln_mem_plan_table_free(mem_plans);
 }

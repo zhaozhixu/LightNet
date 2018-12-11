@@ -127,17 +127,6 @@
             ]
         },
         {
-            "name": "print2",
-            "optype": "print",
-            "tensors_in": [
-                {"arg_name": "src", "name": "mean1"}
-            ],
-            "tensors_out": [
-            ],
-            "params": [
-            ]
-        },
-        {
             "name": "conv2d1",
             "optype": "conv2d",
             "tensors_in": [
@@ -259,55 +248,24 @@
             ]
         },
         {
-            "name": "slice1",
-            "optype": "slice",
+            "name": "upsample1",
+            "optype": "upsample",
             "tensors_in": [
                 {"arg_name": "src", "name": "softmax1_dst"}
             ],
             "tensors_out": [
-                {"arg_name": "dst", "name": "slice1_dst"}
+                {"arg_name": "dst", "name": "upsample1_dst"}
             ],
             "params": [
-                {"arg_name": "axis", "value": 3},
-                {"arg_name": "start", "value": 0},
-                {"arg_name": "len", "value": 10}
-            ]
-        },
-        {
-            "name": "slice2",
-            "optype": "slice",
-            "tensors_in": [
-                {"arg_name": "src", "name": "slice1_dst"}
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "slice2_dst"}
-            ],
-            "params": [
-                {"arg_name": "axis", "value": 2},
-                {"arg_name": "start", "value": 0},
-                {"arg_name": "len", "value": 5}
-            ]
-        },
-        {
-            "name": "slice3",
-            "optype": "slice",
-            "tensors_in": [
-                {"arg_name": "src", "name": "slice2_dst"}
-            ],
-            "tensors_out": [
-                {"arg_name": "dst", "name": "slice3_dst"}
-            ],
-            "params": [
-                {"arg_name": "axis", "value": 1},
-                {"arg_name": "start", "value": 0},
-                {"arg_name": "len", "value": 5}
+                {"arg_name": "mode", "value": "TL_NEAREST"},
+                {"arg_name": "scales", "value": [1, 2, 2, 2]}
             ]
         },
         {
             "name": "print1",
             "optype": "print",
             "tensors_in": [
-                {"arg_name": "src", "name": "slice3_dst"}
+                {"arg_name": "src", "name": "upsample1_dst"}
             ],
             "tensors_out": [
             ],

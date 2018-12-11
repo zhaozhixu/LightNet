@@ -33,21 +33,17 @@
 struct ln_op_arg {
     char            *name;
     char            *optype;
+    char            *arch;
     ln_list         *tensors_in;
     ln_list         *tensors_out;
     ln_list         *params;
     ln_hash         *tensor_table;   /* TODO: goes outside ln_op? */
     void            *priv;           /* for other private data storage */
+    const char     **in_arg_names;   /* NULL terminated array, as belows */
+    const char     **out_arg_names;
+    const char     **param_arg_names;
 };
 typedef struct ln_op_arg ln_op_arg;
-
-/* This staticly resides in op_proto's struct. */
-struct ln_op_info {
-    const char **in_arg_names;       /* NULL terminated array, as belows */
-    const char **out_arg_names;
-    const char **param_arg_names;
-};
-typedef struct ln_op_info ln_op_info;
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
 
@@ -56,7 +52,6 @@ typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
    before remove it from the op_table. */
 struct ln_op {
     ln_op_arg   *op_arg;
-    ln_op_info  *op_info;
     ln_op_func   pre_run;
     ln_op_func   static_run;
     ln_op_func   run;
@@ -86,9 +81,9 @@ void ln_op_free_lists_too(ln_op *op);
 ln_list *ln_op_list_create_from_array(ln_op **op_array);
 void ln_op_list_free(ln_list *op_list);
 void ln_op_list_free_lists_too(ln_list *ops);
-ln_op *ln_op_list_find_by_optype(ln_list *ops, char *optype);
-ln_op *ln_op_array_find_by_optype(ln_op *ops[], char *optype);
-ln_op *ln_op_list_find_by_name(ln_list *ops, char *name);
+ln_op *ln_op_list_find_by_optype(ln_list *ops, const char *optype);
+ln_op *ln_op_array_find_by_optype(ln_op *ops[], const char *optype);
+ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name);
 void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_static_run(ln_list *ops, ln_error **error);
 void ln_op_list_do_run(ln_list *ops, ln_error **error);

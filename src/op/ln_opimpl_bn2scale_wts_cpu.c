@@ -35,7 +35,6 @@ struct priv_s {
     tl_tensor *dst_power;
     char      *dst_power_name;
     float      epsilon;
-    ln_tensor_entry *src_mean_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -207,19 +206,15 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     priv->dst_power = dst_power;
     priv->dst_power_name = dst_power_name;
     priv->epsilon = epsilon;
-    priv->src_mean_entry = src_mean_entry;
     op_arg->priv = priv;
-    printf("%lu\n", priv->src_mean_entry->isstatic);
 }
 
 /* This function blocks only once per instance right after memory allocation. */
 static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
-    ln_tensor_entry *te = ln_tensor_table_find(op_arg->tensor_table, "mean1");
-    printf("in static run %p\n", te->tensor->data);
+
     {
-        printf("%d\n", priv->src_mean_entry->isstatic);
         float *dst_scale = priv->dst_scale->data;
         float *dst_shift = priv->dst_shift->data;
         float *dst_power = priv->dst_power->data;
@@ -228,9 +223,6 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
         float *src_scale = priv->src_scale->data;
         float *src_offset = priv->src_offset->data;
         for (int i = 0; i < priv->dst_scale->len; i++) {
-            printf("%p %p %p\n", dst_scale, dst_power, dst_shift);
-            printf("%p %p %p %p\n", src_scale, src_mean, src_offset, src_var);
-            printf("%f\n", priv->epsilon);
             dst_scale[i] = src_scale[i] / (src_var[i] + priv->epsilon);
             dst_shift[i] = src_offset[i] - src_mean[i] * src_scale[i] / (src_var[i] + priv->epsilon);
             dst_power[i] = 1;
@@ -248,11 +240,6 @@ static void bn2scale_wts_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_power_name);
     ln_free(op_arg->priv);
 }
-
-/* specify other ln_op_arg fields */
-static ln_op_arg op_arg_bn2scale_wts_cpu = {
-    .optype = "bn2scale_wts_cpu",
-};
 
 static const char *in_arg_names[] = {
     "src_mean",
@@ -274,7 +261,10 @@ static const char *param_arg_names[] = {
     NULL
 };
 
-static ln_op_info op_info_bn2scale_wts_cpu = {
+/* specify other ln_op_arg fields */
+static ln_op_arg op_arg_bn2scale_wts_cpu = {
+    .optype = "bn2scale_wts_cpu",
+    .arch = "cpu",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
@@ -283,7 +273,6 @@ static ln_op_info op_info_bn2scale_wts_cpu = {
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_bn2scale_wts_cpu = {
     .op_arg = &op_arg_bn2scale_wts_cpu,
-    .op_info = &op_info_bn2scale_wts_cpu,
     .pre_run = bn2scale_wts_cpu_pre_run,
     .static_run = bn2scale_wts_cpu_static_run,
     .run = NULL,
