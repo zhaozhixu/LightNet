@@ -37,7 +37,7 @@
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "gt": 0}
             ],
-            "run": "memset(priv->dst->data, 0, priv->dst->len*tl_size_of(priv->dst->dtype));"
+            "run": "memset(priv->dst->data, 0, tl_tensor_size(priv->dst));"
         },
         {
             "optype": "zeros_cuda",
@@ -57,7 +57,7 @@
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "gt": 0}
             ],
-            "run": "ln_memset_cuda(priv->dst->data, 0, priv->dst->len*tl_size_of(priv->dst->dtype));"
+            "run": "ln_memset_cuda(priv->dst->data, 0, tl_tensor_size(priv->dst));"
         }
     ]
 }

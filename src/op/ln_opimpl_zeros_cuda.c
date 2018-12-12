@@ -102,7 +102,7 @@ static void zeros_cuda_run(ln_op_arg *op_arg, ln_error **error)
     struct priv_s *priv = op_arg->priv;
 
     {
-        ln_memset_cuda(priv->dst->data, 0, priv->dst->len*tl_size_of(priv->dst->dtype));
+        ln_memset_cuda(priv->dst->data, 0, tl_tensor_size(priv->dst));
     }
 }
 

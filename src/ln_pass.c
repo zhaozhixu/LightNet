@@ -147,7 +147,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                 continue;
             if (te->isstatic) {
                 te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
-                water_level = te->offset + tl_tensor_size(te->tensor) - 1;
+                water_level = te->offset + tl_tensor_size(te->tensor);
                 ctx->mem_sizes[te->mtype] =
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
@@ -195,7 +195,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                 use_count_dec(use_counts, te->name);
             } else {
                 te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
-                water_level = te->offset + tl_tensor_size(te->tensor) - 1;
+                water_level = te->offset + tl_tensor_size(te->tensor);
                 ctx->mem_sizes[te->mtype] =
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
