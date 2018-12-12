@@ -151,9 +151,9 @@ void ln_pass_mem_plan(ln_context *ctx)
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
                 total_sums[te->mtype] += tl_tensor_size(te->tensor);
-                ln_error_debug("%s: alloc %s %lu bytes",
+                ln_error_debug("plan memory %s: %s %lu bytes at offset %p",
                                ln_mem_type_name(te->mtype), tle->name,
-                               tl_tensor_size(te->tensor));
+                               tl_tensor_size(te->tensor), te->offset);
                 continue;
             }
             if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
@@ -192,9 +192,9 @@ void ln_pass_mem_plan(ln_context *ctx)
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
                 total_sums[te->mtype] += tl_tensor_size(te->tensor);
-                ln_error_debug("%s: alloc %s %lu bytes",
+                ln_error_debug("plan memory %s: %s %lu bytes at offset %p",
                                ln_mem_type_name(te->mtype), tle->name,
-                               tl_tensor_size(te->tensor));
+                               tl_tensor_size(te->tensor), te->offset);
             }
             if (use_count_of(use_counts, te->name) == 0)
                 unused_tles = ln_list_prepend(unused_tles, tle);
@@ -226,9 +226,9 @@ void ln_pass_mem_plan(ln_context *ctx)
 
 #ifdef LN_DEBUG
     for (int i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        ln_error_debug("planned memory usage of %s: %lu bytes",
+        ln_error_debug("planned usage of memory %s: %lu bytes",
                        ln_mem_type_name(i), ctx->mem_sizes[i]);
-        ln_error_debug("counted memory usage of %s: %lu bytes",
+        ln_error_debug("counted usage of memory %s: %lu bytes",
                        ln_mem_type_name(i), total_sums[i]);
     }
 #endif  /* LN_DEBUG */

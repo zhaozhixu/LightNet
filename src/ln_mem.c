@@ -58,7 +58,7 @@ const ln_mtype_info ln_mtype_infos[] = {
     {NULL, NULL, 0, 0},
     {ln_alloc, ln_free, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
 #ifdef LN_CUDA
-    {ln_alloc_cuda, ln_free_cuda, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
+    {ln_alloc_cuda, ln_free_cuda, DEFAULT_MAX_SIZE, 16},
 #else
     {NULL, NULL, 0, 0},
 #endif  /* LN_CUDA */

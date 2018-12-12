@@ -54,6 +54,7 @@ int ln_cuda_get_device()
     return n;
 }
 
+/* Cannot use it on host ptr */
 int ln_is_device_mem(const void *ptr)
 {
     assert(ptr);
@@ -61,7 +62,7 @@ int ln_is_device_mem(const void *ptr)
     cudaError_t status;
 
     status = cudaPointerGetAttributes(&attributes, ptr);
-    if (status == cudaErrorInvalidValue)
+    if (status == cudaErrorInvalidValue) /* probably host memory */
         return 0;
     LN_CUDA_CK(status);
     return attributes.memoryType == cudaMemoryTypeDevice;
@@ -91,7 +92,7 @@ void ln_memset_cuda(void *dst, int c, size_t n)
 
 void ln_memcpy_h2d(void *dst, const void *src, size_t size)
 {
-    assert(!ln_is_device_mem(src));
+    /* assert(!ln_is_device_mem(src)); */
     assert(ln_is_device_mem(dst));
     LN_CUDA_CK(cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice));
 }
@@ -99,7 +100,7 @@ void ln_memcpy_h2d(void *dst, const void *src, size_t size)
 void ln_memcpy_d2h(void *dst, const void *src, size_t size)
 {
     assert(ln_is_device_mem(src));
-    assert(!ln_is_device_mem(dst));
+    /* assert(!ln_is_device_mem(dst)); */
     LN_CUDA_CK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost));
 }
 
@@ -120,7 +121,7 @@ void *ln_clone_h2d(const void *src, size_t size)
 {
     void *p;
 
-    assert(!ln_is_device_mem(src));
+    /* assert(!ln_is_device_mem(src)); */
     p = ln_alloc_cuda(size);
     LN_CUDA_CK(cudaMemcpy(p, src, size, cudaMemcpyHostToDevice));
     return p;
@@ -151,7 +152,8 @@ void *ln_repeat_h2d(void *data, size_t size, int times)
     void *p, *dst;
     int i;
 
-    assert(!ln_is_device_mem(data) && times > 0);
+    /* assert(!ln_is_device_mem(data) && times > 0); */
+    assert(times > 0);
     dst = p = ln_alloc_cuda(size * times);
     for (i = 0; i < times; i++, p = (char *)p + size)
         LN_CUDA_CK(cudaMemcpy(p, data, size, cudaMemcpyHostToDevice));

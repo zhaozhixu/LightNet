@@ -143,7 +143,6 @@ static void create_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
         }
     }
     memmove(priv->dst->data, data, size);
-    printf("%s: %lu %f %f\n", op_arg->name, size, ((float *)data)[0], ((float *)priv->dst->data)[0]);
     ln_free(data);
 }
 

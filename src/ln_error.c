@@ -94,10 +94,8 @@ void ln_error_handle(ln_error **error)
         fflush(NULL);
         break;
     case LN_DEBUG_INFO:
-#ifdef LN_DEBUG
         fprintf(stderr, "DEBUG INFO: %s\n", (*error)->err_str);
         fflush(NULL);
-#endif
         break;
     default :
         assert(0 && "shouldn't get here, unsupported ln_error_level");

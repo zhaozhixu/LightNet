@@ -65,8 +65,12 @@ typedef struct ln_error ln_error;
             ln_error_emit(LN_INTER_ERROR, (fmt), ##varg);       \
     } while (0)
 
-#define ln_error_debug(fmt, varg...)                           \
-            ln_error_emit(LN_DEBUG_INFO, (fmt), ##varg);       \
+#ifdef LN_DEBUG
+#define ln_error_debug(fmt, varg...)            \
+    ln_error_emit(LN_DEBUG_INFO, (fmt), ##varg)
+#else
+#define ln_error_debug(fmt, varg...) (void)0
+#endif
 
 #ifdef __cplusplus
 LN_CPPSTART
