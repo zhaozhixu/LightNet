@@ -129,19 +129,16 @@ START_TEST(test_ln_pass_combiner)
      ck_assert_int_eq(param_entry->type, LN_PARAM_ARRAY_NUMBER);
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,3,2), 2);
 
-     /* maxreduce_arg1 */
-     op = ln_op_list_find_by_name(ctx->ops, "maxreduce_arg1");
-     assert_op_eq(op, "maxreduce_arg_cuda", "maxreduce_arg1");
+     /* maxreduce1 */
+     op = ln_op_list_find_by_name(ctx->ops, "maxreduce1");
+     assert_op_eq(op, "maxreduce_cuda", "maxreduce1");
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src");
      ck_assert_ptr_ne(tensor_name, NULL);
      ck_assert_str_eq(tensor_name, "reshape1");
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_dst");
-     tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "arg");
-     ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_arg");
+     ck_assert_str_eq(tensor_name, "maxreduce1_dst");
 
      param_entry = ln_param_list_find(op->op_arg->params, "axis");
      ck_assert_ptr_ne(param_entry, NULL);
@@ -154,10 +151,10 @@ START_TEST(test_ln_pass_combiner)
 
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src1");
      ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_dst");
+     ck_assert_str_eq(tensor_name, "maxreduce1_dst");
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src2");
      ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_arg");
+     ck_assert_str_eq(tensor_name, "maxreduce1_dst");
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);
      ck_assert_str_eq(tensor_name, "elew1");
@@ -212,7 +209,10 @@ START_TEST(test_ln_pass_mem)
      ln_hash *mem_plans;
      ln_mem_plan *mem_plan_none;
      ln_tensor_entry *te;
+     ln_arch *arch;
 
+     arch = ln_hash_find(LN_ARCH.arch_table, "cuda");
+     ln_pass_combiner(ctx, 3, arch->cb_funcs);
      mem_plans = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, mem_plans_free_wrapper);
      mem_plan_none = ln_mem_plan_create(4096, 1);
      ln_hash_insert(mem_plans, (void *)LN_MEM_NONE, mem_plan_none);
@@ -227,13 +227,10 @@ START_TEST(test_ln_pass_mem)
      ck_assert_int_eq(te->offset, 33);
      te = ln_tensor_table_find(ctx->tensor_table, "reshape1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 0);
-     te = ln_tensor_table_find(ctx->tensor_table, "maxreduce_arg1_dst");
+     ck_assert_int_eq(te->offset, 33);
+     te = ln_tensor_table_find(ctx->tensor_table, "maxreduce1_dst");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 57);
-     te = ln_tensor_table_find(ctx->tensor_table, "maxreduce_arg1_arg");
-     ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 65);
      te = ln_tensor_table_find(ctx->tensor_table, "elew1");
      ck_assert_ptr_ne(te, NULL);
      ck_assert_int_eq(te->offset, 33);
@@ -259,7 +256,7 @@ Suite *make_pass_suite(void)
      tcase_add_checked_fixture(tc_pass, checked_setup, checked_teardown);
 
      tcase_add_test(tc_pass, test_ln_pass_combiner);
-     /* tcase_add_test(tc_pass, test_ln_pass_mem); */
+     tcase_add_test(tc_pass, test_ln_pass_mem);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_pass);

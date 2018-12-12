@@ -45,6 +45,9 @@ int main(int argc, char **argv)
      srunner_add_suite(sr, make_mem_suite());
      srunner_add_suite(sr, make_pass_suite());
      srunner_add_suite(sr, make_opimpl_suite());
+#ifdef LN_CUDA
+     srunner_add_suite(sr, make_cuda_suite());
+#endif
      /* end of adding suites */
 
      srunner_set_xml (sr, "result/check_output.xml");

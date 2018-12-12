@@ -634,6 +634,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                                                        te->tensor->dims[1],
                                                        te->tensor->dims[2],
                                                        te->tensor->dims[3]));
+        printf("%s: addInput(%s)\n", op_arg->name, te->name);
     }
 
     ln_param_entry *pe;
@@ -661,6 +662,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
         tle = (ln_tensor_list_entry *)l->data;
         tensors[tle->name]->setName(tle->name);
         network->markOutput(*tensors[tle->name]);
+        printf("%s: markOutput(%s)\n", op_arg->name, tle->name);
     }
 
     pe = ln_param_list_find(op_arg->params, "batch_size");
@@ -692,6 +694,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
     context = engine->createExecutionContext();
     assert(context);
     bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
+    printf("%s NbBingdings: %d\n", op_arg->name, engine->getNbBindings());
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
         if (!ln_streqn(tle->arg_name, "src", 3))
@@ -699,6 +702,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         index = engine->getBindingIndex(tle->name);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
+        printf("%s addr: %p\n", te->name, te->tensor->data);
     }
     for (l = op_arg->tensors_out; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
@@ -707,8 +711,10 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         index = engine->getBindingIndex(tle->name);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
+        printf("%s addr: %p\n", te->name, te->tensor->data);
     }
     batch_size = engine->getMaxBatchSize(); // TODO: make batch_size flexible?
+    printf("batch_size = %d\n", batch_size);
 
     bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
     bundle->engine = engine;

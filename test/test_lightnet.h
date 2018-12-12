@@ -46,6 +46,9 @@ Suite *make_parse_suite(void);
 Suite *make_mem_suite(void);
 Suite *make_pass_suite(void);
 Suite *make_opimpl_suite(void);
+#ifdef LN_CUDA
+Suite *make_cuda_suite(void);
+#endif
 /* end of declarations */
 
 #ifdef __cplusplus

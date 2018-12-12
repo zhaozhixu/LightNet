@@ -13,7 +13,7 @@
                  "custom": "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
                  "cleanup": "ln_free(dst_dims);"},
                 {"arg_name": "arg", "mtype": "LN_MEM_NONE",
-                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "ndim": "src->ndim", "dtype": "TL_INT32",
                  "custom": "arg_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\narg_dims[axis] = 1;",
                  "cleanup": "ln_free(arg_dims);"}
             ],
@@ -36,7 +36,7 @@
                  "custom": "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
                  "cleanup": "ln_free(dst_dims);"},
                 {"arg_name": "arg", "mtype": "LN_MEM_CPU",
-                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "ndim": "src->ndim", "dtype": "TL_INT32",
                  "custom": "arg_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\narg_dims[axis] = 1;",
                  "cleanup": "ln_free(arg_dims);"}
             ],
@@ -60,7 +60,7 @@
                  "custom": "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
                  "cleanup": "ln_free(dst_dims);"},
                 {"arg_name": "arg", "mtype": "LN_MEM_CUDA",
-                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "ndim": "src->ndim", "dtype": "TL_INT32",
                  "custom": "arg_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\narg_dims[axis] = 1;",
                  "cleanup": "ln_free(arg_dims);"}
             ],

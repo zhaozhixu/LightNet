@@ -152,8 +152,8 @@ START_TEST(test_ln_parse)
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,3,2), 2);
 
      /* maxreduce1 */
-     op = ln_op_list_find_by_name(ops, "maxreduce_arg1");
-     assert_op_eq(op, "maxreduce_arg", "maxreduce_arg1");
+     op = ln_op_list_find_by_name(ops, "maxreduce1");
+     assert_op_eq(op, "maxreduce", "maxreduce1");
 
      /* assert_tensor_eq(TENSORS_IN, table, "src", "reshape1", tensor1, NULL); */
      /* tensor_true = tl_tensor_create(ARR(float,0,0), 2, ARR(int,1,2), TL_FLOAT); */
@@ -167,10 +167,7 @@ START_TEST(test_ln_parse)
      ck_assert_str_eq(tensor_name, "reshape1");
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_dst");
-     tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "arg");
-     ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_arg");
+     ck_assert_str_eq(tensor_name, "maxreduce1_dst");
 
      param_entry = ln_param_list_find(op->op_arg->params, "axis");
      ck_assert_ptr_ne(param_entry, NULL);
@@ -188,10 +185,10 @@ START_TEST(test_ln_parse)
      /* tl_tensor_free(tensor_true); */
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src1");
      ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_dst");
+     ck_assert_str_eq(tensor_name, "maxreduce1_dst");
      tensor_name = ln_tensor_list_find_name(TENSORS_IN, "src2");
      ck_assert_ptr_ne(tensor_name, NULL);
-     ck_assert_str_eq(tensor_name, "maxreduce_arg1_arg");
+     ck_assert_str_eq(tensor_name, "maxreduce1_dst");
      tensor_name = ln_tensor_list_find_name(TENSORS_OUT, "dst");
      ck_assert_ptr_ne(tensor_name, NULL);
      ck_assert_str_eq(tensor_name, "elew1");

@@ -36,6 +36,7 @@ LN_CPPSTART
 
 void ln_cuda_set_device(int n);
 int ln_cuda_get_device();
+/* Cannot use it on host ptr */
 int ln_is_device_mem(const void *ptr);
 void *ln_alloc_cuda(size_t size);
 void ln_memset_cuda(void *dst, int c, size_t n);

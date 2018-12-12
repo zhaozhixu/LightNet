@@ -112,7 +112,7 @@ static void maxreduce_arg_pre_run(ln_op_arg *op_arg, ln_error **error)
     }
 
     arg_ndim = src->ndim;
-    arg_dtype = src->dtype;
+    arg_dtype = TL_INT32;
     {
         arg_dims = ln_clone(src->dims, sizeof(int)*src->ndim);
         arg_dims[axis] = 1;

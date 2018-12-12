@@ -125,6 +125,7 @@ void ln_pass_mem_plan(ln_context *ctx)
     ln_op_arg *arg;
     ln_hash *use_counts;
     ln_tensor_entry *te;
+    ln_tensor_entry *owner_te;
     ln_tensor_list_entry *tle;
     ln_hash *mem_plans;
     ln_mem_plan *mp;
@@ -179,8 +180,15 @@ void ln_pass_mem_plan(ln_context *ctx)
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             mp = ln_hash_find(mem_plans, (void *)te->mtype);
-            if (te->owner)
+            if (te->owner) {
+                owner_te = ln_tensor_table_find(arg->tensor_table, te->owner);
+                assert(owner_te);
+                te->offset = owner_te->offset;
+                ln_error_debug("plan memory %s: %s %lu bytes at offset %p",
+                               ln_mem_type_name(te->mtype), tle->name,
+                               tl_tensor_size(te->tensor), te->offset);
                 continue;
+            }
             if (te->isstatic)
                 continue;
             if (ln_mem_plan_exist(mp, te->offset)) {
