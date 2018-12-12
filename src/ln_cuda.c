@@ -54,7 +54,6 @@ int ln_cuda_get_device()
     return n;
 }
 
-/* Cannot use it on host ptr */
 int ln_is_device_mem(const void *ptr)
 {
     assert(ptr);

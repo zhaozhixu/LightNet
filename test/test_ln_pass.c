@@ -221,25 +221,25 @@ START_TEST(test_ln_pass_mem)
 
      te = ln_tensor_table_find(ctx->tensor_table, "create1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 1);
+     ck_assert_int_eq(te->offset, 16);
      te = ln_tensor_table_find(ctx->tensor_table, "slice1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 33);
+     ck_assert_int_eq(te->offset, 48);
      te = ln_tensor_table_find(ctx->tensor_table, "reshape1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 33);
+     ck_assert_int_eq(te->offset, 48);
      te = ln_tensor_table_find(ctx->tensor_table, "maxreduce1_dst");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 57);
+     ck_assert_int_eq(te->offset, 80);
      te = ln_tensor_table_find(ctx->tensor_table, "elew1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 33);
+     ck_assert_int_eq(te->offset, 48);
      te = ln_tensor_table_find(ctx->tensor_table, "transpose1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 41);
+     ck_assert_int_eq(te->offset, 64);
      te = ln_tensor_table_find(ctx->tensor_table, "zeros1");
      ck_assert_ptr_ne(te, NULL);
-     ck_assert_int_eq(te->offset, 49);
+     ck_assert_int_eq(te->offset, 80);
 
      ln_hash_free(mem_plans);
 }
