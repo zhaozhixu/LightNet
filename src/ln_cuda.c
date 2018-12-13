@@ -59,10 +59,14 @@ int ln_is_device_mem(const void *ptr)
     assert(ptr);
     struct cudaPointerAttributes attributes;
     cudaError_t status;
+    cudaError_t last_error;
 
     status = cudaPointerGetAttributes(&attributes, ptr);
-    if (status == cudaErrorInvalidValue) /* probably host memory */
+    if (status == cudaErrorInvalidValue) { /* probably host memory */
+        last_error = cudaGetLastError();   /* reset error code to cudaSuccess */
+        assert(last_error == status);
         return 0;
+    }
     LN_CUDA_CK(status);
     return attributes.memoryType == cudaMemoryTypeDevice;
 }

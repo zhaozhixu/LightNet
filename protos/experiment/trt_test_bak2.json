@@ -258,18 +258,7 @@
             ],
             "params": [
                 {"arg_name": "mode", "value": "TL_NEAREST"},
-                {"arg_name": "scales", "value": [1, 2, 2, 2]}
-            ]
-        },
-        {
-            "name": "print1",
-            "optype": "print",
-            "tensors_in": [
-                {"arg_name": "src", "name": "upsample1_dst"}
-            ],
-            "tensors_out": [
-            ],
-            "params": [
+                {"arg_name": "scales", "value": [1, 1, 2, 2]}
             ]
         }
     ]
