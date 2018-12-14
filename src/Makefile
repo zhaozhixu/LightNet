@@ -12,6 +12,9 @@ SRC += $(wildcard *.cu)
 SRC += $(wildcard op/*.c)
 SRC += $(wildcard op/*.cc)
 SRC += $(wildcard op/*.cu)
+SRC += $(wildcard op/auto/*.c)
+SRC += $(wildcard op/auto/*.cc)
+SRC += $(wildcard op/auto/*.cu)
 SRC += $(wildcard arch/*.c)
 SRC += $(wildcard arch/*.cc)
 SRC += $(wildcard arch/*.cu)
@@ -38,7 +41,7 @@ endif
 endif
 
 define make-obj-dir
-$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/op; \
+$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/op/auto; \
 mkdir -p $(OBJDIR)/arch; fi
 endef
 
@@ -87,5 +90,6 @@ clean:
 ifneq "$(MAKECMDGOALS)" "clean"
 -include $(OBJDIR)/*.d
 -include $(OBJDIR)/op/*.d
+-include $(OBJDIR)/op/auto/*.d
 -include $(OBJDIR)/arch/*.d
 endif
