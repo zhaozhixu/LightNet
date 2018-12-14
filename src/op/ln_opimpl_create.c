@@ -23,43 +23,44 @@
 #include <assert.h>
 #include "ln_op.h"
 
-static int compute_length(int ndim, const int *dims)
-{
-    int i, len;
-
-    for (i = 0, len = 1; i < ndim; i++)
-        len *= dims[i];
-    return len;
-}
-
 struct priv_s {
-    tl_tensor      *dst;
-    char           *dst_name;
-    ln_param_entry *data_entry;
-    int             dtype;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *dtype_entry;
+    ln_param_entry  *dims_entry;
+    ln_param_entry  *data_entry;
 };
 
-/*
- * This function should do the parameter checking and tensor shape inference.
- */
+/* This function should do the parameter checking and tensor shape inference. */
 static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-    char *dst_name;
-    ln_tensor_entry *dst_entry;
-    tl_tensor *dst_tensor;
-    ln_param_entry *dims_entry, *dtype_entry, *data_entry;
-    int tensors_n, params_n, dtype, i;
-    struct priv_s *priv;
+    char                 *dst_name;
+    ln_tensor_list_entry *dst_list_entry;
+    ln_tensor_entry      *dst_entry;
+    tl_tensor            *dst;
+    int                   dst_ndim;
+    int                  *dst_dims;
+    tl_dtype              dst_dtype;
+    int                   dtype;
+    ln_param_entry       *dtype_entry;
+    int                  *dims;
+    ln_param_entry       *dims_entry;
+    double               *data;
+    ln_param_entry       *data_entry;
+    int                   tensors_in_n;
+    int                   tensors_out_n;
+    int                   params_n;
+    struct priv_s        *priv;
 
     /* check tensors and parameters */
-    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-    ln_opck_tensors_in_len_eq(tensors_n, 0);
+    tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_eq(tensors_in_n, 0);
 
-    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-    ln_opck_tensors_out_len_eq(tensors_n, 1);
+    tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_eq(tensors_out_n, 1);
 
-    dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-    ln_opck_tensor_out_exist(dst_name, "dst");
+    dst_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst");
+    ln_opck_tensor_out_exist(dst_list_entry, "dst");
+    dst_name = dst_list_entry->name;
     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
@@ -69,65 +70,51 @@ static void create_pre_run(ln_op_arg *op_arg, ln_error **error)
     dtype_entry = ln_param_list_find(op_arg->params, "dtype");
     ln_opck_param_exist(dtype_entry, "dtype");
     ln_opck_param_type(dtype_entry, LN_PARAM_STRING);
-
     dtype = tl_dtype_from_str(dtype_entry->value_string);
-    ln_opck_param_satisfy_msg(dtype != -1,
-                              "`dtype` param should be a supported tl_dtype");
+    dtype_entry->value_int = dtype;
+    dtype = dtype;
+    ln_opck_param_satisfy_msg(dtype != -1, "`dtype` param should be a supported tl_dtype");
 
     dims_entry = ln_param_list_find(op_arg->params, "dims");
     ln_opck_param_exist(dims_entry, "dims");
     ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
-    for (i = 0; i < dims_entry->array_len; i++)
-        ln_opck_param_satisfy_msg(dims_entry->value_array_int[i] > 0,
-                                  "`dims` array elements should be positive");
+    dims = dims_entry->value_array_int;
+    ln_opck_param_array_int_gt(dims_entry, 0);
+    dims = dims;
 
     data_entry = ln_param_list_find(op_arg->params, "data");
     ln_opck_param_exist(data_entry, "data");
-    ln_opck(LN_ERROR, data_entry->type == LN_PARAM_ARRAY_NUMBER
-            || data_entry->type == LN_PARAM_NULL,
-            "%s: `%s`'s `%s` param's value should be of type %s or %s, but gets a %s",
-            op_arg->optype, op_arg->name, data_entry->arg_name,
-            ln_param_type_name(LN_PARAM_ARRAY_NUMBER),
-            ln_param_type_name(LN_PARAM_NULL),
-            ln_param_type_name(data_entry->type));
-
-    /* TODO: add file reading */
-    if (data_entry->type == LN_PARAM_ARRAY_NUMBER) {
-        ln_opck_param_satisfy_msg(compute_length(dims_entry->array_len,
-                                                 dims_entry->value_array_int)
-                                  == data_entry->array_len,
-                                  "`data` array length should match with `dims`");
-    }
+    ln_opck_param_type(data_entry, LN_PARAM_ARRAY_NUMBER);
+    data = data_entry->value_array_double;
+    data = data;
 
     /* define output tensor shape, tensor data should be NULL */
-    dst_tensor = tl_tensor_create(NULL, dims_entry->array_len,
-                                  dims_entry->value_array_int,
-                                  dtype);
-    dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+    dst_ndim = dims_entry->array_len;
+    dst_dims = dims;
+    dst_dtype = dtype;
+    dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
+    dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
+    dst_entry->isstatic = 1;
     dst_entry->mtype = LN_MEM_NONE;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    dst_entry->isstatic = 1;
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->dst = dst_tensor;
-    priv->dst_name = dst_name;
+    priv->dst_entry = dst_entry;
+    priv->dtype_entry = dtype_entry;
+    priv->dims_entry = dims_entry;
     priv->data_entry = data_entry;
-    priv->dtype = dtype;
     op_arg->priv = priv;
 }
 
-/*
- * This function should undo everything done by pre_run().
- */
+/* This function should free all the memory allocated by other *_run()s. */
 static void create_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-    struct priv_s *priv;
+    struct priv_s *priv = op_arg->priv;
 
-    priv = op_arg->priv;
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {
@@ -141,6 +128,7 @@ static const char *out_arg_names[] = {
 
 static const char *param_arg_names[] = {
     "dtype",
+    "dims",
     "data",
     NULL
 };

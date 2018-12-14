@@ -24,17 +24,14 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *src_mean;
-    tl_tensor *src_var;
-    tl_tensor *src_scale;
-    tl_tensor *src_offset;
-    tl_tensor *dst_scale;
-    char      *dst_scale_name;
-    tl_tensor *dst_shift;
-    char      *dst_shift_name;
-    tl_tensor *dst_power;
-    char      *dst_power_name;
-    float      epsilon;
+    ln_tensor_entry *src_mean_entry;
+    ln_tensor_entry *src_var_entry;
+    ln_tensor_entry *src_scale_entry;
+    ln_tensor_entry *src_offset_entry;
+    ln_tensor_entry *dst_scale_entry;
+    ln_tensor_entry *dst_shift_entry;
+    ln_tensor_entry *dst_power_entry;
+    ln_param_entry  *epsilon_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -77,8 +74,8 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_power_ndim;
     int                  *dst_power_dims;
     tl_dtype              dst_power_dtype;
-    ln_param_entry       *epsilon_entry;
     float                 epsilon;
+    ln_param_entry       *epsilon_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -94,6 +91,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_mean_entry = ln_tensor_table_find(op_arg->tensor_table, src_mean_name);
     ln_opck_tensor_defined(src_mean_entry, src_mean_name);
     src_mean = src_mean_entry->tensor;
+    src_mean = src_mean;
     ln_opck_tensor_mtype_eq(src_mean_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_mean_entry, TL_FLOAT);
     ln_opck_tensor_ndim(src_mean_entry, 1);
@@ -105,6 +103,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_var_entry = ln_tensor_table_find(op_arg->tensor_table, src_var_name);
     ln_opck_tensor_defined(src_var_entry, src_var_name);
     src_var = src_var_entry->tensor;
+    src_var = src_var;
     ln_opck_tensor_mtype_eq(src_var_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_var_entry, TL_FLOAT);
     ln_opck_tensor_ndim(src_var_entry, 1);
@@ -116,6 +115,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_scale_entry = ln_tensor_table_find(op_arg->tensor_table, src_scale_name);
     ln_opck_tensor_defined(src_scale_entry, src_scale_name);
     src_scale = src_scale_entry->tensor;
+    src_scale = src_scale;
     ln_opck_tensor_mtype_eq(src_scale_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_scale_entry, TL_FLOAT);
     ln_opck_tensor_ndim(src_scale_entry, 1);
@@ -127,6 +127,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_offset_entry = ln_tensor_table_find(op_arg->tensor_table, src_offset_name);
     ln_opck_tensor_defined(src_offset_entry, src_offset_name);
     src_offset = src_offset_entry->tensor;
+    src_offset = src_offset;
     ln_opck_tensor_mtype_eq(src_offset_entry, LN_MEM_CPU);
     ln_opck_tensor_dtype_eq(src_offset_entry, TL_FLOAT);
     ln_opck_tensor_ndim(src_offset_entry, 1);
@@ -161,6 +162,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(epsilon_entry, LN_PARAM_NUMBER);
     epsilon = epsilon_entry->value_float;
     ln_opck_param_float_gt(epsilon_entry, 0);
+    epsilon = epsilon;
 
     /* define output tensor shape, tensor data should be NULL */
     dst_scale_ndim = 1;
@@ -195,17 +197,14 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src_mean = src_mean;
-    priv->src_var = src_var;
-    priv->src_scale = src_scale;
-    priv->src_offset = src_offset;
-    priv->dst_scale = dst_scale;
-    priv->dst_scale_name = dst_scale_name;
-    priv->dst_shift = dst_shift;
-    priv->dst_shift_name = dst_shift_name;
-    priv->dst_power = dst_power;
-    priv->dst_power_name = dst_power_name;
-    priv->epsilon = epsilon;
+    priv->src_mean_entry = src_mean_entry;
+    priv->src_var_entry = src_var_entry;
+    priv->src_scale_entry = src_scale_entry;
+    priv->src_offset_entry = src_offset_entry;
+    priv->dst_scale_entry = dst_scale_entry;
+    priv->dst_shift_entry = dst_shift_entry;
+    priv->dst_power_entry = dst_power_entry;
+    priv->epsilon_entry = epsilon_entry;
     op_arg->priv = priv;
 }
 
@@ -213,19 +212,27 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
+    tl_tensor     *src_mean = priv->src_mean_entry->tensor;
+    tl_tensor     *src_var = priv->src_var_entry->tensor;
+    tl_tensor     *src_scale = priv->src_scale_entry->tensor;
+    tl_tensor     *src_offset = priv->src_offset_entry->tensor;
+    tl_tensor     *dst_scale = priv->dst_scale_entry->tensor;
+    tl_tensor     *dst_shift = priv->dst_shift_entry->tensor;
+    tl_tensor     *dst_power = priv->dst_power_entry->tensor;
+    float          epsilon = priv->epsilon_entry->value_float;
 
     {
-        float *dst_scale = priv->dst_scale->data;
-        float *dst_shift = priv->dst_shift->data;
-        float *dst_power = priv->dst_power->data;
-        float *src_mean = priv->src_mean->data;
-        float *src_var = priv->src_var->data;
-        float *src_scale = priv->src_scale->data;
-        float *src_offset = priv->src_offset->data;
-        for (int i = 0; i < priv->dst_scale->len; i++) {
-            dst_scale[i] = src_scale[i] / (src_var[i] + priv->epsilon);
-            dst_shift[i] = src_offset[i] - src_mean[i] * src_scale[i] / (src_var[i] + priv->epsilon);
-            dst_power[i] = 1;
+        float *dst_scale_data = dst_scale->data;
+        float *dst_shift_data = dst_shift->data;
+        float *dst_power_data = dst_power->data;
+        float *src_mean_data = src_mean->data;
+        float *src_var_data = src_var->data;
+        float *src_scale_data = src_scale->data;
+        float *src_offset_data = src_offset->data;
+        for (int i = 0; i < dst_scale->len; i++) {
+            dst_scale_data[i] = src_scale_data[i] / (src_var_data[i] + epsilon);
+            dst_shift_data[i] = src_offset_data[i] - src_mean_data[i] * src_scale_data[i] / (src_var_data[i] + epsilon);
+            dst_power_data[i] = 1;
         }
     }
 }
@@ -235,10 +242,10 @@ static void bn2scale_wts_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_scale_name);
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_shift_name);
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_power_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_scale_entry->name);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_shift_entry->name);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_power_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

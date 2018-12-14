@@ -22,13 +22,13 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_cuda.h"
 
 struct priv_s {
-    tl_tensor *src1;
-    tl_tensor *src2;
-    tl_tensor *dst;
-    char      *dst_name;
-    int        elew_op;
+    ln_tensor_entry *src1_entry;
+    ln_tensor_entry *src2_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *elew_op_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -49,8 +49,8 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *elew_op_entry;
     int                   elew_op;
+    ln_param_entry       *elew_op_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -66,6 +66,7 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     src1_entry = ln_tensor_table_find(op_arg->tensor_table, src1_name);
     ln_opck_tensor_defined(src1_entry, src1_name);
     src1 = src1_entry->tensor;
+    src1 = src1;
     ln_opck_tensor_mtype_eq(src1_entry, LN_MEM_CUDA);
 
     src2_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src2");
@@ -74,6 +75,7 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     src2_entry = ln_tensor_table_find(op_arg->tensor_table, src2_name);
     ln_opck_tensor_defined(src2_entry, src2_name);
     src2 = src2_entry->tensor;
+    src2 = src2;
     ln_opck_tensor_mtype_eq(src2_entry, LN_MEM_CUDA);
     ln_opck_tensor_issametype(src2_entry, src1_entry);
     ln_opck_tensor_issameshape(src2_entry, src1_entry);
@@ -94,6 +96,8 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(elew_op_entry, "elew_op");
     ln_opck_param_type(elew_op_entry, LN_PARAM_STRING);
     elew_op = tl_elew_op_from_str(elew_op_entry->value_string);
+    elew_op_entry->value_int = elew_op;
+    elew_op = elew_op;
     ln_opck_param_satisfy_msg(elew_op != -1, "`elew_op` param should be a supported tl_elew_op");
 
     /* define output tensor shape, tensor data should be NULL */
@@ -108,11 +112,10 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src1 = src1;
-    priv->src2 = src2;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->elew_op = elew_op;
+    priv->src1_entry = src1_entry;
+    priv->src2_entry = src2_entry;
+    priv->dst_entry = dst_entry;
+    priv->elew_op_entry = elew_op_entry;
     op_arg->priv = priv;
 }
 
@@ -120,9 +123,13 @@ static void elew_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void elew_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
+    tl_tensor     *src1 = priv->src1_entry->tensor;
+    tl_tensor     *src2 = priv->src2_entry->tensor;
+    tl_tensor     *dst = priv->dst_entry->tensor;
+    int            elew_op = priv->elew_op_entry->value_int;
 
     {
-        tl_tensor_elew_cuda(priv->src1, priv->src2, priv->dst, priv->elew_op);
+        tl_tensor_elew_cuda(src1, src2, dst, elew_op);
     }
 }
 
@@ -131,8 +138,8 @@ static void elew_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

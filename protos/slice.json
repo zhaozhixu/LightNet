@@ -45,7 +45,7 @@
                  "realtype": "int", "gt": 0, "le": "src->dims[axis]",
                  "check": "len + start <= src->dims[axis]"}
             ],
-            "run": "tl_tensor_slice(priv->src, priv->dst, priv->axis, priv->start, priv->len);"
+            "run": "tl_tensor_slice(src, dst, axis, start, len);"
         },
         {
             "optype": "slice_cuda",
@@ -69,7 +69,7 @@
                  "realtype": "int", "gt": 0, "le": "src->dims[axis]",
                  "check": "len + start <= src->dims[axis]"}
             ],
-            "run": "tl_tensor_slice_cuda(priv->src, priv->dst, priv->axis, priv->start, priv->len);"
+            "run": "tl_tensor_slice_cuda(src, dst, axis, start, len);"
         }
     ]
 }

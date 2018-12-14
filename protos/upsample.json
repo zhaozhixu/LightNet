@@ -15,7 +15,7 @@
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
-                 "realtype": "tl_resize_type",
+                 "realtype": "int",
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
@@ -38,14 +38,14 @@
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
-                 "realtype": "tl_resize_type",
+                 "realtype": "int",
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "float", "gt": 0,
                  "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
             ],
-            "run": "tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);"
+            "run": "tl_tensor_resize(src, dst, dst->dims, mode);"
         },
         {
             "optype": "upsample_cuda",
@@ -62,14 +62,14 @@
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
-                 "realtype": "tl_resize_type",
+                 "realtype": "int",
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "float", "gt": 0,
                  "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
             ],
-            "run": "tl_tensor_resize_cuda(priv->src, priv->dst, priv->dst->dims, priv->mode);"
+            "run": "tl_tensor_resize_cuda(src, dst, dst->dims, mode);"
         }
     ]
 }

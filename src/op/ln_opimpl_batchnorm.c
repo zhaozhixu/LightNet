@@ -24,14 +24,13 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *src;
-    tl_tensor *scale;
-    tl_tensor *offset;
-    tl_tensor *mean;
-    tl_tensor *var;
-    tl_tensor *dst;
-    char      *dst_name;
-    float      epsilon;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *scale_entry;
+    ln_tensor_entry *offset_entry;
+    ln_tensor_entry *mean_entry;
+    ln_tensor_entry *var_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *epsilon_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -64,8 +63,8 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *epsilon_entry;
     float                 epsilon;
+    ln_param_entry       *epsilon_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -81,6 +80,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
     ln_opck_tensor_ndim(src_entry, 4);
 
     scale_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "scale");
@@ -89,6 +89,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     scale_entry = ln_tensor_table_find(op_arg->tensor_table, scale_name);
     ln_opck_tensor_defined(scale_entry, scale_name);
     scale = scale_entry->tensor;
+    scale = scale;
     ln_opck_tensor_ndim(scale_entry, 1);
     ln_opck_tensor_len(scale_entry, src->dims[1]);
     ln_opck_tensor_issametype(scale_entry, src_entry);
@@ -99,6 +100,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     offset_entry = ln_tensor_table_find(op_arg->tensor_table, offset_name);
     ln_opck_tensor_defined(offset_entry, offset_name);
     offset = offset_entry->tensor;
+    offset = offset;
     ln_opck_tensor_ndim(offset_entry, 1);
     ln_opck_tensor_len(offset_entry, src->dims[1]);
     ln_opck_tensor_issametype(offset_entry, src_entry);
@@ -109,6 +111,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     mean_entry = ln_tensor_table_find(op_arg->tensor_table, mean_name);
     ln_opck_tensor_defined(mean_entry, mean_name);
     mean = mean_entry->tensor;
+    mean = mean;
     ln_opck_tensor_ndim(mean_entry, 1);
     ln_opck_tensor_len(mean_entry, src->dims[1]);
     ln_opck_tensor_issametype(mean_entry, src_entry);
@@ -119,6 +122,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     var_entry = ln_tensor_table_find(op_arg->tensor_table, var_name);
     ln_opck_tensor_defined(var_entry, var_name);
     var = var_entry->tensor;
+    var = var;
     ln_opck_tensor_ndim(var_entry, 1);
     ln_opck_tensor_len(var_entry, src->dims[1]);
     ln_opck_tensor_issametype(var_entry, src_entry);
@@ -140,6 +144,7 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(epsilon_entry, LN_PARAM_NUMBER);
     epsilon = epsilon_entry->value_float;
     ln_opck_param_float_gt(epsilon_entry, 0);
+    epsilon = epsilon;
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
@@ -153,14 +158,13 @@ static void batchnorm_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->scale = scale;
-    priv->offset = offset;
-    priv->mean = mean;
-    priv->var = var;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->epsilon = epsilon;
+    priv->src_entry = src_entry;
+    priv->scale_entry = scale_entry;
+    priv->offset_entry = offset_entry;
+    priv->mean_entry = mean_entry;
+    priv->var_entry = var_entry;
+    priv->dst_entry = dst_entry;
+    priv->epsilon_entry = epsilon_entry;
     op_arg->priv = priv;
 }
 
@@ -169,8 +173,8 @@ static void batchnorm_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

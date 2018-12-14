@@ -24,12 +24,10 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *src;
-    tl_tensor *dst;
-    char      *dst_name;
-    tl_tensor *arg;
-    char      *arg_name;
-    int        axis;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *dst_entry;
+    ln_tensor_entry *arg_entry;
+    ln_param_entry  *axis_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -53,8 +51,8 @@ static void maxreduce_arg_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   arg_ndim;
     int                  *arg_dims;
     tl_dtype              arg_dtype;
-    ln_param_entry       *axis_entry;
     int                   axis;
+    ln_param_entry       *axis_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -70,6 +68,7 @@ static void maxreduce_arg_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 2);
@@ -93,6 +92,7 @@ static void maxreduce_arg_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(axis_entry, "axis");
     ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
     axis = axis_entry->value_int;
+    axis = axis;
     ln_opck_param_satisfy_msg(axis >= 0 && axis < src->ndim, "`axis` should match the dimensions of `src`");
 
     /* define output tensor shape, tensor data should be NULL */
@@ -128,12 +128,10 @@ static void maxreduce_arg_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->arg = arg;
-    priv->arg_name = arg_name;
-    priv->axis = axis;
+    priv->src_entry = src_entry;
+    priv->dst_entry = dst_entry;
+    priv->arg_entry = arg_entry;
+    priv->axis_entry = axis_entry;
     op_arg->priv = priv;
 }
 
@@ -142,9 +140,9 @@ static void maxreduce_arg_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_tensor_table_remove(op_arg->tensor_table, priv->arg_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->arg_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

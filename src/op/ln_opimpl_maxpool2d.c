@@ -24,12 +24,11 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *src;
-    tl_tensor *dst;
-    char      *dst_name;
-    int       *size;
-    int       *stride;
-    int       *padding;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *size_entry;
+    ln_param_entry  *stride_entry;
+    ln_param_entry  *padding_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -46,12 +45,12 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *size_entry;
     int                  *size;
-    ln_param_entry       *stride_entry;
+    ln_param_entry       *size_entry;
     int                  *stride;
-    ln_param_entry       *padding_entry;
+    ln_param_entry       *stride_entry;
     int                  *padding;
+    ln_param_entry       *padding_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -67,6 +66,7 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
     ln_opck_tensor_ndim(src_entry, 4);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
@@ -87,6 +87,7 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(size_entry, 2);
     size = size_entry->value_array_int;
     ln_opck_param_array_int_gt(size_entry, 0);
+    size = size;
 
     stride_entry = ln_param_list_find(op_arg->params, "stride");
     ln_opck_param_exist(stride_entry, "stride");
@@ -94,6 +95,7 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(stride_entry, 2);
     stride = stride_entry->value_array_int;
     ln_opck_param_array_int_gt(stride_entry, 0);
+    stride = stride;
 
     padding_entry = ln_param_list_find(op_arg->params, "padding");
     ln_opck_param_exist(padding_entry, "padding");
@@ -101,6 +103,7 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(padding_entry, 4);
     padding = padding_entry->value_array_int;
     ln_opck_param_array_int_gt(padding_entry, 0);
+    padding = padding;
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
@@ -123,12 +126,11 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->size = size;
-    priv->stride = stride;
-    priv->padding = padding;
+    priv->src_entry = src_entry;
+    priv->dst_entry = dst_entry;
+    priv->size_entry = size_entry;
+    priv->stride_entry = stride_entry;
+    priv->padding_entry = padding_entry;
     op_arg->priv = priv;
 }
 
@@ -137,8 +139,8 @@ static void maxpool2d_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

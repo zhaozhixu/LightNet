@@ -541,7 +541,6 @@ char *ln_json_create_json_str(const ln_context *ctx)
     cJSON *ops_json = NULL;
     cJSON *op_json = NULL;
     cJSON *item = NULL;
-    int i;
 
     json = cJSON_CreateObject();
     if (!json)

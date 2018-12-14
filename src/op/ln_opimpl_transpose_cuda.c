@@ -22,12 +22,12 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_cuda.h"
 
 struct priv_s {
-    tl_tensor *src;
-    tl_tensor *dst;
-    char      *dst_name;
-    int       *axes;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *axes_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -44,8 +44,8 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *axes_entry;
     int                  *axes;
+    ln_param_entry       *axes_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -61,6 +61,7 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
@@ -80,6 +81,7 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(axes_entry, LN_PARAM_ARRAY_NUMBER);
     axes = axes_entry->value_array_int;
     ln_opck_param_array_int_ge(axes_entry, 0);
+    axes = axes;
     {
         int *tmp = ln_alloc(src->ndim*sizeof(int));
         memset(tmp, 0, src->ndim*sizeof(int));
@@ -109,10 +111,9 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->axes = axes;
+    priv->src_entry = src_entry;
+    priv->dst_entry = dst_entry;
+    priv->axes_entry = axes_entry;
     op_arg->priv = priv;
 }
 
@@ -120,9 +121,12 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void transpose_cuda_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
+    tl_tensor     *src = priv->src_entry->tensor;
+    tl_tensor     *dst = priv->dst_entry->tensor;
+    int           *axes = priv->axes_entry->value_array_int;
 
     {
-        tl_tensor_transpose_cuda(priv->src, priv->dst, priv->axes);
+        tl_tensor_transpose_cuda(src, dst, axes);
     }
 }
 
@@ -131,8 +135,8 @@ static void transpose_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

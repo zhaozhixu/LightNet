@@ -24,12 +24,11 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *src;
-    tl_tensor *dst;
-    char      *dst_name;
-    int        axis;
-    int        start;
-    int        len;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *axis_entry;
+    ln_param_entry  *start_entry;
+    ln_param_entry  *len_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -46,12 +45,12 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *axis_entry;
     int                   axis;
-    ln_param_entry       *start_entry;
+    ln_param_entry       *axis_entry;
     int                   start;
-    ln_param_entry       *len_entry;
+    ln_param_entry       *start_entry;
     int                   len;
+    ln_param_entry       *len_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -67,6 +66,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -86,6 +86,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
     axis = axis_entry->value_int;
     ln_opck_param_int_ge(axis_entry, 0);
     ln_opck_param_int_lt(axis_entry, src->ndim);
+    axis = axis;
 
     start_entry = ln_param_list_find(op_arg->params, "start");
     ln_opck_param_exist(start_entry, "start");
@@ -93,6 +94,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
     start = start_entry->value_int;
     ln_opck_param_int_ge(start_entry, 0);
     ln_opck_param_int_lt(start_entry, src->dims[axis]);
+    start = start;
 
     len_entry = ln_param_list_find(op_arg->params, "len");
     ln_opck_param_exist(len_entry, "len");
@@ -100,6 +102,7 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
     len = len_entry->value_int;
     ln_opck_param_int_gt(len_entry, 0);
     ln_opck_param_int_le(len_entry, src->dims[axis]);
+    len = len;
     ln_opck_param_satisfy(len + start <= src->dims[axis]);
 
     /* define output tensor shape, tensor data should be NULL */
@@ -120,12 +123,11 @@ static void slice_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->axis = axis;
-    priv->start = start;
-    priv->len = len;
+    priv->src_entry = src_entry;
+    priv->dst_entry = dst_entry;
+    priv->axis_entry = axis_entry;
+    priv->start_entry = start_entry;
+    priv->len_entry = len_entry;
     op_arg->priv = priv;
 }
 
@@ -134,8 +136,8 @@ static void slice_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

@@ -37,7 +37,7 @@
                  "realtype": "int", "ge": 0,
                  "custom": "int *tmp = ln_alloc(src->ndim*sizeof(int));\nmemset(tmp, 0, src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    tmp[axes[i]] = 1;\nfor (int i = 0; i < src->ndim; i++)\n    ln_opck_param_satisfy_msg(tmp[i], \"`axes` should match `src`'s shape\");\nln_free(tmp);"}
             ],
-            "run": "tl_tensor_transpose(priv->src, priv->dst, priv->axes);"
+            "run": "tl_tensor_transpose(src, dst, axes);"
         },
         {
             "optype": "transpose_cuda",
@@ -57,7 +57,7 @@
                  "realtype": "int", "ge": 0,
                  "custom": "int *tmp = ln_alloc(src->ndim*sizeof(int));\nmemset(tmp, 0, src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    tmp[axes[i]] = 1;\nfor (int i = 0; i < src->ndim; i++)\n    ln_opck_param_satisfy_msg(tmp[i], \"`axes` should match `src`'s shape\");\nln_free(tmp);"}
             ],
-            "run": "tl_tensor_transpose_cuda(priv->src, priv->dst, priv->axes);"
+            "run": "tl_tensor_transpose_cuda(src, dst, axes);"
         }
     ]
 }

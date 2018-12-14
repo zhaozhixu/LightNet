@@ -39,7 +39,7 @@
                  "realtype": "int", "from_func": "tl_elew_op_from_str",
                  "check": "elew_op != -1, \"`elew_op` param should be a supported tl_elew_op\""}
             ],
-            "run": "tl_tensor_elew(priv->src1, priv->src2, priv->dst, priv->elew_op);"
+            "run": "tl_tensor_elew(src1, src2, dst, elew_op);"
         },
         {
             "optype": "elew_cuda",
@@ -60,7 +60,7 @@
                  "realtype": "int", "from_func": "tl_elew_op_from_str",
                  "check": "elew_op != -1, \"`elew_op` param should be a supported tl_elew_op\""}
             ],
-            "run": "tl_tensor_elew_cuda(priv->src1, priv->src2, priv->dst, priv->elew_op);"
+            "run": "tl_tensor_elew_cuda(src1, src2, dst, elew_op);"
         }
     ]
 }

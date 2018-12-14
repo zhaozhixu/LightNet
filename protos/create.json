@@ -1,13 +1,13 @@
 {
     "ops": [
         {
-            "optype": "zeros",
+            "optype": "create",
             "author": "Zhao Zhixu",
             "arch": "none",
             "tensors_in": [
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE", "static": true,
                  "ndim": "dims_entry->array_len", "dtype": "dtype",
                  "dims": "dims"}
             ],
@@ -16,17 +16,19 @@
                  "realtype": "int", "from_func": "tl_dtype_from_str",
                  "check": "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "gt": 0}
+                 "realtype": "int", "gt": 0},
+                {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "double"}
             ]
         },
         {
-            "optype": "zeros_cpu",
+            "optype": "create_cpu",
             "author": "Zhao Zhixu",
             "arch": "cpu",
             "tensors_in": [
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU", "static": true,
                  "ndim": "dims_entry->array_len", "dtype": "dtype",
                  "dims": "dims"}
             ],
@@ -35,18 +37,20 @@
                  "realtype": "int", "from_func": "tl_dtype_from_str",
                  "check": "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "gt": 0}
+                 "realtype": "int", "gt": 0},
+                {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "double"}
             ],
-            "run": "memset(dst->data, 0, tl_tensor_size(dst));"
+            "static_run": "size_t size = tl_tensor_size(dst);\nvoid *data_tmp = ln_alloc(size);\nif (data[0] == 0 && data_entry->array_len == 1) {\n    memset(data_tmp, 0, size);\n} else {\n    for (int i = 0; i < data_entry->array_len; i++)\n        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &data[i], TL_DOUBLE);\n}\nmemmove(dst->data, data_tmp, size);\nln_free(data_tmp);"
         },
         {
-            "optype": "zeros_cuda",
+            "optype": "create_cuda",
             "author": "Zhao Zhixu",
             "arch": "cuda",
             "tensors_in": [
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA", "static": true,
                  "ndim": "dims_entry->array_len", "dtype": "dtype",
                  "dims": "dims"}
             ],
@@ -55,9 +59,11 @@
                  "realtype": "int", "from_func": "tl_dtype_from_str",
                  "check": "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "gt": 0}
+                 "realtype": "int", "gt": 0},
+                {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "double"}
             ],
-            "run": "ln_memset_cuda(dst->data, 0, tl_tensor_size(dst));"
+            "static_run": "size_t size = tl_tensor_size(dst);\nvoid *data_tmp = ln_alloc(size);\nif (data[0] == 0 && data_entry->array_len == 1) {\n    memset(data_tmp, 0, size);\n} else {\n    for (int i = 0; i < data_entry->array_len; i++)\n        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &data[i], TL_DOUBLE);\n}\nln_memcpy_h2d(dst->data, data_tmp, size);\nln_free(data_tmp);"
         }
     ]
 }

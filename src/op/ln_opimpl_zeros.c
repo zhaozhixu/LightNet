@@ -24,10 +24,9 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *dst;
-    char      *dst_name;
-    int        dtype;
-    int       *dims;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *dtype_entry;
+    ln_param_entry  *dims_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -40,10 +39,10 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *dtype_entry;
     int                   dtype;
-    ln_param_entry       *dims_entry;
+    ln_param_entry       *dtype_entry;
     int                  *dims;
+    ln_param_entry       *dims_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -69,6 +68,8 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(dtype_entry, "dtype");
     ln_opck_param_type(dtype_entry, LN_PARAM_STRING);
     dtype = tl_dtype_from_str(dtype_entry->value_string);
+    dtype_entry->value_int = dtype;
+    dtype = dtype;
     ln_opck_param_satisfy_msg(dtype != -1, "`dtype` param should be a supported tl_dtype");
 
     dims_entry = ln_param_list_find(op_arg->params, "dims");
@@ -76,6 +77,7 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
     dims = dims_entry->value_array_int;
     ln_opck_param_array_int_gt(dims_entry, 0);
+    dims = dims;
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = dims_entry->array_len;
@@ -89,10 +91,9 @@ static void zeros_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->dtype = dtype;
-    priv->dims = dims;
+    priv->dst_entry = dst_entry;
+    priv->dtype_entry = dtype_entry;
+    priv->dims_entry = dims_entry;
     op_arg->priv = priv;
 }
 
@@ -101,8 +102,8 @@ static void zeros_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

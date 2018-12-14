@@ -160,6 +160,16 @@ sub gen_head_block {
     my $op = shift;
     &err_exit("'$op->{optype}' needs an `author`") unless exists $op->{author};
     my $author = $op->{author};
+    my @headers = ();
+    push @headers, "#include <assert.h>";
+    push @headers, "#include \"ln_op.h\"";
+    if ($op->{arch} eq "cuda") {
+        push @headers, "#include \"ln_cuda.h\"";
+    }
+    if ($op->{arch} eq "tensorrt") {
+        push @headers, "#include \"ln_tensorrt.h\"";
+    }
+    my $headers_str = join "\n", @headers;
     my $head_block_tpl = <<EOF;
 /*
  * Copyright (c) 2018 $author
@@ -183,12 +193,10 @@ sub gen_head_block {
  * SOFTWARE.
  */
 
-#include <assert.h>
-#include "ln_op.h"
+$headers_str
 EOF
 }
 
-# TODO: replace tl_tensor to ln_tensor_entry
 sub gen_struct_def {
     my $op = shift;
     my $tensors_in = $op->{tensors_in};
@@ -198,15 +206,15 @@ sub gen_struct_def {
     my @defs = ();
     foreach (@$tensors_in) {
         &err_exit("'$op->{optype}' needs an `arg_name` in one of the  `tensors_in`") unless exists $_->{arg_name};
-        push @defs, "tl_tensor *$_->{arg_name};";
+        push @defs, "ln_tensor_entry *$_->{arg_name}_entry;";
     }
     foreach (@$tensors_out) {
         &err_exit("'$op->{optype}' needs an `arg_name` in one of the `tensors_out`") unless exists $_->{arg_name};
-        push @defs, "tl_tensor *$_->{arg_name};";
-        push @defs, "char *$_->{arg_name}_name;";
+        push @defs, "ln_tensor_entry *$_->{arg_name}_entry;";
     }
-    &gen_params($op, 0, \@defs);
-    &make_defs_neat($INDENT_OFFSET, \@defs);
+    &gen_params($op, 1, 0, \@defs);
+    &make_defs_neat(\@defs);
+    &indent_block($INDENT_OFFSET, \@defs);
 
     my $defs_str = join "\n", @defs;
     my $struct_def_tpl = <<EOF;
@@ -217,7 +225,7 @@ EOF
 }
 
 sub gen_pre_run {
-    my $op = $_[0];
+    my $op = shift;
     my $pre_run_local_vars = &gen_pre_run_local_vars($op);
     my $pre_run_checks = &gen_pre_run_checks($op);
     my $output_tensor_def = &gen_output_tensor_def($op);
@@ -239,7 +247,8 @@ EOF
 }
 
 sub gen_pre_run_local_vars {
-    my $op = $_[0];
+    my $op = shift;
+    my $code_str = shift;
     my $tensors_in = $op->{tensors_in};
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
@@ -260,86 +269,100 @@ sub gen_pre_run_local_vars {
         push @vars, "int *$_->{arg_name}_dims;";
         push @vars, "tl_dtype $_->{arg_name}_dtype;";
     }
-    &gen_params($op, 1, \@vars);
+    &gen_params($op, 1, 1, \@vars);
 
     push @vars, "int tensors_in_n;";
     push @vars, "int tensors_out_n;";
     push @vars, "int params_n;";
     push @vars, "struct priv_s *priv;";
-    &make_defs_neat($INDENT_OFFSET, \@vars);
+    &make_defs_neat(\@vars);
+    &indent_block($INDENT_OFFSET, \@vars);
     push @vars, "";
 
     join "\n", @vars;
+}
+
+sub get_param_type {
+    my $param = shift;
+
+    &err_exit("'$param->{arg_name}' needs a `ptype`")
+        unless exists $param->{ptype};
+    my $realtype;
+    given ($param->{ptype}) {
+        when ("LN_PARAM_NULL") {
+            $realtype = "void *";
+        }
+        when ("LN_PARAM_STRING") {
+            if (exists $param->{realtype}) {
+                $realtype = $param->{realtype};
+            } else {
+                $realtype = "char *";
+            }
+        }
+        when ("LN_PARAM_NUMBER") {
+            &err_exit("$param->{arg_name} needs a `realtype`")
+                unless exists $param->{realtype};
+            if ($param->{realtype} eq "float" ||
+                $param->{realtype} eq "double"||
+                $param->{realtype} eq "int") {
+                $realtype = $param->{realtype};
+            } else {
+                &err_exit("unsupported `realtype`: '$param->{realtype}'");
+            }
+        }
+        when ("LN_PARAM_BOOL") {
+            $realtype = "tl_bool_t";
+        }
+        when ("LN_PARAM_ARRAY_STRING") {
+            if (exists $param->{realtype}) {
+                $realtype = "$param->{realtype} *";
+            } else {
+                $realtype = "char **";
+            }
+        }
+        when ("LN_PARAM_ARRAY_NUMBER") {
+            &err_exit("$param->{arg_name} needs a `realtype`")
+                unless exists $param->{realtype};
+            if ($param->{realtype} eq "float" ||
+                $param->{realtype} eq "double"||
+                $param->{realtype} eq "int") {
+                $realtype = "$param->{realtype} *";
+            } else {
+                &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
+            }
+        }
+        when ("LN_PARAM_ARRAY_BOOL") {
+            $realtype = "tl_bool_t *";
+        }
+        default {
+            &err_exit("$param->{arg_name} has unsupported `ptype`: '$param->{ptype}'");
+        }
+    }
+    $realtype .= " " unless ($realtype =~ /\*$/);
+    $realtype;
 }
 
 sub gen_params {
     my $op = shift;
     my $params = $op->{params};
     my $do_gen_entry = shift;
+    my $do_gen_param = shift;
     my $defs = shift;
     foreach my $param (@$params) {
-        &err_exit("'$op->{optype}' needs a `arg_name` in one of the `params`") unless exists $param->{arg_name};
-        &err_exit("'$param->{arg_name}' needs a `ptype`") unless exists $param->{ptype};
-        my $realtype;
-        given ($param->{ptype}) {
-            when ("LN_PARAM_NULL") {
-                $realtype = "void *";
-            }
-            when ("LN_PARAM_STRING") {
-                if (exists $param->{realtype}) {
-                    $realtype = $param->{realtype};
-                } else {
-                    $realtype = "char *";
-                }
-            }
-            when ("LN_PARAM_NUMBER") {
-                &err_exit("$param->{arg_name} needs a `realtype`") unless exists $param->{realtype};
-                if ($param->{realtype} eq "float" ||
-                    $param->{realtype} eq "double"||
-                    $param->{realtype} eq "int") {
-                    $realtype = $param->{realtype};
-                } else {
-                    &err_exit("unsupported `realtype`: '$param->{realtype}'");
-                }
-            }
-            when ("LN_PARAM_BOOL") {
-                $realtype = "tl_bool_t";
-            }
-            when ("LN_PARAM_ARRAY_STRING") {
-                if (exists $param->{realtype}) {
-                    $realtype = "$param->{realtype} *";
-                } else {
-                    $realtype = "char **";
-                }
-            }
-            when ("LN_PARAM_ARRAY_NUMBER") {
-                &err_exit("$param->{arg_name} needs a `realtype`") unless exists $param->{realtype};
-                if ($param->{realtype} eq "float" ||
-                    $param->{realtype} eq "double"||
-                    $param->{realtype} eq "int") {
-                    $realtype = "$param->{realtype} *";
-                } else {
-                    &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
-                }
-            }
-            when ("LN_PARAM_ARRAY_BOOL") {
-                $realtype = "tl_bool_t *";
-            }
-            default {
-                &err_exit("$param->{arg_name} has unsupported `ptype`: '$param->{ptype}'");
-            }
+        &err_exit("'$op->{optype}' needs an `arg_name` in one of the `params`")
+            unless exists $param->{arg_name};
+        if ($do_gen_param) {
+            my $type = &get_param_type($param);
+            push @$defs, "${type}$param->{arg_name};";
         }
-        $realtype .= " " unless ($realtype =~ /\*$/);
-
         if ($do_gen_entry) {
-          push @$defs, "ln_param_entry *$param->{arg_name}_entry;";
+            push @$defs, "ln_param_entry *$param->{arg_name}_entry;";
         }
-        push @$defs, "${realtype}$param->{arg_name};";
     }
 }
 
 sub gen_pre_run_checks {
-    my $op = $_[0];
+    my $op = shift;
     my $tensors_in = $op->{tensors_in};
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
@@ -357,6 +380,8 @@ sub gen_pre_run_checks {
         push @states, "${arg_name}_entry = ln_tensor_table_find(op_arg->tensor_table, ${arg_name}_name);";
         push @states, "ln_opck_tensor_defined(${arg_name}_entry, ${arg_name}_name);";
         push @states, "${arg_name} = ${arg_name}_entry->tensor;";
+        # to subpress -Wunused-but-set-variable
+        push @states, "${arg_name} = ${arg_name};";
         &err_exit("'$tensor->{arg_name}' needs a `mtype`") unless exists $tensor->{mtype};
         # maybe not so strict in none arch
         push @states, "ln_opck_tensor_mtype_eq(${arg_name}_entry, $tensor->{mtype});" unless $tensor->{mtype} eq "LN_MEM_NONE";
@@ -440,6 +465,7 @@ sub gen_pre_run_checks {
                 if (exists $param->{realtype}) {
                     if (exists $param->{from_func}) {
                         push @states, "${arg_name} = $param->{from_func}(${arg_name}_entry->value_string);";
+                        push @states, "${arg_name}_entry->value_$param->{realtype} = ${arg_name};";
                     } else {
                         &err_exit("$param->{arg_name} needs a `from_func` to convert '${arg_name}'");
                     }
@@ -480,28 +506,28 @@ sub gen_pre_run_checks {
             when (/^LN_PARAM_ARRAY/) {
                 if (exists $param->{len}) {
                     push @states, "ln_opck_param_array_len_eq(${arg_name}_entry, $param->{len});";
-                }
-                continue ;
+                } continue ;
             }
             when ("LN_PARAM_ARRAY_STRING") {
-              if (exists $param->{realtype}) {
-                if (exists $param->{from_func}) {
-                  push @states, "${arg_name} = ln_alloc(sizeof($param->{realtype})*${arg_name}_entry->array_len);";
-                  push @states, "for (int i = 0; i < ${arg_name}_entry->array_len; i++)";
-                  push @states, &indent_line($INDENT_OFFSET, "${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);");
+                if (exists $param->{realtype}) {
+                    if (exists $param->{from_func}) {
+                        push @states, "${arg_name} = ln_alloc(sizeof($param->{realtype})*${arg_name}_entry->array_len);";
+                        push @states, "${arg_name}_entry->value_array_$param->{realtype} = ${arg_name}";
+                        push @states, "for (int i = 0; i < ${arg_name}_entry->array_len; i++)";
+                        push @states, &indent_line($INDENT_OFFSET, "${arg_name}[i] = $param->{from_func}(${arg_name}_entry->value_array_string[i]);");
+                    } else {
+                        &err_exit("$param->{arg_name} needs a `from_func` to convert '${arg_name}'");
+                    }
                 } else {
-                  &err_exit("$param->{arg_name} needs a `from_func` to convert '${arg_name}'");
+                    push @states, "${arg_name} = ${arg_name}_entry->value_array_string;";
                 }
-              } else {
-                push @states, "${arg_name} = ${arg_name}_entry->value_array_string;";
-              }
             }
             when ("LN_PARAM_ARRAY_NUMBER") {
-              if ($param->{realtype} eq "float" ||
-                  $param->{realtype} eq "double"||
-                  $param->{realtype} eq "int") {
-                  push @states, "${arg_name} = ${arg_name}_entry->value_array_$param->{realtype};";
-                  if (exists $param->{eq}) {
+                if ($param->{realtype} eq "float" ||
+                    $param->{realtype} eq "double"||
+                    $param->{realtype} eq "int") {
+                    push @states, "${arg_name} = ${arg_name}_entry->value_array_$param->{realtype};";
+                    if (exists $param->{eq}) {
                         push @states, "ln_opck_param_array_$param->{realtype}_eq(${arg_name}_entry, $param->{eq});";
                     }
                     if (exists $param->{gt}) {
@@ -519,17 +545,19 @@ sub gen_pre_run_checks {
                     if (exists $param->{ne}) {
                         push @states, "ln_opck_param_array_$param->{realtype}_ne(${arg_name}_entry, $param->{ne});";
                     }
-              } else {
-                &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
-              }
+                } else {
+                    &err_exit("$param->{arg_name} has unsupported `realtype`: '$param->{realtype}'");
+                }
             }
             when ("LN_PARAM_ARRAY_BOOL") {
-              push @states, "${arg_name} = ${arg_name}_entry->value_array_bool;";
+                push @states, "${arg_name} = ${arg_name}_entry->value_array_bool;";
             }
             default {
                 &err_exit("$param->{arg_name} has unsupported `ptype`: '$param->{ptype}'");
             }
         }
+        # to subpress -Wunused-but-set-variable
+        push @states, "${arg_name} = ${arg_name};";
         if (exists $param->{check}) {
             if ($param->{check} =~ /,/) {
                 push @states, "ln_opck_param_satisfy_msg($param->{check});";
@@ -585,7 +613,7 @@ sub gen_pre_run_checks {
 }
 
 sub gen_output_tensor_def {
-    my $op = $_[0];
+    my $op = shift;
     my $tensors_out = $op->{tensors_out};
 
     my @states = ();
@@ -613,7 +641,7 @@ sub gen_output_tensor_def {
         push @states, "${arg_name}_entry = ln_tensor_entry_create(${arg_name}_name, ${arg_name});";
         push @states, "ln_tensor_entry_set_creater(${arg_name}_entry, op_arg->name);";
         if (exists $tensor->{static}) {
-          push @states, "${arg_name}_entry->isstatic = 1;";
+            push @states, "${arg_name}_entry->isstatic = 1;";
         }
         if (exists $tensor->{mtype}) {
             push @states, "${arg_name}_entry->mtype = $tensor->{mtype};";
@@ -632,7 +660,7 @@ sub gen_output_tensor_def {
 }
 
 sub gen_priv_assigns {
-    my $op = $_[0];
+    my $op = shift;
     my $tensors_in = $op->{tensors_in};
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
@@ -640,14 +668,13 @@ sub gen_priv_assigns {
     my @states = ();
     push @states, "priv = ln_alloc(sizeof(struct priv_s));";
     foreach (@$tensors_in) {
-        push @states, "priv->$_->{arg_name} = $_->{arg_name};";
+        push @states, "priv->$_->{arg_name}_entry = $_->{arg_name}_entry;";
     }
     foreach (@$tensors_out) {
-        push @states, "priv->$_->{arg_name} = $_->{arg_name};";
-        push @states, "priv->$_->{arg_name}_name = $_->{arg_name}_name;";
+        push @states, "priv->$_->{arg_name}_entry = $_->{arg_name}_entry;";
     }
     foreach (@$params) {
-        push @states, "priv->$_->{arg_name} = $_->{arg_name};";
+        push @states, "priv->$_->{arg_name}_entry = $_->{arg_name}_entry;";
     }
     push @states, "op_arg->priv = priv;";
 
@@ -655,12 +682,111 @@ sub gen_priv_assigns {
     join "\n", @states;
 }
 
-# TODO: dynamicly gen declarations
+sub have_variable {
+    my $code_str = shift;
+    my $variable = shift;
+    my $ret;
+
+    if ($code_str =~ /((?<!->)|(?<!.)|(?<!\w))(?=\w)$variable\b/) {
+        $ret = 1;
+    } else {
+        $ret = 0;
+    }
+}
+
+sub gen_param_decl_from_priv {
+    my $param = shift;
+
+    my $type = &get_param_type($param);
+    my $arg_name = $param->{arg_name};
+    my $decl;
+    given ($param->{ptype}) {
+        when ("LN_PARAM_NULL") {
+            $decl = "${type}${arg_name} = NULL;";
+        }
+        when ("LN_PARAM_STRING") {
+            if (exists $param->{realtype}) {
+                    $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_$param->{realtype};";
+            } else {
+                $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_string;";
+            }
+        }
+        when ("LN_PARAM_NUMBER") {
+            $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_$param->{realtype};";
+        }
+        when ("LN_PARAM_BOOL") {
+            $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_bool;";
+        }
+        when ("LN_PARAM_ARRAY_STRING") {
+            if (exists $param->{realtype}) {
+                $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_array_$param->{realtype};";
+            } else {
+                $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_array_string;";
+            }
+        }
+        when ("LN_PARAM_ARRAY_NUMBER") {
+            $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_array_$param->{realtype};";
+        }
+        when ("LN_PARAM_ARRAY_BOOL") {
+            $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_array_bool;";
+        }
+        default {
+            &err_exit("$param->${arg_name} has unsupported `ptype`: '$param->{ptype}'");
+        }
+    }
+}
+
+sub add_dynamic_decs_from_priv {
+    my $op = shift;
+    my $code_str = shift;
+    my $states = shift;
+    my $tensors_in = $op->{tensors_in};
+    my $tensors_out = $op->{tensors_out};
+    my $params = $op->{params};
+
+    return unless $code_str;
+    foreach (@$tensors_in) {
+        my $arg_name = $_->{arg_name};
+        if (&have_variable($code_str, "$_->{arg_name}_entry")) {
+            push @$states, "ln_tensor_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
+        }
+        if (&have_variable($code_str, "$_->{arg_name}")) {
+            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->tensor;";
+        }
+        if (&have_variable($code_str, "$_->{arg_name}_name")) {
+            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->name;";
+        }
+    }
+    foreach (@$tensors_out) {
+        my $arg_name = $_->{arg_name};
+        if (&have_variable($code_str, "$_->{arg_name}_entry")) {
+            push @$states, "ln_tensor_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
+        }
+        if (&have_variable($code_str, "$_->{arg_name}")) {
+            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->tensor;";
+        }
+        if (&have_variable($code_str, "$_->{arg_name}_name")) {
+            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->name;";
+        }
+    }
+    foreach (@$params) {
+        my $arg_name = $_->{arg_name};
+        if (&have_variable($code_str, "$_->{arg_name}_entry")) {
+            push @$states, "ln_param_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
+        }
+        if (&have_variable($code_str, "$_->{arg_name}")) {
+            push @$states, &gen_param_decl_from_priv($_);
+        }
+    }
+}
+
 sub gen_static_run {
-    my $op = $_[0];
+    my $op = shift;
 
     my @states = ();
     push @states, "struct priv_s *priv = op_arg->priv;";
+    &add_dynamic_decs_from_priv($op, $op->{static_run}, \@states);
+    &make_defs_neat(\@states);
     push @states, "";
     &add_custom_block($op->{static_run}, \@states);
     &indent_block($INDENT_OFFSET, \@states);
@@ -676,10 +802,12 @@ EOF
 }
 
 sub gen_run {
-    my $op = $_[0];
+    my $op = shift;
 
     my @states = ();
     push @states, "struct priv_s *priv = op_arg->priv;";
+    &add_dynamic_decs_from_priv($op, $op->{run}, \@states);
+    &make_defs_neat(\@states);
     push @states, "";
     &add_custom_block($op->{run}, \@states);
     &indent_block($INDENT_OFFSET, \@states);
@@ -695,17 +823,19 @@ EOF
 }
 
 sub gen_post_run {
-    my $op = $_[0];
+    my $op = shift;
     my $tensors_out = $op->{tensors_out};
 
     my @states = ();
     push @states, "struct priv_s *priv = op_arg->priv;";
+    &add_dynamic_decs_from_priv($op, $op->{post_run}, \@states);
+    &make_defs_neat(\@states);
     push @states, "";
-    foreach (@$tensors_out) {
-        push @states, "ln_tensor_table_remove(op_arg->tensor_table, priv->$_->{arg_name}_name);";
-    }
     &add_custom_block($op->{post_run}, \@states) if exists $op->{post_run};
-    push @states, "ln_free(op_arg->priv);";
+    foreach (@$tensors_out) {
+        push @states, "ln_tensor_table_remove(op_arg->tensor_table, priv->$_->{arg_name}_entry->name);";
+    }
+    push @states, "ln_free(priv);";
 
     &indent_block($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
@@ -720,7 +850,7 @@ EOF
 }
 
 sub gen_op_arg {
-    my $op = $_[0];
+    my $op = shift;
     my $tensors_in = $op->{tensors_in};
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
@@ -774,7 +904,7 @@ EOF
 }
 
 sub gen_op_impl {
-    my $op = $_[0];
+    my $op = shift;
     my $static_run_func = exists $op->{static_run} ? "$op->{optype}_static_run" : "NULL";
     my $run_func = exists $op->{run} ? "$op->{optype}_run" : "NULL";
 
@@ -801,11 +931,10 @@ sub add_custom_block {
 }
 
 sub make_defs_neat {
-    my $nspaces = shift;
     my $defs = shift;
     my $max_offset = 0;
     foreach (@$defs) {
-        if (/( |\*)(\w+;)/) {
+        if (/( |\*)(\w+(;$| *=.+;$))/) {
             my $offset = index($_, $2);
             $max_offset = $max_offset < $offset ? $offset : $max_offset;
         } else {
@@ -813,24 +942,22 @@ sub make_defs_neat {
         }
     }
     foreach (@$defs) {
-        my $type = $1 if /((\w+[ \t]+)+)/;
-        $type =~ s/[ \t]+$//;
+        my $type = $1 if /^(struct +\w+|\w+)/;
         my $nstars = 0;
-        $nstars = length $1 if /(\*+)/;
-        my $rest = $2 if /( |\*)(\w+;)/;
+        $nstars = length $1 if /^$type +(\*+)/;
+        my $rest = $2 if /( |\*)(\w+(;$| *=.+;$))/;
         $_ = sprintf("%-${max_offset}s", $type);
         my $re = " "x$nstars;
         my $stars = "*"x$nstars;
         s/$re$/$stars$rest/;
     }
-    &indent_block($nspaces, $defs);
 }
 
 sub indent_block {
     my $nspaces = shift;
     my $states = shift;
     foreach (@$states) {
-      $_ = " "x$nspaces.$_ unless /^\s*$/;
+        $_ = " "x$nspaces.$_ unless /^\s*$/;
     }
 }
 

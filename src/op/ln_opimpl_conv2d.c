@@ -24,16 +24,15 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor *src;
-    tl_tensor *weight;
-    tl_tensor *bias;
-    tl_tensor *dst;
-    char      *dst_name;
-    int        group;
-    int       *size;
-    int       *stride;
-    int       *padding;
-    int       *dilation;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *weight_entry;
+    ln_tensor_entry *bias_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *group_entry;
+    ln_param_entry  *size_entry;
+    ln_param_entry  *stride_entry;
+    ln_param_entry  *padding_entry;
+    ln_param_entry  *dilation_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -58,16 +57,16 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
-    ln_param_entry       *group_entry;
     int                   group;
-    ln_param_entry       *size_entry;
+    ln_param_entry       *group_entry;
     int                  *size;
-    ln_param_entry       *stride_entry;
+    ln_param_entry       *size_entry;
     int                  *stride;
-    ln_param_entry       *padding_entry;
+    ln_param_entry       *stride_entry;
     int                  *padding;
-    ln_param_entry       *dilation_entry;
+    ln_param_entry       *padding_entry;
     int                  *dilation;
+    ln_param_entry       *dilation_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -83,6 +82,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
     ln_opck_tensor_ndim(src_entry, 4);
 
     weight_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "weight");
@@ -91,6 +91,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     weight_entry = ln_tensor_table_find(op_arg->tensor_table, weight_name);
     ln_opck_tensor_defined(weight_entry, weight_name);
     weight = weight_entry->tensor;
+    weight = weight;
     ln_opck_tensor_ndim(weight_entry, 5);
     ln_opck_tensor_satisfy_msg(weight->dims[2] == src->dims[1], "`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`");
 
@@ -100,6 +101,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     bias_entry = ln_tensor_table_find(op_arg->tensor_table, bias_name);
     ln_opck_tensor_defined(bias_entry, bias_name);
     bias = bias_entry->tensor;
+    bias = bias;
     ln_opck_tensor_ndim(bias_entry, 1);
     ln_opck_tensor_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` should have the size of the 2nd dimision of `weight`");
 
@@ -120,6 +122,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(group_entry, LN_PARAM_NUMBER);
     group = group_entry->value_int;
     ln_opck_param_int_ge(group_entry, 1);
+    group = group;
     ln_opck_param_satisfy_msg(group == weight->dims[0], "`group` should be equal to the 1st dimension of `weight`");
 
     size_entry = ln_param_list_find(op_arg->params, "size");
@@ -128,6 +131,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(size_entry, 2);
     size = size_entry->value_array_int;
     ln_opck_param_array_int_ge(size_entry, 1);
+    size = size;
     ln_opck_param_satisfy_msg(size[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimensions of `weight`");
 
     stride_entry = ln_param_list_find(op_arg->params, "stride");
@@ -136,6 +140,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(stride_entry, 2);
     stride = stride_entry->value_array_int;
     ln_opck_param_array_int_ge(stride_entry, 1);
+    stride = stride;
 
     padding_entry = ln_param_list_find(op_arg->params, "padding");
     ln_opck_param_exist(padding_entry, "padding");
@@ -143,6 +148,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(padding_entry, 4);
     padding = padding_entry->value_array_int;
     ln_opck_param_array_int_ge(padding_entry, 0);
+    padding = padding;
 
     dilation_entry = ln_param_list_find(op_arg->params, "dilation");
     ln_opck_param_exist(dilation_entry, "dilation");
@@ -150,6 +156,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_array_len_eq(dilation_entry, 2);
     dilation = dilation_entry->value_array_int;
     ln_opck_param_array_int_ge(dilation_entry, 1);
+    dilation = dilation;
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
@@ -172,16 +179,15 @@ static void conv2d_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->weight = weight;
-    priv->bias = bias;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->group = group;
-    priv->size = size;
-    priv->stride = stride;
-    priv->padding = padding;
-    priv->dilation = dilation;
+    priv->src_entry = src_entry;
+    priv->weight_entry = weight_entry;
+    priv->bias_entry = bias_entry;
+    priv->dst_entry = dst_entry;
+    priv->group_entry = group_entry;
+    priv->size_entry = size_entry;
+    priv->stride_entry = stride_entry;
+    priv->padding_entry = padding_entry;
+    priv->dilation_entry = dilation_entry;
     op_arg->priv = priv;
 }
 
@@ -190,8 +196,8 @@ static void conv2d_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

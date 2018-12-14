@@ -24,11 +24,10 @@
 #include "ln_op.h"
 
 struct priv_s {
-    tl_tensor     *src;
-    tl_tensor     *dst;
-    char          *dst_name;
-    tl_resize_type mode;
-    float         *scales;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *mode_entry;
+    ln_param_entry  *scales_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -45,10 +44,10 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     int                   dst_ndim;
     int                  *dst_dims;
     tl_dtype              dst_dtype;
+    int                   mode;
     ln_param_entry       *mode_entry;
-    tl_resize_type        mode;
-    ln_param_entry       *scales_entry;
     float                *scales;
+    ln_param_entry       *scales_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -64,6 +63,7 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
+    src = src;
     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CPU);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
@@ -82,6 +82,8 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_exist(mode_entry, "mode");
     ln_opck_param_type(mode_entry, LN_PARAM_STRING);
     mode = tl_resize_type_from_str(mode_entry->value_string);
+    mode_entry->value_int = mode;
+    mode = mode;
     ln_opck_param_satisfy_msg(mode != -1, "`mode` should be 'TL_NEAREST' or 'TL_LINEAR'");
 
     scales_entry = ln_param_list_find(op_arg->params, "scales");
@@ -89,6 +91,7 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
     ln_opck_param_type(scales_entry, LN_PARAM_ARRAY_NUMBER);
     scales = scales_entry->value_array_float;
     ln_opck_param_array_float_gt(scales_entry, 0);
+    scales = scales;
     ln_opck_param_satisfy_msg(scales_entry->array_len == src->ndim, "the length of `scales` should be the same as the rank of input `src`");
 
     /* define output tensor shape, tensor data should be NULL */
@@ -110,11 +113,10 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->src = src;
-    priv->dst = dst;
-    priv->dst_name = dst_name;
-    priv->mode = mode;
-    priv->scales = scales;
+    priv->src_entry = src_entry;
+    priv->dst_entry = dst_entry;
+    priv->mode_entry = mode_entry;
+    priv->scales_entry = scales_entry;
     op_arg->priv = priv;
 }
 
@@ -122,9 +124,12 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 static void upsample_cpu_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
+    tl_tensor     *src = priv->src_entry->tensor;
+    tl_tensor     *dst = priv->dst_entry->tensor;
+    int            mode = priv->mode_entry->value_int;
 
     {
-        tl_tensor_resize(priv->src, priv->dst, priv->dst->dims, priv->mode);
+        tl_tensor_resize(src, dst, dst->dims, mode);
     }
 }
 
@@ -133,8 +138,8 @@ static void upsample_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {

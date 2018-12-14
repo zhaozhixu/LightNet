@@ -37,7 +37,7 @@
                  "realtype": "int",
                  "check": "axis >= 0 && axis < src->ndim, \"`axis` should match the dimensions of `src`\""}
             ],
-            "run": "tl_tensor_maxreduce(priv->src, priv->dst, NULL, priv->axis);"
+            "run": "tl_tensor_maxreduce(src, dst, NULL, axis);"
         },
         {
             "optype": "maxreduce_cuda",
@@ -57,7 +57,7 @@
                  "realtype": "int",
                  "check": "axis >= 0 && axis < src->ndim, \"`axis` should match the dimensions of `src`\""}
             ],
-            "run": "tl_tensor_maxreduce_cuda(priv->src, priv->dst, NULL, priv->axis);"
+            "run": "tl_tensor_maxreduce_cuda(src, dst, NULL, axis);"
         }
     ]
 }

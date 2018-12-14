@@ -23,7 +23,7 @@
             ],
             "params": [
             ],
-            "run": "tl_tensor_print(priv->src, NULL);"
+            "run": "tl_tensor_print(src, NULL);"
         },
         {
             "optype": "print_cuda",
@@ -36,7 +36,7 @@
             ],
             "params": [
             ],
-            "run": "tl_tensor_print_cuda(priv->src, NULL);"
+            "run": "tl_tensor_print_cuda(src, NULL);"
         }
     ]
 }
