@@ -1,0 +1,60 @@
+{
+    "ops": [
+        {
+            "optype": "reshape",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE", "owner": "src_name",
+                 "ndim": "dims_entry->array_len", "dtype": "src->dtype",
+                 "dims": "dims"}
+            ],
+            "params": [
+                {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "check": "src->len == ln_compute_length(dims_entry->array_len, dims), \"`src` tensor length should be equal to the reshaped length\""}
+            ]
+        },
+        {
+            "optype": "reshape_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU", "owner": "src_name",
+                 "ndim": "dims_entry->array_len", "dtype": "src->dtype",
+                 "dims": "dims"}
+            ],
+            "params": [
+                {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "check": "src->len == ln_compute_length(dims_entry->array_len, dims), \"`src` tensor length should be equal to the reshaped length\""}
+            ],
+            "static_run": "dst->data = src->data;"
+        },
+        {
+            "optype": "reshape_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA", "owner": "src_name",
+                 "ndim": "dims_entry->array_len", "dtype": "src->dtype",
+                 "dims": "dims"}
+            ],
+            "params": [
+                {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "check": "src->len == ln_compute_length(dims_entry->array_len, dims), \"`src` tensor length should be equal to the reshaped length\""}
+            ],
+            "static_run": "dst->data = src->data;"
+        }
+    ]
+}

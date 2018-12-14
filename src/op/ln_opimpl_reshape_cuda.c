@@ -22,41 +22,54 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_cuda.h"
 
 struct priv_s {
-    char      *dst_name;
-    tl_tensor *dst_tensor;
-    tl_tensor *src_tensor;
+    ln_tensor_entry *src_entry;
+    ln_tensor_entry *dst_entry;
+    ln_param_entry  *dims_entry;
 };
 
-/*
- * This function should do the parameter checking and tensor shape inference.
- */
+/* This function should do the parameter checking and tensor shape inference. */
 static void reshape_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
 {
-    char *dst_name, *src_name;
-    ln_tensor_entry *dst_entry, *src_entry;
-    tl_tensor *dst_tensor;
-    ln_param_entry *dims_entry;
-    int tensors_n, params_n;
-    int *dims, ndim, i;
-    struct priv_s *priv;
+    char                 *src_name;
+    ln_tensor_list_entry *src_list_entry;
+    ln_tensor_entry      *src_entry;
+    tl_tensor            *src;
+    char                 *dst_name;
+    ln_tensor_list_entry *dst_list_entry;
+    ln_tensor_entry      *dst_entry;
+    tl_tensor            *dst;
+    int                   dst_ndim;
+    int                  *dst_dims;
+    tl_dtype              dst_dtype;
+    int                  *dims;
+    ln_param_entry       *dims_entry;
+    int                   tensors_in_n;
+    int                   tensors_out_n;
+    int                   params_n;
+    struct priv_s        *priv;
 
     /* check tensors and parameters */
-    tensors_n = ln_tensor_list_length(op_arg->tensors_in);
-    ln_opck_tensors_in_len_eq(tensors_n, 1);
+    tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);
+    ln_opck_tensors_in_len_eq(tensors_in_n, 1);
 
-    tensors_n = ln_tensor_list_length(op_arg->tensors_out);
-    ln_opck_tensors_out_len_eq(tensors_n, 1);
-
-    src_name = ln_tensor_list_find_name(op_arg->tensors_in, "src");
-    ln_opck_tensor_in_exist(src_name, "src");
+    src_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src");
+    ln_opck_tensor_in_exist(src_list_entry, "src");
+    src_name = src_list_entry->name;
     src_entry = ln_tensor_table_find(op_arg->tensor_table, src_name);
     ln_opck_tensor_defined(src_entry, src_name);
+    src = src_entry->tensor;
+    src = src;
     ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
 
-    dst_name = ln_tensor_list_find_name(op_arg->tensors_out, "dst");
-    ln_opck_tensor_out_exist(dst_name, "dst");
+    tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
+    ln_opck_tensors_out_len_eq(tensors_out_n, 1);
+
+    dst_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst");
+    ln_opck_tensor_out_exist(dst_list_entry, "dst");
+    dst_name = dst_list_entry->name;
     dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
@@ -66,52 +79,49 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg, ln_error **error)
     dims_entry = ln_param_list_find(op_arg->params, "dims");
     ln_opck_param_exist(dims_entry, "dims");
     ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
-
     dims = dims_entry->value_array_int;
-    ndim = dims_entry->array_len;
-    ln_opck_param_satisfy_msg(ndim > 0,
-                              "`dims` array shouldn't be empty");
-    for (i = 0; i < ndim; i++)
-        ln_opck_param_satisfy_msg(dims[i] > 0,
-                                  "`dims` array elements should be positive");
-    ln_opck_param_satisfy_msg(src_entry->tensor->len == ln_compute_length(ndim, dims),
-                              "`src` tensor length is not equal with requested length");
+    ln_opck_param_array_int_ge(dims_entry, 1);
+    dims = dims;
+    ln_opck_param_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` tensor length should be equal to the reshaped length");
 
     /* define output tensor shape, tensor data should be NULL */
-    dst_tensor = tl_tensor_reshape(src_entry->tensor, ndim, dims);
-    dst_entry = ln_tensor_entry_create(dst_name, dst_tensor);
+    dst_ndim = dims_entry->array_len;
+    dst_dims = dims;
+    dst_dtype = src->dtype;
+    dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
+    dst_entry = ln_tensor_entry_create(dst_name, dst);
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, src_name);
+    dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->dst_name = dst_name;
-    priv->dst_tensor = dst_tensor;
-    priv->src_tensor = src_entry->tensor;
+    priv->src_entry = src_entry;
+    priv->dst_entry = dst_entry;
+    priv->dims_entry = dims_entry;
     op_arg->priv = priv;
 }
 
-/* This function runs only once per instance right after memory allocation. */
+/* This function blocks only once per instance right after memory allocation. */
 static void reshape_cuda_static_run(ln_op_arg *op_arg, ln_error **error)
 {
-    struct priv_s *priv;
+    struct priv_s *priv = op_arg->priv;
+    tl_tensor     *src = priv->src_entry->tensor;
+    tl_tensor     *dst = priv->dst_entry->tensor;
 
-    priv = op_arg->priv;
-    priv->dst_tensor->data = priv->src_tensor->data;
+    {
+        dst->data = src->data;
+    }
 }
 
-/*
- * This function should undo everything done by pre_run().
- */
+/* This function should free all the memory allocated by other *_run()s. */
 static void reshape_cuda_post_run(ln_op_arg *op_arg, ln_error **error)
 {
-    struct priv_s *priv;
+    struct priv_s *priv = op_arg->priv;
 
-    priv = op_arg->priv;
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_name);
-    ln_free(op_arg->priv);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_free(priv);
 }
 
 static const char *in_arg_names[] = {
@@ -137,6 +147,7 @@ static ln_op_arg op_arg_reshape_cuda = {
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
 };
+
 /* struct used for op registration in ln_oplist.c */
 ln_op ln_opimpl_reshape_cuda = {
     .op_arg = &op_arg_reshape_cuda,
