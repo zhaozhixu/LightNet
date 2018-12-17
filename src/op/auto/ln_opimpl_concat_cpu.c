@@ -31,7 +31,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void concat_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void concat_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 {
     char                 *src1_name;
     ln_tensor_list_entry *src1_list_entry;
@@ -131,7 +131,7 @@ static void concat_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should only do the calculations. */
-static void concat_cpu_run(ln_op_arg *op_arg, ln_error **error)
+static void concat_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -140,7 +140,7 @@ static void concat_cpu_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void concat_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
+static void concat_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
 {
     struct priv_s *priv = op_arg->priv;
 

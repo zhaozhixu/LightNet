@@ -25,7 +25,7 @@
 #include "cJSON.h"
 #include "ln_json.h"
 
-#define PARSE_JSON_ERROR(varg...) ln_error_emit(LN_ERROR, ##varg)
+#define PARSE_JSON_ERROR(varg...) ln_msg_emit(LN_ERROR, ##varg)
 
 static ln_list *parse_array_value(const cJSON *array_json,
                                   const cJSON *name_json,
@@ -383,7 +383,7 @@ static int *preprocess(char *json_str)
                 *p = ' ';
             }
             if (!*p)
-                ln_error_emit(LN_ERROR, "unterminated comment: %s", mark);
+                ln_msg_emit(LN_ERROR, "unterminated comment: %s", mark);
             *p++ = ' ';
             *p = ' ';
             continue;
@@ -439,7 +439,7 @@ ln_list *ln_json_parse_file(const char *file, ln_context *ctx)
     return ops;
 }
 
-#define PRINT_JSON_ERROR ln_error_emit(LN_ERROR, "ln_json_print_ops() failed")
+#define PRINT_JSON_ERROR ln_msg_emit(LN_ERROR, "ln_json_print_ops() failed")
 
 static void add_tensors(cJSON *tensors_json, ln_list *tensors,
                         ln_hash *tensor_table)

@@ -196,3 +196,8 @@ void ln_cuda_stream_sync(ln_cuda_stream stream)
 {
     LN_CUDA_CK(cudaStreamSynchronize(stream.stream));
 }
+
+void ln_cuda_device_reset(void)
+{
+    LN_CUDA_CK(cudaDeviceReset());
+}

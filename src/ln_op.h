@@ -27,7 +27,7 @@
 #include "ln_mem.h"
 #include "ln_tensor.h"
 #include "ln_param.h"
-#include "ln_error.h"
+#include "ln_msg.h"
 #include "ln_graph.h"
 
 struct ln_op_arg {
@@ -45,7 +45,7 @@ struct ln_op_arg {
 };
 typedef struct ln_op_arg ln_op_arg;
 
-typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_error **error);
+typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_msg **error);
 
 /* The operator used in IR. */
 /* NOTE: It is owned by a op_table. Remove it from a DFG and do post_run()
@@ -73,6 +73,8 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table);
 /* create with tensors_in, tensors_out, and with auto-generated unique op name */
 ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table);
 ln_op *ln_op_copy(const ln_op *op);
+ln_op *ln_op_copy_to_optype(ln_hash *op_proto_table, const ln_op *op,
+                            const char *new_optype);
 ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name);
 ln_tensor_list_entry *ln_op_find_tensor_list_entry(const ln_op *op,
                                                    const char *arg_name);
@@ -84,10 +86,10 @@ void ln_op_list_free_lists_too(ln_list *ops);
 ln_op *ln_op_list_find_by_optype(ln_list *ops, const char *optype);
 ln_op *ln_op_array_find_by_optype(ln_op *ops[], const char *optype);
 ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name);
-void ln_op_list_do_pre_run(ln_list *ops, ln_error **error);
-void ln_op_list_do_static_run(ln_list *ops, ln_error **error);
-void ln_op_list_do_run(ln_list *ops, ln_error **error);
-void ln_op_list_do_post_run(ln_list *ops, ln_error **error);
+void ln_op_list_do_pre_run(ln_list *ops, ln_msg **error);
+void ln_op_list_do_static_run(ln_list *ops, ln_msg **error);
+void ln_op_list_do_run(ln_list *ops, ln_msg **error);
+void ln_op_list_do_post_run(ln_list *ops, ln_msg **error);
 /* Create a new opname with `prefix` subfixed with the next number.
    Need to be freed. `ops` should not be modified */
 char *ln_op_list_new_opname(const ln_list *ops, const char *prefix);
@@ -105,7 +107,7 @@ LN_CPPEND
 /*
  * Convenient macros for operator parameter checking in a ln_op_func,
  * usually in a ln_op->pre_run function.
- * *level* is an enum defined in ln_error.h
+ * *level* is an enum defined in ln_msg.h
  * NOTE: If there is more error handling work, please write the code yourself
  * instead of using those macros.
  * NOTE: Normally we shouldn't use those kind of error handling routines in
@@ -115,10 +117,10 @@ LN_CPPEND
 #define ln_opck(level, condition, msg_fmt, varg...)                     \
     do {                                                                \
         if (!(condition)) {                                             \
-            *error = ln_error_create((level), (msg_fmt), ##varg);	\
+            *error = ln_msg_create((level), (msg_fmt), ##varg);	\
             if ((level) == LN_WARNING || (level) == LN_WARNING_SYS ||   \
                 (level) == LN_INFO) {                                   \
-                ln_error_handle(error);                                 \
+                ln_msg_handle(error);                                 \
                 break;                                                  \
             }                                                           \
             return;                                                     \

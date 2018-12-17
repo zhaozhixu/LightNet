@@ -26,7 +26,7 @@
 #include "ln_util.h"
 #include "ln_list.h"
 #include "ln_queue.h"
-#include "ln_error.h"
+#include "ln_msg.h"
 #include "ln_graph.h"
 #include "ln_hash.h"
 #include "ln_mem.h"

@@ -60,12 +60,14 @@ void ln_arch_init(void)
         if (archs[i]->init_func)
             archs[i]->init_func();
         ret = ln_hash_insert(LN_ARCH.arch_table, archs[i]->arch_name, archs[i]);
-        ln_error_inter(ret, "duplicated arch name \"%s\"", archs[i]->arch_name);
+        if (!ret)
+            ln_msg_inter_error("duplicated arch name \"%s\"", archs[i]->arch_name);
 
         for (j = 0; (op = archs[i]->reg_ops[j]); j++) {
             ret = ln_hash_insert(LN_ARCH.op_proto_table, op->op_arg->optype, op);
-            ln_error_inter(ret && "duplicated optype \"%s\"",
-                           op->op_arg->optype);
+            if (!ret)
+                ln_msg_inter_error("duplicated optype \"%s\"",
+                                   op->op_arg->optype);
         }
     }
 }

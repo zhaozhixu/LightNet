@@ -24,11 +24,9 @@
 #include "lightnet.h"
 
 static const struct option longopts[] = {
-    {"", 1, NULL, 'e'},
-    {"video", 1, NULL, 'v'},
-    {"bbox-dir", 1, NULL, 'b'},
-    {"x-shift", 1, NULL, 'x'},
-    {"y-shift", 1, NULL, 'y'},
+    {"run", 0, NULL, 'r'},
+    {"target", 1, NULL, 't'},
+    {"outfile", 1, NULL, 'o'},
     {"help", 0, NULL, 'h'},
     {0, 0, 0, 0}
 };
@@ -39,16 +37,10 @@ int main(int argc, char **argv)
     char *target;
     ln_arch *arch;
     ln_context *ctx;
-    ln_hash *mem_plans;
-    void *cpu_mem;
-    void *cuda_mem;
 
     ln_arch_init();
     ln_name_init();
     ctx = ln_context_create();
-    mem_plans = ln_mem_plan_table_create();
-    cpu_mem = ln_alloc(1073741824);
-    cuda_mem = ln_alloc_cuda(1073741824);
 
     json_file = argv[1];
     target = argv[2];
@@ -69,10 +61,8 @@ int main(int argc, char **argv)
     /* ln_context_dealloc_mem(ctx); */
     ln_context_run(ctx);
 
-    ln_free(cpu_mem);
-    ln_free_cuda(cuda_mem);
     ln_arch_cleanup();
     ln_name_cleanup();
     ln_context_free(ctx);
-    ln_mem_plan_table_free(mem_plans);
+    ln_cuda_device_reset();
 }

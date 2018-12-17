@@ -31,7 +31,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -121,7 +121,7 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should only do the calculations. */
-static void upsample_cpu_run(ln_op_arg *op_arg, ln_error **error)
+static void upsample_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 {
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *src = priv->src_entry->tensor;
@@ -134,7 +134,7 @@ static void upsample_cpu_run(ln_op_arg *op_arg, ln_error **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void upsample_cpu_post_run(ln_op_arg *op_arg, ln_error **error)
+static void upsample_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
 {
     struct priv_s *priv = op_arg->priv;
 

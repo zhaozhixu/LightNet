@@ -271,7 +271,7 @@ static void check_and_add_batch_size(ln_op *trt_op, int batch_size,
         trt_op->op_arg->params = ln_param_list_append_number(trt_op->op_arg->params,
                                                              "batch_size", batch_size);
     else if (batch_size != pe->value_int)
-        ln_error_emit(LN_ERROR,
+        ln_msg_emit(LN_ERROR,
                       "batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
                       pe->value_int, opname, batch_size);
     else
@@ -285,7 +285,7 @@ static int check_conv(const ln_op *op)
     pe = ln_param_list_find(op->op_arg->params, "padding");
     if (pe->value_array_int[0] != pe->value_array_int[2]
         || pe->value_array_int[1] != pe->value_array_int[3]) {
-        ln_error_emit(LN_WARNING,
+        ln_msg_emit(LN_WARNING,
                       "cannot convert '%s' with asymmetrical padding to TensorRT conv op",
                       op->op_arg->name);
         return 0;
@@ -403,7 +403,7 @@ static int check_pooling(const ln_op *op)
     pe = ln_param_list_find(op->op_arg->params, "padding");
     if (pe->value_array_int[0] != pe->value_array_int[2]
         || pe->value_array_int[1] != pe->value_array_int[3]) {
-        ln_error_emit(LN_WARNING,
+        ln_msg_emit(LN_WARNING,
                       "cannot convert '%s' with asymmetrical padding to TensorRT pooling op",
                       op->op_arg->name);
         return 0;
@@ -483,20 +483,20 @@ static int check_softmax(const ln_op *op)
     assert(te);
 
     if (pe->value_int == 0) {
-        ln_error_emit(LN_WARNING,
+        ln_msg_emit(LN_WARNING,
                       "cannot convert '%s' with 'axis' = 0 to TensorRT softmax op",
                       op->op_arg->name);
         return 0;
     }
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") < 0) {
         if (te->tensor->ndim < 4 && pe->value_int != 1) {
-            ln_error_emit(LN_WARNING,
+            ln_msg_emit(LN_WARNING,
                           "cannot convert '%s' with 'src''s number of dimensions < 4 and 'axis' != 1 to TensorRT softmax op in TensorRT version < 4.0.0",
                           op->op_arg->name);
             return 0;
         }
         if (te->tensor->ndim >= 4 && pe->value_int != te->tensor->ndim-3) {
-            ln_error_emit(LN_WARNING,
+            ln_msg_emit(LN_WARNING,
                           "cannot convert '%s' with 'src''s number of dimensions >= 4 and 'axis' != 'src''s number of dimensions minus 3 to TensorRT softmax op in TensorRT version < 4.0.0",
                           op->op_arg->name);
             return 0;
@@ -553,20 +553,20 @@ static int check_concat(const ln_op *op)
     assert(te);
 
     if (pe->value_int == 0) {
-        ln_error_emit(LN_WARNING,
+        ln_msg_emit(LN_WARNING,
                       "cannot convert '%s' with 'axis' = 0 to TensorRT concat op",
                       op->op_arg->name);
         return 0;
     }
     if (strverscmp(ln_tensorrt_version_str(), "4.0.0") < 0) {
         if (te->tensor->ndim < 4 && pe->value_int != 1) {
-            ln_error_emit(LN_WARNING,
+            ln_msg_emit(LN_WARNING,
                           "cannot convert '%s' with 'src1''s number of dimensions < 4 and 'axis' != 1 to TensorRT concat op in TensorRT version < 4.0.0",
                           op->op_arg->name);
             return 0;
         }
         if (te->tensor->ndim >= 4 && pe->value_int != te->tensor->ndim-3) {
-            ln_error_emit(LN_WARNING,
+            ln_msg_emit(LN_WARNING,
                           "cannot convert '%s' with 'src1''s number of dimensions >= 4 and 'axis' != 'src1''s number of dimensions minus 3 to TensorRT concat op in TensorRT version < 4.0.0",
                           op->op_arg->name);
             return 0;
@@ -917,8 +917,8 @@ static ln_list *ep_func_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)
     void *value;
 
     if (!ln_hash_find_extended(ep_funcs_hash, op->op_arg->optype, NULL, &value))
-        ln_error_inter(0, "unsupported optype \"%s\" for TensorRT optimization",
-                       op->op_arg->optype);
+        ln_msg_inter_error(0, "unsupported optype \"%s\" for TensorRT optimization",
+                           op->op_arg->optype);
 
     ep_func = value;
     new_ops = ep_func(op, dfg, match);
@@ -1106,7 +1106,7 @@ static void add_trt_to_trt(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg)
     op_batch_size = pe->value_int;
     pe = ln_param_list_find(trt_arg->params, "batch_size");
     if (pe && op_batch_size != pe->value_int) {
-        ln_error_emit(LN_ERROR,
+        ln_msg_emit(LN_ERROR,
                       "batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
                       pe->value_int, op->op_arg->name, op_batch_size);
     } else if (!pe) {

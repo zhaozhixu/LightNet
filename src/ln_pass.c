@@ -74,7 +74,7 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
         }
         count++;
         if (count > MAX_PEEPHOLE_PASSES) {
-            ln_error_emit(LN_INTER_WARNING,
+            ln_msg_emit(LN_INTER_WARNING,
                           "peephole passes exceeds limit of %d",
                           MAX_PEEPHOLE_PASSES);
         }
@@ -140,9 +140,9 @@ void ln_pass_mem_plan(ln_context *ctx)
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             mp = ln_hash_find(mem_plans, (void *)te->mtype);
-            ln_error_inter(te->mtype != LN_MEM_NONE,
-                           "tensor \"%s\" has an unresolved memory type %s",
-                           te->name, ln_mem_type_name(te->mtype));
+            if (te->mtype == LN_MEM_NONE)
+                ln_msg_inter_error("tensor \"%s\" has an unresolved memory type %s",
+                                   te->name, ln_mem_type_name(te->mtype));
             if (te->owner)
                 continue;
             if (te->isstatic) {
@@ -152,7 +152,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
                 total_sums[te->mtype] += tl_tensor_size(te->tensor);
-                ln_error_debug("plan memory %s: %s %lu bytes at offset %p",
+                ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
                                ln_mem_type_name(te->mtype), tle->name,
                                tl_tensor_size(te->tensor), te->offset);
                 continue;
@@ -184,7 +184,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                 owner_te = ln_tensor_table_find(arg->tensor_table, te->owner);
                 assert(owner_te);
                 te->offset = owner_te->offset;
-                ln_error_debug("plan memory %s: %s %lu bytes at offset %p",
+                ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
                                ln_mem_type_name(te->mtype), tle->name,
                                tl_tensor_size(te->tensor), te->offset);
                 continue;
@@ -200,7 +200,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                     ctx->mem_sizes[te->mtype] > water_level ?
                     ctx->mem_sizes[te->mtype] : water_level;
                 total_sums[te->mtype] += tl_tensor_size(te->tensor);
-                ln_error_debug("plan memory %s: %s %lu bytes at offset %p",
+                ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
                                ln_mem_type_name(te->mtype), tle->name,
                                tl_tensor_size(te->tensor), te->offset);
             }
@@ -234,9 +234,9 @@ void ln_pass_mem_plan(ln_context *ctx)
 
 #ifdef LN_DEBUG
     for (int i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        ln_error_debug("planned usage of memory %s: %lu bytes",
+        ln_msg_debug("planned usage of memory %s: %lu bytes",
                        ln_mem_type_name(i), ctx->mem_sizes[i]);
-        ln_error_debug("counted usage of memory %s: %lu bytes",
+        ln_msg_debug("counted usage of memory %s: %lu bytes",
                        ln_mem_type_name(i), total_sums[i]);
     }
 #endif  /* LN_DEBUG */

@@ -139,6 +139,23 @@ ln_op *ln_op_copy(const ln_op *op)
                                    op->op_arg->tensor_table);
 }
 
+ln_op *ln_op_copy_to_optype(ln_hash *op_proto_table, const ln_op *op,
+                            const char *new_optype)
+{
+    ln_op *new_op_proto;
+    ln_op *new_op;
+
+    new_op_proto = ln_hash_find(op_proto_table, new_optype);
+    if (!new_op_proto)
+        ln_msg_inter_error("optype %s not found", new_optype);
+    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name,
+                                     ln_tensor_list_copy(op->op_arg->tensors_in),
+                                     ln_tensor_list_copy(op->op_arg->tensors_out),
+                                     ln_param_list_copy(op->op_arg->params),
+                                     op->op_arg->tensor_table);
+    return new_op;
+}
+
 ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name)
 {
     char *tname;
@@ -263,7 +280,7 @@ ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name)
     return result_op;
 }
 
-void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
+void ln_op_list_do_pre_run(ln_list *ops, ln_msg **error)
 {
     ln_op *op;
     ln_list *l;
@@ -276,7 +293,7 @@ void ln_op_list_do_pre_run(ln_list *ops, ln_error **error)
     }
 }
 
-void ln_op_list_do_static_run(ln_list *ops, ln_error **error)
+void ln_op_list_do_static_run(ln_list *ops, ln_msg **error)
 {
     ln_op *op;
     ln_list *l;
@@ -291,7 +308,7 @@ void ln_op_list_do_static_run(ln_list *ops, ln_error **error)
     }
 }
 
-void ln_op_list_do_run(ln_list *ops, ln_error **error)
+void ln_op_list_do_run(ln_list *ops, ln_msg **error)
 {
     ln_op *op;
     ln_list *l;
@@ -306,7 +323,7 @@ void ln_op_list_do_run(ln_list *ops, ln_error **error)
     }
 }
 
-void ln_op_list_do_post_run(ln_list *ops, ln_error **error)
+void ln_op_list_do_post_run(ln_list *ops, ln_msg **error)
 {
     ln_op *op;
     ln_list *l;

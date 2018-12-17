@@ -20,12 +20,12 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_ERROR_H_
-#define _LN_ERROR_H_
+#ifndef _LN_MSG_H_
+#define _LN_MSG_H_
 
 #include "ln_hash.h"
 
-enum ln_error_level {
+enum ln_msg_level {
     LN_ERROR,
     LN_ERROR_SYS,
     LN_INTER_ERROR,
@@ -37,51 +37,51 @@ enum ln_error_level {
     LN_DEBUG_INFO,
     LN_INFO
 };
-typedef enum ln_error_level ln_error_level;
+typedef enum ln_msg_level ln_msg_level;
 
-struct ln_error {
+struct ln_msg {
     char            *err_str;
-    ln_error_level   level;
+    ln_msg_level   level;
 };
-typedef struct ln_error ln_error;
+typedef struct ln_msg ln_msg;
 
-#define ln_error_emit(level, fmt, varg...)                              \
-    do {                                                                \
-        ln_error *err = ln_error_create((level), (fmt), ##varg);        \
-        ln_error_handle(&err);                                          \
-    } while (0)
-
-#define ln_error_emit_once(hash, key, level, fmt, varg...)              \
-    do {                                                                \
-        if (!ln_hash_find((hash), (key))) {                             \
-            ln_hash_insert((hash), (key), (void *)1);                   \
-            ln_error_emit((level), (fmt), ##varg);                      \
-        }                                                               \
-    } while (0)
-
-#define ln_error_inter(condition, fmt, varg...)                 \
+#define ln_msg_emit(level, fmt, varg...)                        \
     do {                                                        \
-        if (!(condition))                                       \
-            ln_error_emit(LN_INTER_ERROR, (fmt), ##varg);       \
+        ln_msg *err = ln_msg_create((level), (fmt), ##varg);    \
+        ln_msg_handle(&err);                                    \
     } while (0)
+
+#define ln_msg_emit_once(hash, key, level, fmt, varg...)        \
+    do {                                                        \
+        if (!ln_hash_find((hash), (key))) {                     \
+            ln_hash_insert((hash), (key), (void *)1);           \
+            ln_msg_emit((level), (fmt), ##varg);                \
+        }                                                       \
+    } while (0)
+
+#define ln_msg_inter_error(fmt, varg...)        \
+    ln_msg_emit(LN_INTER_ERROR, (fmt), ##varg)
+
+#define ln_msg_inter_warning(fmt, varg...)      \
+    ln_msg_emit(LN_INTER_ERROR, (fmt), ##varg)
 
 #ifdef LN_DEBUG
-#define ln_error_debug(fmt, varg...)            \
-    ln_error_emit(LN_DEBUG_INFO, (fmt), ##varg)
+#define ln_msg_debug(fmt, varg...)              \
+    ln_msg_emit(LN_DEBUG_INFO, (fmt), ##varg)
 #else
-#define ln_error_debug(fmt, varg...) (void)0
+#define ln_msg_debug(fmt, varg...) (void)0
 #endif
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_error *ln_error_create(ln_error_level level, const char *fmt, ...);
-void ln_error_free(ln_error *error);
-void ln_error_handle(ln_error **error);
+ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...);
+void ln_msg_free(ln_msg *error);
+void ln_msg_handle(ln_msg **error);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif	/* _LN_ERROR_H_ */
+#endif	/* _LN_MSG_H_ */

@@ -8,6 +8,7 @@
 *.out
 *.el
 .clang_complete
+vgcore*
 config.mk
 check_output.xml
 test_lightnet

@@ -51,6 +51,7 @@ void *ln_repeat_d2h(void *data, size_t size, int times);
 void *ln_repeat_d2d(void *data, size_t size, int times);
 void ln_cuda_stream_create(ln_cuda_stream *pstream);
 void ln_cuda_stream_sync(ln_cuda_stream stream);
+void ln_cuda_device_reset(void);
 
 #ifdef __cplusplus
 LN_CPPEND

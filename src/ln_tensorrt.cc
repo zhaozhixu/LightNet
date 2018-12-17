@@ -118,7 +118,7 @@ static int str_to_scale_mode(const char *str)
 
 static void check_param(const char *name1, const char *name2,
                         ln_param_type ptype, int plen ,ln_op_arg *op_arg,
-                        ln_error **error)
+                        ln_msg **error)
 {
     char *full_name;
     ln_param_entry *pe;
@@ -137,7 +137,7 @@ static void check_param(const char *name1, const char *name2,
 }
 
 /* TODO: check params throughly */
-static void check_conv(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_conv(char *opname, ln_op_arg *op_arg, ln_msg **error)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "weight", LN_PARAM_STRING, 0, op_arg, error);
@@ -151,7 +151,7 @@ static void check_conv(char *opname, ln_op_arg *op_arg, ln_error **error)
     check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg, error);
 }
 
-static void check_activation(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_activation(char *opname, ln_op_arg *op_arg, ln_msg **error)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
@@ -163,7 +163,7 @@ static void check_activation(char *opname, ln_op_arg *op_arg, ln_error **error)
                               "unsupported activation type");
 }
 
-static void check_pooling(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_pooling(char *opname, ln_op_arg *op_arg, ln_msg **error)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
@@ -178,13 +178,13 @@ static void check_pooling(char *opname, ln_op_arg *op_arg, ln_error **error)
                               "unsupported pooling type");
 }
 
-static void check_softmax(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_softmax(char *opname, ln_op_arg *op_arg, ln_msg **error)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg, error);
 }
 
-static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_concat(char *opname, ln_op_arg *op_arg, ln_msg **error)
 {
     check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg, error);
@@ -192,7 +192,7 @@ static void check_concat(char *opname, ln_op_arg *op_arg, ln_error **error)
     // axis is optional
 }
 
-static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)
+static void check_scale(char *opname, ln_op_arg *op_arg, ln_msg **error)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg, error);
     check_param(opname, "shift", LN_PARAM_STRING, 0, op_arg, error);
@@ -207,7 +207,7 @@ static void check_scale(char *opname, ln_op_arg *op_arg, ln_error **error)
                               "unsupported scale mode");
 }
 
-void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_error **error)
+void ln_tensorrt_check_op(ln_op_arg *op_arg, ln_msg **error)
 {
     int tensors_n;
     ln_param_entry *pe;
@@ -634,7 +634,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                                                        te->tensor->dims[1],
                                                        te->tensor->dims[2],
                                                        te->tensor->dims[3]));
-        ln_error_debug("%s: addInput(%s)", op_arg->name, te->name);
+        ln_msg_debug("%s: addInput(%s)", op_arg->name, te->name);
     }
 
     ln_param_entry *pe;
@@ -662,7 +662,7 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
         tle = (ln_tensor_list_entry *)l->data;
         tensors[tle->name]->setName(tle->name);
         network->markOutput(*tensors[tle->name]);
-        ln_error_debug("%s: markOutput(%s)", op_arg->name, tle->name);
+        ln_msg_debug("%s: markOutput(%s)", op_arg->name, tle->name);
     }
 
     pe = ln_param_list_find(op_arg->params, "batch_size");
@@ -694,7 +694,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
     context = engine->createExecutionContext();
     assert(context);
     bindings = (void **)ln_alloc(sizeof(void *)*engine->getNbBindings());
-    ln_error_debug("%s: NbBingdings: %d",
+    ln_msg_debug("%s: NbBingdings: %d",
                    op_arg->name, engine->getNbBindings());
     for (l = op_arg->tensors_in; l; l = l->next) {
         tle = (ln_tensor_list_entry *)l->data;
@@ -703,7 +703,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         index = engine->getBindingIndex(tle->name);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
-        ln_error_debug("%s: %s addr: %p", op_arg->name,
+        ln_msg_debug("%s: %s addr: %p", op_arg->name,
                        te->name, te->tensor->data);
     }
     for (l = op_arg->tensors_out; l; l = l->next) {
@@ -713,11 +713,11 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         index = engine->getBindingIndex(tle->name);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
-        ln_error_debug("%s: %s addr: %p", op_arg->name, te->name,
+        ln_msg_debug("%s: %s addr: %p", op_arg->name, te->name,
                        te->tensor->data);
     }
     batch_size = engine->getMaxBatchSize(); // TODO: make batch_size flexible?
-    ln_error_debug("%s: batch_size = %d", op_arg->name, batch_size);
+    ln_msg_debug("%s: batch_size = %d", op_arg->name, batch_size);
 
     bundle = (ln_tensorrt_bundle *)ln_alloc(sizeof(ln_tensorrt_bundle));
     bundle->engine = engine;
