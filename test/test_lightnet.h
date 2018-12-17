@@ -41,7 +41,7 @@ Suite *make_list_suite(void);
 Suite *make_queue_suite(void);
 Suite *make_graph_suite(void);
 Suite *make_hash_suite(void);
-Suite *make_error_suite(void);
+Suite *make_msg_suite(void);
 Suite *make_param_suite(void);
 Suite *make_tensor_suite(void);
 Suite *make_op_suite(void);

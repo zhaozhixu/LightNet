@@ -90,20 +90,20 @@ START_TEST(test_ln_msg_handle)
 END_TEST
 /* end of tests */
 
-Suite *make_error_suite(void)
+Suite *make_msg_suite(void)
 {
      Suite *s;
-     TCase *tc_error;
+     TCase *tc_msg;
 
-     s = suite_create("error");
-     tc_error = tcase_create("error");
-     tcase_add_checked_fixture(tc_error, checked_checked_setup, checked_teardown);
+     s = suite_create("msg");
+     tc_msg = tcase_create("msg");
+     tcase_add_checked_fixture(tc_msg, checked_checked_setup, checked_teardown);
 
-     tcase_add_test(tc_error, test_ln_msg_create);
-     tcase_add_test(tc_error, test_ln_msg_handle);
+     tcase_add_test(tc_msg, test_ln_msg_create);
+     tcase_add_test(tc_msg, test_ln_msg_handle);
      /* end of adding tests */
 
-     suite_add_tcase(s, tc_error);
+     suite_add_tcase(s, tc_msg);
 
      return s;
 }

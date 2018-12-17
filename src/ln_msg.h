@@ -59,11 +59,29 @@ typedef struct ln_msg ln_msg;
         }                                                       \
     } while (0)
 
+#define ln_msg_error(fmt, varg...)              \
+    ln_msg_emit(LN_ERROR, (fmt), ##varg)
+
+#define ln_msg_error_sys(fmt, varg...)          \
+    ln_msg_emit(LN_ERROR_SYS, (fmt), ##varg)
+
 #define ln_msg_inter_error(fmt, varg...)        \
     ln_msg_emit(LN_INTER_ERROR, (fmt), ##varg)
 
-#define ln_msg_inter_warning(fmt, varg...)      \
-    ln_msg_emit(LN_INTER_ERROR, (fmt), ##varg)
+#define ln_msg_inter_error_sys(fmt, varg...)            \
+    ln_msg_emit(LN_INTER_ERROR_SYS, (fmt), ##varg)
+
+#define ln_msg_warning(fmt, varg...)            \
+    ln_msg_emit(LN_WARNING, (fmt), ##varg)
+
+#define ln_msg_warning_sys(fmt, varg...)        \
+    ln_msg_emit(LN_WARNING_SYS, (fmt), ##varg)
+
+#define ln_msg_inter_warning(fmt, varg...)              \
+    ln_msg_emit(LN_INTER_WARNING, (fmt), ##varg)
+
+#define ln_msg_inter_warning_sys(fmt, varg...)          \
+    ln_msg_emit(LN_INTER_WARNING_SYS, (fmt), ##varg)
 
 #ifdef LN_DEBUG
 #define ln_msg_debug(fmt, varg...)              \
@@ -71,6 +89,9 @@ typedef struct ln_msg ln_msg;
 #else
 #define ln_msg_debug(fmt, varg...) (void)0
 #endif
+
+#define ln_msg_info(fmt, varg...)               \
+    ln_msg_emit(LN_INFO, (fmt), ##varg)
 
 #ifdef __cplusplus
 LN_CPPSTART

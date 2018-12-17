@@ -41,4 +41,8 @@
 #include "ln_name.h"
 #include "ln_cuda.h"
 
+#define LN_MAJOR_VERSION (0)
+#define LN_MINOR_VERSION (1)
+#define LN_MICRO_VERSION (0)
+
 #endif  /* _LIGHTNET_H_ */
