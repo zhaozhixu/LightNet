@@ -57,6 +57,8 @@ int main(int argc, char **argv)
 
     json_file = option.source;
     target = option.target;
+    /* json_file = argv[1]; */
+    /* target = argv[2]; */
     ln_json_parse_file(json_file, ctx);
     ln_context_init_ops(ctx);
 

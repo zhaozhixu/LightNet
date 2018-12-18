@@ -20,40 +20,41 @@
  * SOFTWARE.
  */
 
-#ifndef _TEST_LIGHTNET_H_
-#define _TEST_LIGHTNET_H_
+#include "test_lightnet.h"
+#include "../src/ln_util.h"
 
-#include <stdio.h>
-#include <check.h>
-#include <math.h>
-#include <tl_check.h>
+static void checked_setup(void)
+{
+}
 
-#ifdef __cplusplus
-#define CPPSTART extern "C" {
-#define CPPEND }
-#endif
+static void checked_teardown(void)
+{
+}
 
-Suite *make_master_suite(void);
-Suite *make_util_suite(void);
-#ifdef LN_CUDA
-Suite *make_cuda_suite(void);
-#endif
-Suite *make_list_suite(void);
-Suite *make_queue_suite(void);
-Suite *make_graph_suite(void);
-Suite *make_hash_suite(void);
-Suite *make_msg_suite(void);
-Suite *make_param_suite(void);
-Suite *make_tensor_suite(void);
-Suite *make_op_suite(void);
-Suite *make_parse_suite(void);
-Suite *make_mem_suite(void);
-Suite *make_pass_suite(void);
-Suite *make_opimpl_suite(void);
-/* end of declarations */
+START_TEST(test_ln_strcat_delim_alloc)
+{
+     const char *str1 = "hello";
+     const char *str2 = "world";
+     char *str = ln_strcat_delim_alloc(str1, str2, ',');
+     ck_assert_str_eq(str, "hello,world");
+     ln_free(str);
+}
+END_TEST
+/* end of tests */
 
-#ifdef __cplusplus
-CPPEND
-#endif
+Suite *make_util_suite(void)
+{
+     Suite *s;
+     TCase *tc_util;
 
-#endif /* _TEST_LIGHTNET_H_ */
+     s = suite_create("util");
+     tc_util = tcase_create("util");
+     tcase_add_checked_fixture(tc_util, checked_setup, checked_teardown);
+
+     tcase_add_test(tc_util, test_ln_strcat_delim_alloc);
+     /* end of adding tests */
+
+     suite_add_tcase(s, tc_util);
+
+     return s;
+}

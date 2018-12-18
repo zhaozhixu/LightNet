@@ -135,7 +135,7 @@ char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim)
 
     s1_len = strlen(s1);
     s2_len = strlen(s2);
-    dst = ln_alloc(sizeof(char) * (s2_len+s2_len+2));
+    dst = ln_alloc(sizeof(char) * (s1_len+s2_len+2));
     strcpy(dst, s1);
     dst[s1_len] = delim;
     dst[s1_len+1] = '\0';
