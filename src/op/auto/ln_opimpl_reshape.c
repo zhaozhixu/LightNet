@@ -30,7 +30,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void reshape_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void reshape_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -80,7 +80,7 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_msg **error)
     dims = dims_entry->value_array_int;
     ln_opck_param_array_int_ge(dims_entry, 1);
     dims = dims;
-    ln_opck_param_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` tensor length should be equal to the reshaped length");
+    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` tensor length should be equal to the reshaped length");
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = dims_entry->array_len;
@@ -102,7 +102,7 @@ static void reshape_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void reshape_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void reshape_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

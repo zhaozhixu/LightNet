@@ -36,7 +36,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void conv2d_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -95,7 +95,7 @@ static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     weight = weight;
     ln_opck_tensor_mtype_eq(weight_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(weight_entry, 5);
-    ln_opck_tensor_satisfy_msg(weight->dims[2] == src->dims[1], "`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`");
+    ln_opck_satisfy_msg(weight->dims[2] == src->dims[1], "`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`");
 
     bias_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "bias");
     ln_opck_tensor_in_exist(bias_list_entry, "bias");
@@ -106,7 +106,7 @@ static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     bias = bias;
     ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CPU);
     ln_opck_tensor_ndim(bias_entry, 1);
-    ln_opck_tensor_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` should have the size of the 2nd dimision of `weight`");
+    ln_opck_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` should have the size of the 2nd dimision of `weight`");
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -126,7 +126,7 @@ static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     group = group_entry->value_int;
     ln_opck_param_int_ge(group_entry, 1);
     group = group;
-    ln_opck_param_satisfy_msg(group == weight->dims[0], "`group` should be equal to the 1st dimension of `weight`");
+    ln_opck_satisfy_msg(group == weight->dims[0], "`group` should be equal to the 1st dimension of `weight`");
 
     size_entry = ln_param_list_find(op_arg->params, "size");
     ln_opck_param_exist(size_entry, "size");
@@ -135,7 +135,7 @@ static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     size = size_entry->value_array_int;
     ln_opck_param_array_int_ge(size_entry, 1);
     size = size;
-    ln_opck_param_satisfy_msg(size[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimensions of `weight`");
+    ln_opck_satisfy_msg(size[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimensions of `weight`");
 
     stride_entry = ln_param_list_find(op_arg->params, "stride");
     ln_opck_param_exist(stride_entry, "stride");
@@ -195,7 +195,7 @@ static void conv2d_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void conv2d_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void conv2d_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -204,7 +204,7 @@ static void conv2d_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void conv2d_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void conv2d_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

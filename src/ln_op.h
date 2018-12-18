@@ -45,7 +45,7 @@ struct ln_op_arg {
 };
 typedef struct ln_op_arg ln_op_arg;
 
-typedef void (*ln_op_func) (ln_op_arg *op_arg, ln_msg **error);
+typedef void (*ln_op_func) (ln_op_arg *op_arg);
 
 /* The operator used in IR. */
 /* NOTE: It is owned by a op_table. Remove it from a DFG and do post_run()
@@ -86,10 +86,10 @@ void ln_op_list_free_lists_too(ln_list *ops);
 ln_op *ln_op_list_find_by_optype(ln_list *ops, const char *optype);
 ln_op *ln_op_array_find_by_optype(ln_op *ops[], const char *optype);
 ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name);
-void ln_op_list_do_pre_run(ln_list *ops, ln_msg **error);
-void ln_op_list_do_static_run(ln_list *ops, ln_msg **error);
-void ln_op_list_do_run(ln_list *ops, ln_msg **error);
-void ln_op_list_do_post_run(ln_list *ops, ln_msg **error);
+void ln_op_list_do_pre_run(ln_list *ops);
+void ln_op_list_do_static_run(ln_list *ops);
+void ln_op_list_do_run(ln_list *ops);
+void ln_op_list_do_post_run(ln_list *ops);
 /* Create a new opname with `prefix` subfixed with the next number.
    Need to be freed. `ops` should not be modified */
 char *ln_op_list_new_opname(const ln_list *ops, const char *prefix);
@@ -114,37 +114,20 @@ LN_CPPEND
  * ln_op->run and ln_op->post_run functions, where errors should be considered
  * as bugs.
  */
-#define ln_opck(level, condition, msg_fmt, varg...)                     \
-    do {                                                                \
-        if (!(condition)) {                                             \
-            *error = ln_msg_create((level), (msg_fmt), ##varg);	\
-            if ((level) == LN_WARNING || (level) == LN_WARNING_SYS ||   \
-                (level) == LN_INFO) {                                   \
-                ln_msg_handle(error);                                 \
-                break;                                                  \
-            }                                                           \
-            return;                                                     \
-        }                                                               \
+#define ln_opck(level, condition, msg_fmt, varg...)     \
+    do {                                                \
+        if (!(condition))                               \
+            ln_msg_emit(level, msg_fmt, ##varg);        \
     } while (0)
 
-#define ln_opck_param_satisfy_msg(condition, msg)       \
-    ln_opck(LN_ERROR, (condition),                      \
-            "%s: `%s`'s params should satisfy: %s",     \
-            op_arg->optype, op_arg->name, (msg))
+#define ln_opck_satisfy_msg(condition, msg_fmt, varg...)        \
+    ln_opck(LN_ERROR, (condition),                              \
+            "%s(%s) should satisfy: "#msg_fmt,                  \
+            op_arg->name, op_arg->optype, ##varg)
 
 /* condition is appended as the message */
-#define ln_opck_param_satisfy(condition)                \
-    ln_opck_param_satisfy_msg((condition), #condition)
-
-#define ln_opck_param_error(condition, msg)             \
-    ln_opck(LN_ERROR, (condition),                      \
-            "%s: `%s`'s param error: %s",               \
-            op_arg->optype, op_arg->name, (msg))
-
-#define ln_opck_param_warning(condition, msg)           \
-    ln_opck(LN_WARNING, (condition),                    \
-            "%s: `%s`'s param warning: %s",             \
-            op_arg->optype, op_arg->name, (msg))
+#define ln_opck_satisfy(condition)                      \
+    ln_opck_satisfy_msg((condition), #condition)
 
 /* entry should be returned by
    ln_param_list_find(op_arg->params, arg_name) */
@@ -417,7 +400,7 @@ LN_CPPEND
                     "%s: `%s`'s `%s` param[%d] should be <= %f, but gets %f ", \
                     op_arg->optype, op_arg->name, (entry)->arg_name, i, \
                     (expect), (entry)->value_array_float[i]);           \
-                    } while (0)
+    } while (0)
 
 #define ln_opck_param_array_float_ne(entry, expect)                     \
     do {                                                                \
@@ -508,15 +491,6 @@ LN_CPPEND
     ln_opck(LN_ERROR, (list_len) <= (expect_len),                       \
             "%s: `%s` needs <= %d params, but gets %d params",          \
             op_arg->optype, op_arg->name, (expect_len), (list_len))
-
-#define ln_opck_tensor_satisfy_msg(condition, msg)      \
-    ln_opck(LN_ERROR, (condition),                      \
-            "%s: `%s`'s tensors should satisfy: %s",    \
-            op_arg->optype, op_arg->name, (msg))
-
-/* condition is appended as the message */
-#define ln_opck_tensor_satisfy(condition)               \
-    ln_opck_tensor_satisfy_msg((condition), #condition)
 
 /* tle should be returned by
    ln_tensor_list_find_by_arg_name(op_arg->tensors_in, arg_name) */

@@ -34,7 +34,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void batchnorm_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void batchnorm_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -174,7 +174,7 @@ static void batchnorm_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void batchnorm_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void batchnorm_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -183,7 +183,7 @@ static void batchnorm_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void batchnorm_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void batchnorm_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

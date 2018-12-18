@@ -30,7 +30,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void transpose_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void transpose_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -87,7 +87,7 @@ static void transpose_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
         for (int i = 0; i < src->ndim; i++)
             tmp[axes[i]] = 1;
         for (int i = 0; i < src->ndim; i++)
-            ln_opck_param_satisfy_msg(tmp[i], "`axes` should match `src`'s shape");
+            ln_opck_satisfy_msg(tmp[i], "`axes` should match `src`'s shape");
         ln_free(tmp);
     }
 
@@ -117,7 +117,7 @@ static void transpose_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void transpose_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void transpose_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *src = priv->src_entry->tensor;
@@ -130,7 +130,7 @@ static void transpose_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void transpose_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void transpose_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

@@ -280,20 +280,18 @@ ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name)
     return result_op;
 }
 
-void ln_op_list_do_pre_run(ln_list *ops, ln_msg **error)
+void ln_op_list_do_pre_run(ln_list *ops)
 {
     ln_op *op;
     ln_list *l;
 
     for (l = ops; l; l = l->next) {
         op = l->data;
-        op->pre_run(op->op_arg, error);
-        if (*error)
-            return;
+        op->pre_run(op->op_arg);
     }
 }
 
-void ln_op_list_do_static_run(ln_list *ops, ln_msg **error)
+void ln_op_list_do_static_run(ln_list *ops)
 {
     ln_op *op;
     ln_list *l;
@@ -302,13 +300,11 @@ void ln_op_list_do_static_run(ln_list *ops, ln_msg **error)
         op = l->data;
         if (!op->static_run)
             continue;
-        op->static_run(op->op_arg, error);
-        if (*error)
-            return;
+        op->static_run(op->op_arg);
     }
 }
 
-void ln_op_list_do_run(ln_list *ops, ln_msg **error)
+void ln_op_list_do_run(ln_list *ops)
 {
     ln_op *op;
     ln_list *l;
@@ -317,22 +313,18 @@ void ln_op_list_do_run(ln_list *ops, ln_msg **error)
         op = l->data;
         if (!op->run)
             continue;
-        op->run(op->op_arg, error);
-        if (*error)
-            return;
+        op->run(op->op_arg);
     }
 }
 
-void ln_op_list_do_post_run(ln_list *ops, ln_msg **error)
+void ln_op_list_do_post_run(ln_list *ops)
 {
     ln_op *op;
     ln_list *l;
 
     for (l = ops; l; l = l->next) {
         op = l->data;
-        op->post_run(op->op_arg, error);
-        if (*error)
-            return;
+        op->post_run(op->op_arg);
     }
 }
 

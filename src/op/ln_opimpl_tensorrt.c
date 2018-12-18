@@ -31,10 +31,10 @@ struct priv_s {
 /*
  * This function should do the parameter checking and tensor shape inference.
  */
-static void tensorrt_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void tensorrt_pre_run(ln_op_arg *op_arg)
 {
     /* check tensors and parameters */
-    ln_tensorrt_check_op(op_arg, error);
+    ln_tensorrt_check_op(op_arg);
 
     /* define output tensor shape, tensor data should be NULL */
     ln_param_entry *pe;
@@ -70,7 +70,7 @@ static void tensorrt_pre_run(ln_op_arg *op_arg, ln_msg **error)
     op_arg->priv = priv;
 }
 
-static void tensorrt_static_run(ln_op_arg *op_arg, ln_msg **error)
+static void tensorrt_static_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv;
 
@@ -81,7 +81,7 @@ static void tensorrt_static_run(ln_op_arg *op_arg, ln_msg **error)
 /*
  * This function should only do the calculations.
  */
-static void tensorrt_run(ln_op_arg *op_arg, ln_msg **error)
+static void tensorrt_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv;
 
@@ -92,7 +92,7 @@ static void tensorrt_run(ln_op_arg *op_arg, ln_msg **error)
 /*
  * This function should free all the memory allocated by other *_run()s.
  */
-static void tensorrt_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void tensorrt_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv;
     ln_tensor_list_entry *tle;

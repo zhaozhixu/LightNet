@@ -31,7 +31,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void create_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void create_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *dst_name;
     ln_tensor_list_entry *dst_list_entry;
@@ -73,7 +73,7 @@ static void create_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     dtype = tl_dtype_from_str(dtype_entry->value_string);
     dtype_entry->value_int = dtype;
     dtype = dtype;
-    ln_opck_param_satisfy_msg(dtype != -1, "`dtype` param should be a supported tl_dtype");
+    ln_opck_satisfy_msg(dtype != -1, "`dtype` param should be a supported tl_dtype");
 
     dims_entry = ln_param_list_find(op_arg->params, "dims");
     ln_opck_param_exist(dims_entry, "dims");
@@ -109,7 +109,7 @@ static void create_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function blocks only once per instance right after memory allocation. */
-static void create_cpu_static_run(ln_op_arg *op_arg, ln_msg **error)
+static void create_cpu_static_run(ln_op_arg *op_arg)
 {
     struct priv_s  *priv = op_arg->priv;
     tl_tensor      *dst = priv->dst_entry->tensor;
@@ -132,7 +132,7 @@ static void create_cpu_static_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void create_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void create_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

@@ -29,54 +29,52 @@ static int static_run_count = 0;
 static int run_count = 0;
 static int post_run_count = 0;
 
-static void pre_run0 (ln_op_arg *op_arg, ln_msg **error)
+static void pre_run0 (ln_op_arg *op_arg)
 {
      pre_run_count++;
 }
 
-static void static_run0 (ln_op_arg *op_arg, ln_msg **error)
+static void static_run0 (ln_op_arg *op_arg)
 {
      static_run_count++;
-     *error = ln_msg_create(LN_WARNING, "static_run0");
 }
 
-static void run0 (ln_op_arg *op_arg, ln_msg **error)
+static void run0 (ln_op_arg *op_arg)
 {
      run_count++;
 }
 
-static void post_run0 (ln_op_arg *op_arg, ln_msg **error)
+static void post_run0 (ln_op_arg *op_arg)
 {
      post_run_count++;
 }
 
-static void pre_run1 (ln_op_arg *op_arg, ln_msg **error)
+static void pre_run1 (ln_op_arg *op_arg)
 {
      pre_run_count++;
-     *error = ln_msg_create(LN_INFO, "pre_run1");
 }
 
-static void run1 (ln_op_arg *op_arg, ln_msg **error)
+static void run1 (ln_op_arg *op_arg)
 {
      run_count++;
 }
 
-static void post_run1 (ln_op_arg *op_arg, ln_msg **error)
+static void post_run1 (ln_op_arg *op_arg)
 {
      post_run_count++;
 }
 
-static void pre_run2 (ln_op_arg *op_arg, ln_msg **error)
+static void pre_run2 (ln_op_arg *op_arg)
 {
      pre_run_count++;
 }
 
-static void run2 (ln_op_arg *op_arg, ln_msg **error)
+static void run2 (ln_op_arg *op_arg)
 {
      run_count++;
 }
 
-static void post_run2 (ln_op_arg *op_arg, ln_msg **error)
+static void post_run2 (ln_op_arg *op_arg)
 {
      post_run_count++;
 }
@@ -256,44 +254,28 @@ END_TEST
 
 START_TEST(test_ln_op_list_do_pre_run)
 {
-     ln_msg *error = NULL;
-
-     ln_op_list_do_pre_run(test_op_list, &error);
-     ck_assert_int_eq(error->level, LN_INFO);
-     ck_assert_str_eq(error->err_str, "pre_run1");
-     ln_msg_free(error);
-     ck_assert_int_eq(pre_run_count, 2);
+     ln_op_list_do_pre_run(test_op_list);
+     ck_assert_int_eq(pre_run_count, 3);
 }
 END_TEST
 
 START_TEST(test_ln_op_list_do_static_run)
 {
-     ln_msg *error = NULL;
-
-     ln_op_list_do_static_run(test_op_list, &error);
-     ck_assert_int_eq(error->level, LN_WARNING);
-     ck_assert_str_eq(error->err_str, "static_run0");
-     ln_msg_free(error);
+     ln_op_list_do_static_run(test_op_list);
      ck_assert_int_eq(static_run_count, 1);
 }
 END_TEST
 
 START_TEST(test_ln_op_list_do_run)
 {
-     ln_msg *error = NULL;
-
-     ln_op_list_do_run(test_op_list, &error);
-     ck_assert_ptr_eq(error, NULL);
+     ln_op_list_do_run(test_op_list);
      ck_assert_int_eq(run_count, 3);
 }
 END_TEST
 
 START_TEST(test_ln_op_list_do_post_run)
 {
-     ln_msg *error = NULL;
-
-     ln_op_list_do_post_run(test_op_list, &error);
-     ck_assert_ptr_eq(error, NULL);
+     ln_op_list_do_post_run(test_op_list);
      ck_assert_int_eq(post_run_count, 3);
 }
 END_TEST

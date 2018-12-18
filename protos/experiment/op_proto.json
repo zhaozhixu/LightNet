@@ -30,9 +30,9 @@
                  "from_func": "tl_elew_op_from_str"}
             ],
             "checks": [
-                {"cktype": "tensor", "check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
-                {"cktype": "param", "check": "1, \"test1\""},
-                {"cktype": "tensor", "check": "1, \"test2\""}
+                {"check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
+                {"check": "1, \"test1\""},
+                {"check": "1, \"test2\""}
             ],
             "custom": "custom;\nasdf;\nasdf;",
             "static_run": "static_run;",
@@ -69,9 +69,9 @@
                  "from_func": "tl_elew_op_from_str"}
             ],
             "checks": [
-                {"cktype": "tensor", "check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
-                {"cktype": "param", "check": "1, \"test1\""},
-                {"cktype": "tensor", "check": "1, \"test2\""}
+                {"check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
+                {"check": "1, \"test1\""},
+                {"check": "1, \"test2\""}
             ],
             "custom": "custom;\nasdf;\nasdf;",
             "static_run": "static_run;",

@@ -31,7 +31,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void elew_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void elew_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src1_name;
     ln_tensor_list_entry *src1_list_entry;
@@ -97,7 +97,7 @@ static void elew_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     elew_op = tl_elew_op_from_str(elew_op_entry->value_string);
     elew_op_entry->value_int = elew_op;
     elew_op = elew_op;
-    ln_opck_param_satisfy_msg(elew_op != -1, "`elew_op` param should be a supported tl_elew_op");
+    ln_opck_satisfy_msg(elew_op != -1, "`elew_op` param should be a supported tl_elew_op");
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src1->ndim;
@@ -119,7 +119,7 @@ static void elew_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void elew_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void elew_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *src1 = priv->src1_entry->tensor;
@@ -133,7 +133,7 @@ static void elew_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void elew_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void elew_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

@@ -69,7 +69,7 @@ static void print_version_exit(void)
     const char *version = "\
 lightnet %s\n\
 Copyright (C) 2018, Zhao Zhixu\n\
-This software is under the terms of the MIT License.\n\
+This software may be copied only under the terms of the MIT License.\n\
 ";
 
     snprintf(version_str, 20, "%d.%d.%d",

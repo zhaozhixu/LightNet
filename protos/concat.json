@@ -19,7 +19,7 @@
                  "realtype": "int",
                  "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
             ],
-            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
+            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
         },
         {
             "optype": "concat_cpu",
@@ -40,7 +40,7 @@
                  "realtype": "int",
                  "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
             ],
-            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
+            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
             "run": ""
         },
         {
@@ -62,7 +62,7 @@
                  "realtype": "int",
                  "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
             ],
-            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
+            "custom": "for (int i = 0; i < src1->ndim; i++) {\n    if (i == axis)\n        continue;\n    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], \"`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`\");\n}",
             "run": ""
         }
     ]

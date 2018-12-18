@@ -30,7 +30,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void softmax_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void softmax_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -80,7 +80,7 @@ static void softmax_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
     axis = axis_entry->value_int;
     axis = axis;
-    ln_opck_param_satisfy_msg(axis >= 0 && axis < src->ndim, "`axis` should match the dimisions of `src`");
+    ln_opck_satisfy_msg(axis >= 0 && axis < src->ndim, "`axis` should match the dimisions of `src`");
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
@@ -101,7 +101,7 @@ static void softmax_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void softmax_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void softmax_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -110,7 +110,7 @@ static void softmax_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void softmax_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void softmax_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

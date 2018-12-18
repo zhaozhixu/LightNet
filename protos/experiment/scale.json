@@ -28,7 +28,7 @@
                 {"arg_name": "src", "mtype": "LN_MEM_CUDA"},
                 {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
                  "check": "scales->ndim == 1 && scales->len == src->ndim, \"the number of elements of `scales` should be the same as the rank of input `src`\"",
-                 "custom": "for (int i = 0; i < scales->len; i++) {\n    ln_opck_tensor_satisfy_msg(((float *)scales->data)[i] >= 1, \"`scales` takes values >= 1\");\n    ln_opck_tensor_satisfy_msg(floorf(((float *)scales->data)[i]*src->dims[i]) <= INT32_MAX, \"scaled dimension exceeds INT32_MAX limit\");\n}"}
+                 "custom": "for (int i = 0; i < scales->len; i++) {\n    ln_opck_satisfy_msg(((float *)scales->data)[i] >= 1, \"`scales` takes values >= 1\");\n    ln_opck_satisfy_msg(floorf(((float *)scales->data)[i]*src->dims[i]) <= INT32_MAX, \"scaled dimension exceeds INT32_MAX limit\");\n}"}
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",

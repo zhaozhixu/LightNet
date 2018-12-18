@@ -48,11 +48,9 @@ void ln_context_free(ln_context *ctx)
 static void init_op(ln_context *ctx, ln_op *op)
 {
     int ret;
-    ln_msg *error = NULL;
 
     /* ln_msg_debug("init_op: %s %s\n", op->op_arg->name, op->op_arg->optype); */
-    op->pre_run(op->op_arg, &error);
-    ln_msg_handle(&error);
+    op->pre_run(op->op_arg);
     ret = ln_op_table_insert(ctx->op_table, op);
     assert(ret);
     ln_dfg_add(ctx->dfg, op);
@@ -61,12 +59,10 @@ static void init_op(ln_context *ctx, ln_op *op)
 static void cleanup_op(ln_context *ctx, ln_op *op)
 {
     int ret;
-    ln_msg *error = NULL;
 
     /* ln_msg_debug("cleanup_op: %s %s\n", op->op_arg->name, op->op_arg->optype); */
     ln_dfg_remove(ctx->dfg, op);
-    op->post_run(op->op_arg, &error);
-    ln_msg_handle(&error);
+    op->post_run(op->op_arg);
     ret = ln_op_table_remove(ctx->op_table, op->op_arg->name);
     assert(ret);
 }
@@ -161,26 +157,19 @@ void ln_context_dealloc_mem(ln_context *ctx)
 
 void ln_context_run(ln_context *ctx)
 {
-    ln_msg *error = NULL;
-
-    ln_op_list_do_post_run(ctx->ops, &error);
-    ln_msg_handle(&error);
+    ln_op_list_do_post_run(ctx->ops);
     assert(ln_hash_size(ctx->tensor_table) == 0);
 
-    ln_op_list_do_pre_run(ctx->ops, &error);
-    ln_msg_handle(&error);
+    ln_op_list_do_pre_run(ctx->ops);
 
     ln_pass_mem_plan(ctx);
     ln_context_alloc_mem(ctx);
 
-    ln_op_list_do_static_run(ctx->ops, &error);
-    ln_msg_handle(&error);
+    ln_op_list_do_static_run(ctx->ops);
 
-    ln_op_list_do_run(ctx->ops, &error);
-    ln_msg_handle(&error);
+    ln_op_list_do_run(ctx->ops);
 
-    ln_op_list_do_post_run(ctx->ops, &error);
-    ln_msg_handle(&error);
+    ln_op_list_do_post_run(ctx->ops);
     /* ln_context_cleanup_ops(ctx); */
     ln_context_dealloc_mem(ctx);
 }

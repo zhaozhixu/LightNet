@@ -29,7 +29,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void print_cuda_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void print_cuda_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -68,7 +68,7 @@ static void print_cuda_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void print_cuda_run(ln_op_arg *op_arg, ln_msg **error)
+static void print_cuda_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *src = priv->src_entry->tensor;
@@ -79,7 +79,7 @@ static void print_cuda_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void print_cuda_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void print_cuda_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

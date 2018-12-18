@@ -31,7 +31,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void upsample_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -84,7 +84,7 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     mode = tl_resize_type_from_str(mode_entry->value_string);
     mode_entry->value_int = mode;
     mode = mode;
-    ln_opck_param_satisfy_msg(mode != -1, "`mode` should be 'TL_NEAREST' or 'TL_LINEAR'");
+    ln_opck_satisfy_msg(mode != -1, "`mode` should be 'TL_NEAREST' or 'TL_LINEAR'");
 
     scales_entry = ln_param_list_find(op_arg->params, "scales");
     ln_opck_param_exist(scales_entry, "scales");
@@ -92,7 +92,7 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     scales = scales_entry->value_array_float;
     ln_opck_param_array_float_gt(scales_entry, 0);
     scales = scales;
-    ln_opck_param_satisfy_msg(scales_entry->array_len == src->ndim, "the length of `scales` should be the same as the rank of input `src`");
+    ln_opck_satisfy_msg(scales_entry->array_len == src->ndim, "the length of `scales` should be the same as the rank of input `src`");
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
@@ -121,7 +121,7 @@ static void upsample_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void upsample_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void upsample_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *src = priv->src_entry->tensor;
@@ -134,7 +134,7 @@ static void upsample_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void upsample_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void upsample_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

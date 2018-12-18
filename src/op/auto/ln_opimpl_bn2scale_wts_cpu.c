@@ -35,7 +35,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_mean_name;
     ln_tensor_list_entry *src_mean_list_entry;
@@ -209,7 +209,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function blocks only once per instance right after memory allocation. */
-static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_msg **error)
+static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *src_mean = priv->src_mean_entry->tensor;
@@ -238,7 +238,7 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void bn2scale_wts_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void bn2scale_wts_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

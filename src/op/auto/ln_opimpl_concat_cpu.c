@@ -31,7 +31,7 @@ struct priv_s {
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void concat_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
+static void concat_cpu_pre_run(ln_op_arg *op_arg)
 {
     char                 *src1_name;
     ln_tensor_list_entry *src1_list_entry;
@@ -95,13 +95,13 @@ static void concat_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
     ln_opck_param_type(axis_entry, LN_PARAM_NUMBER);
     axis = axis_entry->value_int;
     axis = axis;
-    ln_opck_param_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` should match the dimensions of `src1` and `src2`");
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` should match the dimensions of `src1` and `src2`");
 
     {
         for (int i = 0; i < src1->ndim; i++) {
             if (i == axis)
                 continue;
-            ln_opck_tensor_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
+            ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
         }
     }
 
@@ -131,7 +131,7 @@ static void concat_cpu_pre_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should only do the calculations. */
-static void concat_cpu_run(ln_op_arg *op_arg, ln_msg **error)
+static void concat_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -140,7 +140,7 @@ static void concat_cpu_run(ln_op_arg *op_arg, ln_msg **error)
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
-static void concat_cpu_post_run(ln_op_arg *op_arg, ln_msg **error)
+static void concat_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 

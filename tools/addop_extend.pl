@@ -233,7 +233,7 @@ sub gen_pre_run {
 
     my $pre_run_str = <<EOF;
 /* This function should do the parameter checking and tensor shape inference. */
-static void $op->{optype}_pre_run(ln_op_arg *op_arg, ln_error **error)
+static void $op->{optype}_pre_run(ln_op_arg *op_arg)
 {
 ${pre_run_local_vars}
     /* check tensors and parameters */
@@ -409,9 +409,9 @@ sub gen_pre_run_checks {
         }
         if (exists $tensor->{check}) {
             if ($tensor->{check} =~ /,/) {
-                push @states, "ln_opck_tensor_satisfy_msg($tensor->{check});";
+                push @states, "ln_opck_satisfy_msg($tensor->{check});";
             } else {
-                push @states, "ln_opck_tensor_satisfy($tensor->{check});";
+                push @states, "ln_opck_satisfy($tensor->{check});";
             }
         }
         if (exists $tensor->{checks}) {
@@ -419,9 +419,9 @@ sub gen_pre_run_checks {
             foreach (@$checks) {
                 if (exists $_->{check}) {
                     if ($_->{check} =~ /,/) {
-                        push @states, "ln_opck_tensor_satisfy_msg($_->{check});";
+                        push @states, "ln_opck_satisfy_msg($_->{check});";
                     } else {
-                        push @states, "ln_opck_tensor_satisfy($_->{check});";
+                        push @states, "ln_opck_satisfy($_->{check});";
                     }
                 } else {
                     &err_exit("tensor '${arg_name}' expects a `check` in `checks`");
@@ -560,9 +560,9 @@ sub gen_pre_run_checks {
         push @states, "${arg_name} = ${arg_name};";
         if (exists $param->{check}) {
             if ($param->{check} =~ /,/) {
-                push @states, "ln_opck_param_satisfy_msg($param->{check});";
+                push @states, "ln_opck_satisfy_msg($param->{check});";
             } else {
-                push @states, "ln_opck_param_satisfy($param->{check});";
+                push @states, "ln_opck_satisfy($param->{check});";
             }
         }
         if (exists $param->{checks}) {
@@ -570,9 +570,9 @@ sub gen_pre_run_checks {
             foreach (@$checks) {
                 if (exists $_->{check}) {
                     if ($_->{check} =~ /,/) {
-                        push @states, "ln_opck_param_satisfy_msg($_->{check});";
+                        push @states, "ln_opck_satisfy_msg($_->{check});";
                     } else {
-                        push @states, "ln_opck_param_satisfy($_->{check});";
+                        push @states, "ln_opck_satisfy($_->{check});";
                     }
                 } else {
                     &err_exit("$param->{arg_name} expects a `check` in `checks`");
@@ -588,17 +588,12 @@ sub gen_pre_run_checks {
     if (exists $op->{checks}) {
         my $checks = $op->{checks};
         foreach (@$checks) {
-            if (exists $_->{cktype} and exists $_->{check}) {
-                if ($_->{cktype} ne "param" and $_->{cktype} ne "tensor") {
-                    &err_exit("`checks`'s `cktype` should be 'param' or 'tensor'");
-                }
+            if (exists $_->{check}) {
                 if ($_->{check} =~ /,/) {
-                    push @states, "ln_opck_$_->{cktype}_satisfy_msg($_->{check});";
+                    push @states, "ln_opck_satisfy_msg($_->{check});";
                 } else {
-                    push @states, "ln_opck_$_->{cktype}_satisfy($_->{check});";
+                    push @states, "ln_opck_satisfy($_->{check});";
                 }
-            } else {
-                &err_exit("$op->{optype}'s `checks` expects a `cktype` and a `check`");
             }
         }
         push @states, "";
@@ -797,7 +792,7 @@ sub gen_static_run {
 
     my $static_run_tpl = <<EOF;
 /* This function blocks only once per instance right after memory allocation. */
-static void $op->{optype}_static_run(ln_op_arg *op_arg, ln_error **error)
+static void $op->{optype}_static_run(ln_op_arg *op_arg)
 {
 ${states_str}
 }
@@ -818,7 +813,7 @@ sub gen_run {
 
     my $static_run_tpl = <<EOF;
 /* This function should only do the calculations. */
-static void $op->{optype}_run(ln_op_arg *op_arg, ln_error **error)
+static void $op->{optype}_run(ln_op_arg *op_arg)
 {
 ${states_str}
 }
@@ -845,7 +840,7 @@ sub gen_post_run {
 
     my $static_run_tpl = <<EOF;
 /* This function should free all the memory allocated by other *_run()s. */
-static void $op->{optype}_post_run(ln_op_arg *op_arg, ln_error **error)
+static void $op->{optype}_post_run(ln_op_arg *op_arg)
 {
 ${states_str}
 }
