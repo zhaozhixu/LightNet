@@ -55,7 +55,7 @@ char *ln_strdup(const char *s);
 char *ln_path_alloc(size_t *sizep);
 void *ln_clone(const void *src, size_t size);
 void *ln_repeat(void *data, size_t size, int times);
-char *ln_read_text(const char *file_name);
+char *ln_read_text(const char *path);
 char *ln_next_token(const char *s, int c);
 char *ln_strcat_alloc(const char *s1, const char *s2);
 char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim);

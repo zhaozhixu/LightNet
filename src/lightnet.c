@@ -45,8 +45,6 @@ static struct ln_option option = {
 
 int main(int argc, char **argv)
 {
-    const char *json_file;
-    const char *target;
     ln_arch *arch;
     ln_context *ctx;
 
@@ -55,31 +53,20 @@ int main(int argc, char **argv)
     ln_name_init();
     ctx = ln_context_create();
 
-    json_file = option.source;
-    target = option.target;
-    /* json_file = argv[1]; */
-    /* target = argv[2]; */
-    ln_json_parse_file(json_file, ctx);
+    ln_json_parse_file(option.source, ctx);
     ln_context_init_ops(ctx);
 
-    arch = ln_hash_find(LN_ARCH.arch_table, target);
+    arch = ln_hash_find(LN_ARCH.arch_table, option.target);
     ln_pass_expander(ctx, arch->ep_funcs);
-    /* ln_json_fprint(stdout, ctx); */
     ln_pass_combiner(ctx, 3, arch->cb_funcs);
-    /* ln_pass_mem_plan(ctx); */
-    ln_json_fprint(stdout, ctx);
+    ln_json_print_file(option.outfile, ctx);
 
-    /* ln_context_alloc_mem(ctx); */
-    /* ln_context_static_run(ctx); */
-    /* ln_context_run(ctx); */
-    /* ln_context_cleanup_ops(ctx); */
-    /* ln_context_dealloc_mem(ctx); */
     ln_context_run(ctx);
 
     ln_arch_cleanup();
     ln_name_cleanup();
     ln_context_free(ctx);
-    ln_cuda_device_reset();
+    /* ln_cuda_device_reset(); */
 }
 
 static void print_usage_exit(void)
@@ -91,7 +78,7 @@ Apply optimization procedures to SOURCE according to the options.\n\
 Options:\n\
   -h, --help             display this message\n\
   -v, --version          display version information\n\
-  -o, --outfile=FILE     specify output file name [SOURCE.out.json]\n\
+  -o, --outfile=FILE     specify output file name [out.json]\n\
   -t, --target=TARGET    specify target platform [cpu]\n\
   -r, --run              compile and run the model\n\
   -Wwarn                 display warnings (default)\n\
@@ -176,7 +163,7 @@ static void get_options(int argc, char **argv)
         option.source = argv[optind++];
 
     if (!option.outfile)
-        option.outfile = ln_strcat_delim_alloc(option.source, "out.json", '.');
+        option.outfile = "out.json";
     if (!option.target)
         option.target = "cpu";
 }

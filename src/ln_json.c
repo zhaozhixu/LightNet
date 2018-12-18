@@ -596,3 +596,14 @@ void ln_json_fprint(FILE *fp, const ln_context *ctx)
     fprintf(fp, "%s\n", str);
     ln_free(str);
 }
+
+void ln_json_print_file(const char *file, const ln_context *ctx)
+{
+    char *str;
+    FILE *fp;
+
+    if (!(fp = fopen(file, "w")))
+        err(EXIT_FAILURE, "ln_json_print_file: cannot open %s", file);
+    ln_json_fprint(fp, ctx);
+    fclose(fp);
+}

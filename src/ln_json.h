@@ -35,6 +35,7 @@ ln_list *ln_json_parse(char *json_str, ln_context *ctx);
 ln_list *ln_json_parse_file(const char *file, ln_context *ctx);
 char *ln_json_create_json_str(const ln_context *ctx);
 void ln_json_fprint(FILE *fp, const ln_context *ctx);
+void ln_json_print_file(const char *file, const ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND
