@@ -25,16 +25,7 @@
 
 static void get_options(int argc, char **argv);
 
-struct ln_option {
-    const char  *source;
-    const char  *outfile;
-    const char  *target;
-    int          run;
-    int          Winter;
-    int          Wwarn;
-};
-
-static struct ln_option option = {
+static ln_option option = {
     .source = NULL,
     .outfile = NULL,
     .target = NULL,
@@ -66,7 +57,8 @@ int main(int argc, char **argv)
     ln_arch_cleanup();
     ln_name_cleanup();
     ln_context_free(ctx);
-    /* ln_cuda_device_reset(); */
+
+    return 0;
 }
 
 static void print_usage_exit(void)
@@ -97,7 +89,7 @@ static void print_version_exit(void)
     const char *version = "\
 lightnet %s\n\
 Copyright (C) 2018, Zhao Zhixu\n\
-This software may be copied only under the terms of the MIT License.\n\
+Released under the MIT License.\n\
 ";
 
     snprintf(version_str, 20, "%d.%d.%d",

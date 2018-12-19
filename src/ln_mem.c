@@ -152,11 +152,9 @@ size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size)
 {
     assert(size > 0);
     int fit_idx = best_fit(mem_plan, size);
-    if (fit_idx < 0) {
-        ln_msg *error = ln_msg_create(LN_ERROR,
-                                          "ln_mem_plan_alloc(): out of virtual memory pool when allocating %ld bytes", size);
-        ln_msg_handle(&error);
-    }
+    if (fit_idx < 0)
+        ln_msg_error("ln_mem_plan_alloc(): out of virtual memory pool when allocating %ld bytes",
+                     size);
 
     mem_info *minfo = ln_list_nth_data(mem_plan->mem_blocks, fit_idx);
     size_t align_size = mem_plan->align_size;
@@ -210,12 +208,9 @@ void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr)
         minfo->flag = HOLE;
         break;
     }
-    if (!l) {
-        ln_msg *error = ln_msg_create(LN_ERROR,
-                                          "ln_mem_plan_dealloc(): invalid address: 0x%012lx",
-                                          addr);
-        ln_msg_handle(&error);
-    }
+    if (!l)
+        ln_msg_error("ln_mem_plan_dealloc(): invalid address: 0x%012lx",
+                     addr);
 }
 
 int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr)

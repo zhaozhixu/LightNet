@@ -36,7 +36,7 @@ void *ln_alloc(size_t size)
 
     p = malloc(size);
     if (p == NULL) {
-        err(EXIT_FAILURE, "ln_alloc: malloc(%lu) failed", size);
+        err(EXIT_FAILURE, "ln_alloc(): malloc(%lu) failed", size);
     }
 
     return p;
@@ -48,7 +48,7 @@ void *ln_realloc(void *ptr, size_t size)
 
     p = realloc(ptr, size);
     if (p == NULL && size != 0) {
-        err(EXIT_FAILURE, "ln_realloc: realloc() failed");
+        err(EXIT_FAILURE, "ln_realloc(): realloc() failed");
     }
 
     return p;
@@ -60,7 +60,7 @@ char *ln_strdup(const char *s)
 
     new_s = strdup(s);
     if (new_s == NULL) {
-        err(EXIT_FAILURE, "ln_strdup: strdup(%s) failed", s);
+        err(EXIT_FAILURE, "ln_strdup(): strdup(%s) failed", s);
     }
 
     return new_s;
@@ -94,15 +94,15 @@ char *ln_read_text(const char *path)
     char *str;
 
     if (stat(path, &buf) < 0)
-        err(EXIT_FAILURE, "ln_read_text: cannot stat %s", path);
+        err(EXIT_FAILURE, "ln_read_text(): cannot stat %s", path);
 
     if (!(fp = fopen(path, "rb")))
-        err(EXIT_FAILURE, "ln_read_text: cannot open %s", path);
+        err(EXIT_FAILURE, "ln_read_text(): cannot open %s", path);
 
     str = ln_alloc(buf.st_size+1);
     n = fread(str, buf.st_size, 1, fp);
     if (n < 1 && ferror(fp))
-        err(EXIT_FAILURE, "ln_read_text: cannot read %s", path);
+        err(EXIT_FAILURE, "ln_read_text(): cannot read %s", path);
 
     fclose(fp);
     return str;

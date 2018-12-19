@@ -88,7 +88,7 @@ typedef struct ln_msg ln_msg;
     ln_msg_emit(LN_DEBUG_INFO, (fmt), ##varg)
 #else
 #define ln_msg_debug(fmt, varg...) (void)0
-#endif
+#endif  /* LN_DEBUG */
 
 #define ln_msg_info(fmt, varg...)               \
     ln_msg_emit(LN_INFO, (fmt), ##varg)

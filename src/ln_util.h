@@ -28,6 +28,16 @@
 #include <stdint.h>
 #include <string.h>
 
+struct ln_option {
+    const char  *source;
+    const char  *outfile;
+    const char  *target;
+    int          run;
+    int          Winter;
+    int          Wwarn;
+};
+typedef struct ln_option ln_option;
+
 enum ln_bool {
     LN_FALSE = 0,
     LN_TRUE = 1

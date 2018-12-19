@@ -28,11 +28,11 @@
 #include "ln_hash.h"
 
 /* NOTE: keep this sync with mtype_names and mtype_infos in ln_mem.c */
-#define LN_MEM_TYPE_SIZE 3
 enum ln_mem_type {
     LN_MEM_NONE = 0,
     LN_MEM_CPU,
     LN_MEM_CUDA,
+    LN_MEM_TYPE_SIZE
 };
 typedef enum ln_mem_type ln_mem_type;
 

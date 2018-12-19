@@ -49,10 +49,10 @@ static void init_op(ln_context *ctx, ln_op *op)
 {
     int ret;
 
-    /* ln_msg_debug("init_op: %s %s\n", op->op_arg->name, op->op_arg->optype); */
-    op->pre_run(op->op_arg);
+    /* ln_msg_debug("init_op: %s (%s)", op->op_arg->name, op->op_arg->optype); */
     ret = ln_op_table_insert(ctx->op_table, op);
     assert(ret);
+    op->pre_run(op->op_arg);
     ln_dfg_add(ctx->dfg, op);
 }
 
@@ -60,7 +60,7 @@ static void cleanup_op(ln_context *ctx, ln_op *op)
 {
     int ret;
 
-    /* ln_msg_debug("cleanup_op: %s %s\n", op->op_arg->name, op->op_arg->optype); */
+    /* ln_msg_debug("cleanup_op: %s (%s)", op->op_arg->name, op->op_arg->optype); */
     ln_dfg_remove(ctx->dfg, op);
     op->post_run(op->op_arg);
     ret = ln_op_table_remove(ctx->op_table, op->op_arg->name);

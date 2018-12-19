@@ -25,7 +25,7 @@
 #include "cJSON.h"
 #include "ln_json.h"
 
-#define PARSE_JSON_ERROR(varg...) ln_msg_emit(LN_ERROR, ##varg)
+#define PARSE_JSON_ERROR(fmt, varg...) ln_msg_error("parse error: "#fmt, ##varg)
 
 static ln_list *parse_array_value(const cJSON *array_json,
                                   const cJSON *name_json,
@@ -56,7 +56,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
             type = LN_PARAM_BOOL;
         }
         else {
-            PARSE_JSON_ERROR("op \"%s\"'s param \"%s\"'s value has an unsupported JSON array element type at element index %d",
+            PARSE_JSON_ERROR("op %s's param %s's value has an unsupported JSON array element type at element index %d",
                              name_json->valuestring,
                              param_arg_name_json->valuestring, idx);
         }
@@ -79,7 +79,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
             }
         }
         else if (first_type != type) {
-            PARSE_JSON_ERROR("op \"%s\"'s param \"%s\"'s value is inconsistent among its elements' JSON type at element index %d",
+            PARSE_JSON_ERROR("op %s's param %s's value is inconsistent among its elements' JSON type at element index %d",
                               name_json->valuestring,
                               param_arg_name_json->valuestring, idx);
         }
@@ -121,7 +121,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
         break;
     case LN_PARAM_INVALID:
         assert(array_len == 0);
-        PARSE_JSON_ERROR("op \"%s\"'s param \"%s\"'s value is an empty array",
+        PARSE_JSON_ERROR("op %s's param %s's value is an empty array",
                          name_json->valuestring,
                          param_arg_name_json->valuestring);
         break;
@@ -153,35 +153,35 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
         PARSE_JSON_ERROR("ops[%d]'s name is not a String", idx);
 
     if (!optype_json)
-        PARSE_JSON_ERROR("op \"%s\" doesn't have an \"optype\" key",
+        PARSE_JSON_ERROR("op %s doesn't have an \"optype\" key",
                          name_json->valuestring);
 
     if (!cJSON_IsString(optype_json))
-        PARSE_JSON_ERROR("op \"%s\"'s \"optype\" is not a String",
+        PARSE_JSON_ERROR("op %s's \"optype\" is not a String",
                          name_json->valuestring);
 
     if (!tensors_in_json)
-        PARSE_JSON_ERROR("op \"%s\" doesn't have a \"tensors_in\" key",
+        PARSE_JSON_ERROR("op %s doesn't have a \"tensors_in\" key",
                          name_json->valuestring);
 
     if (!tensors_out_json)
-        PARSE_JSON_ERROR("op \"%s\" doesn't have a \"tensors_out\" key",
+        PARSE_JSON_ERROR("op %s doesn't have a \"tensors_out\" key",
                          name_json->valuestring);
 
     if (!cJSON_IsArray(tensors_in_json))
-        PARSE_JSON_ERROR("op \"%s\"'s \"tensors_in\" is not an Array",
+        PARSE_JSON_ERROR("op %s's \"tensors_in\" is not an Array",
                          name_json->valuestring);
 
     if (!cJSON_IsArray(tensors_out_json))
-        PARSE_JSON_ERROR("op \"%s\"'s \"tensors_out\" is not an Array",
+        PARSE_JSON_ERROR("op %s's \"tensors_out\" is not an Array",
                          name_json->valuestring);
 
     if (!params_json)
-        PARSE_JSON_ERROR("op \"%s\" doesn't have a \"params\" key",
+        PARSE_JSON_ERROR("op %s doesn't have a \"params\" key",
                          name_json->valuestring);
 
     if (!cJSON_IsArray(params_json))
-        PARSE_JSON_ERROR("op \"%s\"'s \"params\" is not an Array",
+        PARSE_JSON_ERROR("op %s's \"params\" is not an Array",
                          name_json->valuestring);
 
     cJSON *tensor_json, *param_json;
@@ -192,20 +192,20 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
         tensor_arg_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
         tensor_name_json = cJSON_GetObjectItem(tensor_json, "name");
         if (!tensor_arg_name_json)
-            PARSE_JSON_ERROR("one of op \"%s\"'s input tensors doesn't have an \"arg_name\" key at tensor index %d",
+            PARSE_JSON_ERROR("one of op %s's input tensors doesn't have an \"arg_name\" key at tensor index %d",
                              name_json->valuestring, i);
 
         if (!cJSON_IsString(tensor_arg_name_json))
-            PARSE_JSON_ERROR("one of op \"%s\"'s input tensors's arg_name is not a String at tensor index %d",
+            PARSE_JSON_ERROR("one of op %s's input tensors's arg_name is not a String at tensor index %d",
                              name_json->valuestring, i);
 
         if (!tensor_name_json)
-            PARSE_JSON_ERROR("op \"%s\"'s \"%s\" tensor doesn't have a \"name\" key",
+            PARSE_JSON_ERROR("op %s's tensor %s doesn't have a \"name\" key",
                              name_json->valuestring,
                              tensor_arg_name_json->valuestring);
 
         if (!cJSON_IsString(tensor_name_json))
-            PARSE_JSON_ERROR("op \"%s\"'s \"%s\" tensor's name is not a String",
+            PARSE_JSON_ERROR("op %s's tensor %s's name is not a String",
                              name_json->valuestring,
                              tensor_arg_name_json->valuestring);
 
@@ -219,20 +219,20 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
         tensor_arg_name_json = cJSON_GetObjectItem(tensor_json, "arg_name");
         tensor_name_json = cJSON_GetObjectItem(tensor_json, "name");
         if (!tensor_arg_name_json)
-            PARSE_JSON_ERROR("one of op \"%s\"'s output tensors doesn't have an \"arg_name\" key at tensor index %d",
+            PARSE_JSON_ERROR("one of op %s's output tensors doesn't have an \"arg_name\" key at tensor index %d",
                              name_json->valuestring, i);
 
         if (!cJSON_IsString(tensor_arg_name_json))
-            PARSE_JSON_ERROR("one of op \"%s\"'s output tensors's arg_name is not a String at tensor index %d",
+            PARSE_JSON_ERROR("one of op %s's output tensors's arg_name is not a String at tensor index %d",
                              name_json->valuestring, i);
 
         if (!tensor_name_json)
-            PARSE_JSON_ERROR("op \"%s\"'s \"%s\" tensor doesn't have a \"name\" key",
+            PARSE_JSON_ERROR("op %s's tensor %s doesn't have a \"name\" key",
                              name_json->valuestring,
                              tensor_arg_name_json->valuestring);
 
         if (!cJSON_IsString(tensor_name_json))
-            PARSE_JSON_ERROR("op \"%s\"'s \"%s\" tensor's name is not a String",
+            PARSE_JSON_ERROR("op %s's tensor %s's name is not a String",
                              name_json->valuestring,
                              tensor_arg_name_json->valuestring);
 
@@ -245,17 +245,17 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
     cJSON_ArrayForEach(param_json, params_json) {
         param_arg_name_json = cJSON_GetObjectItem(param_json, "arg_name");
         if (!param_arg_name_json)
-            PARSE_JSON_ERROR("one of op \"%s\"'s params doesn't have an \"arg_name\" key at param index %d",
+            PARSE_JSON_ERROR("one of op %s's params doesn't have an \"arg_name\" key at param index %d",
                              name_json->valuestring, i);
 
         if (!cJSON_IsString(param_arg_name_json))
-            PARSE_JSON_ERROR("one of op \"%s\"'s params's arg_name is not a String at param index %d",
+            PARSE_JSON_ERROR("one of op %s's params's arg_name is not a String at param index %d",
                              name_json->valuestring);
 
         param_value_json = cJSON_GetObjectItem(param_json, "value");
 
         if (!param_value_json)
-            PARSE_JSON_ERROR("op \"%s\"'s \"%s\" param doesn't have a \"value\" key",
+            PARSE_JSON_ERROR("op %s's %s param doesn't have a \"value\" key",
                              name_json->valuestring,
                              param_arg_name_json->valuestring);
 
@@ -288,7 +288,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
                                        param_arg_name_json, params);
         }
         else {
-            PARSE_JSON_ERROR("op \"%s\"'s param \"%s\"'s value is an unsupported JSON type",
+            PARSE_JSON_ERROR("op %s's param %s's value is an unsupported JSON type",
                              name_json->valuestring,
                              param_arg_name_json->valuestring);
         }
@@ -296,7 +296,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
     }
     proto_op = ln_hash_find(LN_ARCH.op_proto_table, optype_json->valuestring);
     if (!proto_op) {
-        PARSE_JSON_ERROR("op \"%s\"'s optype \"%s\" is not registered",
+        PARSE_JSON_ERROR("op %s's optype %s is not registered",
                          name_json->valuestring,
                          optype_json->valuestring);
     }
@@ -306,7 +306,7 @@ static ln_op *parse_op(const cJSON *op_json, ln_context *ctx, int idx)
 
     int ret = ln_op_table_insert(ctx->op_table, op);
     if (!ret)
-        PARSE_JSON_ERROR("op \"%s\"'s name is duplicated");
+        PARSE_JSON_ERROR("op %s's name is duplicated");
 
     return op;
 }
@@ -439,7 +439,7 @@ ln_list *ln_json_parse_file(const char *file, ln_context *ctx)
     return ops;
 }
 
-#define PRINT_JSON_ERROR ln_msg_emit(LN_ERROR, "ln_json_print_ops() failed")
+#define PRINT_JSON_ERROR ln_msg_error("ln_json_print_ops() failed")
 
 static void add_tensors(cJSON *tensors_json, ln_list *tensors,
                         ln_hash *tensor_table)
@@ -599,11 +599,10 @@ void ln_json_fprint(FILE *fp, const ln_context *ctx)
 
 void ln_json_print_file(const char *file, const ln_context *ctx)
 {
-    char *str;
     FILE *fp;
 
     if (!(fp = fopen(file, "w")))
-        err(EXIT_FAILURE, "ln_json_print_file: cannot open %s", file);
+        ln_msg_error_sys("ln_json_print_file(): cannot open %s", file);
     ln_json_fprint(fp, ctx);
     fclose(fp);
 }

@@ -29,6 +29,13 @@
 
 #define MAX_ERROR_LENGTH 4096
 
+static int32_t disp_mask = 0;
+
+void ln_msg_init(ln_option *option)
+{
+
+}
+
 ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
 {
     ln_msg *msg;
