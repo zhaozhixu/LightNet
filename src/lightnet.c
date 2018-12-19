@@ -31,7 +31,8 @@ static ln_option option = {
     .target = NULL,
     .run = 0,
     .Winter = 1,
-    .Wwarn = 1
+    .Wwarn = 1,
+    .debug = 0,
 };
 
 int main(int argc, char **argv)
@@ -40,6 +41,7 @@ int main(int argc, char **argv)
     ln_context *ctx;
 
     get_options(argc, argv);
+    ln_msg_init(&option);
     ln_arch_init();
     ln_name_init();
     ctx = ln_context_create();
@@ -52,7 +54,8 @@ int main(int argc, char **argv)
     ln_pass_combiner(ctx, 3, arch->cb_funcs);
     ln_json_print_file(option.outfile, ctx);
 
-    ln_context_run(ctx);
+    if (option.run)
+        ln_context_run(ctx);
 
     ln_arch_cleanup();
     ln_name_cleanup();
@@ -66,18 +69,21 @@ static void print_usage_exit(void)
     const char *usage = "\
 Usage: lightnet [OPTION...] SOURCE\n\
 Apply optimization procedures to SOURCE according to the options.\n\
+When SOURCE is -, read standard input.\n\
 \n\
 Options:\n\
   -h, --help             display this message\n\
   -v, --version          display version information\n\
-  -o, --outfile=FILE     specify output file name [out.json]\n\
-  -t, --target=TARGET    specify target platform [cpu]\n\
+  -o, --outfile=FILE     specify output file name; when FILE is -, print to\n\
+                         standard output (default: out.json)\n\
+  -t, --target=TARGET    specify target platform (default: cpu)\n\
   -r, --run              compile and run the model\n\
   -Wwarn                 display warnings (default)\n\
-  -Wno-warn              do not display warnings\n\
+  -w, -Wno-warn          do not display warnings\n\
   -Winter                display internal warnings (default)\n\
   -Wno-inter             do not display internal warnings\n\
-  -w                     suppress warnings\n\
+  -debug                 display debug messages (only works with LN_DEBUG\n\
+                         defined when compiling)\n\
 ";
     fputs(usage, stderr);
     exit(EXIT_SUCCESS);
@@ -112,10 +118,11 @@ static void get_options(int argc, char **argv)
         {"Wno-inter", no_argument, &option.Winter, 0},
         {"Wwarn",     no_argument, &option.Wwarn, 1},
         {"Wno-warn",  no_argument, &option.Wwarn, 0}, /* w */
+        {"debug",     no_argument, &option.debug, 1}, /* d */
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long_only(argc, argv, ":hvo:t:rw",
+    while ((opt = getopt_long_only(argc, argv, ":hvo:t:rwd",
                                    longopts, &optindex)) != -1) {
         switch (opt) {
         case 0:
@@ -137,6 +144,9 @@ static void get_options(int argc, char **argv)
             break;
         case 'w':
             option.Wwarn = 0;
+            break;
+        case 'd':
+            option.debug = 1;
             break;
         case ':':
             ln_msg_error("option %s needs a value", argv[optind-1]);

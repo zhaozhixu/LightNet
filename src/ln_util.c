@@ -99,12 +99,40 @@ char *ln_read_text(const char *path)
     if (!(fp = fopen(path, "rb")))
         err(EXIT_FAILURE, "ln_read_text(): cannot open %s", path);
 
-    str = ln_alloc(buf.st_size+1);
+    str = ln_alloc(buf.st_size + 1);
     n = fread(str, buf.st_size, 1, fp);
-    if (n < 1 && ferror(fp))
+    if (ferror(fp))
         err(EXIT_FAILURE, "ln_read_text(): cannot read %s", path);
-
+    assert(n == 1);
+    str[buf.st_size] = '\0';
     fclose(fp);
+
+    return str;
+}
+
+char *ln_read_stdin(void)
+{
+    char *str;
+    char *p;
+    size_t size = 4096;
+    size_t read_size;
+
+    str = ln_alloc(size + 1);
+    p = str;
+    read_size = size;
+    while(1) {
+        fread(p, read_size, 1, stdin);
+        if (ferror(stdin))
+            err(EXIT_FAILURE, "ln_read_stdin(): read stdin failed");
+        if (feof(stdin))
+            break;
+        size <<= 1;
+        str = ln_realloc(str, size + 1);
+        p += read_size;
+        read_size = size >> 1;
+    }
+    str[size] = '\0';
+
     return str;
 }
 

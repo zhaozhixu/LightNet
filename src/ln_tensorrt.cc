@@ -225,7 +225,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
             ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
             ln_opck_satisfy_msg(te->tensor->ndim == 4,
                                 "\"src*\" should be a 4-dimensional tensor");
-            ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
+            ln_opck(LN_MSG_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
                     "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
                     op_arg->optype, op_arg->name, te->name,
                     tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
@@ -234,7 +234,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
             ln_opck_tensor_defined(te, tle->name);
             ln_opck_tensor_mtype_eq(te, LN_MEM_CPU);
             ln_opck_tensor_isstatic(te);
-            ln_opck(LN_ERROR, tl_dtype_to_weight_DataType(te->tensor->dtype) != -1,
+            ln_opck(LN_MSG_ERROR, tl_dtype_to_weight_DataType(te->tensor->dtype) != -1,
                     "%s: \"%s\"'s tensor %s have unsupported weight tensor dtype %s for building TensorRT %s model",
                     op_arg->optype, op_arg->name, te->name,
                     tl_dtype_name(te->tensor->dtype), ln_tensorrt_version_str());
@@ -270,7 +270,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
         else if (ln_streq(pe->value_string, "scale"))
             check_scale(pe->arg_name, op_arg);
         else
-            ln_opck(LN_ERROR, 0, "unsupported TensorRT operator");
+            ln_opck(LN_MSG_ERROR, 0, "unsupported TensorRT operator");
     }
     pe = ln_param_list_find(op_arg->params, "batch_size");
     ln_opck_param_exist(pe, "batch_size");
@@ -293,7 +293,7 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
         ln_opck_param_exist(pe, arg_name);
         ln_opck_param_type(pe, LN_PARAM_STRING);
         dtype = tl_dtype_from_str(pe->value_string);
-        ln_opck(LN_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
+        ln_opck(LN_MSG_ERROR, tl_dtype_to_ioTensor_DataType(dtype) != -1,
                 "%s: \"%s\"'s param \"%s\" have unsupported output tensor dtype %s for building TensorRT %s model",
                 op_arg->optype, op_arg->name, arg_name, tl_dtype_name(dtype),
                 ln_tensorrt_version_str());

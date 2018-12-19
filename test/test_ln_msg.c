@@ -36,9 +36,9 @@ START_TEST(test_ln_msg_create)
 {
      ln_msg *error;
 
-     error = ln_msg_create(LN_ERROR, "test error %s, %d, %.2f", "test_str", 1, 1.2);
+     error = ln_msg_create(LN_MSG_ERROR, "test error %s, %d, %.2f", "test_str", 1, 1.2);
      ck_assert_str_eq(error->err_str, "test error test_str, 1, 1.20");
-     ck_assert_int_eq(error->level, LN_ERROR);
+     ck_assert_int_eq(error->level, LN_MSG_ERROR);
      ln_msg_free(error);
 
      int errsv;
@@ -48,10 +48,10 @@ START_TEST(test_ln_msg_create)
      strcat(err_str+strlen(err_str), strerror(ENOENT));
      errsv = errno;
      errno = ENOENT;
-     error = ln_msg_create(LN_ERROR_SYS, "test error %s, %d, %.2f", "test_str", 1, 1.2);
+     error = ln_msg_create(LN_MSG_ERROR_SYS, "test error %s, %d, %.2f", "test_str", 1, 1.2);
      errno = errsv;
      ck_assert_str_eq(error->err_str, err_str);
-     ck_assert_int_eq(error->level, LN_ERROR_SYS);
+     ck_assert_int_eq(error->level, LN_MSG_ERROR_SYS);
      ln_msg_free(error);
 }
 END_TEST
@@ -61,28 +61,28 @@ START_TEST(test_ln_msg_handle)
      /* ln_msg *error; */
      /* int errsv; */
 
-     /* error = ln_msg_create(LN_INFO, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
+     /* error = ln_msg_create(LN_MSG_INFO, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
      /* ln_msg_handle(&error); */
      /* ck_assert_ptr_eq(error, NULL); */
 
-     /* error = ln_msg_create(LN_ERROR, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
+     /* error = ln_msg_create(LN_MSG_ERROR, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
      /* ln_msg_handle(&error); */
      /* ck_assert_ptr_eq(error, NULL); */
 
      /* errsv = errno; */
      /* errno = ENOENT; */
-     /* error = ln_msg_create(LN_ERROR_SYS, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
+     /* error = ln_msg_create(LN_MSG_ERROR_SYS, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
      /* errno = errsv; */
      /* ln_msg_handle(&error); */
      /* ck_assert_ptr_eq(error, NULL); */
 
-     /* error = ln_msg_create(LN_WARNING, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
+     /* error = ln_msg_create(LN_MSG_WARN, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
      /* ln_msg_handle(&error); */
      /* ck_assert_ptr_eq(error, NULL); */
 
      /* errsv = errno; */
      /* errno = ENOENT; */
-     /* error = ln_msg_create(LN_WARNING_SYS, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
+     /* error = ln_msg_create(LN_MSG_WARN_SYS, "test error %s, %d, %.2f", "test_str", 1, 1.2); */
      /* errno = errsv; */
      /* ln_msg_handle(&error); */
      /* ck_assert_ptr_eq(error, NULL); */

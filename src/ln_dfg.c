@@ -186,7 +186,7 @@ void ln_dfg_add(ln_dfg *dfg, ln_op *op)
     node = ln_graph_add(dfg->graph, op);
     ret = table_insert(dfg->node_table, op->op_arg->name, node);
     if (!ret)
-        ln_msg_inter_error("duplicated op name \"%s\"",  op->op_arg->name);
+        ln_msg_inter_error("duplicated op name '%s'",  op->op_arg->name);
 
     LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
         te = ln_tensor_table_find(op->op_arg->tensor_table, tle->name);
@@ -302,14 +302,14 @@ int ln_dfg_check(const ln_dfg *dfg)
     LN_LIST_FOREACH(en, dfg->dangling_ins) {
         op = en->node->data;
         tname = en->edge_data;
-        ln_msg_inter_error("unresolved input tensor %s of op %s (%s)",
+        ln_msg_inter_error("unresolved input tensor '%s' of op '%s' (%s)",
                        tname, op->op_arg->name, op->op_arg->optype);
     }
 
     LN_LIST_FOREACH(en, dfg->dangling_outs) {
         op = en->node->data;
         tname = en->edge_data;
-        ln_msg_inter_warning("unused output tensor %s of op %s (%s)",
+        ln_msg_inter_warning("unused output tensor '%s' of op '%s' (%s)",
                              tname, op->op_arg->name, op->op_arg->optype);
     }
     return 1;

@@ -25,17 +25,19 @@
 
 #include "ln_hash.h"
 
+/* LN_MSG_ERROR should always be 0 */
 enum ln_msg_level {
-    LN_ERROR,
-    LN_ERROR_SYS,
-    LN_INTER_ERROR,
-    LN_INTER_ERROR_SYS,
-    LN_WARNING,
-    LN_WARNING_SYS,
-    LN_INTER_WARNING,
-    LN_INTER_WARNING_SYS,
-    LN_DEBUG_INFO,
-    LN_INFO
+    LN_MSG_ERROR = 0,
+    LN_MSG_ERROR_SYS,
+    LN_MSG_INTER_ERROR,
+    LN_MSG_INTER_ERROR_SYS,
+    LN_MSG_WARN,
+    LN_MSG_WARN_SYS,
+    LN_MSG_INTER_WARN,
+    LN_MSG_INTER_WARN_SYS,
+    LN_MSG_DEBUG,
+    LN_MSG_INFO,
+    LN_MSG_SIZE
 };
 typedef enum ln_msg_level ln_msg_level;
 
@@ -60,43 +62,44 @@ typedef struct ln_msg ln_msg;
     } while (0)
 
 #define ln_msg_error(fmt, varg...)              \
-    ln_msg_emit(LN_ERROR, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_ERROR, (fmt), ##varg)
 
 #define ln_msg_error_sys(fmt, varg...)          \
-    ln_msg_emit(LN_ERROR_SYS, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_ERROR_SYS, (fmt), ##varg)
 
 #define ln_msg_inter_error(fmt, varg...)        \
-    ln_msg_emit(LN_INTER_ERROR, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_INTER_ERROR, (fmt), ##varg)
 
 #define ln_msg_inter_error_sys(fmt, varg...)            \
-    ln_msg_emit(LN_INTER_ERROR_SYS, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_INTER_ERROR_SYS, (fmt), ##varg)
 
 #define ln_msg_warning(fmt, varg...)            \
-    ln_msg_emit(LN_WARNING, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_WARN, (fmt), ##varg)
 
 #define ln_msg_warning_sys(fmt, varg...)        \
-    ln_msg_emit(LN_WARNING_SYS, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_WARN_SYS, (fmt), ##varg)
 
 #define ln_msg_inter_warning(fmt, varg...)              \
-    ln_msg_emit(LN_INTER_WARNING, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_INTER_WARN, (fmt), ##varg)
 
 #define ln_msg_inter_warning_sys(fmt, varg...)          \
-    ln_msg_emit(LN_INTER_WARNING_SYS, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_INTER_WARN_SYS, (fmt), ##varg)
 
 #ifdef LN_DEBUG
 #define ln_msg_debug(fmt, varg...)              \
-    ln_msg_emit(LN_DEBUG_INFO, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_DEBUG, (fmt), ##varg)
 #else
 #define ln_msg_debug(fmt, varg...) (void)0
 #endif  /* LN_DEBUG */
 
 #define ln_msg_info(fmt, varg...)               \
-    ln_msg_emit(LN_INFO, (fmt), ##varg)
+    ln_msg_emit(LN_MSG_INFO, (fmt), ##varg)
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
+void ln_msg_init(ln_option *option);
 ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...);
 void ln_msg_free(ln_msg *error);
 void ln_msg_handle(ln_msg **error);

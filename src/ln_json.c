@@ -25,7 +25,7 @@
 #include "cJSON.h"
 #include "ln_json.h"
 
-#define PARSE_JSON_ERROR(fmt, varg...) ln_msg_error("parse error: "#fmt, ##varg)
+#define PARSE_JSON_ERROR(fmt, varg...) ln_msg_error("parse error: "fmt, ##varg)
 
 static ln_list *parse_array_value(const cJSON *array_json,
                                   const cJSON *name_json,
@@ -383,7 +383,7 @@ static int *preprocess(char *json_str)
                 *p = ' ';
             }
             if (!*p)
-                ln_msg_emit(LN_ERROR, "unterminated comment: %s", mark);
+                ln_msg_emit(LN_MSG_ERROR, "unterminated comment: %s", mark);
             *p++ = ' ';
             *p = ' ';
             continue;
@@ -410,10 +410,10 @@ ln_list *ln_json_parse(char *json_str, ln_context *ctx)
     ops_json = cJSON_GetObjectItem(json, "ops");
 
     if (!ops_json)
-        PARSE_JSON_ERROR("top object should have an \"ops\" item");
+        PARSE_JSON_ERROR("top object should have an 'ops' item");
 
     if (!cJSON_IsArray(ops_json))
-        PARSE_JSON_ERROR("item \"ops\" has to be an Array");
+        PARSE_JSON_ERROR("item 'ops' has to be an Array");
 
     int i = 0;
     cJSON_ArrayForEach(op_json, ops_json) {
@@ -432,7 +432,11 @@ ln_list *ln_json_parse_file(const char *file, ln_context *ctx)
     char *str;
     ln_list *ops;
 
-    str = ln_read_text(file);
+    if (ln_streq(file, "-"))
+        str = ln_read_stdin();
+    else
+        str = ln_read_text(file);
+    fputs(str, stdout);
     ops = ln_json_parse(str, ctx);
     ln_free(str);
 

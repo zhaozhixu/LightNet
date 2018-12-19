@@ -29,11 +29,26 @@
 
 #define MAX_ERROR_LENGTH 4096
 
+#define MAKE_BRIGHT(str) "\e[1m"str"\e[0m"
+#define MAKE_GREY(str) "\e[2m"str"\e[0m"
+#define MAKE_RED(str) "\e[31m"str"\e[0m"
+#define MAKE_PURPLE(str) "\e[35m"str"\e[0m"
+
 static int32_t disp_mask = 0;
 
 void ln_msg_init(ln_option *option)
 {
-
+    if (option->Wwarn) {
+        disp_mask |= 1 << LN_MSG_WARN;
+        disp_mask |= 1 << LN_MSG_WARN_SYS;
+        if (option->Winter) {
+            disp_mask |= 1 << LN_MSG_INTER_WARN;
+            disp_mask |= 1 << LN_MSG_INTER_WARN_SYS;
+        }
+    }
+    if (option->debug) {
+        disp_mask |= 1 << LN_MSG_DEBUG;
+    }
 }
 
 ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
@@ -51,8 +66,8 @@ ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
     vsnprintf(msg->err_str, MAX_ERROR_LENGTH-1, fmt, ap);
     va_end(ap);
 
-    if (level == LN_ERROR_SYS || level == LN_WARNING_SYS ||
-        level == LN_INTER_ERROR_SYS || level == LN_INTER_WARNING_SYS)
+    if (level == LN_MSG_ERROR_SYS || level == LN_MSG_WARN_SYS ||
+        level == LN_MSG_INTER_ERROR_SYS || level == LN_MSG_INTER_WARN_SYS)
         snprintf(msg->err_str+strlen(msg->err_str),
                  MAX_ERROR_LENGTH-strlen(msg->err_str)-1, ": %s",
                  strerror(errsv));
@@ -73,34 +88,44 @@ void ln_msg_handle(ln_msg **msg)
 
     fflush(NULL);
     switch ((*msg)->level) {
-    case LN_ERROR:
-    case LN_ERROR_SYS:
-        fprintf(stderr, "ERROR: %s\n", (*msg)->err_str);
+    case LN_MSG_ERROR:
+    case LN_MSG_ERROR_SYS:
+        fprintf(stderr, MAKE_RED("error: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         exit(EXIT_FAILURE);
         break;
-    case LN_INTER_ERROR:
-    case LN_INTER_ERROR_SYS:
-        fprintf(stderr, "INTERNAL ERROR: %s\n", (*msg)->err_str);
+    case LN_MSG_INTER_ERROR:
+    case LN_MSG_INTER_ERROR_SYS:
+        fprintf(stderr, MAKE_RED("internal error: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         abort();
         break;
-    case LN_WARNING:
-    case LN_WARNING_SYS:
-        fprintf(stderr, "WARNING: %s\n", (*msg)->err_str);
+    case LN_MSG_WARN:
+        if (!(disp_mask & 1 << LN_MSG_WARN))
+            break;
+    case LN_MSG_WARN_SYS:
+        if (!(disp_mask & 1 << LN_MSG_WARN_SYS))
+            break;
+        fprintf(stderr, MAKE_PURPLE("warning: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         break;
-    case LN_INTER_WARNING:
-    case LN_INTER_WARNING_SYS:
-        fprintf(stderr, "INTERNAL WARNING: %s\n", (*msg)->err_str);
+    case LN_MSG_INTER_WARN:
+        if (!(disp_mask & 1 << LN_MSG_INTER_WARN))
+            break;
+    case LN_MSG_INTER_WARN_SYS:
+        if (!(disp_mask & 1 << LN_MSG_INTER_WARN_SYS))
+            break;
+        fprintf(stderr, MAKE_PURPLE("internal warning: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         break;
-    case LN_INFO:
-        fprintf(stderr, "INFO: %s\n", (*msg)->err_str);
+    case LN_MSG_INFO:
+        fprintf(stderr, MAKE_GREY("info: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         break;
-    case LN_DEBUG_INFO:
-        fprintf(stderr, "DEBUG INFO: %s\n", (*msg)->err_str);
+    case LN_MSG_DEBUG:
+        if (!(disp_mask & 1 << LN_MSG_DEBUG))
+            break;
+        fprintf(stderr, MAKE_GREY("debug: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         break;
     default :

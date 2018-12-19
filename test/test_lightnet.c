@@ -35,7 +35,7 @@ int main(int argc, char **argv)
      sr = srunner_create(make_master_suite());
      srunner_add_suite(sr, make_util_suite());
 #ifdef LN_CUDA
-     srunner_add_suite(sr, make_cuda_suite());
+     /* srunner_add_suite(sr, make_cuda_suite()); */
 #endif
      srunner_add_suite(sr, make_list_suite());
      srunner_add_suite(sr, make_queue_suite());
