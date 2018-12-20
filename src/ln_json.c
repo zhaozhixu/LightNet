@@ -436,7 +436,7 @@ ln_list *ln_json_parse_file(const char *file, ln_context *ctx)
         str = ln_read_stdin();
     else
         str = ln_read_text(file);
-    fputs(str, stdout);
+
     ops = ln_json_parse(str, ctx);
     ln_free(str);
 
@@ -604,6 +604,11 @@ void ln_json_fprint(FILE *fp, const ln_context *ctx)
 void ln_json_print_file(const char *file, const ln_context *ctx)
 {
     FILE *fp;
+
+    if (ln_streq(file, "-")) {
+        ln_json_fprint(stdout, ctx);
+        return;
+    }
 
     if (!(fp = fopen(file, "w")))
         ln_msg_error_sys("ln_json_print_file(): cannot open %s", file);

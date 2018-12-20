@@ -128,7 +128,7 @@ char *ln_read_stdin(void)
             break;
         size <<= 1;
         str = ln_realloc(str, size + 1);
-        p += read_size;
+        p = str + (size >> 1);
         read_size = size >> 1;
     }
     str[size] = '\0';

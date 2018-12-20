@@ -23,24 +23,15 @@
 #include <getopt.h>
 #include "lightnet.h"
 
-static void get_options(int argc, char **argv);
-
-static ln_option option = {
-    .source = NULL,
-    .outfile = NULL,
-    .target = NULL,
-    .run = 0,
-    .Winter = 1,
-    .Wwarn = 1,
-    .debug = 0,
-};
+static ln_option get_option(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
     ln_arch *arch;
     ln_context *ctx;
+    ln_option option;
 
-    get_options(argc, argv);
+    option = get_option(argc, argv);
     ln_msg_init(&option);
     ln_arch_init();
     ln_name_init();
@@ -62,6 +53,21 @@ int main(int argc, char **argv)
     ln_context_free(ctx);
 
     return 0;
+}
+
+static void print_version_exit(void)
+{
+    char version_str[20] = {0};
+    const char *version = "\
+lightnet %s\n\
+Copyright (C) 2018, Zhao Zhixu\n\
+Released under the MIT License.\n\
+";
+
+    snprintf(version_str, 20, "%d.%d.%d",
+             LN_MAJOR_VERSION, LN_MINOR_VERSION, LN_MICRO_VERSION);
+    fprintf(stderr, version, version_str);
+    exit(EXIT_SUCCESS);
 }
 
 static void print_usage_exit(void)
@@ -89,25 +95,19 @@ Options:\n\
     exit(EXIT_SUCCESS);
 }
 
-static void print_version_exit(void)
-{
-    char version_str[20] = {0};
-    const char *version = "\
-lightnet %s\n\
-Copyright (C) 2018, Zhao Zhixu\n\
-Released under the MIT License.\n\
-";
-
-    snprintf(version_str, 20, "%d.%d.%d",
-             LN_MAJOR_VERSION, LN_MINOR_VERSION, LN_MICRO_VERSION);
-    fprintf(stderr, version, version_str);
-    exit(EXIT_SUCCESS);
-}
-
-static void get_options(int argc, char **argv)
+static ln_option get_option(int argc, char **argv)
 {
     int opt;
     int optindex;
+    ln_option option = {
+        .source = NULL,
+        .outfile = NULL,
+        .target = NULL,
+        .run = 0,
+        .Winter = 1,
+        .Wwarn = 1,
+        .debug = 0,
+    };
     const struct option longopts[] = {
         {"help",      no_argument, NULL, 'h'},
         {"version",   no_argument, NULL, 'v'},
@@ -168,4 +168,6 @@ static void get_options(int argc, char **argv)
         option.outfile = "out.json";
     if (!option.target)
         option.target = "cpu";
+
+    return option;
 }
