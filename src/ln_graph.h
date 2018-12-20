@@ -69,8 +69,9 @@ void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data);
 void ln_graph_link_node(ln_graph *graph, ln_graph_node *node1,
                         ln_graph_node *node2, void *edge_data);
 /* if edge_data == NULL, only compare data1 and data2 */
-void ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data);
-void ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
+void *ln_graph_unlink(ln_graph *graph, void *data1, void *data2,
+                      void *edge_data);
+void *ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
                           void *edge_data);
 ln_graph *ln_graph_copy(ln_graph *graph);
 int ln_graph_num_outlier(ln_graph *graph);

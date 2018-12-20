@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include "ln_graph.h"
 #include "ln_queue.h"
 
@@ -166,7 +167,8 @@ static int edge_node_cmp(const void *p1, const void *p2)
     return 1;
 }
 
-void ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data)
+void *ln_graph_unlink(ln_graph *graph, void *data1, void *data2,
+                      void *edge_data)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
@@ -175,16 +177,19 @@ void ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data)
     node1 = ln_graph_find(graph, data1);
     node2 = ln_graph_find(graph, data2);
     if (!node1 || !node2)
-        return;
+        return NULL;
 
-    ln_graph_unlink_node(node1, node2, edge_data);
+    return ln_graph_unlink_node(node1, node2, edge_data);
 }
 
-void ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
+void *ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
                           void *edge_data)
 {
     ln_graph_edge_node en;
+    ln_graph_edge_node *en1;
+    ln_graph_edge_node *en2;
     ln_cmp_func cmp;
+    void *ret;
 
     if (edge_data)
         cmp = edge_node_cmp;
@@ -193,22 +198,26 @@ void ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
 
     en.edge_data = edge_data;
     en.node = node2;
-    if (!ln_list_find_custom(node1->out_edge_nodes, &en, cmp))
-        return;
-
-    node1->out_edge_nodes = ln_list_remove_custom_deep(node1->out_edge_nodes,
-                                                       &en, cmp,
-                                                       free_edge_node_wrapper);
-    node1->outdegree--;
+    en1 = ln_list_find_custom(node1->out_edge_nodes, &en, cmp);
+    if (!en1)
+        return NULL;
 
     en.node = node1;
-    if (!ln_list_find_custom(node2->in_edge_nodes, &en, cmp))
-        return;
+    en2 = ln_list_find_custom(node2->in_edge_nodes, &en, cmp);
+    if (!en2)
+        return NULL;
+    assert(en1->edge_data == en2->edge_data);
+    ret = en1->edge_data;
 
-    node2->in_edge_nodes = ln_list_remove_custom_deep(node2->in_edge_nodes,
-                                                      &en, cmp,
-                                                      free_edge_node_wrapper);
+    node1->outdegree--;
+    node1->out_edge_nodes = ln_list_remove_custom_deep(node1->out_edge_nodes,
+                                                       en1, cmp,
+                                                       free_edge_node_wrapper);
     node2->indegree--;
+    node2->in_edge_nodes = ln_list_remove_custom_deep(node2->in_edge_nodes,
+                                                      en2, cmp,
+                                                      free_edge_node_wrapper);
+    return ret;
 }
 
 ln_graph *ln_graph_copy(ln_graph *graph)

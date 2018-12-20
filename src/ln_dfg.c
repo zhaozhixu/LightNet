@@ -140,6 +140,7 @@ static void dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
+    char *tname_copy;
 
     if (!ln_tensor_list_find_by_name(op1->op_arg->tensors_out, (char *)tname) ||
         !ln_tensor_list_find_by_name(op2->op_arg->tensors_in, (char *)tname))
@@ -152,7 +153,8 @@ static void dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
     if (!node2)
         return;
 
-    ln_graph_link_node(dfg->graph, node1, node2, (char *)tname);
+    tname_copy = ln_strdup(tname);
+    ln_graph_link_node(dfg->graph, node1, node2, tname_copy);
 }
 
 /* use with ln_dfg_remove() */
@@ -160,6 +162,7 @@ static void dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
+    char *origin_tname;
 
     if (!ln_tensor_list_find_by_name(op1->op_arg->tensors_out, (char *)tname) ||
         !ln_tensor_list_find_by_name(op2->op_arg->tensors_in, (char *)tname))
@@ -172,7 +175,8 @@ static void dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
     if (!node2)
         return;
 
-    ln_graph_unlink_node(node1, node2, (char *)tname);
+    origin_tname = ln_graph_unlink_node(node1, node2, (char *)tname);
+    ln_free(origin_tname);
 }
 
 void ln_dfg_add(ln_dfg *dfg, ln_op *op)

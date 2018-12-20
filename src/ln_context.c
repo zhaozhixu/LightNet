@@ -169,7 +169,6 @@ void ln_context_run(ln_context *ctx)
 
     ln_op_list_do_run(ctx->ops);
 
-    ln_op_list_do_post_run(ctx->ops);
-    /* ln_context_cleanup_ops(ctx); */
+    ln_context_cleanup_ops(ctx);
     ln_context_dealloc_mem(ctx);
 }
