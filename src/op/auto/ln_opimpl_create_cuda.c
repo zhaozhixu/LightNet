@@ -95,6 +95,7 @@ static void create_cuda_pre_run(ln_op_arg *op_arg)
     dst_dtype = dtype;
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
+    dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->isstatic = 1;
     dst_entry->mtype = LN_MEM_CUDA;

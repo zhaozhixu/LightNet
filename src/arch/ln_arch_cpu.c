@@ -67,6 +67,7 @@ static ln_op *ops_cpu[] = {
 static ln_list *ep_cpu(const ln_op *op, const ln_dfg *dfg, int *match)
 {
     ln_list *new_ops = NULL;
+    return new_ops;
 }
 
 ln_expander_func ep_funcs_cpu[] = {

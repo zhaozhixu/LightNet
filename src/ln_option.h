@@ -20,37 +20,21 @@
  * SOFTWARE.
  */
 
-#include "lightnet.h"
+#ifndef _LN_OPTION_H_
+#define _LN_OPTION_H_
 
-int main(int argc, char **argv)
-{
-    ln_context *ctx;
-    ln_option option;
+struct ln_option {
+    const char  *source;
+    const char  *outfile;
+    const char  *target;
+    int          compile;
+    int          run;
+    int          Winter;
+    int          Wwarn;
+    int          debug;
+};
+typedef struct ln_option ln_option;
 
-    option = ln_option_get(argc, argv);
-    ln_msg_init(&option);
-    ln_arch_init();
-    ln_name_init();
-    ctx = ln_context_create();
+ln_option ln_option_get(int argc, char **argv);
 
-    ln_context_init(ctx, option.source);
-
-    if (option.compile)
-        ln_context_compile(ctx, option.target);
-
-    if (!ln_streq(option.outfile, "!"))
-        ln_context_print(ctx, option.outfile);
-
-    if (option.run) {
-        ln_context_load(ctx);
-        ln_context_run(ctx);
-    }
-
-    ln_context_cleanup(ctx);
-
-    ln_context_free(ctx);
-    ln_arch_cleanup();
-    ln_name_cleanup();
-
-    return 0;
-}
+#endif  /* _LN_OPTION_H_ */

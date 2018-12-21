@@ -170,6 +170,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg)
     dst_scale_dtype = src_mean->dtype;
     dst_scale = tl_tensor_create(NULL, dst_scale_ndim, dst_scale_dims, dst_scale_dtype);
     dst_scale_entry = ln_tensor_entry_create(dst_scale_name, dst_scale);
+    dst_scale_entry->offset = dst_scale_list_entry->offset;
     ln_tensor_entry_set_creater(dst_scale_entry, op_arg->name);
     dst_scale_entry->isstatic = 1;
     dst_scale_entry->mtype = LN_MEM_CPU;
@@ -180,6 +181,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg)
     dst_shift_dtype = src_mean->dtype;
     dst_shift = tl_tensor_create(NULL, dst_shift_ndim, dst_shift_dims, dst_shift_dtype);
     dst_shift_entry = ln_tensor_entry_create(dst_shift_name, dst_shift);
+    dst_shift_entry->offset = dst_shift_list_entry->offset;
     ln_tensor_entry_set_creater(dst_shift_entry, op_arg->name);
     dst_shift_entry->isstatic = 1;
     dst_shift_entry->mtype = LN_MEM_CPU;
@@ -190,6 +192,7 @@ static void bn2scale_wts_cpu_pre_run(ln_op_arg *op_arg)
     dst_power_dtype = src_mean->dtype;
     dst_power = tl_tensor_create(NULL, dst_power_ndim, dst_power_dims, dst_power_dtype);
     dst_power_entry = ln_tensor_entry_create(dst_power_name, dst_power);
+    dst_power_entry->offset = dst_power_list_entry->offset;
     ln_tensor_entry_set_creater(dst_power_entry, op_arg->name);
     dst_power_entry->isstatic = 1;
     dst_power_entry->mtype = LN_MEM_CPU;

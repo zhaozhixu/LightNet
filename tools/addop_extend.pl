@@ -634,6 +634,7 @@ sub gen_output_tensor_def {
         }
         push @states, "${arg_name} = tl_tensor_create(NULL, ${arg_name}_ndim, ${arg_name}_dims, ${arg_name}_dtype);";
         push @states, "${arg_name}_entry = ln_tensor_entry_create(${arg_name}_name, ${arg_name});";
+        push @states, "${arg_name}_entry->offset = ${arg_name}_list_entry->offset;";
         push @states, "ln_tensor_entry_set_creater(${arg_name}_entry, op_arg->name);";
         if (exists $tensor->{owner}) {
             push @states, "ln_tensor_entry_set_owner(${arg_name}_entry, op_arg->tensor_table, $tensor->{owner});";

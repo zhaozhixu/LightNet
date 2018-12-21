@@ -106,6 +106,7 @@ static void maxreduce_arg_cuda_pre_run(ln_op_arg *op_arg)
     }
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
+    dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
@@ -121,6 +122,7 @@ static void maxreduce_arg_cuda_pre_run(ln_op_arg *op_arg)
     }
     arg = tl_tensor_create(NULL, arg_ndim, arg_dims, arg_dtype);
     arg_entry = ln_tensor_entry_create(arg_name, arg);
+    arg_entry->offset = arg_list_entry->offset;
     ln_tensor_entry_set_creater(arg_entry, op_arg->name);
     arg_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, arg_entry);

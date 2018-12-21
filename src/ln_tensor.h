@@ -46,6 +46,7 @@ typedef struct ln_tensor_entry ln_tensor_entry;
 struct ln_tensor_list_entry {
     char            *name;
     char            *arg_name;
+    size_t           offset;
 };
 typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 

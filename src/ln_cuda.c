@@ -116,6 +116,8 @@ void ln_memcpy_d2d(void *dst, const void *src, size_t size)
 
 void ln_free_cuda(void *p)
 {
+    if (!p)
+        return;
     assert(ln_is_device_mem(p));
     LN_CUDA_CK(cudaFree(p));
 }

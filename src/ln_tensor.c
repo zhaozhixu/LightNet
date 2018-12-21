@@ -31,6 +31,7 @@ ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
     entry = ln_alloc(sizeof(ln_tensor_list_entry));
     entry->arg_name = ln_strdup(arg_name);
     entry->name = ln_strdup(name);
+    entry->offset = 0;
     return entry;
 }
 

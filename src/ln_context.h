@@ -50,11 +50,16 @@ void ln_context_init_ops(ln_context *ctx);
 void ln_context_cleanup_ops(ln_context *ctx);
 void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
                             ln_list *new_ops);
-int ln_context_check(ln_context *ctx);
+int ln_context_check(const ln_context *ctx);
 void ln_context_alloc_mem(ln_context *ctx);
 void ln_context_dealloc_mem(ln_context *ctx);
-void ln_context_run(ln_context *ctx);
-void ln_context_static_run(ln_context *ctx);
+
+void ln_context_init(ln_context *ctx, const char *source);
+void ln_context_compile(ln_context *ctx, const char *target);
+void ln_context_print(const ln_context *ctx, const char *outfile);
+void ln_context_load(ln_context *ctx);
+void ln_context_run(const ln_context *ctx);
+void ln_context_cleanup(ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND

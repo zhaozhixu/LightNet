@@ -24,6 +24,7 @@
 #define _LN_MSG_H_
 
 #include "ln_hash.h"
+#include "ln_option.h"
 
 /* LN_MSG_ERROR should always be 0 */
 enum ln_msg_level {

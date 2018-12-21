@@ -24,6 +24,7 @@
 #define _LIGHTNET_H_
 
 #include "ln_util.h"
+#include "ln_cuda.h"
 #include "ln_list.h"
 #include "ln_queue.h"
 #include "ln_msg.h"
@@ -39,7 +40,7 @@
 #include "ln_dfg.h"
 #include "ln_context.h"
 #include "ln_name.h"
-#include "ln_cuda.h"
+#include "ln_option.h"
 
 #define LN_MAJOR_VERSION (0)
 #define LN_MINOR_VERSION (1)
