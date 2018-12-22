@@ -369,11 +369,10 @@ static void parse_mem_sizes(const cJSON *json, ln_context *ctx)
     if (array_size != LN_MEM_TYPE_SIZE)
         PARSE_ERROR("the length of 'mem_sizes_h' and 'mem_sizes_l' is not equal to LN_MEM_TYPE_SIZE %d",
                          LN_MEM_TYPE_SIZE);
-
     for (i = 0, h_json = mem_sizes_h_json->child,
              l_json = mem_sizes_l_json->child;
          i < array_size && h_json && l_json;
-         i++, h_json = h_json->child, l_json = l_json->child) {
+         i++, h_json = h_json->next, l_json = l_json->next) {
         if (!cJSON_IsNumber(h_json))
             PARSE_ERROR("the %dth element of 'mem_sizes_h' is not a number",
                              i);
@@ -482,7 +481,6 @@ ln_list *ln_json_parse(char *json_str, ln_context *ctx)
     parse_mem_sizes(json, ctx);
 
     ops_json = cJSON_GetObjectItem(json, "ops");
-
     if (!ops_json)
         PARSE_ERROR("top object should have an 'ops' item");
 

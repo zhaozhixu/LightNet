@@ -134,14 +134,16 @@ void ln_context_alloc_mem(ln_context *ctx)
         ln_msg_debug("allocate memory %s: %lu bytes at address %p",
                        ln_mem_type_name(i), ctx->mem_sizes[i],
                        ctx->mem_starts[i]);
-        assert(ctx->mem_starts[i]);
+        if (ctx->mem_sizes[i])
+            assert(ctx->mem_starts[i]);
     }
     LN_LIST_FOREACH(op, ctx->ops) {
         LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
             te = ln_tensor_table_find(op->op_arg->tensor_table, tle->name);
             assert(te);
             if (te->mtype == LN_MEM_NONE)
-                ln_msg_error("tensor '%s' memory type should not be LN_MEM_NONE");
+                ln_msg_error("tensor '%s' has memory type LN_MEM_NONE",
+                             te->name);
             if (te->offset == 0)
                 ln_msg_error("invalid data offset %p of tensor '%s'",
                              te->offset, te->name);
@@ -209,8 +211,12 @@ void ln_context_run(const ln_context *ctx)
     ln_op_list_do_run(ctx->ops);
 }
 
+void ln_context_unload(ln_context *ctx)
+{
+    ln_context_dealloc_mem(ctx);
+}
+
 void ln_context_cleanup(ln_context *ctx)
 {
     ln_context_cleanup_ops(ctx);
-    ln_context_dealloc_mem(ctx);
 }

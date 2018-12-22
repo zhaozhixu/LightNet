@@ -77,7 +77,8 @@ void *ln_alloc_cuda(size_t size)
     void *p;
     cudaError_t status;
 
-    assert(size > 0);
+    if (size == 0)
+        return NULL;
     status = cudaMalloc(&p, size);
     if (status != cudaSuccess)
         ln_err_msg("ln_alloc_cuda: cudaMalloc(%lu) failed", size);

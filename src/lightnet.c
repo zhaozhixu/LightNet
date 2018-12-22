@@ -44,6 +44,7 @@ int main(int argc, char **argv)
     if (option.run) {
         ln_context_load(ctx);
         ln_context_run(ctx);
+        ln_context_unload(ctx);
     }
 
     ln_context_cleanup(ctx);

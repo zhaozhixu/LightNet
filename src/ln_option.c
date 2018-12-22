@@ -54,8 +54,8 @@ Options:\n\
                          (default: out.json)\n\
   -t, --target=TARGET    specify target platform (default: cpu)\n\
   -c, --compile          compile only; do not run\n\
-  -r, --run              run only; do not compile; SOURCE needs to be a\n\
-                         compiled model\n\
+  -r, --run              run only; do not compile; SOURCE should have been\n\
+                         memory-planned\n\
   -Wwarn                 display warnings (default)\n\
   -w, -Wno-warn          do not display warnings\n\
   -Winter                display internal warnings (default)\n\
@@ -114,10 +114,18 @@ ln_option ln_option_get(int argc, char **argv)
             option.target = optarg;
             break;
         case 'c':
+            if (option.compile == 0 && option.run == 1) {
+                option.compile = 1;
+                break;
+            }
             option.compile = 1;
             option.run = 0;
             break;
         case 'r':
+            if (option.compile == 1 && option.run == 0) {
+                option.run = 1;
+                break;
+            }
             option.compile = 0;
             option.run = 1;
             break;
