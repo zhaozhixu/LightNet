@@ -132,8 +132,8 @@ void ln_context_alloc_mem(ln_context *ctx)
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
         ctx->mem_starts[i] = ln_mtype_infos[i].alloc_func(ctx->mem_sizes[i]);
         ln_msg_debug("allocate memory %s: %lu bytes at address %p",
-                       ln_mem_type_name(i), ctx->mem_sizes[i],
-                       ctx->mem_starts[i]);
+                     ln_mem_type_name(i), ctx->mem_sizes[i],
+                     ctx->mem_starts[i]);
         if (ctx->mem_sizes[i])
             assert(ctx->mem_starts[i]);
     }
@@ -164,8 +164,8 @@ void ln_context_dealloc_mem(ln_context *ctx)
 
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
         ln_msg_debug("free memory %s: %lu bytes at address %p",
-                       ln_mem_type_name(i), ctx->mem_sizes[i],
-                       ctx->mem_starts[i]);
+                     ln_mem_type_name(i), ctx->mem_sizes[i],
+                     ctx->mem_starts[i]);
         ln_mtype_infos[i].free_func(ctx->mem_starts[i]);
         ctx->mem_starts[i] = 0;
     }
