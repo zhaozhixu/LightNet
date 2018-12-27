@@ -15,13 +15,13 @@ Generate operator defination code from operator description JSON.
 Read the JSON string from standard input if JSON_FILE(s) are not given.
 Print the output code to standard output if --dir and --root are omited.
 
-[options]
+Options:
   -h, --help              print this message
-  -d, --dir=<directory>   save operator defination file(s) in <directory>
-  -r, --root=<root>       set project root directory; this option will save
-                          operator defination file(s) in <root>/src, and add
+  -d, --dir=DIRECTORY     save operator defination file(s) in DIRECTORY
+  -r, --root=ROOT         set project root directory; this option will save
+                          operator defination file(s) in ROOT/src/op, and add
                           operator declarations and such to
-                          <root>/src/ln_arch_*.c
+                          ROOT/src/arch/ln_arch_*.c
 Author: Zhao Zhixu
 EOF
 
@@ -30,13 +30,11 @@ my $INDENT_SPACE = " "x$INDENT_OFFSET;
 
 my $root = '';
 my $dir = '';
-my $help = '';
 GetOptions(
-           'help' => \$help,
+           'help' => sub {&exit_msg(0, $usage)},
            'dir=s' => \$dir,
            'root=s' => sub {$root = abs_path($_[1])},
           ) or &exit_msg(1, $usage);
-&exit_msg(0, $usage) if $help;
 
 my @json_files = @ARGV;
 if (@json_files == 0) {
