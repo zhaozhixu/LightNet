@@ -7,7 +7,9 @@
 *.so
 *.out
 *.el
+*.i
 *out.json
+*test.json
 .clang_complete
 vgcore*
 config.mk

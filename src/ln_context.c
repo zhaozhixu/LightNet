@@ -89,15 +89,15 @@ void ln_context_cleanup_ops(ln_context *ctx)
     ln_context_check(ctx);
 }
 
-void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
-                            ln_list *new_ops)
+void ln_context_replace_ops(ln_context *ctx, ln_list **position,
+                            size_t len, ln_list *new_ops)
 {
     ln_op *op;
     size_t i;
     ln_list **lp;
     ln_list *tmp;
 
-    for (i = 0, lp = start_p; i < len && *lp; i++) {
+    for (i = 0, lp = position; i < len && *lp; i++) {
         op = (*lp)->data;
         cleanup_op(ctx, op);
         tmp = *lp;
@@ -105,15 +105,26 @@ void ln_context_replace_ops(ln_context *ctx, ln_list **start_p, size_t len,
         ln_free(tmp);
     }
 
-    tmp = *start_p;
-    *start_p = new_ops;
-    for (lp = start_p; *lp; lp = &(*lp)->next) {
+    tmp = *position;
+    *position = new_ops;
+    for (lp = position; *lp; lp = &(*lp)->next) {
         op = (*lp)->data;
         init_op(ctx, op);
     }
     *lp = tmp;
+}
 
-    ln_context_check(ctx);
+void ln_context_remove_op(ln_context *ctx, ln_list **position)
+{
+    ln_context_replace_ops(ctx, position, 1, NULL);
+}
+
+void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)
+{
+    ln_list *list = NULL;
+
+    list = ln_list_append(list, new_op);
+    ln_context_replace_ops(ctx, position, 0, list);
 }
 
 int ln_context_check(const ln_context *ctx)
@@ -181,6 +192,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
 {
     ln_arch *arch;
 
+    ln_pass_preprocess(ctx);
     arch = ln_hash_find(LN_ARCH.arch_table, target);
     ln_pass_expander(ctx, arch->ep_funcs);
     ln_pass_combiner(ctx, 3, arch->cb_funcs);

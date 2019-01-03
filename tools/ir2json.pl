@@ -5,16 +5,19 @@ use warnings;
 use strict;
 use JSON;
 use Getopt::Long;
+use File::Copy;
+use File::Temp;
 no warnings 'experimental::smartmatch';
 
 my $usage =<<EOF;
 Usage: $0 [OPTION...] [INFILE]
 Generate JSON-format IR code from INFILE which is in simplified IR format.
-Read input from standard input if INFILE is not given.
+Read input from standard input if INFILE is not given. It will do the C-style
+preprocessing using gcc before the generation.
 
 Options:
-  -h, --help      show this help
-  -o, --outfile   specify output file name (print to standard out without this)
+  -h, --help       show this help
+  -o, --outfile    specify output file name (print to standard out without this)
 
 Author: Zhao Zhixu
 EOF
@@ -25,6 +28,18 @@ GetOptions(
            'outfile=s' => \$outfile,
           ) or &exit_msg(1, $usage);
 
+my $in_text;
+if (@ARGV == 0) {
+    $in_text = join '', <STDIN>;
+} else {
+    my $infile = shift @ARGV;
+    open INFILE, '<', $infile or die "Cannot open ${infile}: $!";
+    $in_text = join '', <INFILE>;
+    close INFILE;
+}
+
+$in_text = &preprocess($in_text);
+
 my $name_p = qr/([a-zA-Z_][a-zA-Z0-9_]*)/;
 my $num_p = qr/([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)/;
 my $str_p = qr/("(\\.|[^"\\])*")/;
@@ -32,55 +47,59 @@ my $bool_p = qr/(true|false)/;
 my $type_p = qr/($num_p|$bool_p|$str_p|null)/;
 my $arr_p = qr/(\[(\s*$type_p\s*,)*\s*$type_p\s*,?\s*\])/;
 my $value_p = qr/($type_p|$arr_p|$name_p)/;
-my $kv_p = qr/($name_p\s*:\s*$value_p)/;
+my $kv_p = qr/($name_p\s*=\s*$value_p)/;
 
-my $in_text;
-if (@ARGV == 0) {
-    $in_text = join '', <STDIN>;
-} else {
-    my $infile = shift @ARGV;
-    open INFILE, '<', $infile or die "Cannot open $infile: $!";
-    $in_text = join '', <INFILE>;
-    close INFILE;
+my @states = split /\s*;\s*/, $in_text;
+my @ops = ();
+foreach (@states) {
+    push @ops, &gen_op($_);
 }
 
-my @ops = ();
-
-push @ops, &gen_op("conv(src:hha,wts:q3|dst: dsf|stride:[2,3],padding:[1,2], hi:\"hi\")");
 my %top = (
            'ops' => \@ops,
           );
-
-my $json_obj = JSON->new->pretty();
+my $json_obj = JSON->new->pretty()->canonical();
 my $json_str = $json_obj->encode(\%top);
-say $json_str;
+if ($outfile) {
+    open OUTFILE, '>', $outfile or die "Cannot open $outfile: $!";
+    print OUTFILE $json_str;
+    close OUTFILE;
+} else {
+    print $json_str;
+}
 
+my %op_num;
 sub gen_op {
     my $state = shift;
     my $optype;
+    my $name;
     my $ins_str;
     my $outs_str;
     my $params_str;
 
     my $args_p = qr/((\s*$kv_p\s*,)*\s*$kv_p\s*,?)/;
-    my $arg_list_p = qr/((?<ins>$args_p)\s*\|\s*(?<outs>$args_p)\s*\|\s*(?<params>$args_p))/;
+    my $arg_list_p = qr/((?<ins>$args_p)?\s*\|\s*(?<outs>$args_p)?\s*\|\s*(?<params>$args_p)?)/;
     my $state_p = qr/((?<optype>$name_p)\s*\(\s*$arg_list_p\s*\))/;
 
-    if ($state =~ /^$state_p$/) {
+    if ($state =~ /^\s*$state_p\s*$/) {
         $optype = $+{optype};
-        $ins_str = $+{ins};
-        $outs_str = $+{outs};
-        $params_str = $+{params};
+        $op_num{$optype} = exists $op_num{$optype} ? $op_num{$optype}+1 : 0;
+        $name = "$optype$op_num{$optype}";
+        $ins_str = $+{ins} if exists $+{ins};
+        $outs_str = $+{outs} if exists $+{outs};
+        $params_str = $+{params} if exists $+{params};
     } else {
         &err_exit("wrong syntax in\n    $state");
     }
 
-    # TODO: not right when a string contains ','
+    # TODO:FIXME: incorrect when a string contains ','
+    my @empty_array = ();
     my %op = (
               'optype' => $optype,
-              'tensors_in' => &gen_tensors($ins_str),
-              'tensors_out' => &gen_tensors($outs_str),
-              'params' => &gen_params($params_str),
+              'name' => $name,
+              'tensors_in' => $ins_str ? &gen_tensors($ins_str) : \@empty_array,
+              'tensors_out' => $outs_str ? &gen_tensors($outs_str) : \@empty_array,
+              'params' => $params_str ? &gen_params($params_str) : \@empty_array,
              );
     \%op;
 }
@@ -89,12 +108,12 @@ sub gen_tensors {
     my $tensors_str = shift;
     my @tensors = ();
     foreach (split ',', $tensors_str) {
-        my ($arg_name, $tname) = map {s/^\s+//;s/\s+$//;$_} split ':';
-        &err_exit("wrong tensor name format in '$tname'")
-          unless $tname =~ /^$name_p$/;
+        my ($arg_name, $name) = map {s/^\s+//;s/\s+$//;$_} split '=';
+        &err_exit("wrong tensor name format in '$name'")
+          unless $name =~ /^$name_p$/;
         my %tensor = (
                       'arg_name' => $arg_name,
-                      'tname' => $tname,
+                      'name' => $name,
                      );
         push @tensors, \%tensor;
     }
@@ -107,7 +126,7 @@ sub gen_params {
     my @array_value = ();
     my $is_array = 0;
     foreach (split /,/, $params_str) {
-        if (/^\s*$name_p\s*:\s*\[/) {
+        if (/^\s*$name_p\s*=\s*\[/ and not /\]\s*$/) {
             $is_array = 1;
             @array_value = ();
             push @array_value, $_;
@@ -121,7 +140,7 @@ sub gen_params {
             $is_array = 0;
             $_ = join ',', @array_value;
         }
-        my ($arg_name, $value) = map {s/^\s+//;s/\s+$//;$_} split ':';
+        my ($arg_name, $value) = map {s/^\s+//;s/\s+$//;$_} split '=';
         given ($value) {
             when (/^$num_p$/) {
                 $value += 0;
@@ -193,6 +212,27 @@ sub gen_array {
     }
     \@array;
 }
+
+sub preprocess {
+    my $in_text = shift;
+    my ($tmp_fh, $tmp_name) = mkstemps("XXXXXX", '.c');
+    print $tmp_fh $in_text;
+    close $tmp_fh;
+    my $status = system "gcc -E $tmp_name -o ${tmp_name}.i";
+    unlink "${tmp_name}" or die "Cannot unlink file ${tmp_name}: $!";
+    &exit_msg(0, "gcc returns non-zero status") if $status;
+
+    open TMP, '<', "${tmp_name}.i" or die "Cannot open ${tmp_name}.i: $!";
+    $in_text = join '', <TMP>;
+    close TMP;
+    unlink "${tmp_name}.i" or die "Cannot unlink file ${tmp_name}.i: $!";
+    my @in_lines;
+    foreach (split "\n", $in_text) {
+        push @in_lines, $_ unless /^#/;
+    }
+    $in_text = join "\n", @in_lines;
+}
+
 sub err_exit {
     my $msg = $_[0];
     print STDERR "ERROR: $msg\n";
