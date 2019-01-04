@@ -38,6 +38,8 @@ static ln_op *ops_tensorrt[] = {
 static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_conv2d(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_sigmoid(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_tanh(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_maxpool2d(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_softmax(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_concat(const ln_op *op, const ln_dfg *dfg, int *match);
@@ -57,6 +59,8 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"create", ep_create},
     {"conv2d", ep_conv2d},
     {"relu", ep_relu},
+    {"sigmoid", ep_sigmoid},
+    {"tanh", ep_tanh},
     {"maxpool2d", ep_maxpool2d},
     {"softmax", ep_softmax},
     {"concat", ep_concat},
@@ -679,7 +683,7 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match)
                                            tle->name);
     assert(tle_next);
 
-    /* TODO: FIXME: this may not be right in the future */
+    /* TODO: FIXME: this may be incorrect in the future */
     if (ln_streqn(tle_next->arg_name, "src", 3) &&
         (ln_streq(next_op->op_arg->optype, "conv2d") ||
          ln_streq(next_op->op_arg->optype, "relu") ||
@@ -718,6 +722,32 @@ static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg, int *match)
 
     trt_op = ln_op_create_with_opname(&ln_opimpl_tensorrt,
                                      op->op_arg->tensor_table);
+    add_activation_to_trt(trt_op, op);
+
+    return ln_list_append(NULL, trt_op);
+}
+
+static ln_list *ep_sigmoid(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    ln_op *trt_op;
+
+    *match = 1;
+
+    trt_op = ln_op_create_with_opname(&ln_opimpl_tensorrt,
+                                      op->op_arg->tensor_table);
+    add_activation_to_trt(trt_op, op);
+
+    return ln_list_append(NULL, trt_op);
+}
+
+static ln_list *ep_tanh(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    ln_op *trt_op;
+
+    *match = 1;
+
+    trt_op = ln_op_create_with_opname(&ln_opimpl_tensorrt,
+                                      op->op_arg->tensor_table);
     add_activation_to_trt(trt_op, op);
 
     return ln_list_append(NULL, trt_op);
@@ -917,7 +947,7 @@ static ln_list *ep_func_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)
     void *value;
 
     if (!ln_hash_find_extended(ep_funcs_hash, op->op_arg->optype, NULL, &value))
-        ln_msg_inter_error(0, "unsupported optype \"%s\" for TensorRT optimization",
+        ln_msg_inter_error("unsupported optype \"%s\" for TensorRT optimization",
                            op->op_arg->optype);
 
     ep_func = value;
@@ -989,11 +1019,14 @@ static int digits_len(int n)
 {
     int count = 0;
 
+    if (n == 0)
+        return 1;
+
     while (n) {
         n /= 10;
         count++;
     }
-    return n == 0 ? 1 : count;
+    return count;
 }
 
 static char *new_arg_name(const char *old_name, int base_idx)
@@ -1038,6 +1071,12 @@ static int have_successor_except(const ln_op *trt_op, const char *tname,
     int ret = 0;
 
     suc_ens = ln_dfg_nexts(dfg, trt_op, tname);
+    if (ln_streq(trt_op->op_arg->name, "tensorrt49")) {
+        /* printf("%p\n", suc_ens); */
+        /* printf("opname: %s\n", op->op_arg->name); */
+        /* printf("tname: %s\n", tname); */
+        /* ln_dfg_print(dfg); */
+    }
     if (!suc_ens) {
         ret = 0;
         goto end;

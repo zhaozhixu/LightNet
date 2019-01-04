@@ -314,7 +314,7 @@ int ln_dfg_check(const ln_dfg *dfg)
         op = en->node->data;
         tname = en->edge_data;
         /* ln_msg_inter_warning("unused output tensor '%s' of op '%s' (%s)", */
-                             /* tname, op->op_arg->name, op->op_arg->optype); */
+        /*                      tname, op->op_arg->name, op->op_arg->optype); */
     }
     return 1;
 }

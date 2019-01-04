@@ -39,6 +39,7 @@ extern ln_op ln_opimpl_softmax_cpu;
 extern ln_op ln_opimpl_transpose_cpu;
 extern ln_op ln_opimpl_zeros_cpu;
 extern ln_op ln_opimpl_print_cpu;
+extern ln_op ln_opimpl_sigmoid_cpu;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
@@ -60,6 +61,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_transpose_cpu,
     &ln_opimpl_zeros_cpu,
     &ln_opimpl_print_cpu,
+    &ln_opimpl_sigmoid_cpu,
 /* end of init cpu ops */
     NULL
 };

@@ -38,6 +38,7 @@ extern ln_op ln_opimpl_batchnorm;
 extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_maxreduce_arg;
 extern ln_op ln_opimpl_print;
+extern ln_op ln_opimpl_sigmoid;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -58,6 +59,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_upsample,
     &ln_opimpl_maxreduce_arg,
     &ln_opimpl_print,
+    &ln_opimpl_sigmoid,
 /* end of init none ops */
     NULL
 };

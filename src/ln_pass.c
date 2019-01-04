@@ -23,7 +23,7 @@
 #include <assert.h>
 #include "ln_pass.h"
 
-const int MAX_PEEPHOLE_PASSES = 3;
+const int MAX_PEEPHOLE_PASSES = 10;
 
 void ln_pass_preprocess(ln_context *ctx)
 {

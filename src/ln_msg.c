@@ -92,7 +92,8 @@ void ln_msg_handle(ln_msg **msg)
     case LN_MSG_ERROR_SYS:
         fprintf(stderr, RED("error: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
-        exit(EXIT_FAILURE);
+        /* exit(EXIT_FAILURE); */
+        abort();
         break;
     case LN_MSG_INTER_ERROR:
     case LN_MSG_INTER_ERROR_SYS:

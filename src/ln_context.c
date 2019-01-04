@@ -51,7 +51,7 @@ static void init_op(ln_context *ctx, ln_op *op)
 {
     int ret;
 
-    /* ln_msg_debug("init_op: %s (%s)", op->op_arg->name, op->op_arg->optype); */
+    ln_msg_debug("init_op: %s (%s)", op->op_arg->name, op->op_arg->optype);
     ret = ln_op_table_insert(ctx->op_table, op);
     assert(ret);
     op->pre_run(op->op_arg);
@@ -62,7 +62,7 @@ static void cleanup_op(ln_context *ctx, ln_op *op)
 {
     int ret;
 
-    /* ln_msg_debug("cleanup_op: %s (%s)", op->op_arg->name, op->op_arg->optype); */
+    ln_msg_debug("cleanup_op: %s (%s)", op->op_arg->name, op->op_arg->optype);
     ln_dfg_remove(ctx->dfg, op);
     op->post_run(op->op_arg);
     ret = ln_op_table_remove(ctx->op_table, op->op_arg->name);
@@ -130,6 +130,9 @@ void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)
 int ln_context_check(const ln_context *ctx)
 {
     return ln_dfg_check(ctx->dfg);
+    /* if (!ln_dfg_check(ctx->dfg)) */
+    /*     ln_context_print(ctx, "-"); */
+    /* return 0; */
 }
 
 void ln_context_alloc_mem(ln_context *ctx)
@@ -195,7 +198,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_pass_preprocess(ctx);
     arch = ln_hash_find(LN_ARCH.arch_table, target);
     ln_pass_expander(ctx, arch->ep_funcs);
-    ln_pass_combiner(ctx, 3, arch->cb_funcs);
+    ln_pass_combiner(ctx, 2, arch->cb_funcs);
 
     /* make ops consistent */
     ln_op_list_do_post_run(ctx->ops);
