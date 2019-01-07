@@ -71,3 +71,4 @@ reshape(src=slice2 | dst=reshape2 |
 transpose(src=reshape0 | dst=transpose0 | axes=[0, 3, 4, 1, 2]);
 transpose(src=reshape1 | dst=transpose1 | axes=[0, 3, 4, 1, 2]);
 transpose(src=reshape2 | dst=transpose2 | axes=[0, 3, 4, 1, 2]);
+maxreduce_arg(src=transpose0 | dst=maxreduce_dst, arg=maxreduce_arg | axis=4);

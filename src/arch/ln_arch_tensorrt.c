@@ -69,7 +69,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"batchnorm", ep_batchnorm},
     {"elew", ep_elew},
     {"maxreduce", ep_maxreduce},
-    {"maxreduce", ep_maxreduce_arg},
+    {"maxreduce_arg", ep_maxreduce_arg},
     {"slice", ep_slice},
     {"transpose", ep_transpose},
     {"upsample", ep_upsample},
