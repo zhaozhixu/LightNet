@@ -31,6 +31,11 @@
 #define CONF_SLICE_C 9
 #define CLASS_PLUS_CONF_SLICE_C 71
 #define BBOX_SLICE_C 36
+#define ANCHORS_PER_GRID 9
+#define OUTPUT_CLS_SIZE 7
+#define OUTPUT_BBOX_SIZE 4
+#define CONVOUT_H 24
+#define CONVOUT_W 78
 
 create(| dst=img | dtype=DTYPE, dims=[1, 3, 384, 1248], data=[0]);
 conv_relu(img, conv0, 3, 64, 1, 3, 2, 1, 1);
@@ -57,3 +62,12 @@ slice(src=conv1 | dst=slice2 | axis=1, start=CLASS_PLUS_CONF_SLICE_C,
       len=BBOX_SLICE_C);
 softmax(src=slice0 | dst=softmax0 | axis=1);
 sigmoid(src=slice1 | dst=sigmoid0 |);
+reshape(src=softmax0 | dst=reshape0 |
+        dims=[1, ANCHORS_PER_GRID, OUTPUT_CLS_SIZE, CONVOUT_H, CONVOUT_W]);
+reshape(src=sigmoid0 | dst=reshape1 |
+        dims=[1, ANCHORS_PER_GRID, 1, CONVOUT_H, CONVOUT_W]);
+reshape(src=slice2 | dst=reshape2 |
+        dims=[1, ANCHORS_PER_GRID, OUTPUT_BBOX_SIZE, CONVOUT_H, CONVOUT_W]);
+transpose(src=reshape0 | dst=transpose0 | axes=[0, 3, 4, 1, 2]);
+transpose(src=reshape1 | dst=transpose1 | axes=[0, 3, 4, 1, 2]);
+transpose(src=reshape2 | dst=transpose2 | axes=[0, 3, 4, 1, 2]);

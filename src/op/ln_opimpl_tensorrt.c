@@ -59,6 +59,7 @@ static void tensorrt_pre_run(ln_op_arg *op_arg)
 
         dst_tensor = tl_tensor_create(NULL, ndim, dims, dtype);
         dst_entry = ln_tensor_entry_create(tle->name, dst_tensor);
+        dst_entry->offset = tle->offset;
         ln_tensor_entry_set_creater(dst_entry, op_arg->name);
         dst_entry->mtype = LN_MEM_CUDA;
         ln_tensor_table_insert(op_arg->tensor_table, dst_entry);

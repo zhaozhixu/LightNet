@@ -52,6 +52,7 @@ my $kv_p = qr/($name_p\s*=\s*$value_p)/;
 my @states = split /\s*;\s*/, $in_text;
 my @ops = ();
 foreach (@states) {
+    next if /^\s*$/;
     push @ops, &gen_op($_);
 }
 
@@ -228,7 +229,7 @@ sub preprocess {
     unlink "${tmp_name}.i" or die "Cannot unlink file ${tmp_name}.i: $!";
     my @in_lines;
     foreach (split "\n", $in_text) {
-        push @in_lines, $_ unless /^#/;
+        push @in_lines, $_ unless /^#/ or /^\/\//;
     }
     $in_text = join "\n", @in_lines;
 }

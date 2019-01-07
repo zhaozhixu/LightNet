@@ -633,13 +633,15 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
                                                        te->tensor->dims[1],
                                                        te->tensor->dims[2],
                                                        te->tensor->dims[3]));
+        assert(tensors[te->name]);
         ln_msg_debug("%s: addInput(%s)", op_arg->name, te->name);
     }
 
     ln_param_entry *pe;
     for (l = op_arg->params; l; l = l->next) {
         pe = (ln_param_entry *)l->data;
-        if (!ln_streqn(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+        if (!ln_streqn(pe->arg_name, "op", 2) ||
+            ln_next_token(pe->arg_name, '_'))
             continue;
         if (ln_streq(pe->value_string, "conv"))
             add_conv(network, tensors, weights, pe->arg_name, op_arg);
@@ -663,7 +665,6 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
         network->markOutput(*tensors[tle->name]);
         ln_msg_debug("%s: markOutput(%s)", op_arg->name, tle->name);
     }
-
     pe = ln_param_list_find(op_arg->params, "batch_size");
     builder->setMaxBatchSize(pe->value_int);
     builder->setMaxWorkspaceSize(max_workspace);
@@ -700,6 +701,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         if (!ln_streqn(tle->arg_name, "src", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
+        assert(index >= 0);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
         ln_msg_debug("%s: %s addr: %p", op_arg->name,
@@ -710,6 +712,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         if (!ln_streqn(tle->arg_name, "dst", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
+        assert(index >= 0);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
         ln_msg_debug("%s: %s addr: %p", op_arg->name, te->name,

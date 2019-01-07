@@ -36,6 +36,7 @@ static ln_op *ops_tensorrt[] = {
 };
 
 static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_create_cuda(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_conv2d(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_sigmoid(const ln_op *op, const ln_dfg *dfg, int *match);
@@ -57,6 +58,7 @@ static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
 
 static ln_hash_init_entry init_ep_funcs[] = {
     {"create", ep_create},
+    {"create_cuda", ep_create_cuda},
     {"conv2d", ep_conv2d},
     {"relu", ep_relu},
     {"sigmoid", ep_sigmoid},
@@ -678,7 +680,8 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match)
 
     tle = ln_tensor_list_find_by_arg_name(op->op_arg->tensors_out, "dst");
     next_op = ln_dfg_next(dfg, op, tle->name);
-    assert(next_op);
+    if (!next_op)
+        return simple_replace(op, "create_cpu");
     tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in,
                                            tle->name);
     assert(tle_next);
@@ -689,6 +692,7 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match)
          ln_streq(next_op->op_arg->optype, "relu") ||
          ln_streq(next_op->op_arg->optype, "maxpool2d") ||
          ln_streq(next_op->op_arg->optype, "softmax") ||
+         ln_streq(next_op->op_arg->optype, "sigmoid") ||
          ln_streq(next_op->op_arg->optype, "concat") ||
          ln_streq(next_op->op_arg->optype, "tensorrt")))
         new_optype = "create_cuda";
@@ -696,6 +700,12 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match)
         new_optype = "create_cpu";
 
     return simple_replace(op, new_optype);
+}
+
+static ln_list *ep_create_cuda(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "create_cuda");
 }
 
 static ln_list *ep_conv2d(const ln_op *op, const ln_dfg *dfg, int *match)
@@ -927,8 +937,10 @@ static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match)
         optype = "print_cpu";
     else if (ln_streq(prev_op->op_arg->arch, "cuda"))
         optype = "print_cuda";
+    else if (ln_streq(prev_op->op_arg->arch, "tensorrt"))
+        optype = "print_cuda";
     else
-        assert(0 && "print's prev op is either of cpu or cuda");
+        assert(0 && "print's prev op is either of cpu or tensorrt");
 
     return simple_replace(op, optype);
 }
@@ -1071,12 +1083,6 @@ static int have_successor_except(const ln_op *trt_op, const char *tname,
     int ret = 0;
 
     suc_ens = ln_dfg_nexts(dfg, trt_op, tname);
-    if (ln_streq(trt_op->op_arg->name, "tensorrt49")) {
-        /* printf("%p\n", suc_ens); */
-        /* printf("opname: %s\n", op->op_arg->name); */
-        /* printf("tname: %s\n", tname); */
-        /* ln_dfg_print(dfg); */
-    }
     if (!suc_ens) {
         ret = 0;
         goto end;
