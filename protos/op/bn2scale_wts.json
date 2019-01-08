@@ -24,5 +24,18 @@
         {"arg_name": "epsilon", "ptype": "LN_PARAM_NUMBER", "realtype": "float",
          "gt": 0}
     ],
-    "static_run": "float *dst_scale_data = dst_scale->data;\nfloat *dst_shift_data = dst_shift->data;\nfloat *dst_power_data = dst_power->data;\nfloat *src_mean_data = src_mean->data;\nfloat *src_var_data = src_var->data;\nfloat *src_scale_data = src_scale->data;\nfloat *src_offset_data = src_offset->data;\nfor (int i = 0; i < dst_scale->len; i++) {\n    dst_scale_data[i] = src_scale_data[i] / (src_var_data[i] + epsilon);\n    dst_shift_data[i] = src_offset_data[i] - src_mean_data[i] * src_scale_data[i] / (src_var_data[i] + epsilon);\n    dst_power_data[i] = 1;\n}"
+    "static_run": '''
+float *dst_scale_data = dst_scale->data;
+float *dst_shift_data = dst_shift->data;
+float *dst_power_data = dst_power->data;
+float *src_mean_data = src_mean->data;
+float *src_var_data = src_var->data;
+float *src_scale_data = src_scale->data;
+float *src_offset_data = src_offset->data;
+for (int i = 0; i < dst_scale->len; i++) {
+    dst_scale_data[i] = src_scale_data[i] / (src_var_data[i] + epsilon);
+    dst_shift_data[i] = src_offset_data[i] - src_mean_data[i] * src_scale_data[i] / (src_var_data[i] + epsilon);
+    dst_power_data[i] = 1;
+}
+'''
 }

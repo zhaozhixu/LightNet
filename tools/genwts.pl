@@ -34,16 +34,14 @@ strings seperated by white spaces and some punctuations.
 Author: Zhao Zhixu
 EOF
 
-my $help = '';
 my $type = '';
 my $outfile = '';
 GetOptions(
-           'help' => \$help,
+           'help' => sub{&exit_msg(0, $usage)},
            'type=i' => \$type,
            'outfile=s' => \$outfile,
           ) or &exit_msg(1, $usage);
 
-&exit_msg(0, $usage) if $help;
 &exit_msg(1, "Need a type option\n$usage") if $type eq '';
 &exit_msg(1, "Data type of $type is not supported yet\n$usage")
     if $type != 0 and $type != 2;

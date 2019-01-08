@@ -24,7 +24,7 @@ EOF
 
 my $outfile = '';
 GetOptions(
-           'help' => sub {&exit_msg(0, $usage)},
+           'help' => sub{&exit_msg(0, $usage)},
            'outfile=s' => \$outfile,
           ) or &exit_msg(1, $usage);
 
