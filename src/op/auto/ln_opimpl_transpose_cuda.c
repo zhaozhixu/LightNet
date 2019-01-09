@@ -88,7 +88,7 @@ static void transpose_cuda_pre_run(ln_op_arg *op_arg)
         for (int i = 0; i < src->ndim; i++)
             tmp[axes[i]] = 1;
         for (int i = 0; i < src->ndim; i++)
-            ln_opck_satisfy_msg(tmp[i], "`axes` should match `src`'s shape");
+            ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
         ln_free(tmp);
     }
 

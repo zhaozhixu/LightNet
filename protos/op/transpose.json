@@ -10,13 +10,25 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "ndim": "src->ndim", "dtype": "src->dtype",
-                 "custom": "dst_dims = ln_alloc(src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    dst_dims[i] = src->dims[axes[i]];",
+                 "custom": '''
+dst_dims = ln_alloc(src->ndim*sizeof(int));
+for (int i = 0; i < src->ndim; i++)
+    dst_dims[i] = src->dims[axes[i]];
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
                 {"arg_name": "axes", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "ge": 0,
-                 "custom": "int *tmp = ln_alloc(src->ndim*sizeof(int));\nmemset(tmp, 0, src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    tmp[axes[i]] = 1;\nfor (int i = 0; i < src->ndim; i++)\n    ln_opck_satisfy_msg(tmp[i], \"`axes` should match `src`'s shape\");\nln_free(tmp);"}
+                 "custom": '''
+int *tmp = ln_alloc(src->ndim*sizeof(int));
+memset(tmp, 0, src->ndim*sizeof(int));
+for (int i = 0; i < src->ndim; i++)
+    tmp[axes[i]] = 1;for (int i = 0; i < src->ndim; i++)
+    ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
+ln_free(tmp);
+'''
+                }
             ]
         },
         {
@@ -29,13 +41,26 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "ndim": "src->ndim", "dtype": "src->dtype",
-                 "custom": "dst_dims = ln_alloc(src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    dst_dims[i] = src->dims[axes[i]];",
+                 "custom": '''
+dst_dims = ln_alloc(src->ndim*sizeof(int));
+for (int i = 0; i < src->ndim; i++)
+    dst_dims[i] = src->dims[axes[i]];
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
                 {"arg_name": "axes", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "ge": 0,
-                 "custom": "int *tmp = ln_alloc(src->ndim*sizeof(int));\nmemset(tmp, 0, src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    tmp[axes[i]] = 1;\nfor (int i = 0; i < src->ndim; i++)\n    ln_opck_satisfy_msg(tmp[i], \"`axes` should match `src`'s shape\");\nln_free(tmp);"}
+                 "custom": '''
+int *tmp = ln_alloc(src->ndim*sizeof(int));
+memset(tmp, 0, src->ndim*sizeof(int));
+for (int i = 0; i < src->ndim; i++)
+    tmp[axes[i]] = 1;
+for (int i = 0; i < src->ndim; i++)
+    ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
+ln_free(tmp);
+'''
+                }
             ],
             "run": "tl_tensor_transpose(src, dst, axes);"
         },
@@ -49,13 +74,26 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "ndim": "src->ndim", "dtype": "src->dtype",
-                 "custom": "dst_dims = ln_alloc(src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    dst_dims[i] = src->dims[axes[i]];",
+                 "custom": '''
+dst_dims = ln_alloc(src->ndim*sizeof(int));
+for (int i = 0; i < src->ndim; i++)
+    dst_dims[i] = src->dims[axes[i]];
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
                 {"arg_name": "axes", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "ge": 0,
-                 "custom": "int *tmp = ln_alloc(src->ndim*sizeof(int));\nmemset(tmp, 0, src->ndim*sizeof(int));\nfor (int i = 0; i < src->ndim; i++)\n    tmp[axes[i]] = 1;\nfor (int i = 0; i < src->ndim; i++)\n    ln_opck_satisfy_msg(tmp[i], \"`axes` should match `src`'s shape\");\nln_free(tmp);"}
+                 "custom": '''
+int *tmp = ln_alloc(src->ndim*sizeof(int));
+memset(tmp, 0, src->ndim*sizeof(int));
+for (int i = 0; i < src->ndim; i++)
+    tmp[axes[i]] = 1;
+for (int i = 0; i < src->ndim; i++)
+    ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
+ln_free(tmp);
+'''
+                }
             ],
             "run": "tl_tensor_transpose_cuda(src, dst, axes);"
         }

@@ -3,8 +3,11 @@
 use 5.014;
 use warnings;
 use strict;
-use JSON;
 use Getopt::Long;
+use Cwd 'abs_path';
+use File::Basename;
+use lib abs_path(dirname(__FILE__));
+use easyjson 'easyjson::easy_to_json';
 no warnings 'experimental::smartmatch';
 
 # NOTE: This is a simple imprecise implementation.
@@ -45,8 +48,7 @@ if (@ARGV == 0) {
     close INFILE;
 }
 
-my $text = &do_heredoc($in_text);
-$text = &do_comma_comment($text);
+my $text = easyjson::easy_to_json($in_text);
 
 if ($outfile) {
     open OUTFILE, '>', $outfile or die "Cannot open $outfile: $!";
@@ -54,61 +56,6 @@ if ($outfile) {
     close OUTFILE;
 } else {
     print $text;
-}
-
-# TODO: triple quotes cannot exist in a heredoc yet
-sub do_heredoc {
-    my $in = shift;
-    my @lines = split "\n", $in;
-    my @res = ();
-    my @string_lines = ();
-    my $string_line = '';
-    foreach (@lines) {
-        if ($string_line) {
-            if (/'''(?<comma>\s*,\s*)?$/) {
-                $string_line .= join "\\n", @string_lines;
-                $string_line .= "\"";
-                $string_line .= $+{comma} if exists $+{comma};
-                push @res, $string_line;
-                @string_lines = ();
-                $string_line = '';
-            } else {
-                s/\\/\\\\/g;
-                s/(?=[^\\])"/\\"/g;
-                s/\t/\\t/g;
-                s/\f/\\f/g;
-                s/\r/\\r/g;
-                push @string_lines, $_;
-            }
-        } else {
-            if (/'''$/) {
-                s/'''/"/;
-                $string_line = $_;
-            } else {
-                push @res, $_;
-            }
-        }
-    }
-    &err_exit("unmatched triple quotes (''')") if $string_line;
-    my $out = join "\n", @res;
-}
-
-sub do_comma_comment {
-    my $in = shift;
-    $in =~ s/,(\s*[\]}])/$1/g;     # TODO: not handle commas in strings yet
-    my @lines = split "\n", $in;
-    my @res = ();
-    foreach (@lines) {
-        s/\/\/.*$//;
-        push @res, $_;
-    }
-    my $out = join "\n", @res;
-}
-
-sub err_exit {
-    my $msg = $_[0];
-    print STDERR "ERROR: $msg\n";
-    exit 1;
 }
 
 sub exit_msg {

@@ -16,7 +16,13 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "ndim": "src->ndim", "dtype": "src->dtype",
-                 "custom": "dst_dims = ln_alloc(sizeof(int)*4);\ndst_dims[0] = src->dims[0];\ndst_dims[1] = weight->dims[1];\ndst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);\ndst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*4);
+dst_dims[0] = src->dims[0];
+dst_dims[1] = weight->dims[1];
+dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
@@ -54,7 +60,13 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "ndim": "src->ndim", "dtype": "src->dtype",
-                 "custom": "dst_dims = ln_alloc(sizeof(int)*4);\ndst_dims[0] = src->dims[0];\ndst_dims[1] = weight->dims[1];\ndst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);\ndst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*4);
+dst_dims[0] = src->dims[0];
+dst_dims[1] = weight->dims[1];
+dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
@@ -93,7 +105,13 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "ndim": "src->ndim", "dtype": "src->dtype",
-                 "custom": "dst_dims = ln_alloc(sizeof(int)*4);\ndst_dims[0] = src->dims[0];\ndst_dims[1] = weight->dims[1];\ndst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);\ndst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*4);
+dst_dims[0] = src->dims[0];
+dst_dims[1] = weight->dims[1];
+dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [

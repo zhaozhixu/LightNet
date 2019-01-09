@@ -41,7 +41,18 @@
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double"}
             ],
-            "static_run": "size_t size = tl_tensor_size(dst);\nvoid *data_tmp = ln_alloc(size);\nif (data[0] == 0 && data_entry->array_len == 1) {\n    memset(data_tmp, 0, size);\n} else {\n    for (int i = 0; i < data_entry->array_len; i++)\n        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &data[i], TL_DOUBLE);\n}\nmemmove(dst->data, data_tmp, size);\nln_free(data_tmp);"
+            "static_run": '''
+size_t size = tl_tensor_size(dst);
+void *data_tmp = ln_alloc(size);
+if (data[0] == 0 && data_entry->array_len == 1) {
+    memset(data_tmp, 0, size);
+} else {
+    for (int i = 0; i < data_entry->array_len; i++)
+        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &data[i], TL_DOUBLE);
+}
+memmove(dst->data, data_tmp, size);
+ln_free(data_tmp);
+'''
         },
         {
             "optype": "create_cuda",
@@ -63,7 +74,18 @@
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double"}
             ],
-            "static_run": "size_t size = tl_tensor_size(dst);\nvoid *data_tmp = ln_alloc(size);\nif (data[0] == 0 && data_entry->array_len == 1) {\n    memset(data_tmp, 0, size);\n} else {\n    for (int i = 0; i < data_entry->array_len; i++)\n        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &data[i], TL_DOUBLE);\n}\nln_memcpy_h2d(dst->data, data_tmp, size);\nln_free(data_tmp);"
+            "static_run": '''
+size_t size = tl_tensor_size(dst);
+void *data_tmp = ln_alloc(size);
+if (data[0] == 0 && data_entry->array_len == 1) {
+    memset(data_tmp, 0, size);
+} else {
+    for (int i = 0; i < data_entry->array_len; i++)
+        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &data[i], TL_DOUBLE);
+}
+ln_memcpy_h2d(dst->data, data_tmp, size);
+ln_free(data_tmp);
+'''
         }
     ]
 }

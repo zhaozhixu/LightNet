@@ -23,7 +23,7 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
                  "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
             ],
             "custom": '''
-for (int i = 0; i < src1->ndim: i++) {
+for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
     ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
@@ -54,7 +54,7 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
                  "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
             ],
             "custom": '''
-for (int i = 0; i < src1->ndim: i++) {
+for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
     ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
@@ -86,7 +86,7 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
                  "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
             ],
             "custom": '''
-for (int i = 0; i < src1->ndim: i++) {
+for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
     ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");

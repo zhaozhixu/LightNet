@@ -10,7 +10,11 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "dtype": "src->dtype", "ndim": "src->ndim",
-                 "custom": "dst_dims = ln_alloc(sizeof(int)*dst_ndim);\nfor (int i = 0; i < dst_ndim; i++)\n    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*dst_ndim);
+for (int i = 0; i < dst_ndim; i++)
+    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
@@ -33,7 +37,11 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "dtype": "src->dtype", "ndim": "src->ndim",
-                 "custom": "dst_dims = ln_alloc(sizeof(int)*dst_ndim);\nfor (int i = 0; i < dst_ndim; i++)\n    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*dst_ndim);
+for (int i = 0; i < dst_ndim; i++)
+    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [
@@ -57,7 +65,11 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "dtype": "src->dtype", "ndim": "src->ndim",
-                 "custom": "dst_dims = ln_alloc(sizeof(int)*dst_ndim);\nfor (int i = 0; i < dst_ndim; i++)\n    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*dst_ndim);
+for (int i = 0; i < dst_ndim; i++)
+    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
+''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
             "params": [

@@ -72,6 +72,7 @@ static inline int can_replace(const char *optype)
         ln_streq(optype, "maxreduce") ||
         ln_streq(optype, "maxreduce_arg") ||
         ln_streq(optype, "relu") ||
+        ln_streq(optype, "sigmoid") ||
         ln_streq(optype, "reshape") ||
         ln_streq(optype, "slice") ||
         ln_streq(optype, "transpose") ||

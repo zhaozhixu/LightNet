@@ -7,6 +7,9 @@ use JSON;
 use File::Copy;
 use Cwd 'abs_path';
 use Getopt::Long;
+use File::Basename;
+use lib abs_path(dirname(__FILE__));
+use easyjson;
 no warnings 'experimental::smartmatch';
 
 my $usage = <<EOF;
@@ -51,6 +54,7 @@ if (@json_files == 0) {
 
 sub parse_and_generate {
     my $json_text = shift;
+    $json_text = easyjson::easy_to_json($json_text);
     my $json_obj = JSON->new->relaxed();
     my $json = $json_obj->decode($json_text);
     if (exists $json->{ops}) {
