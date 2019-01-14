@@ -35,6 +35,14 @@ struct ln_option {
 };
 typedef struct ln_option ln_option;
 
+#ifdef __cplusplus
+LN_CPPSTART
+#endif
+
 ln_option ln_option_get(int argc, char **argv);
+
+#ifdef __cplusplus
+LN_CPPEND
+#endif
 
 #endif  /* _LN_OPTION_H_ */

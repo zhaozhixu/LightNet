@@ -33,8 +33,8 @@ typedef struct ln_cudnn_context ln_cudnn_context;
 
 #define LN_CUDNN_CK(status)                             \
     do {                                                \
-        if (status != CUDNN_STATUS_SUCCESS)             \
-            ln_err_bt("CUDNN_ERROR(%d): %s", status,    \
+        if ((status) != CUDNN_STATUS_SUCCESS)           \
+            ln_err_bt("CUDNN_ERROR(%d): %s", (status),  \
                       cudnnGetErrorString(status));     \
     } while(0)
 

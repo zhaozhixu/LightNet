@@ -22,8 +22,8 @@ The differences between two formats:
    the line is a comment.
 3. String values can be heredoc-ed with two triple qoutes ('''), each in a
    seperated line, between which special characters can be auto-escaped,
-   such as newlines, qoutes, etc. The qoutes must be at the end of a line
-   except that the ending qoutes can have a comma following them.
+   such as newlines, qoutes, etc. The triple qoutes must be at the end of a
+   line except that the ending qoutes can have a comma following them.
 
 Options:
   -h, --help       show this help

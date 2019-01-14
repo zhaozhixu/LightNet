@@ -53,7 +53,7 @@ sub do_heredoc {
 
 sub do_comma_comment {
     my $in = shift;
-    $in =~ s/,(\s*[\]}])/$1/g;     # TODO: not handle commas in strings yet
+    $in =~ s/,(\s*[\]}])/$1/g;     # TODO: no handle commas in strings yet
     my @lines = split "\n", $in;
     my @res = ();
     foreach (@lines) {

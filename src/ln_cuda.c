@@ -36,8 +36,8 @@ typedef struct ln_cuda_stream ln_cuda_stream;
 
 #define LN_CUDA_CK(status)                                              \
     do {                                                                \
-        if (status != cudaSuccess)                                      \
-            ln_err_bt("CUDA_ERROR(%d) %s: %s", status,                  \
+        if ((status) != cudaSuccess)                                    \
+            ln_err_bt("CUDA_ERROR(%d) %s: %s", (status),                \
                       cudaGetErrorName(status), cudaGetErrorString(status)); \
     } while(0)
 
