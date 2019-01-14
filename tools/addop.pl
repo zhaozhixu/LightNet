@@ -81,7 +81,7 @@ sub gen_code {
     &err_exit("'${optype}' needs an `arch`") unless exists $op->{arch};
     my $arch = $op->{arch};
     if ($arch ne "none" and $arch ne "cpu" and $arch ne "cuda" and
-        $arch ne "tensorrt") {
+        $arch ne "cudnn" and $arch ne "tensorrt") {
         &err_exit("'${optype}' has unsupported `arch` '${arch}'");
     }
     if ($arch ne "none" and not $optype =~ /\w+_$arch$/) {
@@ -165,8 +165,12 @@ sub gen_head_block {
     my @headers = ();
     push @headers, "#include <assert.h>";
     push @headers, "#include \"ln_op.h\"";
+    push @headers, "#include \"ln_arch.h\"";
     if ($op->{arch} eq "cuda") {
         push @headers, "#include \"ln_cuda.h\"";
+      }
+    if ($op->{arch} eq "cudnn") {
+      push @headers, "#include \"ln_cudnn.h\"";
     }
     if ($op->{arch} eq "tensorrt") {
         push @headers, "#include \"ln_tensorrt.h\"";
@@ -207,12 +211,22 @@ sub gen_struct_def {
 
     my @defs = ();
     foreach (@$tensors_in) {
-        &err_exit("'$op->{optype}' needs an `arg_name` in one of the  `tensors_in`") unless exists $_->{arg_name};
+        &err_exit("'$op->{optype}' needs an `arg_name` in one of the  `tensors_in`")
+            unless exists $_->{arg_name};
         push @defs, "ln_tensor_entry *$_->{arg_name}_entry;";
     }
     foreach (@$tensors_out) {
-        &err_exit("'$op->{optype}' needs an `arg_name` in one of the `tensors_out`") unless exists $_->{arg_name};
+        &err_exit("'$op->{optype}' needs an `arg_name` in one of the `tensors_out`")
+            unless exists $_->{arg_name};
         push @defs, "ln_tensor_entry *$_->{arg_name}_entry;";
+    }
+    if (exists $op->{extra_privs}) {
+        my $extra_privs = $op->{extra_privs};
+        foreach (@$extra_privs) {
+            &err_exit("'$op->{optype}' needs an `type` and `name` in one of the `extra_privs`")
+                unless exists $_->{type} and exists $_->{name};
+            push @defs, "$_->{type} $_->{name};";
+        }
     }
     &gen_params($op, 1, 0, \@defs);
     &make_defs_neat(\@defs);
@@ -779,6 +793,15 @@ sub add_dynamic_decs_from_priv {
             push @$states, &gen_param_decl_from_priv($_);
         }
     }
+    # if (exists $op->{extra_privs}) {
+    #     my $extra_privs = $op->{extra_privs};
+    #     foreach (@$extra_privs) {
+    #         my $name = $_->{name};
+    #         if (&have_variable($code_str, "$_->{name}")) {
+    #             push @$states, "$_->{type} $_->{name} = priv->${name};";
+    #         }
+    #     }
+    # }
 }
 
 sub gen_static_run {
@@ -794,7 +817,7 @@ sub gen_static_run {
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
-/* This function blocks only once per instance right after memory allocation. */
+/* This function runs only once per instance right after memory allocation. */
 static void $op->{optype}_static_run(ln_op_arg *op_arg)
 {
 ${states_str}
@@ -945,7 +968,7 @@ sub make_defs_neat {
     foreach (@$defs) {
         my $type = $1 if /^(struct +\w+|\w+)/;
         my $nstars = 0;
-        $nstars = length $1 if /^$type +(\*+)/;
+        $nstars = length $1 if /^$type *(\*+)/;
         my $rest = $2 if /( |\*)(\w+(;$| *=.+;$))/;
         $_ = sprintf("%-${max_offset}s", $type);
         my $re = " "x$nstars;

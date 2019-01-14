@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_arch.h"
 
 struct priv_s {
     ln_tensor_entry *src_entry;
@@ -84,7 +85,8 @@ static void transpose_pre_run(ln_op_arg *op_arg)
         int *tmp = ln_alloc(src->ndim*sizeof(int));
         memset(tmp, 0, src->ndim*sizeof(int));
         for (int i = 0; i < src->ndim; i++)
-            tmp[axes[i]] = 1;for (int i = 0; i < src->ndim; i++)
+            tmp[axes[i]] = 1;
+        for (int i = 0; i < src->ndim; i++)
             ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
         ln_free(tmp);
     }

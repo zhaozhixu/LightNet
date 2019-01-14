@@ -84,8 +84,8 @@ static ln_hash *ep_funcs_hash = NULL;
 static ln_list *ep_func_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
                                  const ln_dfg *dfg, int *match);
-static void init(void);
-static void cleanup(void);
+static void init(void **);
+static void cleanup(void **);
 
 ln_expander_func ep_funcs_tensorrt[] = {
     ep_func_tensorrt,
@@ -118,13 +118,13 @@ static void add_softmax_to_trt(ln_op *trt_op, const ln_op *op);
 static void add_concat_to_trt(ln_op *trt_op, const ln_op *op);
 static void add_trt_to_trt(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg);
 
-static void init(void)
+static void init(void **context_p)
 {
     ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     ln_hash_init(ep_funcs_hash, init_ep_funcs);
 }
 
-static void cleanup(void)
+static void cleanup(void **context_p)
 {
     ln_hash_free(ep_funcs_hash);
 }

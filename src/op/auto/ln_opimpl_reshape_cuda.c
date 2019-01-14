@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_arch.h"
 #include "ln_cuda.h"
 
 struct priv_s {
@@ -104,7 +105,7 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg)
     op_arg->priv = priv;
 }
 
-/* This function blocks only once per instance right after memory allocation. */
+/* This function runs only once per instance right after memory allocation. */
 static void reshape_cuda_static_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;

@@ -20,46 +20,37 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_ARCH_H_
-#define _LN_ARCH_H_
+#ifndef _LN_CUDNN_H_
+#define _LN_CUDNN_H_
+#ifdef LN_CUDNN
 
-#include "ln_op.h"
-#include "ln_dfg.h"
+#include <cudnn.h>
 
-typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg,
-                                      int *match);
-typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
-                                      const ln_dfg *dfg, int *match);
-
-struct ln_arch {
-    void              (*init_func)(void **context_p); /* pointer to context */
-    void              (*cleanup_func)(void **context_p);
-    void               *context;
-    ln_op             **reg_ops;       /* NULL terminated */
-    ln_expander_func   *ep_funcs;      /* NULL terminated */
-    ln_combiner_func   *cb_funcs;      /* NULL terminated */
-    char               *arch_name;
+struct ln_cudnn_context {
+    cudnnHandle_t cudnn_handle;
 };
-typedef struct ln_arch ln_arch;
+typedef struct ln_cudnn_context ln_cudnn_context;
 
-struct ln_arch_info {
-    ln_hash  *arch_table;
-    ln_hash  *op_proto_table;
-};
-typedef struct ln_arch_info ln_arch_info;
-
-extern ln_arch_info ln_global_arch_info;
-#define LN_ARCH ln_global_arch_info
+#define LN_CUDNN_CK(status)                             \
+    do {                                                \
+        if (status != CUDNN_STATUS_SUCCESS)             \
+            ln_err_bt("CUDNN_ERROR(%d): %s", status,    \
+                      cudnnGetErrorString(status));     \
+    } while(0)
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-void ln_arch_init(void);
-void ln_arch_cleanup(void);
+ln_cudnn_context *ln_cudnn_context_create(void);
+void ln_cudnn_context_free(ln_cudnn_context *context);
+cudnnDataType_t ln_cudnn_datatype(tl_dtype dtype);
+cudnnTensorDescriptor_t ln_cudnn_tensor_nchw_init(tl_tensor *tensor);
+void ln_cudnn_tensor_cleanup(cudnnTensorDescriptor_t desc);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif  /* _LN_ARCH_H_ */
+#endif  /* LN_CUDNN */
+#endif  /* _LN_CUDNN_H_ */

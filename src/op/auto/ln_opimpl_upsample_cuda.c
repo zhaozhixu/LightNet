@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include "ln_op.h"
+#include "ln_arch.h"
 #include "ln_cuda.h"
 
 struct priv_s {

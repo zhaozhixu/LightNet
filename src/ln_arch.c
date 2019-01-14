@@ -39,6 +39,9 @@ static ln_arch *archs[] = {
 #ifdef LN_CUDA
     &ln_arch_cuda,
 #endif
+#ifdef LN_CUDNN
+    &ln_arch_cudnn,
+#endif
 #ifdef LN_TENSORRT
     &ln_arch_tensorrt,
 #endif
@@ -58,10 +61,11 @@ void ln_arch_init(void)
 
     for (i = 0; archs[i]; i++) {
         if (archs[i]->init_func)
-            archs[i]->init_func();
+            archs[i]->init_func(&archs[i]->context);
         ret = ln_hash_insert(LN_ARCH.arch_table, archs[i]->arch_name, archs[i]);
         if (!ret)
-            ln_msg_inter_error("duplicated arch name \"%s\"", archs[i]->arch_name);
+            ln_msg_inter_error("duplicated arch name \"%s\"",
+                               archs[i]->arch_name);
 
         for (j = 0; (op = archs[i]->reg_ops[j]); j++) {
             ret = ln_hash_insert(LN_ARCH.op_proto_table, op->op_arg->optype, op);
@@ -78,7 +82,7 @@ void ln_arch_cleanup(void)
 
     for (i = 0; archs[i]; i++) {
         if (archs[i]->cleanup_func)
-            archs[i]->cleanup_func();
+            archs[i]->cleanup_func(&archs[i]->context);
     }
 
     ln_hash_free(LN_ARCH.arch_table);

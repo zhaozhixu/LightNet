@@ -1,7 +1,8 @@
 {
     "ops": [
         {
-            "optype": "scale",
+            "optype": "scale_cpu",
+            "author": "Zhao Zhixu",
             "arch": "cpu",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU"},
@@ -24,6 +25,11 @@
         {
             "optype": "upsample_cuda",
             "arch": "cuda",
+            "author": "Zhao Zhixu",
+            "extra_privs": [
+                {"type": "cudaXXXX *", "name": "cudaYYYY"},
+                {"type": "cudaXXXX2*", "name": "cudaYYYY2"},
+            ],
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CUDA"},
                 {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
