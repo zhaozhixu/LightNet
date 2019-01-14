@@ -25,69 +25,78 @@
 
 #include "ln_list.h"
 
-typedef enum ln_param_type ln_param_type;
 enum ln_param_type {
-     /* NULL should always be the first type */
-     LN_PARAM_NULL = 0,
-     LN_PARAM_STRING,
-     LN_PARAM_NUMBER,
-     LN_PARAM_BOOL,
-     LN_PARAM_ARRAY_STRING,
-     LN_PARAM_ARRAY_NUMBER,
-     LN_PARAM_ARRAY_BOOL,
-     LN_PARAM_INVALID
-     /* INVALID should always be the last type */
+    /* NULL should always be the first type */
+    LN_PARAM_NULL = 0,
+    LN_PARAM_STRING,
+    LN_PARAM_NUMBER,
+    LN_PARAM_BOOL,
+    LN_PARAM_ARRAY_STRING,
+    LN_PARAM_ARRAY_NUMBER,
+    LN_PARAM_ARRAY_BOOL,
+    LN_PARAM_INVALID
+    /* INVALID should always be the last type */
 };
+typedef enum ln_param_type ln_param_type;
 
-typedef struct ln_param_entry ln_param_entry;
 struct ln_param_entry {
-     char          *arg_name;
-     ln_param_type  type;
-     int            array_len;
-     double         value_double;
-     int            value_int;
-     ln_bool        value_bool;
-     char          *value_string;
-     char         **value_array_string;
-     double        *value_array_double;
-     int           *value_array_int;
-     ln_bool       *value_array_bool;
+    char          *arg_name;
+    ln_param_type  type;
+    int            array_len;
+    double         value_double;
+    float          value_float;
+    int            value_int;
+    ln_bool        value_bool;
+    char          *value_string;
+    char         **value_array_string;
+    double        *value_array_double;
+    float         *value_array_float;
+    int           *value_array_int;
+    ln_bool       *value_array_bool;
 };
-
-typedef ln_list ln_param_table;
+typedef struct ln_param_entry ln_param_entry;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_param_table *ln_param_table_append_string(ln_param_table *table,
-                                             const char *arg_name,
-                                             const char *string);
-ln_param_table *ln_param_table_append_number(ln_param_table *table,
-                                             const char *arg_name,
-                                             double number);
-ln_param_table *ln_param_table_append_bool(ln_param_table *table,
-                                           const char *arg_name,
-                                           ln_bool bool);
-ln_param_table *ln_param_table_append_null(ln_param_table *table,
-                                           const char *arg_name);
-ln_param_table *ln_param_table_append_array_string(ln_param_table *table,
-                                                   const char *arg_name,
-                                                   int array_len,
-                                                   char **array_string);
-ln_param_table *ln_param_table_append_array_number(ln_param_table *table,
-                                                   const char *arg_name,
-                                                   int array_len,
-                                                   double *array_number);
-ln_param_table *ln_param_table_append_array_bool(ln_param_table *table,
-                                                 const char *arg_name,
-                                                 int array_len,
-                                                 ln_bool *array_bool);
-void ln_param_table_free(ln_param_table *table);
-ln_param_entry *ln_param_table_find_by_arg_name(ln_param_table *table,
-						char *arg_name);
-int ln_param_table_length(ln_param_table *table);
+ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type);
+void ln_param_entry_free(ln_param_entry *entry);
+
+/* TODO: add prepend version */
+ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
+                                     const char *string);
+ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,
+                                     double number);
+ln_list *ln_param_list_append_double(ln_list *list, const char *arg_name,
+                                     double number);
+ln_list *ln_param_list_append_float(ln_list *list, const char *arg_name,
+                                    float number);
+ln_list *ln_param_list_append_int(ln_list *list, const char *arg_name,
+                                  int number);
+ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name,
+                                   ln_bool bool_value);
+ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name);
+ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
+                                           int array_len, char **array_string);
+ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
+                                           int array_len, double *array_number);
+ln_list *ln_param_list_append_array_double(ln_list *list, const char *arg_name,
+                                           int array_len, double *array_number);
+ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name,
+                                          int array_len, float *array_number);
+ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
+                                        int array_len, int *array_int);
+ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
+                                         int array_len, ln_bool *array_bool);
+void ln_param_list_free(ln_list *list);
+ln_list *ln_param_list_copy(ln_list *list);
+ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name);
+ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
+                                    const char *arg_name2);
+int ln_param_list_length(ln_list *list);
 const char *ln_param_type_name(ln_param_type type);
+ln_param_entry *ln_param_entry_copy(const ln_param_entry *pe);
 
 #ifdef __cplusplus
 LN_CPPEND

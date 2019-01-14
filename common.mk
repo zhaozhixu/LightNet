@@ -11,7 +11,7 @@ else
 AT = @
 endif
 
-CFLAGS = -Wall
+CFLAGS = -Wall -std=gnu99 -D_GNU_SOURCE
 CXXFLAGS = -std=c++11 -Wall
 CUFLAGS = -m64 -arch=sm_30 -ccbin $(CXX)
 LDFLAGS = $(CFLAGS)
@@ -28,7 +28,7 @@ CUFLAGS += -O3
 LDFLAGS += -O3
 endif
 
-INCPATHS = -I/usr/local/include `pkg-config --cflags tensorlight`
+INCPATHS = -I/usr/local/include -I. `pkg-config --cflags tensorlight`
 LDFLAGS += -L/usr/local/lib -lm `pkg-config --libs tensorlight`
 
 ifeq ($(WITH_CUDA), yes)
@@ -43,6 +43,14 @@ CFLAGS += -DLN_CUDNN
 CXXFLAGS += -DLN_CUDNN
 CUFLAGS += -DLN_CUDNN
 LDFLAGS += -lcudnn
+endif
+ifeq ($(WITH_TENSORRT), yes)
+CFLAGS += -DLN_TENSORRT
+CXXFLAGS += -DLN_TENSORRT
+CUFLAGS += -DLN_TENSORRT
+TENSORRT_INSTALL_DIR ?= /usr
+INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
+LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer
 endif
 endif
 
@@ -60,7 +68,7 @@ $(AT)$(CC) -MM -MF $3 -MP -MT $2 $(CFLAGS) $1
 endef
 
 define make-depend-cxx
-$(AT)$(CXX) -MM -MF $3 -MP -MT $2 $(CFLAGS) $1
+$(AT)$(CXX) -MM -MF $3 -MP -MT $2 $(CXXFLAGS) $1
 endef
 
 define make-depend-cu

@@ -3,14 +3,25 @@ include ../common.mk
 
 TARGET ?= lightnet
 TARGET_BIN = $(TARGET)
+LIBTARGET_A = lib$(TARGET).a
 
 SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
 SRC += $(wildcard *.cc)
 SRC += $(wildcard *.cu)
-NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu,$(SRC))
+SRC += $(wildcard op/*.c)
+SRC += $(wildcard op/*.cc)
+SRC += $(wildcard op/*.cu)
+SRC += $(wildcard op/auto/*.c)
+SRC += $(wildcard op/auto/*.cc)
+SRC += $(wildcard op/auto/*.cu)
+SRC += $(wildcard arch/*.c)
+SRC += $(wildcard arch/*.cc)
+SRC += $(wildcard arch/*.cu)
+NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu %tensorrt.c %tensorrt.cc,$(SRC))
 CUDA_SRC = $(filter %cuda.c %cuda.cu,$(SRC))
 CUDNN_SRC = $(filter %cudnn.c %cudnn.cu,$(SRC))
+TENSORRT_SRC = $(filter %tensorrt.c %tensorrt.cc,$(SRC))
 
 OBJDIR = obj
 OBJS   = $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(NORMAL_SRC)))
@@ -23,37 +34,52 @@ ifeq ($(WITH_CUDNN), yes)
 OBJS  += $(patsubst %.cu,$(OBJDIR)/%.o,$(filter %.cu,$(CUDNN_SRC)))
 OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDNN_SRC)))
 endif
+ifeq ($(WITH_TENSORRT), yes)
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(TENSORRT_SRC)))
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(TENSORRT_SRC)))
+endif
 endif
 
-.PHONY: all bin clean
-all: bin
+define make-obj-dir
+$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/op/auto; \
+mkdir -p $(OBJDIR)/arch; fi
+endef
+
+.PHONY: all bin liba clean
+all: bin liba
 
 bin: $(OBJDIR)/$(TARGET_BIN)
 
+liba: $(OBJDIR)/$(LIBTARGET_A)
+
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
-	$(ECHO) Linking: $^
+	$(ECHO) Linking: $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 
+$(OBJDIR)/$(LIBTARGET_A): $(OBJS)
+	$(ECHO) Packing: $@
+	$(AT)$(AR) $@ $^
+
 $(OBJDIR)/%.o: %.c
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-c,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling: $<
 	$(AT)$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cpp
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling: $<
 	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cc
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling: $<
 	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cu
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-cu,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling CUDA: $<
 	$(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
@@ -63,4 +89,7 @@ clean:
 
 ifneq "$(MAKECMDGOALS)" "clean"
 -include $(OBJDIR)/*.d
+-include $(OBJDIR)/op/*.d
+-include $(OBJDIR)/op/auto/*.d
+-include $(OBJDIR)/arch/*.d
 endif

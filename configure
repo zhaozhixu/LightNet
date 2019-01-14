@@ -8,19 +8,22 @@ Usage: $0 [<option>[=<value>]...]
 Generate configuration makefile for building LightNet.
 
 options:
-  -h, --help                 print this information
-  --target=<name>            target name, default is lightnet
-  --abbr=<abbr>              abbreviation name, default is ln
-  --build-dir=<path>         building directory, default is build
-  --install-dir=<path>       installation directory, default is /usr/local
-  --pkgconfig-dir=<path>     pkgconfig directory, default is
-                             /usr/local/lib/pkgconfig
-  --with-cuda=<value>        set to yes if build with CUDA, default is no
-  --with-cudnn=<value>       set to yes if build with cudnn library,
-                             default is no
-  --cuda-install-dir=<path>  cuda installation directory, default is
-                             /usr/local/cuda
-  --debug=<value>            set to yes when debugging, default is no
+  -h, --help                     print this information
+  --target=<name>                target name, default is lightnet
+  --abbr=<abbr>                  abbreviation name, default is ln
+  --build-dir=<path>             building directory, default is build
+  --install-dir=<path>           installation directory, default is /usr/local
+  --pkgconfig-dir=<path>         pkgconfig directory, default is
+                                 /usr/local/lib/pkgconfig
+  --with-cuda=<value>            set to yes if build with CUDA, default is no
+  --with-cudnn=<value>           set to yes if build with cudnn library,
+                                 default is no
+  --cuda-install-dir=<path>      cuda installation directory, default is
+                                 /usr/local/cuda
+  --with-tensorrt=<value>        set to yes if build with TensorRT, default is no
+  --tensorrt-install-dir=<path>  tensorrt installation directory, default is
+                                 /usr
+  --debug=<value>                set to yes when debugging, default is no
 EOF
 
 # default options, go in config.mk
@@ -33,29 +36,31 @@ my %opts = (
             "WITH_CUDA" => "no",
             "WITH_CUDNN" => "no",
             "CUDA_INSTALL_DIR" => "/usr/local/cuda",
+            "WITH_TENSORRT" => "no",
+            "TENSORRT_INSTALL_DIR" => "/usr",
             "DEBUG" => "no",
            );
 
 # parse arguments
 while (@ARGV > 0) {
-  my $arg = shift @ARGV;
-  if ($arg eq "-h" or $arg eq "--help") {
-    print $usage;
-    exit;
-  }
-  if (not $arg =~ /^--(\S+)$/) {
-    &err_exit("wrong format in argument \"$arg\"");
-  }
-  my ($opt, $value) = split /=/, $1;
-  if (not defined $value or $value eq "") {
-    &err_exit("option \"$arg\" doesn't have a value");
-  }
-  $opt =~ s/(\S+)/\U$1/gi;
-  $opt =~ s/-/_/g;
-  if (not exists $opts{$opt}) {
-    &err_exit("invalid option \"$arg\"");
-  }
-  $opts{$opt} = $value;
+    my $arg = shift @ARGV;
+    if ($arg eq "-h" or $arg eq "--help") {
+        print $usage;
+        exit;
+    }
+    if (not $arg =~ /^--(\S+)$/) {
+        &err_exit("wrong format in argument \"$arg\"");
+    }
+    my ($opt, $value) = split /=/, $1;
+    if (not defined $value or $value eq "") {
+        &err_exit("option \"$arg\" doesn't have a value");
+    }
+    $opt =~ s/(\S+)/\U$1/gi;
+    $opt =~ s/-/_/g;
+    if (not exists $opts{$opt}) {
+        &err_exit("invalid option \"$arg\"");
+    }
+    $opts{$opt} = $value;
 }
 
 # check configuration
@@ -63,41 +68,48 @@ while (@ARGV > 0) {
 my $output;
 $output = `gcc --version`;
 if (!defined $output or $output eq "") {
-  &err_exit("gcc not installed");
+    &err_exit("gcc not installed");
 }
 
 $output = `make --version`;;
 if (!defined $output or $output eq "") {
-  &err_exit("make not installed");
+    &err_exit("make not installed");
 }
 
 $output = `pkg-config --version`;;
 if (!defined $output or $output eq "") {
-  &err_exit("pkg-config not installed");
+    &err_exit("pkg-config not installed");
 }
 
 $output = `pkg-config --modversion check`;
 if (!defined $output or $output eq "") {
-  &err_exit("check not installed");
+    &err_exit("check not installed");
 }
 
 $output = `pkg-config --modversion tensorlight`;
 if (!defined $output or $output eq "") {
-  &err_exit("tensorlight not installed");
+    &err_exit("tensorlight not installed");
 }
 
 if ($opts{WITH_CUDNN} eq "yes") {
-  if (not $opts{WITH_CUDA} eq "yes") {
-    $opts{WITH_CUDA} = "yes";
-    print ("automatically set --with-cuda=yes\n");
-  }
+    if (not $opts{WITH_CUDA} eq "yes") {
+        $opts{WITH_CUDA} = "yes";
+        print ("automatically set --with-cuda=yes\n");
+    }
+}
+
+if ($opts{WITH_TENSORRT} eq "yes") {
+    if (not $opts{WITH_CUDA} eq "yes") {
+        $opts{WITH_CUDA} = "yes";
+        print ("automatically set --with-cuda=yes\n");
+    }
 }
 
 if ($opts{WITH_CUDA} eq "yes") {
-  $output = `nvcc --version`;;
-  if (!defined $output or $output eq "") {
-    &err_exit("nvcc not installed");
-  }
+    $output = `nvcc --version`;;
+    if (!defined $output or $output eq "") {
+        &err_exit("nvcc not installed");
+    }
 }
 
 # get current version
@@ -125,7 +137,8 @@ MINOR = $minor
 MICRO = $micro
 EOF
 foreach my $key (sort keys %opts) {
-  $config_str .= "$key ?= $opts{$key}\n";
+    $config_str .= "$key ?= $opts{$key}\n";
+    print "$key = $opts{$key}\n";
 }
 my $conf_file = "config.mk";
 open my $conf_fh, '>', $conf_file or die "Cannot open $conf_file: $!";
@@ -134,7 +147,7 @@ close $conf_fh;
 
 # subroutines
 sub err_exit {
-  my $msg = $_[0];
-  print STDERR "Error: $msg\n";
-  exit 1;
+    my $msg = $_[0];
+    print STDERR "Error: $msg\n";
+    exit 1;
 }

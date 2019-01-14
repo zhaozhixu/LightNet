@@ -1,0 +1,42 @@
+{
+    "ops": [
+        {
+            "optype": "print",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+            ]
+        },
+        {
+            "optype": "print_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+            ],
+            "run": "tl_tensor_print(src, NULL);"
+        },
+        {
+            "optype": "print_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+            ],
+            "run": "tl_tensor_print_cuda(src, NULL);"
+        }
+    ]
+}

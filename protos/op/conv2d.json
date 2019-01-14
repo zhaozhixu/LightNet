@@ -1,0 +1,138 @@
+{
+    "ops": [
+        {
+            "optype": "conv2d",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                // [batch, channel, height, width]
+                {"arg_name": "src", "mtype": "LN_MEM_NONE", "ndim": 4},
+                // [group, output_channel, input_channel, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_NONE", "ndim": 5,
+                 "check": "weight->dims[2] == src->dims[1], \"`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`\""},
+                {"arg_name": "bias", "mtype": "LN_MEM_NONE", "ndim": 1,
+                 "check": "bias->dims[0] == weight->dims[1], \"`bias` should have the size of the 2nd dimision of `weight`\""}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*4);
+dst_dims[0] = src->dims[0];
+dst_dims[1] = weight->dims[1];
+dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+''',
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "check": "group == weight->dims[0], \"`group` should be equal to the 1st dimension of `weight`\""},
+                // [height, width]
+                {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimensions of `weight`\""},
+                // [height, width]
+                {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                // [top, left, bottom, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1}
+            ]
+        },
+        {
+            "optype": "conv2d_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                // [batch, channel, height, width]
+                {"arg_name": "src", "mtype": "LN_MEM_CPU", "ndim": 4},
+                // [group, output_channel, input_channel, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_CPU", "ndim": 5,
+                 "check": "weight->dims[2] == src->dims[1], \"`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`\""},
+                {"arg_name": "bias", "mtype": "LN_MEM_CPU", "ndim": 1,
+                 "check": "bias->dims[0] == weight->dims[1], \"`bias` should have the size of the 2nd dimision of `weight`\""}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*4);
+dst_dims[0] = src->dims[0];
+dst_dims[1] = weight->dims[1];
+dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+''',
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "check": "group == weight->dims[0], \"`group` should be equal to the 1st dimension of `weight`\""},
+                // [height, width]
+                {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimensions of `weight`\""},
+                // [height, width]
+                {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                // [top, left, bottom, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1}
+            ],
+            "run": ""
+        },
+        {
+            "optype": "conv2d_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                // [batch, channel, height, width]
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA", "ndim": 4},
+                // [group, output_channel, input_channel, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_CUDA", "ndim": 5,
+                 "check": "weight->dims[2] == src->dims[1], \"`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`\""},
+                {"arg_name": "bias", "mtype": "LN_MEM_CUDA", "ndim": 1,
+                 "check": "bias->dims[0] == weight->dims[1], \"`bias` should have the size of the 2nd dimision of `weight`\""}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": '''
+dst_dims = ln_alloc(sizeof(int)*4);
+dst_dims[0] = src->dims[0];
+dst_dims[1] = weight->dims[1];
+dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+''',
+                 "cleanup": "ln_free(dst_dims);"}
+            ],
+            "params": [
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "check": "group == weight->dims[0], \"`group` should be equal to the 1st dimension of `weight`\""},
+                // [height, weight]
+                {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "check": "size[0] == weight->dims[3] && size[1] == weight->dims[4], \"`size` should be equal to the last two dimensions of `weight`\""},
+                // [height, weight]
+                {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                // [top, left, bottom, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [height, weight]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,}
+            ],
+            "run": ""
+        }
+    ]
+}

@@ -1,0 +1,82 @@
+{
+    "ops": [
+        {
+            "optype": "testop",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE", "static": true,
+                 "check": "src->ndim == 4, \"`src` should be a 4-dimensional tensor\""},
+                {"arg_name": "scales", "mtype": "LN_MEM_NONE", "dtype": "TL_FLOAT",
+                 "sameshape": "src", "sametype": "src", "static": false, "custom": "asdf;\nasdf;\n"},
+                {"arg_name": "bias", "mtype": "LN_MEM_NONE",
+                 "checks": [
+                     {"check": "bias->ndim == 1, \"`bias` should be a 1-dimensional tensor\""},
+                     {"check": "bias->dims[0] == weight->dims[1], \"`bias` should have the size of the number of output feature map (the second dimision of `weight`)\""}
+                 ]
+                }
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dims": "src->dims", "dtype": "src->dtype"},
+                {"arg_name": "dst2", "mtype": "LN_MEM_NONE", "custom": "asdf;\nasdf",
+                 "ndim": "src->ndim", "custom": "ndim = src->dim;\ndims = src->dims;\ndtype = src->dtype", "dtype": "src->dtype", "cleanup": "clean!!;"}
+            ],
+            "params": [
+                {"arg_name": "mode", "ptype": "LN_PARAM_STRING"},
+                {"arg_name": "test", "ptype": "LN_PARAM_ARRAY_NUMBER", "realtype": "double", "len": 4},
+                {"arg_name": "test2", "ptype": "LN_PARAM_BOOL", "realtype": "double",
+                 "check": "axis == -1 || (axis >= 0 && axis < src_entry->tensor->dims[src_entry->tensor->ndim-1]), \"`axis` should be -1 or match the dimisions of `src`\""},
+                {"arg_name": "elew_op", "ptype": "LN_PARAM_ARRAY_STRING", "realtype": "tl_elew_op",
+                 "from_func": "tl_elew_op_from_str"}
+            ],
+            "checks": [
+                {"check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
+                {"check": "1, \"test1\""},
+                {"check": "1, \"test2\""}
+            ],
+            "custom": "custom;\nasdf;\nasdf;",
+            "static_run": "static_run;",
+            "run": "run!;",
+            "post_run": "post_run;"
+        },
+        {
+            "optype": "testop_cpu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU", "static": true,
+                 "check": "src->ndim == 4, \"`src` should be a 4-dimensional tensor\""},
+                {"arg_name": "scales", "mtype": "LN_MEM_CPU", "dtype": "TL_FLOAT",
+                 "sameshape": "src", "sametype": "src", "static": false, "custom": "asdf;\nasdf;\n"},
+                {"arg_name": "bias", "mtype": "LN_MEM_CPU",
+                 "checks": [
+                     {"check": "bias->ndim == 1, \"`bias` should be a 1-dimensional tensor\""},
+                     {"check": "bias->dims[0] == weight->dims[1], \"`bias` should have the size of the number of output feature map (the second dimision of `weight`)\""}
+                 ]
+                }
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dims": "src->dims", "dtype": "src->dtype"},
+                {"arg_name": "dst2", "mtype": "LN_MEM_CPU", "custom": "asdf;\nasdf",
+                 "ndim": "src->ndim", "custom": "ndim = src->dim;\ndims = src->dims;\ndtype = src->dtype", "dtype": "src->dtype", "cleanup": "clean!!;"}
+            ],
+            "params": [
+                {"arg_name": "mode", "ptype": "LN_PARAM_STRING"},
+                {"arg_name": "test", "ptype": "LN_PARAM_ARRAY_NUMBER", "realtype": "double", "len": 4},
+                {"arg_name": "test2", "ptype": "LN_PARAM_BOOL", "realtype": "double",
+                 "check": "axis == -1 || (axis >= 0 && axis < src_entry->tensor->dims[src_entry->tensor->ndim-1]), \"`axis` should be -1 or match the dimisions of `src`\""},
+                {"arg_name": "elew_op", "ptype": "LN_PARAM_ARRAY_STRING", "realtype": "tl_elew_op",
+                 "from_func": "tl_elew_op_from_str"}
+            ],
+            "checks": [
+                {"check": "size[0] == weight_entry->tensor->dims[3] && size[1] == weight_entry->tensor->dims[4], \"`size` should match the last two dimensions of `weight`\""},
+                {"check": "1, \"test1\""},
+                {"check": "1, \"test2\""}
+            ],
+            "custom": "custom;\nasdf;\nasdf;",
+            "static_run": "static_run;",
+            "run": "run!;",
+            "post_run": "post_run;"
+        }
+    ]
+}

@@ -26,148 +26,205 @@
 /* return the list with appended element (a new list if list == NULL) */
 ln_list *ln_list_append(ln_list *list, void *data)
 {
-     ln_list *l;
+    ln_list *l;
 
-     if (!list) {
-          l = (ln_list *)ln_alloc(sizeof(ln_list));
-          l->data = data;
-          l->next = NULL;
-          return l;
-     }
-     for (l = list; l->next; l = l->next)
-          ;
-     l->next = (ln_list *)ln_alloc(sizeof(ln_list));
-     l->next->data = data;
-     l->next->next = NULL;
-     return list;
+    if (!list) {
+        l = (ln_list *)ln_alloc(sizeof(ln_list));
+        l->data = data;
+        l->next = NULL;
+        return l;
+    }
+    for (l = list; l->next; l = l->next)
+        ;
+    l->next = (ln_list *)ln_alloc(sizeof(ln_list));
+    l->next->data = data;
+    l->next->next = NULL;
+    return list;
 }
 
 /* return the list with prepended element (a new list if list == NULL) */
 ln_list *ln_list_prepend(ln_list *list, void *data)
 {
-     ln_list *l;
+    ln_list *l;
 
-     if (!list) {
-          l = (ln_list *)ln_alloc(sizeof(ln_list));
-          l->data = data;
-          l->next = NULL;
-          return l;
-     }
+    if (!list) {
+        l = (ln_list *)ln_alloc(sizeof(ln_list));
+        l->data = data;
+        l->next = NULL;
+        return l;
+    }
 
-     l = (ln_list *)ln_alloc(sizeof(ln_list));
-     l->data = data;
-     l->next = list;
-     return l;
+    l = (ln_list *)ln_alloc(sizeof(ln_list));
+    l->data = data;
+    l->next = list;
+    return l;
 }
 
 void ln_list_free(ln_list *list)
 {
-     ln_list *tmp, *l;
+    ln_list *tmp, *l;
 
-     for (l = list; l;) {
-          tmp = l->next;
-          ln_free(l);
-          l = tmp;
-     }
+    for (l = list; l;) {
+        tmp = l->next;
+        ln_free(l);
+        l = tmp;
+    }
 }
 
 void ln_list_free_deep(ln_list *list, void (*free_func)(void *))
 {
-     ln_list *tmp, *l;
+    ln_list *tmp, *l;
 
-     for (l = list; l;) {
-          tmp = l->next;
-          free_func(l->data);
-          ln_free(l);
-          l = tmp;
-     }
+    for (l = list; l;) {
+        tmp = l->next;
+        free_func(l->data);
+        ln_free(l);
+        l = tmp;
+    }
 }
 
 /* return the nth element in list, or NULL if the position is off the end of list */
 ln_list *ln_list_nth(ln_list *list, int n)
 {
-     ln_list *l;
-     int pos;
+    ln_list *l;
+    int pos;
 
-     for (l = list, pos = 0; l; l = l->next, pos++)
-          if (pos == n)
-               return l;
-     return NULL;
+    for (l = list, pos = 0; l; l = l->next, pos++)
+        if (pos == n)
+            return l;
+    return NULL;
 }
 
 void *ln_list_nth_data(ln_list *list, int n)
 {
-     ln_list *l;
-     l = ln_list_nth(list, n);
-     return l ? l->data : NULL;
+    ln_list *l;
+    l = ln_list_nth(list, n);
+    return l ? l->data : NULL;
 }
 
 ln_list *ln_list_remove(ln_list *list, void *data)
 {
-     ln_list **lp;
-     ln_list *tmp;
+    ln_list **lp;
+    ln_list *tmp;
 
-     for (lp = &list; *lp; lp = &(*lp)->next) {
-          if ((*lp)->data == data) {
-               tmp = *lp;
-               *lp = tmp->next;
-               ln_free(tmp);
-               break;
-          }
-     }
-     return list;
+    for (lp = &list; *lp; lp = &(*lp)->next) {
+        if ((*lp)->data == data) {
+            tmp = *lp;
+            *lp = tmp->next;
+            ln_free(tmp);
+            break;
+        }
+    }
+    return list;
 }
 
 ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp)
 {
-     ln_list **lp;
-     ln_list *tmp;
+    ln_list **lp;
+    ln_list *tmp;
 
-     for (lp = &list; *lp; lp = &(*lp)->next) {
-          if (cmp((*lp)->data, data) == 0) {
-               tmp = *lp;
-               *lp = tmp->next;
-               ln_free(tmp);
-               break;
-          }
-     }
-     return list;
+    for (lp = &list; *lp; lp = &(*lp)->next) {
+        if (cmp((*lp)->data, data) == 0) {
+            tmp = *lp;
+            *lp = tmp->next;
+            ln_free(tmp);
+            break;
+        }
+    }
+    return list;
+}
+
+ln_list *ln_list_remove_custom_deep(ln_list *list, void *data, ln_cmp_func cmp,
+                                    void (*free_func)(void *))
+{
+    ln_list **lp;
+    ln_list *tmp;
+
+    for (lp = &list; *lp; lp = &(*lp)->next) {
+        if (cmp((*lp)->data, data) == 0) {
+            tmp = *lp;
+            *lp = tmp->next;
+            free_func(tmp->data);
+            ln_free(tmp);
+            break;
+        }
+    }
+    return list;
+}
+
+ln_list *ln_list_remove_all_custom_deep(ln_list *list, void *data,
+                                        ln_cmp_func cmp,
+                                        void (*free_func)(void *))
+{
+    ln_list **lp;
+    ln_list *tmp;
+
+    for (lp = &list; *lp;) {
+        if (cmp((*lp)->data, data) == 0) {
+            tmp = *lp;
+            *lp = tmp->next;
+            free_func(tmp->data);
+            ln_free(tmp);
+            continue;
+        }
+        lp = &(*lp)->next;
+    }
+    return list;
 }
 
 ln_list *ln_list_remove_nth(ln_list *list, int n)
 {
-     ln_list **lp;
-     ln_list *tmp;
-     int i;
+    ln_list **lp;
+    ln_list *tmp;
+    int i;
 
-     for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
-          if (i == n) {
-               tmp = *lp;
-               *lp = tmp->next;
-               ln_free(tmp);
-               break;
-          }
-     }
-     return list;
+    for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
+        if (i == n) {
+            tmp = *lp;
+            *lp = tmp->next;
+            ln_free(tmp);
+            break;
+        }
+    }
+    return list;
 }
 
 ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
                                  void (*free_func)(void *))
 {
-     ln_list **lp;
-     ln_list *tmp;
-     int i;
+    ln_list **lp;
+    ln_list *tmp;
+    int i;
 
-     for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
-          if (i == n) {
-               tmp = *lp;
-               *lp = tmp->next;
-               free_func(tmp->data);
-               ln_free(tmp);
-               break;
-          }
-     }
-     return list;
+    for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
+        if (i == n) {
+            tmp = *lp;
+            *lp = tmp->next;
+            free_func(tmp->data);
+            ln_free(tmp);
+            break;
+        }
+    }
+    return list;
+}
+
+ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *llink)
+{
+    ln_list **lp;
+
+    if (!llink)
+        return ln_list_append(list, data);
+
+    for (lp = &list; *lp; lp = &(*lp)->next) {
+        if (*lp == llink) {
+            *lp = ln_alloc(sizeof(ln_list));
+            (*lp)->data = data;
+            (*lp)->next = llink;
+            break;
+        }
+    }
+
+    return list;
 }
 
 /*
@@ -177,90 +234,102 @@ ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
  */
 ln_list *ln_list_insert_nth(ln_list *list, void *data, int n)
 {
-     ln_list **lp;
-     ln_list *tmp;
-     int i;
+    ln_list **lp;
+    ln_list *tmp;
+    int i;
 
-     if (n < 0)
-          return ln_list_append(list, data);
+    if (n < 0)
+        return ln_list_append(list, data);
 
-     for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
-          if (i == n) {
-               tmp = *lp;
-               *lp = (ln_list *)ln_alloc(sizeof(ln_list));
-               (*lp)->data = data;
-               (*lp)->next = tmp;
-               break;
-          }
-     }
+    for (i = 0, lp = &list; *lp; lp = &(*lp)->next, i++) {
+        if (i == n) {
+            tmp = *lp;
+            *lp = ln_alloc(sizeof(ln_list));
+            (*lp)->data = data;
+            (*lp)->next = tmp;
+            break;
+        }
+    }
 
-     if (!*lp)
-          *lp = ln_list_append(NULL, data);
+    if (!*lp)
+        *lp = ln_list_append(NULL, data);
 
-     return list;
+    return list;
 }
 
 void *ln_list_find(ln_list *list, void *data)
 {
-     ln_list *l;
+    ln_list *l;
 
-     for (l = list; l; l = l->next)
-          if (data == l->data)
-               return l->data;
-     return NULL;
+    for (l = list; l; l = l->next)
+        if (data == l->data)
+            return l->data;
+    return NULL;
 }
 
 void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)
 {
-     ln_list *l;
+    ln_list *l;
 
-     for (l = list; l; l = l->next)
-          if (cmp(data, l->data) == 0)
-               return l->data;
-     return NULL;
+    for (l = list; l; l = l->next)
+        if (cmp(l->data, data) == 0)
+            return l->data;
+    return NULL;
+}
+
+ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)
+{
+    ln_list *l;
+    ln_list *res = NULL;
+
+    for (l = list; l; l = l->next) {
+        if (cmp(l->data, data) == 0)
+            res = ln_list_prepend(res, l->data);
+    }
+    return res;
 }
 
 int ln_list_position(ln_list *list, ln_list *llink)
 {
-     ln_list *l;
-     int i;
+    ln_list *l;
+    int i;
 
-     for (i = 0, l = list; l; l = l->next, i++)
-          if (l == llink)
-               return i;
-     return -1;
+    for (i = 0, l = list; l; l = l->next, i++)
+        if (l == llink)
+            return i;
+    return -1;
 }
 
 int ln_list_index(ln_list *list, void *data)
 {
-     ln_list *l;
-     int i;
+    ln_list *l;
+    int i;
 
-     for (i = 0, l = list; l; l = l->next, i++)
-          if (l->data == data)
-               return i;
-     return -1;
+    for (i = 0, l = list; l; l = l->next, i++)
+        if (l->data == data)
+            return i;
+    return -1;
 }
 
 int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp)
 {
-     ln_list *l;
-     int i;
+    ln_list *l;
+    int i;
 
-     for (i = 0, l = list; l; l = l->next, i++)
-          if (cmp(data, l->data) == 0)
-               return i;
-     return -1;
+    for (i = 0, l = list; l; l = l->next, i++)
+        if (cmp(l->data, data) == 0)
+            return i;
+    return -1;
 }
 
 int ln_list_length(ln_list *list)
 {
-     ln_list *l;
-     int len;
+    ln_list *l;
+    int len;
 
-     for (len = 0, l = list; l; l = l->next, len++)
-          ;
-     return len;
+    for (len = 0, l = list; l; l = l->next, len++)
+        ;
+    return len;
 }
 
 ln_list *ln_list_reverse(ln_list *list)
@@ -281,23 +350,23 @@ ln_list *ln_list_reverse(ln_list *list)
 
 ln_list *ln_list_from_array_size_t(size_t *array, size_t n)
 {
-     ln_list *res;
-     size_t i;
+    ln_list *res;
+    size_t i;
 
-     res = NULL;
-     for (i = 0; i < n; i++)
-          res = ln_list_append(res, (void *)array[i]);
-     return res;
+    res = NULL;
+    for (i = 0; i < n; i++)
+        res = ln_list_append(res, (void *)array[i]);
+    return res;
 }
 
 ln_list *ln_list_copy_size_t(ln_list *list)
 {
-     ln_list *list_cpy;
-     ln_list *l;
+    ln_list *list_cpy;
+    ln_list *l;
 
-     list_cpy = NULL;
-     for (l = list; l; l = l->next)
-          list_cpy = ln_list_append(list_cpy, l->data);
+    list_cpy = NULL;
+    for (l = list; l; l = l->next)
+        list_cpy = ln_list_append(list_cpy, l->data);
 
-     return list_cpy;
+    return list_cpy;
 }

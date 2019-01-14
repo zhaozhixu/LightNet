@@ -38,7 +38,7 @@ endef
 
 .PHONY: all bin test clean info install uninstall
 
-all: bin test
+all: bin
 
 install:
 	$(call make-install-dir)
@@ -61,7 +61,7 @@ uninstall:
 
 info:
 	@echo "Available make targets:"
-	@echo "  all: make executables and tests"
+	@echo "  all: make executables"
 	@echo "  bin: make executables"
 	@echo "  test: make tests"
 	@echo "  install: install executables"

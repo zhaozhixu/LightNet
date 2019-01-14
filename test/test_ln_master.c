@@ -22,11 +22,11 @@
 
 #include "test_lightnet.h"
 
-static void setup(void)
+static void checked_setup(void)
 {
 }
 
-static void teardown(void)
+static void checked_teardown(void)
 {
 }
 
@@ -39,7 +39,7 @@ Suite *make_master_suite(void)
 
      s = suite_create("master");
      tc_master = tcase_create("master");
-     tcase_add_checked_fixture(tc_master, setup, teardown);
+     tcase_add_checked_fixture(tc_master, checked_setup, checked_teardown);
 
 
      /* end of adding tests */

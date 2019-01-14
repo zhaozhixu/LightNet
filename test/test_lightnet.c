@@ -33,15 +33,22 @@ int main(int argc, char **argv)
      SRunner *sr;
 
      sr = srunner_create(make_master_suite());
+     srunner_add_suite(sr, make_util_suite());
+#ifdef LN_CUDA
+     /* srunner_add_suite(sr, make_cuda_suite()); */
+#endif
      srunner_add_suite(sr, make_list_suite());
-     srunner_add_suite(sr, make_error_suite());
+     srunner_add_suite(sr, make_queue_suite());
+     srunner_add_suite(sr, make_graph_suite());
+     srunner_add_suite(sr, make_hash_suite());
+     srunner_add_suite(sr, make_msg_suite());
      srunner_add_suite(sr, make_param_suite());
      srunner_add_suite(sr, make_tensor_suite());
      srunner_add_suite(sr, make_op_suite());
      srunner_add_suite(sr, make_parse_suite());
      srunner_add_suite(sr, make_mem_suite());
-     srunner_add_suite(sr, make_hash_suite());
-     srunner_add_suite(sr, make_optimize_suite());
+     srunner_add_suite(sr, make_pass_suite());
+     srunner_add_suite(sr, make_opimpl_suite());
      /* end of adding suites */
 
      srunner_set_xml (sr, "result/check_output.xml");

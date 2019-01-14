@@ -25,31 +25,42 @@
 
 #include <stdlib.h>
 #include "ln_list.h"
+#include "ln_hash.h"
 
-typedef enum ln_mem_type ln_mem_type;
+/* NOTE: keep this sync with mtype_names and mtype_infos in ln_mem.c */
 enum ln_mem_type {
-     LN_MEM_UNDEFINED,
-     LN_MEM_CPU,
-     LN_MEM_CUDA
+    LN_MEM_NONE = 0,
+    LN_MEM_CPU,
+    LN_MEM_CUDA,
+    LN_MEM_TYPE_SIZE
 };
+typedef enum ln_mem_type ln_mem_type;
 
-typedef struct ln_mem_pool ln_mem_pool;
-struct ln_mem_pool {
-     size_t   size;
-     size_t   align_size;
-     ln_list *mem_blocks;
+typedef struct ln_mem_plan ln_mem_plan;
+
+struct ln_mtype_info {
+    void  *(*alloc_func)(size_t);
+    void   (*free_func)(void *);
+    size_t  max_size;
+    size_t  align_size;
 };
+typedef struct ln_mtype_info ln_mtype_info;
+
+extern const ln_mtype_info ln_mtype_infos[];
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size);
-void ln_mem_pool_free(ln_mem_pool *mem_pool);
-size_t ln_mem_alloc(ln_mem_pool *mem_pool, size_t size);
-void ln_mem_free(ln_mem_pool *mem_pool, size_t addr);
-int ln_mem_exist(ln_mem_pool *mem_pool, size_t addr);
-void ln_mem_dump(ln_mem_pool *mem_pool, FILE *fp);
+const char *ln_mem_type_name(ln_mem_type mtype);
+ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size);
+void ln_mem_plan_free(ln_mem_plan *mem_plan);
+size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size);
+void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr);
+int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr);
+void ln_mem_plan_dump(ln_mem_plan *mem_plan, FILE *fp);
+ln_hash *ln_mem_plan_table_create(void);
+void ln_mem_plan_table_free(ln_hash *mpt);
 
 #ifdef __cplusplus
 LN_CPPEND

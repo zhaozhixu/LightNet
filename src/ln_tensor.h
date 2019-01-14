@@ -25,31 +25,67 @@
 
 #include "tl_tensor.h"
 #include "ln_list.h"
+#include "ln_hash.h"
 #include "ln_mem.h"
 
-typedef struct ln_tensor_entry ln_tensor_entry;
+/* tensor entry used in tensor table */
+/* NOTE: ALWAYS access tensor entry via its name in tensor_table, since the
+   entry may be not the same during passes. It is owned by the tensor_table. */
 struct ln_tensor_entry {
-     char       *name;
-     char       *arg_name;
-     tl_tensor  *tensor;
-     ln_mem_type mtype;
+    char        *name;
+    tl_tensor   *tensor;
+    char        *owner;         /* owner tensor name of the tensor data */
+    char        *creater;       /* name of the creater op */
+    size_t       offset;
+    int          isstatic;
+    ln_mem_type  mtype;
 };
+typedef struct ln_tensor_entry ln_tensor_entry;
 
-typedef ln_list ln_tensor_table;
+/* tensor entry used in op parameter */
+struct ln_tensor_list_entry {
+    char            *name;
+    char            *arg_name;
+    size_t           offset;
+};
+typedef struct ln_tensor_list_entry ln_tensor_list_entry;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
-					const char *name, ln_mem_type mtype,
-                                        tl_tensor *tensor);
-void ln_tensor_table_free(ln_tensor_table *table);
-ln_tensor_entry *ln_tensor_table_find_by_arg_name(ln_tensor_table *table,
-						  char *arg_name);
-ln_tensor_entry *ln_tensor_table_find_by_name(ln_tensor_table *table,
-					      char *name);
-int ln_tensor_table_length(ln_tensor_table *table);
+ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
+                                                  const char *name);
+void ln_tensor_list_entry_free(ln_tensor_list_entry *entry);
+ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
+                               const char *name);
+void ln_tensor_list_free(ln_list *list);
+ln_list *ln_tensor_list_copy(ln_list *list);
+char *ln_tensor_list_find_name(ln_list *list, const char *arg_name);
+ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list,
+                                                      const char *arg_name);
+ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
+                                                  const char *name);
+int ln_tensor_list_length(ln_list *list);
+
+ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);
+void ln_tensor_entry_free(ln_tensor_entry *entry);
+void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry);
+void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
+                               char *direct_owner);
+void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater);
+
+/*
+ * When removing-tensor or inserting-different-tensor-with-same-name
+ * or freeing-table happens, tensor_table will free the table entry and
+ * the tensor, but not free the tensor->data.
+ * We should always insert tensors with NULL data.
+ */
+ln_hash *ln_tensor_table_create(void);
+int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry);
+int ln_tensor_table_remove(ln_hash *table, const char *name);
+ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);
+void ln_tensor_table_free(ln_hash *table);
 
 #ifdef __cplusplus
 LN_CPPEND

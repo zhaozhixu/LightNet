@@ -23,93 +23,183 @@
 #include "ln_tensor.h"
 #include "ln_util.h"
 
-static ln_tensor_entry *ln_tensor_entry_create(const char *name, const char *arg_name,
-                                               ln_mem_type mtype, tl_tensor *tensor)
+ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
+                                                  const char *name)
 {
-     ln_tensor_entry *entry;
+    ln_tensor_list_entry *entry;
 
-     entry = ln_alloc(sizeof(ln_tensor_entry));
-     entry->name = ln_alloc(sizeof(char)*(strlen(name)+1));
-     strcpy(entry->name, name);
-     entry->arg_name = ln_alloc(sizeof(char)*(strlen(arg_name)+1));
-     strcpy(entry->arg_name, arg_name);
-     entry->mtype = mtype;
-     entry->tensor = tensor;
-
-     return entry;
+    entry = ln_alloc(sizeof(ln_tensor_list_entry));
+    entry->arg_name = ln_strdup(arg_name);
+    entry->name = ln_strdup(name);
+    entry->offset = 0;
+    return entry;
 }
 
-static void ln_tensor_entry_free(ln_tensor_entry *entry)
+void ln_tensor_list_entry_free(ln_tensor_list_entry *entry)
 {
-     ln_free(entry->name);
-     ln_free(entry->arg_name);
-     ln_free(entry);
+    ln_free(entry->arg_name);
+    ln_free(entry->name);
+    ln_free(entry);
 }
 
-ln_tensor_table *ln_tensor_table_append(ln_tensor_table *table, const char *arg_name,
-					const char *name, ln_mem_type mtype,
-                                        tl_tensor *tensor)
+static void list_entry_free_wrapper(void *entry)
 {
-     ln_tensor_entry *entry;
-
-     entry = ln_tensor_entry_create(name, arg_name, mtype, tensor);
-     table = ln_list_append(table, entry);
-     return table;
+    ln_tensor_list_entry_free(entry);
 }
 
-static void tensor_entry_free_wrapper(void *p)
+ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name,
+                               const char *name)
 {
-     ln_tensor_entry_free(p);
+    ln_tensor_list_entry *entry;
+
+    entry = ln_tensor_list_entry_create(arg_name, name);
+    list = ln_list_append(list, entry);
+    return list;
 }
 
-void ln_tensor_table_free(ln_tensor_table *table)
+void ln_tensor_list_free(ln_list *list)
 {
-     ln_list_free_deep(table, tensor_entry_free_wrapper);
+    ln_list_free_deep(list, list_entry_free_wrapper);
 }
 
-static int find_by_arg_name(void *data1, void *data2)
+ln_list *ln_tensor_list_copy(ln_list *list)
 {
-     ln_tensor_entry *t1, *t2;
+    ln_list *new_list = NULL;
+    ln_tensor_list_entry *entry;
 
-     t1 = (ln_tensor_entry *)data1;
-     t2 = (ln_tensor_entry *)data2;
-     return strcmp(t1->arg_name, t2->arg_name);
+    LN_LIST_FOREACH(entry, list) {
+        new_list = ln_tensor_list_append(new_list, entry->arg_name, entry->name);
+    }
+    return new_list;
 }
 
-ln_tensor_entry *ln_tensor_table_find_by_arg_name(ln_tensor_table *table,
-						  char *arg_name)
+static int cmp_by_arg_name(const void *data1, const void *data2)
 {
-     ln_tensor_entry cmp_entry;
-     ln_tensor_entry *result_entry;
+    const ln_tensor_list_entry *e1 = data1;
+    const ln_tensor_list_entry *e2 = data2;
 
-     cmp_entry.arg_name = arg_name;
-     result_entry = ln_list_find_custom(table, &cmp_entry, find_by_arg_name);
-
-     return result_entry;
+    return strcmp(e1->arg_name, e2->arg_name);
 }
 
-static int find_by_name(void *data1, void *data2)
+static int cmp_by_name(const void *data1, const void *data2)
 {
-     ln_tensor_entry *t1, *t2;
+    const ln_tensor_list_entry *e1 = data1;
+    const ln_tensor_list_entry *e2 = data2;
 
-     t1 = (ln_tensor_entry *)data1;
-     t2 = (ln_tensor_entry *)data2;
-     return strcmp(t1->name, t2->name);
+    return strcmp(e1->name, e2->name);
 }
 
-ln_tensor_entry *ln_tensor_table_find_by_name(ln_tensor_table *table,
-					      char *name)
+char *ln_tensor_list_find_name(ln_list *list, const char *arg_name)
 {
-     ln_tensor_entry cmp_entry;
-     ln_tensor_entry *result_entry;
+    ln_tensor_list_entry cmp_entry;
+    ln_tensor_list_entry *result_entry;
 
-     cmp_entry.name = name;
-     result_entry = ln_list_find_custom(table, &cmp_entry, find_by_name);
-
-     return result_entry;
+    cmp_entry.arg_name = (char *)arg_name;
+    result_entry = ln_list_find_custom(list, &cmp_entry, cmp_by_arg_name);
+    if (!result_entry)
+        return NULL;
+    return result_entry->name;
 }
 
-int ln_tensor_table_length(ln_tensor_table *table)
+ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list,
+                                                      const char *arg_name)
 {
-     return ln_list_length(table);
+    ln_tensor_list_entry cmp_entry;
+
+    cmp_entry.arg_name = (char *)arg_name;
+    return ln_list_find_custom(list, &cmp_entry, cmp_by_arg_name);
+}
+
+ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
+                                                  const char *name)
+{
+    ln_tensor_list_entry cmp_entry;
+
+    cmp_entry.name = (char *)name;
+    return ln_list_find_custom(list, &cmp_entry, cmp_by_name);
+}
+
+int ln_tensor_list_length(ln_list *list)
+{
+    return ln_list_length(list);
+}
+
+ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)
+{
+    ln_tensor_entry *entry;
+
+    entry = ln_alloc(sizeof(ln_tensor_entry));
+    entry->name = ln_strdup(name);
+    entry->tensor = tensor;
+    entry->owner = NULL;
+    entry->creater = NULL;
+    entry->offset = 0;
+    entry->isstatic = 0;
+    entry->mtype = LN_MEM_NONE;
+
+    return entry;
+}
+
+void ln_tensor_entry_free(ln_tensor_entry *entry)
+{
+    ln_free(entry->name);
+    ln_free(entry->owner);
+    ln_free(entry->creater);
+    ln_free(entry);
+}
+
+void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)
+{
+    ln_free(entry->name);
+    tl_tensor_free(entry->tensor);
+    ln_free(entry);
+}
+
+static void tensor_entry_free_tensor_too_wrapper(void *p)
+{
+    ln_tensor_entry_free_tensor_too(p);
+}
+
+void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
+                               char *direct_owner)
+{
+    ln_tensor_entry *te;
+
+    assert(entry->name != direct_owner);
+
+    te = ln_tensor_table_find(tensor_table, direct_owner);
+    while (te->owner)
+        te = ln_tensor_table_find(tensor_table, te->owner);
+    entry->owner = ln_strdup(te->name);
+}
+
+void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)
+{
+    entry->creater = ln_strdup(creater);
+}
+
+ln_hash *ln_tensor_table_create(void)
+{
+    return ln_hash_create(ln_str_hash, ln_str_cmp, NULL,
+                          tensor_entry_free_tensor_too_wrapper);
+}
+
+int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry)
+{
+    return ln_hash_insert(table, entry->name, entry);
+}
+
+int ln_tensor_table_remove(ln_hash *table, const char *name)
+{
+    return ln_hash_remove(table, (char *)name);
+}
+
+ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name)
+{
+    return ln_hash_find(table, (char *)name);
+}
+
+void ln_tensor_table_free(ln_hash *table)
+{
+    ln_hash_free(table);
 }
