@@ -647,25 +647,11 @@ static void add_batchnorm_weight(ln_op_arg *trt_arg, ln_op_arg *bn2scale_arg,
     }
 }
 
-static ln_op *op_create_by_optype(const ln_op *op, const char *new_optype)
-{
-    ln_op *new_op_proto;
-    ln_op *new_op;
-
-    new_op_proto = ln_hash_find(LN_ARCH.op_proto_table, new_optype);
-    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name,
-                                     ln_tensor_list_copy(op->op_arg->tensors_in),
-                                     ln_tensor_list_copy(op->op_arg->tensors_out),
-                                     ln_param_list_copy(op->op_arg->params),
-                                     op->op_arg->tensor_table);
-    return new_op;
-}
-
 static ln_list *simple_replace(const ln_op *op, const char *new_optype)
 {
     ln_op *new_op;
 
-    new_op = op_create_by_optype(op, new_optype);
+    new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table, op, new_optype);
     return ln_list_append(NULL, new_op);
 }
 

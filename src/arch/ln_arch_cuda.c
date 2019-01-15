@@ -21,7 +21,6 @@
  */
 
 #include "ln_arch.h"
-#include "ln_tensorrt.h"
 
 extern ln_op ln_opimpl_create_cuda;
 extern ln_op ln_opimpl_conv2d_cuda;

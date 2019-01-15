@@ -44,13 +44,13 @@ static void print_usage_exit(void)
     const char *usage = "\
 Usage: lightnet [OPTION...] SOURCE\n\
 Apply compilation procedures to SOURCE according to the options.\n\
-When SOURCE is -, read standard input.\n\
+If SOURCE is -, read standard input.\n\
 \n\
 Options:\n\
   -h, --help             display this message\n\
   -v, --version          display version information\n\
-  -o, --outfile=FILE     specify output file name; when FILE is -, print to\n\
-                         standard output; when FILE is !, do not print\n\
+  -o, --outfile=FILE     specify output file name; if FILE is -, print to\n\
+                         standard output; if FILE is !, do not print;\n\
                          (default: out.json)\n\
   -t, --target=TARGET    specify target platform (default: cpu)\n\
   -c, --compile          compile only; do not run\n\

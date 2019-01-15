@@ -1,4 +1,5 @@
-A light weight neural network frontend framework for different software/hardware backends. The first version is still under development.
+A light weight neural network frontend framework for different software/hardware
+backends. The first version is still under development.
 
 ## Getting Started
 
@@ -13,7 +14,8 @@ sudo apt-get install build-essential perl git pkg-config check
 #### Build with CUDA
 If you want to build with CUDA support, you also have to install CUDA 8.0
 (or later) according to their website [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
-Remember to put `nvcc` (usually in `/usr/local/cuda/bin`) in environment variable `PATH`.
+Remember to put `nvcc` (usually in `/usr/local/cuda/bin`) in environment
+variable `PATH`.
 
 #### Build with cuDNN
 If you want to build with cuDNN support, you also have to install CUDA 8.0 
