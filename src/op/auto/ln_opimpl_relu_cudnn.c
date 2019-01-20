@@ -31,7 +31,7 @@ struct priv_s {
     cudnnTensorDescriptor_t     src_desc;
     cudnnTensorDescriptor_t     dst_desc;
     cudnnActivationDescriptor_t activation_desc;
-    ln_cudnn_context            cudnn_context;
+    ln_cudnn_context           *cudnn_context;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -111,7 +111,9 @@ static void relu_cudnn_static_run(ln_op_arg *op_arg)
         priv->dst_desc = ln_cudnn_tensor_nchw_init(dst);
         LN_CUDNN_CK(cudnnCreateActivationDescriptor(&priv->activation_desc));
         LN_CUDNN_CK(cudnnSetActivationDescriptor(priv->activation_desc,
-                                                 CUDNN_ACTIVATION_RELU));
+                                                 CUDNN_ACTIVATION_RELU,
+                                                 CUDNN_NOT_PROPAGATE_NAN,
+                                                 0));
     }
 }
 

@@ -1,0 +1,28 @@
+site_name: LightNet
+
+nav:
+  - Home: index.md
+  - Getting Started: Getting-Started.md
+  - Hacking: Hacking.md
+
+repo_url: https://github.com/zhaozhixu/LightNet
+
+site_dir: build/doc/lightnet
+
+use_directory_urls: false
+
+theme:
+  name: mkdocs
+  hightlightjs: false
+
+markdown_extensions:
+  - toc:
+      permalink: true
+  - codehilite:
+      guess_lang: false
+  - extra
+  - attr_list
+  - def_list
+
+extra_css:
+  - css/codehilite.css

@@ -29,6 +29,10 @@ extern ln_arch ln_arch_cpu;
 extern ln_arch ln_arch_cuda;
 #endif
 
+#ifdef LN_CUDNN
+extern ln_arch ln_arch_cudnn;
+#endif
+
 #ifdef LN_TENSORRT
 extern ln_arch ln_arch_tensorrt;
 #endif

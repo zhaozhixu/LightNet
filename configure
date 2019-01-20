@@ -2,6 +2,7 @@
 
 use warnings;
 use strict;
+use Sort::strverscmp;
 
 my $usage = <<EOF;
 Usage: $0 [<option>[=<value>]...]
@@ -9,21 +10,18 @@ Generate configuration makefile for building LightNet.
 
 options:
   -h, --help                     print this information
-  --target=<name>                target name, default is lightnet
-  --abbr=<abbr>                  abbreviation name, default is ln
-  --build-dir=<path>             building directory, default is build
-  --install-dir=<path>           installation directory, default is /usr/local
-  --pkgconfig-dir=<path>         pkgconfig directory, default is
-                                 /usr/local/lib/pkgconfig
-  --with-cuda=<value>            set to yes if build with CUDA, default is no
-  --with-cudnn=<value>           set to yes if build with cudnn library,
-                                 default is no
-  --cuda-install-dir=<path>      cuda installation directory, default is
-                                 /usr/local/cuda
-  --with-tensorrt=<value>        set to yes if build with TensorRT, default is no
-  --tensorrt-install-dir=<path>  tensorrt installation directory, default is
-                                 /usr
-  --debug=<value>                set to yes when debugging, default is no
+  --target=<name>                target name [lightnet]
+  --abbr=<abbr>                  abbreviation name [ln]
+  --build-dir=<path>             building directory [build]
+  --install-dir=<path>           installation directory [/usr/local]
+  --pkgconfig-dir=<path>         pkgconfig directory [/usr/local/lib/pkgconfig]
+  --with-cuda=<bool>             set to yes if build with CUDA [no]
+  --with-cudnn=<bool>            set to yes if build with cudnn library [no]
+  --cuda-install-dir=<path>      cuda installation directory [/usr/local/cuda]
+  --with-tensorrt=<bool>         set to yes if build with TensorRT [no]
+  --tensorrt-install-dir=<path>  tensorrt installation directory [/usr]
+  --debug=<bool>                 set to yes when debugging [no]
+  --doc=<bool>                   set to yes if build the documents too [yes]
 EOF
 
 # default options, go in config.mk
@@ -39,6 +37,7 @@ my %opts = (
             "WITH_TENSORRT" => "no",
             "TENSORRT_INSTALL_DIR" => "/usr",
             "DEBUG" => "no",
+            "DOC" => "yes",
            );
 
 # parse arguments
@@ -112,6 +111,18 @@ if ($opts{WITH_CUDA} eq "yes") {
     }
 }
 
+if ($opts{DOC} eq "yes") {
+    $output = `mkdocs --version`;;
+    if (!defined $output or $output eq "") {
+        &warn_msg("mkdocs is not installed; documents are not going to be built");
+        $opts{DOC} = "no";
+    } elsif (strverscmp(&mkdocs_version($output), "1.0.0") < 0) {
+        my $version = &mkdocs_version($output);
+        &warn_msg("mkdocs requires mininal version 1.0.0, but get $version; documents are not going to be built");
+        $opts{DOC} = "no";
+    }
+}
+
 # get current version
 my $major = 0;
 my $minor = 1;
@@ -145,9 +156,21 @@ open my $conf_fh, '>', $conf_file or die "Cannot open $conf_file: $!";
 print $conf_fh $config_str;
 close $conf_fh;
 
+sub mkdocs_version {
+    my $str = shift;
+    my $version = "";
+    $version = $1 if $str =~ /version (\d\.\d\.\d)/;
+    $version;
+}
+
 # subroutines
 sub err_exit {
     my $msg = $_[0];
-    print STDERR "Error: $msg\n";
+    print STDERR "\e[31mError:\e[0m $msg\n";
     exit 1;
+}
+
+sub warn_msg {
+    my $msg = $_[0];
+    print STDERR "\e[35mWarning:\e[0m $msg\n";
 }

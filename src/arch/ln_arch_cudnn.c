@@ -23,21 +23,11 @@
 #include "ln_arch.h"
 #include "ln_cudnn.h"
 
-extern ln_op ln_opimpl_conv2d_cudnn;
-extern ln_op ln_opimpl_maxpool2d_cudnn;
 extern ln_op ln_opimpl_relu_cudnn;
-extern ln_op ln_opimpl_softmax_cudnn;
-extern ln_op ln_opimpl_batchnorm_cudnn;
-extern ln_op ln_opimpl_sigmoid_cudnn;
 /* end of declare cudnn ops */
 
 static ln_op *ops_cudnn[] = {
-    &ln_opimpl_conv2d_cudnn,
-    &ln_opimpl_maxpool2d_cudnn,
     &ln_opimpl_relu_cudnn,
-    &ln_opimpl_softmax_cudnn,
-    &ln_opimpl_batchnorm_cudnn,
-    &ln_opimpl_sigmoid_cudnn,
 /* end of init cudnn ops */
     NULL
 };

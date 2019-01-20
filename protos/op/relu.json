@@ -52,7 +52,7 @@
                 {"type": "cudnnTensorDescriptor_t", "name": "src_desc"},
                 {"type": "cudnnTensorDescriptor_t", "name": "dst_desc"},
                 {"type": "cudnnActivationDescriptor_t", "name": "activation_desc"},
-                {"type": "ln_cudnn_context", "name": "cudnn_context"},
+                {"type": "ln_cudnn_context *", "name": "cudnn_context"},
             ],
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
@@ -71,7 +71,9 @@ priv->src_desc = ln_cudnn_tensor_nchw_init(src);
 priv->dst_desc = ln_cudnn_tensor_nchw_init(dst);
 LN_CUDNN_CK(cudnnCreateActivationDescriptor(&priv->activation_desc));
 LN_CUDNN_CK(cudnnSetActivationDescriptor(priv->activation_desc,
-                                         CUDNN_ACTIVATION_RELU));
+                                         CUDNN_ACTIVATION_RELU,
+                                         CUDNN_NOT_PROPAGATE_NAN,
+                                         0));
 ''',
             "run": '''
 LN_CUDNN_CK(cudnnActivationForward(priv->cudnn_context->cudnn_handle,
