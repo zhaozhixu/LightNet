@@ -22,8 +22,8 @@ Options:
   -h, --help              print this message
   -d, --dir=DIRECTORY     save operator defination file(s) in DIRECTORY
   -r, --root=ROOT         set project root directory; this option will save
-                          operator defination file(s) in ROOT/src/op, and add
-                          operator declarations and such to
+                          operator defination file(s) in ROOT/src/op/auto, and
+                          add operator declarations and such to
                           ROOT/src/arch/ln_arch_*.c
 Author: Zhao Zhixu
 EOF

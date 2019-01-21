@@ -16,7 +16,7 @@ Usage: $0 [OPTION...] [INFILE]
 Generate JSON-format code from INFILE which is in easy-to-write JSON format.
 Read input from standard input if INFILE is not given.
 
-The differences between two formats:
+The extensions of the latter format:
 1. The last elements in arrays and objects can have a trailing comma.
 2. Comments are supported; every thing from double slashs (//) to the end of
    the line is a comment.

@@ -31,22 +31,27 @@ build LightNet.
 
 * (Optional) CUDA dependency
 
-    If you want to build with CUDA support, you also have to install CUDA 8.0
-    (or later) according to their website [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
+    You also have to install CUDA 8.0 (or later) according to its website
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
+    if you want to build with CUDA support.
     Remember to put `nvcc` (usually in `/usr/local/cuda/bin`) in environment
     variable `PATH`.
 
 * (Optional) cuDNN dependency
 
-    If you want to build with cuDNN support, you also have to install CUDA 8.0 
-    (or later) and cuDNN 7.0 (or later) libraries, according to their websites
-    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html).
+    You also have to install CUDA 8.0 (or later) and cuDNN 7.0 (or later)
+    libraries, according to their websites
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and 
+    [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html) 
+    if you want to build with cuDNN support.
 
 * (Optional) TensorRT dependency
 
-    If you want to build with TensorRT support, you also have to install CUDA
-    8.0 (or later) and TensorRT 3.0 (or later) libraries, according to their
-    websites [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html).
+    You also have to install CUDA 8.0 (or later) and TensorRT 3.0 (or later) 
+    libraries, according to their websites
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and 
+    [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
+    if you want to build with TensorRT support.
 
 ### Building and Installation
 
@@ -68,23 +73,23 @@ build LightNet.
     
         ./configure --install-dir=DIR
         
-    to set the installation directory (default is `/usr/local`); use
+    to set the installation directory (default is `/usr/local`). Use
     
         ./configure --with-cuda=yes
         
     if you want to build with CUDA support.
+    
     Detailed `./configure` options can be displayed using `./configure -h`.
 
-    After that, use `make` to compile the library, and optionally, run the tests
-    with `make test` if installed the development dependency. Then
-    `make install` to copy the library files and headers into the installation 
-    directory.
+    After that, use `make` to compile the binaries, and run the test.
+    Finally, use `make install` to install the build directory into
+    the installation directory.
 
 3. Other `make` options
 
     Use `make info` to see other `make` options.
     Especially, you can use `make clean` to clean up the build directory and all
-    object files, and `make uninstall` to remove library files and headers from
+    object files, and `make uninstall` to remove installed files from
     the installation directory.
 
 ## Usage

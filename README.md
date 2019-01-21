@@ -1,85 +1,107 @@
 A light weight neural network frontend framework for different software/hardware
 backends. The first version is still under development.
 
-## Getting Started
+## Overview
 
-### Prerequisites
+LightNet is a lightweight neural network compiler framework for different
+software/hardware backends.
+
+## Installation
+
+### Requirements
+
 The following steps have been tested for Ubuntu 16.04 but should work with
 other distros as well. 
-Required packages can be installed using the following command:
 
-```
-sudo apt-get install build-essential perl git pkg-config check
-```
-#### Build with CUDA
-If you want to build with CUDA support, you also have to install CUDA 8.0
-(or later) according to their website [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
-Remember to put `nvcc` (usually in `/usr/local/cuda/bin`) in environment
-variable `PATH`.
+Most required packages can be installed using the following commands
+(`sudo` permission may be required):
 
-#### Build with cuDNN
-If you want to build with cuDNN support, you also have to install CUDA 8.0 
-(or later) and cuDNN 7.0 (or later) libraries, according to their websites [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
-and [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html).
+    apt-get install build-essential perl git pkg-config check
+    cpan install JSON Sort::strverscmp
 
-#### Build with TensorRT
-If you want to build with TensorRT support, you also have to install CUDA 8.0 
-(or later) and TensorRT 3.0 (or later) libraries, according to their websites [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
-and [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html).
+This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight), a lightweight tensor operation library. Install it according to 
+[its repository](https://github.com/zhaozhixu/TensorLight) before continuing to
+build LightNet.
+
+* (Optional) Packages for building documents
+
+    Use the following commands to install the packages for building documents:
+    
+        apt-get install python3-pip
+        pip3 install mkdocs
+
+* (Optional) CUDA dependency
+
+    If you want to build with CUDA support, you also have to install CUDA 8.0
+    (or later) according to its website [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
+    Remember to put `nvcc` (usually in `/usr/local/cuda/bin`) in environment
+    variable `PATH`.
+
+* (Optional) cuDNN dependency
+
+    If you want to build with cuDNN support, you also have to install CUDA 8.0 
+    (or later) and cuDNN 7.0 (or later) libraries, according to their websites
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html).
+
+* (Optional) TensorRT dependency
+
+    If you want to build with TensorRT support, you also have to install CUDA
+    8.0 (or later) and TensorRT 3.0 (or later) libraries, according to their
+    websites [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html).
 
 ### Building and Installation
-1.  Clone this repository to your local directory.
 
-    ```
-    cd <my_working_directory>
-    git clone https://github.com/zhaozhixu/LightNet.git
-    cd LightNet
-    ```
+1. Clone this repository to your local directory.
 
-2.  Build and install
+        cd <my_working_directory>
+        git clone https://github.com/zhaozhixu/LightNet.git
+        cd LightNet
+
+2. Configure and build
 
     First, configure your installation using:
     
-    ```
-    chmod +x configure
-    ./configure
-    ```
+        chmod +x configure
+        ./configure
+    
     There are options to custom your building and installation process.
     You can append them after `./configure`. For example, use
-    ```
-    ./configure --install-dir=DIR
-    ```
-    to set the installation directory (default is `/usr/local`); use
-    ```
-    ./configure --with-cuda=yes
-    ```
+    
+        ./configure --install-dir=DIR
+        
+    to set the installation directory (default is `/usr/local`). Use
+    
+        ./configure --with-cuda=yes
+        
     if you want to build with CUDA support.
+    
     Detailed `./configure` options can be displayed using `./configure -h`.
 
-    After that, use `make` to compile the library, and optionally, run the tests with
-    `make test`. Then `make install` to copy the library files and headers into 
-    the installation directory, or `sudo make install` if you don't have the
-    permissions with that directory.
+    After that, use `make` to compile the binaries, and run the test.
+    Finally, use `make install` to install the build directory into
+    the installation directory.
 
-3.  Other `make` options
+3. Other `make` options
 
     Use `make info` to see other `make` options.
     Especially, you can use `make clean` to clean up the build directory and all
-    object files, and `make uninstall` to remove library files and headers from
+    object files, and `make uninstall` to remove installed files from
     the installation directory.
 
-### Usage
-After compilation, use `lightnet -h` to learn the usage for this program, as follows.
+## Usage
+After compilation, use `lightnet -h` to learn the usage for this program, as 
+follows.
+
 ```
 Usage: lightnet [OPTION...] SOURCE
 Apply compilation procedures to SOURCE according to the options.
-When SOURCE is -, read standard input.
+If SOURCE is -, read standard input.
 
 Options:
   -h, --help             display this message
   -v, --version          display version information
-  -o, --outfile=FILE     specify output file name; when FILE is -, print to
-                         standard output; when FILE is !, do not print
+  -o, --outfile=FILE     specify output file name; if FILE is -, print to
+                         standard output; if FILE is !, do not print;
                          (default: out.json)
   -t, --target=TARGET    specify target platform (default: cpu)
   -c, --compile          compile only; do not run
@@ -92,4 +114,3 @@ Options:
   -debug                 display debug messages (only works with LN_DEBUG
                          defined when compiling)
 ```
-

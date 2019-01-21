@@ -9,7 +9,13 @@ backends.
 * [Installation](Getting-Started.md#Installation)
 * [Usage](Getting-Started.md#Usage)
 
-## Documents
+## Documentation
+
+* [Project Structure](Documentation/Project-Structure.md)
+* [Building Options](Documentation/Building-Options.md)
+* [Intermediate Representation](Documentation/Intermediate-Representation.md)
+* [Operator Description](Documentation/Operator-Description.md)
+* [Miscellaneous](Documentation/Miscellaneous.md)
 
 ## Hacking
 

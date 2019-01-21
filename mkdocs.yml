@@ -3,6 +3,12 @@ site_name: LightNet
 nav:
   - Home: index.md
   - Getting Started: Getting-Started.md
+  - Documentation:
+      - Project Structure: Documentation/Project-Structure.md
+      - Building Options: Documentation/Building-Options.md
+      - Intermediate Representation: Documentation/Intermediate-Representation.md
+      - Operator Description: Documentation/Operator-Description.md
+      - Miscellaneous: Documentation/Miscellaneous.md
   - Hacking: Hacking.md
 
 repo_url: https://github.com/zhaozhixu/LightNet
@@ -13,15 +19,13 @@ use_directory_urls: false
 
 theme:
   name: mkdocs
-  hightlightjs: false
+  highlightjs: false
 
 markdown_extensions:
   - toc:
       permalink: true
   - codehilite:
       guess_lang: false
-  - extra
-  - attr_list
   - def_list
 
 extra_css:
