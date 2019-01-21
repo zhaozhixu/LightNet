@@ -1,18 +1,23 @@
 # Miscellaneous
 
-## An Easy-to-Write JSON format
+## An Easy-to-Write JSON Format
 
 For the convenience of write JSON format files (operator descriptions, IR etc.)
 used in this project, we add several extensions to the [official JSON format](http://json.org/).
 
 The JSON extensions:
-1. The last elements in arrays and objects can have a trailing comma.
+
+1. The last elements in arrays and objects can have a trailing comma `,`.
 2. Comments are supported; every thing from double slashs `//` to the end of
    the line is a comment.
 3. String values can be heredoc-ed with two triple qoutes `'''`, each in a
    seperated line, between which special characters can be auto-escaped,
-   such as newlines, qoutes, etc. The triple qoutes must be at the end of a
+   such as newlines, qoutes`"`, etc. The triple qoutes must be at the end of a
    line except that the ending qoutes can have a comma following them.
+   
+JSON files using above extensions can be easily transformed into official JSON 
+files with [easyjson.pl](Tools#easyjson.pl)
+
 
 ## Tools
 
@@ -42,7 +47,7 @@ You can always get help for a tool by typing `tool_name -h`.
 * `easyjson.pm`
 
     A perl module with interfaces for transforming an 
-    [easy-to-write JSON format](Miscellaneous.md#An-Easy-to-Write-JSON-format)
+    [easy-to-write JSON format](Miscellaneous.md#An-Easy-to-Write-JSON-Format)
     file to an official JSON form file.
 
 * `genwts.pl`
