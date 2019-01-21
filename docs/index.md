@@ -5,9 +5,9 @@ backends.
 
 ## Getting Started
 
-* [Overview](Getting-Started.md#Overview)
-* [Installation](Getting-Started.md#Installation)
-* [Usage](Getting-Started.md#Usage)
+* [Overview](Getting-Started.md#overview)
+* [Installation](Getting-Started.md#installation)
+* [Usage](Getting-Started.md#usage)
 
 ## Documentation
 
@@ -19,5 +19,5 @@ backends.
 
 ## Hacking
 
-* [Commit Guidelines](Hacking.md#Commit-Guidelines)
-* [Code Conventions](Hacking.md#Code-Conventions)
+* [Commit Guidelines](Hacking.md#commit-guidelines)
+* [Code Conventions](Hacking.md#code-conventions)

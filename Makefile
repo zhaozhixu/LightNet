@@ -46,7 +46,7 @@ $(AT)cp $(OBJ_BIN) $(BUILD_BIN_VERSION)
 endef
 
 define make-doc
-$(AT)mkdocs build -c
+$(AT)mkdocs build -c -d $(BUILD_DOC)
 endef
 
 define make-install

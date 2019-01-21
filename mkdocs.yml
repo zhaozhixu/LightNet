@@ -1,4 +1,5 @@
 site_name: LightNet
+site_dir: build/doc/lightnet
 
 nav:
   - Home: index.md
@@ -12,8 +13,7 @@ nav:
   - Hacking: Hacking.md
 
 repo_url: https://github.com/zhaozhixu/LightNet
-
-site_dir: build/doc/lightnet
+edit_uri: ""
 
 use_directory_urls: false
 

@@ -3,8 +3,8 @@ backends. The first version is still under development.
 
 ## Overview
 
-LightNet is a lightweight neural network compiler framework for different
-software/hardware backends.
+[LightNet](https://zhaozhixu.github.io/LightNet) is a lightweight neural 
+network compiler framework for different software/hardware backends.
 
 ## Installation
 

@@ -70,4 +70,3 @@ commit message. Commit messages should have the following format:
 `typedef struct foo * foo;`
 * As a general rule of thumb, follow the same coding style as the surrounding
 code.
-
