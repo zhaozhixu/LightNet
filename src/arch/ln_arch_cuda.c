@@ -39,6 +39,9 @@ extern ln_op ln_opimpl_upsample_cuda;
 extern ln_op ln_opimpl_maxreduce_arg_cuda;
 extern ln_op ln_opimpl_print_cuda;
 extern ln_op ln_opimpl_sigmoid_cuda;
+extern ln_op ln_opimpl_sort1d_cuda;
+extern ln_op ln_opimpl_arange_cuda;
+extern ln_op ln_opimpl_sort1d_by_key_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -59,6 +62,9 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_maxreduce_arg_cuda,
     &ln_opimpl_print_cuda,
     &ln_opimpl_sigmoid_cuda,
+    &ln_opimpl_sort1d_cuda,
+    &ln_opimpl_sort1d_by_key_cuda,
+    &ln_opimpl_arange_cuda,
 /* end of init cuda ops */
     NULL
 };
@@ -80,6 +86,9 @@ static inline int can_replace(const char *optype)
         ln_streq(optype, "softmax") ||
         ln_streq(optype, "concat") ||
         ln_streq(optype, "upsample") ||
+        ln_streq(optype, "sort1d") ||
+        ln_streq(optype, "sort1d_by_key") ||
+        ln_streq(optype, "arange") ||
         ln_streq(optype, "print"))
         return 1;
     return 0;

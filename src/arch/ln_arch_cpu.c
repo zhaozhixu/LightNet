@@ -40,6 +40,9 @@ extern ln_op ln_opimpl_transpose_cpu;
 extern ln_op ln_opimpl_zeros_cpu;
 extern ln_op ln_opimpl_print_cpu;
 extern ln_op ln_opimpl_sigmoid_cpu;
+extern ln_op ln_opimpl_sort1d_cpu;
+extern ln_op ln_opimpl_arange_cpu;
+extern ln_op ln_opimpl_sort1d_by_key_cpu;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
@@ -62,6 +65,9 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_zeros_cpu,
     &ln_opimpl_print_cpu,
     &ln_opimpl_sigmoid_cpu,
+    &ln_opimpl_sort1d_cpu,
+    &ln_opimpl_sort1d_by_key_cpu,
+    &ln_opimpl_arange_cpu,
 /* end of init cpu ops */
     NULL
 };

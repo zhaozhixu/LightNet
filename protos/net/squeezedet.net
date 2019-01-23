@@ -26,6 +26,13 @@
     concat(src1=out_name##_ex1x1, src2=out_name##_ex3x3 | dst=out_name | \
            axis=1)
 
+#define INPUT_H 384;
+#define INPUT_W 1248;
+#define IMG_H 384
+#define IMG_W 1248
+#define X_SHIFT -20
+#define Y_SHIFT -20
+
 #define CONVOUT_C 108
 #define CLASS_SLICE_C 63
 #define CONF_SLICE_C 9
@@ -36,8 +43,9 @@
 #define OUTPUT_BBOX_SIZE 4
 #define CONVOUT_H 24
 #define CONVOUT_W 78
+#define ANCHOR_NUM 16848
 
-create(| dst=img | dtype=DTYPE, dims=[1, 3, 384, 1248], data=[0]);
+create(| dst=img | dtype=DTYPE, dims=[1, 3, IMG_H, IMG_W], data=[0]);
 conv_relu(img, conv0, 3, 64, 1, 3, 2, 1, 1);
 maxpool2d(src=conv0 | dst=pool0 | size=[3, 3], stride=[2, 2],
           padding=[1, 1, 1, 1]);
@@ -56,20 +64,28 @@ fire(fire6, fire7, 512, 64, 256, 256);
 fire(fire7, fire8, 512, 96, 384, 384);
 fire(fire8, fire9, 768, 96, 384, 384);
 conv(fire9, conv1, 768, CONVOUT_C, 1, 3, 1, 1, 1);
-slice(src=conv1 | dst=slice0 | axis=1, start=0, len=CLASS_SLICE_C);
-slice(src=conv1 | dst=slice1 | axis=1, start=CLASS_SLICE_C, len=CONF_SLICE_C);
-slice(src=conv1 | dst=slice2 | axis=1, start=CLASS_PLUS_CONF_SLICE_C,
+slice(src=conv1 | dst=slice_class | axis=1, start=0, len=CLASS_SLICE_C);
+slice(src=conv1 | dst=slice_conf | axis=1, start=CLASS_SLICE_C, len=CONF_SLICE_C);
+slice(src=conv1 | dst=slice_bbox | axis=1, start=CLASS_PLUS_CONF_SLICE_C,
       len=BBOX_SLICE_C);
-softmax(src=slice0 | dst=softmax0 | axis=1);
-sigmoid(src=slice1 | dst=sigmoid0 |);
-reshape(src=softmax0 | dst=reshape0 |
+softmax(src=slice_class | dst=softmax_class | axis=1);
+sigmoid(src=slice_conf | dst=sigmoid_conf |);
+reshape(src=softmax_class | dst=reshape_class |
         dims=[1, ANCHORS_PER_GRID, OUTPUT_CLS_SIZE, CONVOUT_H, CONVOUT_W]);
-reshape(src=sigmoid0 | dst=reshape1 |
+reshape(src=sigmoid_conf | dst=reshape_conf |
         dims=[1, ANCHORS_PER_GRID, 1, CONVOUT_H, CONVOUT_W]);
-reshape(src=slice2 | dst=reshape2 |
+reshape(src=slice_bbox | dst=reshape_bbox |
         dims=[1, ANCHORS_PER_GRID, OUTPUT_BBOX_SIZE, CONVOUT_H, CONVOUT_W]);
-transpose(src=reshape0 | dst=transpose0 | axes=[0, 3, 4, 1, 2]);
-transpose(src=reshape1 | dst=transpose1 | axes=[0, 3, 4, 1, 2]);
-transpose(src=reshape2 | dst=transpose2 | axes=[0, 3, 4, 1, 2]);
-maxreduce_arg(src=transpose0 | dst=maxreduce_dst, arg=maxreduce_arg | axis=4);
-elew(src1=maxreduce_dst, src2=transpose1 | dst=elew0 | elew_op=TL_MUL);
+transpose(src=reshape_class | dst=transpose_class | axes=[0, 3, 4, 1, 2]);
+transpose(src=reshape_conf | dst=transpose_conf | axes=[0, 3, 4, 1, 2]);
+transpose(src=reshape_bbox | dst=transpose_bbox | axes=[0, 3, 4, 1, 2]);
+maxreduce_arg(src=transpose_class | dst=maxreduce_dst, arg=maxreduce_arg |
+              axis=4);
+elew(src1=maxreduce_dst, src2=transpose_conf | dst=elew0 | elew_op=TL_MUL);
+create(| dst=anchors | dtype=DTYPE,
+       dims=[1, CONVOUT_H, CONVOUT_W, ANCHORS_PER_GRID, 4], data=[0]);
+transform_bboxSQD(delta=transpose_bbox, anchor=anchors | dst=bbox |
+                  width=INPUT_W, height=INPUT_H, img_width=IMG_W,
+                  img_height=IMG_H, x_shift=X_SHIFT, y_shift=Y_SHIFT);
+reshape(src=transpose_conf | dst=reshape_conf1d | dims=[ANCHOR_NUM]);
+sort1d_index(src=reshape_conf1d | dst=sort_conf);

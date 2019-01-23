@@ -12,7 +12,7 @@ backends.
 ## Documentation
 
 * [Project Structure](Documentation/Project-Structure.md)
-* [Building Options](Documentation/Building-Options.md)
+* [Build Options](Documentation/Build-Options.md)
 * [Intermediate Representation](Documentation/Intermediate-Representation.md)
 * [Operator Description](Documentation/Operator-Description.md)
 * [Miscellaneous](Documentation/Miscellaneous.md)

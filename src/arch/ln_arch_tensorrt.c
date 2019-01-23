@@ -54,6 +54,9 @@ static ln_list *ep_upsample(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_zeros(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_sort1d(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_sort1d_by_key(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_arange(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
 
 static ln_hash_init_entry init_ep_funcs[] = {
@@ -76,6 +79,9 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"zeros", ep_zeros},
     {"reshape", ep_reshape},
     {"print", ep_print},
+    {"sort1d", ep_sort1d},
+    {"sort1d_by_key", ep_sort1d_by_key},
+    {"arange", ep_arange},
     {"tensorrt", ep_tensorrt},
     LN_HASH_INIT_ENTRY_NULL
 };
@@ -929,6 +935,24 @@ static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match)
         assert(0 && "print's prev op is either of cpu or tensorrt");
 
     return simple_replace(op, optype);
+}
+
+static ln_list *ep_sort1d(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "sort1d_cuda");
+}
+
+static ln_list *ep_sort1d_by_key(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "sort1d_by_key_cuda");
+}
+
+static ln_list *ep_arange(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "arange_cuda");
 }
 
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)

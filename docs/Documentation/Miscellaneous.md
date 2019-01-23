@@ -61,10 +61,6 @@ You can always get help for a tool by typing `tool_name -h`.
     `ROOT/src/op/auto`, and add operator declarations into corresponding
     `ROOT/src/arch/ln_arch_*.c` file.
 
-* `addop_simple.pl`
-
-    Not used now. An old simple script for operator code generation.
-
 * `addtest.pl`
 
     Generate test templates for a module.

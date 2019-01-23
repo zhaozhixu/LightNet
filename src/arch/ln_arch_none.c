@@ -39,6 +39,9 @@ extern ln_op ln_opimpl_upsample;
 extern ln_op ln_opimpl_maxreduce_arg;
 extern ln_op ln_opimpl_print;
 extern ln_op ln_opimpl_sigmoid;
+extern ln_op ln_opimpl_sort1d;
+extern ln_op ln_opimpl_sort1d_by_key;
+extern ln_op ln_opimpl_arange;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -60,6 +63,9 @@ static ln_op *ops_none[] = {
     &ln_opimpl_maxreduce_arg,
     &ln_opimpl_print,
     &ln_opimpl_sigmoid,
+    &ln_opimpl_sort1d,
+    &ln_opimpl_sort1d_by_key,
+    &ln_opimpl_arange,
 /* end of init none ops */
     NULL
 };

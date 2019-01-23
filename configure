@@ -9,7 +9,7 @@ Usage: $0 [<option>[=<value>]...]
 Generate configuration makefile for building LightNet.
 
 options:
-  -h, --help                     print this information
+  -h, --help                     print help information
   --target=<name>                target name [lightnet]
   --abbr=<abbr>                  abbreviation name [ln]
   --build-dir=<path>             building directory [build]
