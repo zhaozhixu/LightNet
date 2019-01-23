@@ -88,4 +88,4 @@ transform_bboxSQD(delta=transpose_bbox, anchor=anchors | dst=bbox |
                   width=INPUT_W, height=INPUT_H, img_width=IMG_W,
                   img_height=IMG_H, x_shift=X_SHIFT, y_shift=Y_SHIFT);
 reshape(src=transpose_conf | dst=reshape_conf1d | dims=[ANCHOR_NUM]);
-sort1d_index(src=reshape_conf1d | dst=sort_conf);
+sort1d_by_key(key=reshape_conf1d | dst=sort_conf);

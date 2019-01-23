@@ -10,8 +10,14 @@
                  "len": "key->len", "dtype": "TL_INT32"},
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_NONE", "owner": "key_name",
-                 "ndim": "key->ndim", "dtype": "key->dtype", "dims": "key->dims"}
+                {"arg_name": "sorted_key", "mtype": "LN_MEM_NONE",
+                 "owner": "key_name",
+                 "ndim": "key->ndim", "dtype": "key->dtype",
+                 "dims": "key->dims"},
+                {"arg_name": "sorted_val", "mtype": "LN_MEM_NONE",
+                 "owner": "val_name",
+                 "ndim": "val->ndim", "dtype": "val->dtype",
+                 "dims": "val->dims"}
             ],
             "params": [
                 {"arg_name": "dir", "ptype": "LN_PARAM_STRING",
@@ -29,8 +35,13 @@
                  "len": "key->len", "dtype": "TL_INT32"},
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_NONE", "owner": "key_name",
-                 "ndim": "key->ndim", "dtype": "key->dtype", "dims": "key->dims"}
+                {"arg_name": "sorted_key", "mtype": "LN_MEM_CPU",
+                 "owner": "key_name",
+                 "ndim": "key->ndim", "dtype": "key->dtype",
+                 "dims": "key->dims"},
+                {"arg_name": "sorted_val", "mtype": "LN_MEM_CPU",
+                 "owner": "val_name",
+                 "ndim": "val->ndim", "dtype": "val->dtype", "dims": "val->dims"}
             ],
             "params": [
                 {"arg_name": "dir", "ptype": "LN_PARAM_STRING",
@@ -49,8 +60,13 @@
                  "len": "key->len", "dtype": "TL_INT32"},
             ],
             "tensors_out": [
-                {"arg_name": "dst", "mtype": "LN_MEM_NONE", "owner": "key_name",
-                 "ndim": "key->ndim", "dtype": "key->dtype", "dims": "key->dims"}
+                {"arg_name": "sorted_key", "mtype": "LN_MEM_CUDA",
+                 "owner": "key_name",
+                 "ndim": "key->ndim", "dtype": "key->dtype",
+                 "dims": "key->dims"},
+                {"arg_name": "sorted_val", "mtype": "LN_MEM_CUDA",
+                 "owner": "val_name",
+                 "ndim": "val->ndim", "dtype": "val->dtype", "dims": "val->dims"}
             ],
             "params": [
                 {"arg_name": "dir", "ptype": "LN_PARAM_STRING",
