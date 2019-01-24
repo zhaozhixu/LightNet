@@ -26,8 +26,8 @@
     concat(src1=out_name##_ex1x1, src2=out_name##_ex3x3 | dst=out_name | \
            axis=1)
 
-#define INPUT_H 384;
-#define INPUT_W 1248;
+#define INPUT_H 384
+#define INPUT_W 1248
 #define IMG_H 384
 #define IMG_W 1248
 #define X_SHIFT -20
@@ -44,6 +44,8 @@
 #define CONVOUT_H 24
 #define CONVOUT_W 78
 #define ANCHOR_NUM 16848
+#define ANCHOR_NUMx4 67392
+#define TOP_N_DETECTION 64
 
 create(| dst=img | dtype=DTYPE, dims=[1, 3, IMG_H, IMG_W], data=[0]);
 conv_relu(img, conv0, 3, 64, 1, 3, 2, 1, 1);
@@ -84,8 +86,21 @@ maxreduce_arg(src=transpose_class | dst=maxreduce_dst, arg=maxreduce_arg |
 elew(src1=maxreduce_dst, src2=transpose_conf | dst=elew0 | elew_op=TL_MUL);
 create(| dst=anchors | dtype=DTYPE,
        dims=[1, CONVOUT_H, CONVOUT_W, ANCHORS_PER_GRID, 4], data=[0]);
-transform_bboxSQD(delta=transpose_bbox, anchor=anchors | dst=bbox |
+transform_bboxSQD(src_delta=transpose_bbox, src_anchor=anchors | dst=bbox |
                   width=INPUT_W, height=INPUT_H, img_width=IMG_W,
                   img_height=IMG_H, x_shift=X_SHIFT, y_shift=Y_SHIFT);
+create(| dst=index | dtype=TL_INT32, dims=[ANCHOR_NUM], data=[0]);
+rearange(src=index | dst=index_rearrange | start=0, step=1, stop=ANCHOR_NUM);
 reshape(src=transpose_conf | dst=reshape_conf1d | dims=[ANCHOR_NUM]);
-sort1d_by_key(key=reshape_conf1d | dst=sort_conf);
+sort1d_by_key(src_key=reshape_conf1d, src_val=index_rearrange |
+              dst_key=sort_conf1d, dst_val=sort_index |
+              dir=TL_SORT_DIR_DESCENDING);
+reshape(src=elew0 | dst=elew01d | dims=[ANCHOR_NUM]);
+reshape(src=maxreduce_arg | dst=maxreduce_arg1d | dims=[ANCHOR_NUM]);
+reshape(src=bbox | dst=bbox1d | dims=[ANCHOR_NUMx4]);
+pick1d(src=elew01d, src_index=sort_index | dst=final_prob | len=TOP_N_DETECTION,
+       stride=1);
+pick1d(src=maxreduce_arg1d, src_index=sort_index | dst=final_class |
+       len=TOP_N_DETECTION, stride=1);
+pick1d(src=bbox1d, src_index=sort_index | dst=final_bbox |
+       len=TOP_N_DETECTION, stride=OUTPUT_BBOX_SIZE);

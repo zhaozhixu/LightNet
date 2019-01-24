@@ -188,6 +188,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                 ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
                                ln_mem_type_name(te->mtype), tle->name,
                                tl_tensor_size(te->tensor), te->offset);
+                use_count_zero(use_counts, te->name);
                 continue;
             }
             if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
@@ -201,8 +202,8 @@ void ln_pass_mem_plan(ln_context *ctx)
                 use_count_inc(use_counts, te->owner);
                 continue;
             }
-            if (te->isstatic)
-                continue;
+            /* if (te->isstatic) */
+            /*     continue; */
             use_count_inc(use_counts, te->name);
         }
     }
@@ -252,12 +253,16 @@ void ln_pass_mem_plan(ln_context *ctx)
             if (te->owner) {
                 if (use_count_dec(use_counts, te->owner) == 0) {
                     te = ln_tensor_table_find(arg->tensor_table, te->owner);
+                    if (te->isstatic)
+                        continue;
                     ln_mem_plan_dealloc(mp, te->offset);
                 }
                 continue;
             }
-            if (te->isstatic)
+            if (te->isstatic) {
+                use_count_dec(use_counts, te->name);
                 continue;
+            }
             if (use_count_dec(use_counts, te->name) == 0) {
                 ln_mem_plan_dealloc(mp, te->offset);
             }

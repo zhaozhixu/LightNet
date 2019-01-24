@@ -42,6 +42,9 @@ extern ln_op ln_opimpl_sigmoid;
 extern ln_op ln_opimpl_sort1d;
 extern ln_op ln_opimpl_sort1d_by_key;
 extern ln_op ln_opimpl_arange;
+extern ln_op ln_opimpl_transform_bboxSQD;
+extern ln_op ln_opimpl_rearange;
+extern ln_op ln_opimpl_pick1d;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -66,6 +69,9 @@ static ln_op *ops_none[] = {
     &ln_opimpl_sort1d,
     &ln_opimpl_sort1d_by_key,
     &ln_opimpl_arange,
+    &ln_opimpl_transform_bboxSQD,
+    &ln_opimpl_rearange,
+    &ln_opimpl_pick1d,
 /* end of init none ops */
     NULL
 };

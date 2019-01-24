@@ -5,19 +5,19 @@
             "author": "Zhao Zhixu",
             "arch": "none",
             "tensors_in": [
-                {"arg_name": "key", "mtype": "LN_MEM_NONE", "ndim": 1},
-                {"arg_name": "val", "mtype": "LN_MEM_NONE", "ndim": 1,
-                 "len": "key->len", "dtype": "TL_INT32"},
+                {"arg_name": "src_key", "mtype": "LN_MEM_NONE", "ndim": 1},
+                {"arg_name": "src_val", "mtype": "LN_MEM_NONE", "ndim": 1,
+                 "len": "src_key->len", "dtype": "TL_INT32"},
             ],
             "tensors_out": [
-                {"arg_name": "sorted_key", "mtype": "LN_MEM_NONE",
-                 "owner": "key_name",
-                 "ndim": "key->ndim", "dtype": "key->dtype",
-                 "dims": "key->dims"},
-                {"arg_name": "sorted_val", "mtype": "LN_MEM_NONE",
-                 "owner": "val_name",
-                 "ndim": "val->ndim", "dtype": "val->dtype",
-                 "dims": "val->dims"}
+                {"arg_name": "dst_key", "mtype": "LN_MEM_NONE",
+                 "owner": "src_key_name",
+                 "ndim": "src_key->ndim", "dtype": "src_key->dtype",
+                 "dims": "src_key->dims"},
+                {"arg_name": "dst_val", "mtype": "LN_MEM_NONE",
+                 "owner": "src_val_name",
+                 "ndim": "src_val->ndim", "dtype": "src_val->dtype",
+                 "dims": "src_val->dims"}
             ],
             "params": [
                 {"arg_name": "dir", "ptype": "LN_PARAM_STRING",
@@ -30,18 +30,19 @@
             "author": "Zhao Zhixu",
             "arch": "cpu",
             "tensors_in": [
-                {"arg_name": "key", "mtype": "LN_MEM_CPU", "ndim": 1},
-                {"arg_name": "val", "mtype": "LN_MEM_CPU", "ndim": 1,
-                 "len": "key->len", "dtype": "TL_INT32"},
+                {"arg_name": "src_key", "mtype": "LN_MEM_CPU", "ndim": 1},
+                {"arg_name": "src_val", "mtype": "LN_MEM_CPU", "ndim": 1,
+                 "len": "src_key->len", "dtype": "TL_INT32"},
             ],
             "tensors_out": [
-                {"arg_name": "sorted_key", "mtype": "LN_MEM_CPU",
-                 "owner": "key_name",
-                 "ndim": "key->ndim", "dtype": "key->dtype",
-                 "dims": "key->dims"},
-                {"arg_name": "sorted_val", "mtype": "LN_MEM_CPU",
-                 "owner": "val_name",
-                 "ndim": "val->ndim", "dtype": "val->dtype", "dims": "val->dims"}
+                {"arg_name": "dst_key", "mtype": "LN_MEM_CPU",
+                 "owner": "src_key_name",
+                 "ndim": "src_key->ndim", "dtype": "src_key->dtype",
+                 "dims": "src_key->dims"},
+                {"arg_name": "dst_val", "mtype": "LN_MEM_CPU",
+                 "owner": "src_val_name",
+                 "ndim": "src_val->ndim", "dtype": "src_val->dtype",
+                 "dims": "src_val->dims"}
             ],
             "params": [
                 {"arg_name": "dir", "ptype": "LN_PARAM_STRING",
@@ -55,25 +56,26 @@
             "author": "Zhao Zhixu",
             "arch": "cuda",
             "tensors_in": [
-                {"arg_name": "key", "mtype": "LN_MEM_CUDA", "ndim": 1},
-                {"arg_name": "val", "mtype": "LN_MEM_CUDA", "ndim": 1,
-                 "len": "key->len", "dtype": "TL_INT32"},
+                {"arg_name": "src_key", "mtype": "LN_MEM_CUDA", "ndim": 1},
+                {"arg_name": "src_val", "mtype": "LN_MEM_CUDA", "ndim": 1,
+                 "len": "src_key->len", "dtype": "TL_INT32"},
             ],
             "tensors_out": [
-                {"arg_name": "sorted_key", "mtype": "LN_MEM_CUDA",
-                 "owner": "key_name",
-                 "ndim": "key->ndim", "dtype": "key->dtype",
-                 "dims": "key->dims"},
-                {"arg_name": "sorted_val", "mtype": "LN_MEM_CUDA",
-                 "owner": "val_name",
-                 "ndim": "val->ndim", "dtype": "val->dtype", "dims": "val->dims"}
+                {"arg_name": "dst_key", "mtype": "LN_MEM_CUDA",
+                 "owner": "src_key_name",
+                 "ndim": "src_key->ndim", "dtype": "src_key->dtype",
+                 "dims": "src_key->dims"},
+                {"arg_name": "dst_val", "mtype": "LN_MEM_CUDA",
+                 "owner": "src_val_name",
+                 "ndim": "src_val->ndim", "dtype": "src_val->dtype",
+                 "dims": "src_val->dims"}
             ],
             "params": [
                 {"arg_name": "dir", "ptype": "LN_PARAM_STRING",
                  "from_func": "tl_sort_dir_from_str", "realtype": "int",
                  "check": "dir != -1, \"'dir' should be a supported tl_sort_dir\""}
             ],
-            "run": "tl_tensor_sort1d_by_key_cuda(key, val, dir);"
+            "run": "tl_tensor_sort1d_by_key_cuda(src_key, src_val, dir);"
         },
     ]
 }

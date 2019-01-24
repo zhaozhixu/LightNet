@@ -25,30 +25,38 @@
 #include "ln_arch.h"
 
 struct priv_s {
-    ln_tensor_entry *key_entry;
-    ln_tensor_entry *val_entry;
-    ln_tensor_entry *dst_entry;
+    ln_tensor_entry *src_key_entry;
+    ln_tensor_entry *src_val_entry;
+    ln_tensor_entry *dst_key_entry;
+    ln_tensor_entry *dst_val_entry;
     ln_param_entry  *dir_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
 static void sort1d_by_key_cpu_pre_run(ln_op_arg *op_arg)
 {
-    char                 *key_name;
-    ln_tensor_list_entry *key_list_entry;
-    ln_tensor_entry      *key_entry;
-    tl_tensor            *key;
-    char                 *val_name;
-    ln_tensor_list_entry *val_list_entry;
-    ln_tensor_entry      *val_entry;
-    tl_tensor            *val;
-    char                 *dst_name;
-    ln_tensor_list_entry *dst_list_entry;
-    ln_tensor_entry      *dst_entry;
-    tl_tensor            *dst;
-    int                   dst_ndim;
-    int                  *dst_dims;
-    tl_dtype              dst_dtype;
+    char                 *src_key_name;
+    ln_tensor_list_entry *src_key_list_entry;
+    ln_tensor_entry      *src_key_entry;
+    tl_tensor            *src_key;
+    char                 *src_val_name;
+    ln_tensor_list_entry *src_val_list_entry;
+    ln_tensor_entry      *src_val_entry;
+    tl_tensor            *src_val;
+    char                 *dst_key_name;
+    ln_tensor_list_entry *dst_key_list_entry;
+    ln_tensor_entry      *dst_key_entry;
+    tl_tensor            *dst_key;
+    int                   dst_key_ndim;
+    int                  *dst_key_dims;
+    tl_dtype              dst_key_dtype;
+    char                 *dst_val_name;
+    ln_tensor_list_entry *dst_val_list_entry;
+    ln_tensor_entry      *dst_val_entry;
+    tl_tensor            *dst_val;
+    int                   dst_val_ndim;
+    int                  *dst_val_dims;
+    tl_dtype              dst_val_dtype;
     int                   dir;
     ln_param_entry       *dir_entry;
     int                   tensors_in_n;
@@ -60,36 +68,42 @@ static void sort1d_by_key_cpu_pre_run(ln_op_arg *op_arg)
     tensors_in_n = ln_tensor_list_length(op_arg->tensors_in);
     ln_opck_tensors_in_len_eq(tensors_in_n, 2);
 
-    key_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "key");
-    ln_opck_tensor_in_exist(key_list_entry, "key");
-    key_name = key_list_entry->name;
-    key_entry = ln_tensor_table_find(op_arg->tensor_table, key_name);
-    ln_opck_tensor_defined(key_entry, key_name);
-    key = key_entry->tensor;
-    key = key;
-    ln_opck_tensor_mtype_eq(key_entry, LN_MEM_CPU);
-    ln_opck_tensor_ndim(key_entry, 1);
+    src_key_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src_key");
+    ln_opck_tensor_in_exist(src_key_list_entry, "src_key");
+    src_key_name = src_key_list_entry->name;
+    src_key_entry = ln_tensor_table_find(op_arg->tensor_table, src_key_name);
+    ln_opck_tensor_defined(src_key_entry, src_key_name);
+    src_key = src_key_entry->tensor;
+    src_key = src_key;
+    ln_opck_tensor_mtype_eq(src_key_entry, LN_MEM_CPU);
+    ln_opck_tensor_ndim(src_key_entry, 1);
 
-    val_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "val");
-    ln_opck_tensor_in_exist(val_list_entry, "val");
-    val_name = val_list_entry->name;
-    val_entry = ln_tensor_table_find(op_arg->tensor_table, val_name);
-    ln_opck_tensor_defined(val_entry, val_name);
-    val = val_entry->tensor;
-    val = val;
-    ln_opck_tensor_mtype_eq(val_entry, LN_MEM_CPU);
-    ln_opck_tensor_dtype_eq(val_entry, TL_INT32);
-    ln_opck_tensor_ndim(val_entry, 1);
-    ln_opck_tensor_len(val_entry, key->len);
+    src_val_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "src_val");
+    ln_opck_tensor_in_exist(src_val_list_entry, "src_val");
+    src_val_name = src_val_list_entry->name;
+    src_val_entry = ln_tensor_table_find(op_arg->tensor_table, src_val_name);
+    ln_opck_tensor_defined(src_val_entry, src_val_name);
+    src_val = src_val_entry->tensor;
+    src_val = src_val;
+    ln_opck_tensor_mtype_eq(src_val_entry, LN_MEM_CPU);
+    ln_opck_tensor_dtype_eq(src_val_entry, TL_INT32);
+    ln_opck_tensor_ndim(src_val_entry, 1);
+    ln_opck_tensor_len(src_val_entry, src_key->len);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
-    ln_opck_tensors_out_len_eq(tensors_out_n, 1);
+    ln_opck_tensors_out_len_eq(tensors_out_n, 2);
 
-    dst_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst");
-    ln_opck_tensor_out_exist(dst_list_entry, "dst");
-    dst_name = dst_list_entry->name;
-    dst_entry = ln_tensor_table_find(op_arg->tensor_table, dst_name);
-    ln_opck_tensor_not_defined(dst_entry, dst_name);
+    dst_key_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst_key");
+    ln_opck_tensor_out_exist(dst_key_list_entry, "dst_key");
+    dst_key_name = dst_key_list_entry->name;
+    dst_key_entry = ln_tensor_table_find(op_arg->tensor_table, dst_key_name);
+    ln_opck_tensor_not_defined(dst_key_entry, dst_key_name);
+
+    dst_val_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_out, "dst_val");
+    ln_opck_tensor_out_exist(dst_val_list_entry, "dst_val");
+    dst_val_name = dst_val_list_entry->name;
+    dst_val_entry = ln_tensor_table_find(op_arg->tensor_table, dst_val_name);
+    ln_opck_tensor_not_defined(dst_val_entry, dst_val_name);
 
     params_n = ln_param_list_length(op_arg->params);
     ln_opck_params_len_eq(params_n, 1);
@@ -103,22 +117,34 @@ static void sort1d_by_key_cpu_pre_run(ln_op_arg *op_arg)
     ln_opck_satisfy_msg(dir != -1, "'dir' should be a supported tl_sort_dir");
 
     /* define output tensor shape, tensor data should be NULL */
-    dst_ndim = key->ndim;
-    dst_dims = key->dims;
-    dst_dtype = key->dtype;
-    dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
-    dst_entry = ln_tensor_entry_create(dst_name, dst);
-    dst_entry->offset = dst_list_entry->offset;
-    ln_tensor_entry_set_creater(dst_entry, op_arg->name);
-    ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, key_name);
-    dst_entry->mtype = LN_MEM_NONE;
-    ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
+    dst_key_ndim = src_key->ndim;
+    dst_key_dims = src_key->dims;
+    dst_key_dtype = src_key->dtype;
+    dst_key = tl_tensor_create(NULL, dst_key_ndim, dst_key_dims, dst_key_dtype);
+    dst_key_entry = ln_tensor_entry_create(dst_key_name, dst_key);
+    dst_key_entry->offset = dst_key_list_entry->offset;
+    ln_tensor_entry_set_creater(dst_key_entry, op_arg->name);
+    ln_tensor_entry_set_owner(dst_key_entry, op_arg->tensor_table, src_key_name);
+    dst_key_entry->mtype = LN_MEM_CPU;
+    ln_tensor_table_insert(op_arg->tensor_table, dst_key_entry);
+
+    dst_val_ndim = src_val->ndim;
+    dst_val_dims = src_val->dims;
+    dst_val_dtype = src_val->dtype;
+    dst_val = tl_tensor_create(NULL, dst_val_ndim, dst_val_dims, dst_val_dtype);
+    dst_val_entry = ln_tensor_entry_create(dst_val_name, dst_val);
+    dst_val_entry->offset = dst_val_list_entry->offset;
+    ln_tensor_entry_set_creater(dst_val_entry, op_arg->name);
+    ln_tensor_entry_set_owner(dst_val_entry, op_arg->tensor_table, src_val_name);
+    dst_val_entry->mtype = LN_MEM_CPU;
+    ln_tensor_table_insert(op_arg->tensor_table, dst_val_entry);
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
-    priv->key_entry = key_entry;
-    priv->val_entry = val_entry;
-    priv->dst_entry = dst_entry;
+    priv->src_key_entry = src_key_entry;
+    priv->src_val_entry = src_val_entry;
+    priv->dst_key_entry = dst_key_entry;
+    priv->dst_val_entry = dst_val_entry;
     priv->dir_entry = dir_entry;
     op_arg->priv = priv;
 }
@@ -137,18 +163,20 @@ static void sort1d_by_key_cpu_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
-    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_key_entry->name);
+    ln_tensor_table_remove(op_arg->tensor_table, priv->dst_val_entry->name);
     ln_free(priv);
 }
 
 static const char *in_arg_names[] = {
-    "key",
-    "val",
+    "src_key",
+    "src_val",
     NULL
 };
 
 static const char *out_arg_names[] = {
-    "dst",
+    "dst_key",
+    "dst_val",
     NULL
 };
 

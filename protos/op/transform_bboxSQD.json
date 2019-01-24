@@ -5,16 +5,16 @@
             "author": "Zhao Zhixu",
             "arch": "none",
             "tensors_in": [
-                {"arg_name": "delta", "mtype": "LN_MEM_NONE", "ndim": 5,
+                {"arg_name": "src_delta", "mtype": "LN_MEM_NONE", "ndim": 5,
                  "dtype": "TL_FLOAT",
-                 "check": "delta->dims[4] == 4"},
-                {"arg_name": "anchor", "mtype": "LN_MEM_NONE",
-                 "sametype": "delta", "sameshape": "delta"},
+                 "check": "src_delta->dims[4] == 4"},
+                {"arg_name": "src_anchor", "mtype": "LN_MEM_NONE",
+                 "sametype": "src_delta", "sameshape": "src_delta"},
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
-                 "ndim": "delta->ndim", "dims": "delta->dims",
-                 "dtype": "delta->dtype"}
+                 "ndim": "src_delta->ndim", "dims": "src_delta->dims",
+                 "dtype": "src_delta->dtype"}
             ],
             "params": [
                 {"arg_name": "width", "ptype": "LN_PARAM_NUMBER",
@@ -26,9 +26,9 @@
                 {"arg_name": "img_height", "ptype": "LN_PARAM_NUMBER",
                  "realtype": "int", "gt": 0},
                 {"arg_name": "x_shift", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0},
+                 "realtype": "int"},
                 {"arg_name": "y_shift", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0},
+                 "realtype": "int"},
             ]
         },
         {
@@ -36,16 +36,16 @@
             "author": "Zhao Zhixu",
             "arch": "cpu",
             "tensors_in": [
-                {"arg_name": "delta", "mtype": "LN_MEM_CPU", "ndim": 5,
+                {"arg_name": "src_delta", "mtype": "LN_MEM_CPU", "ndim": 5,
                  "dtype": "TL_FLOAT",
-                 "check": "delta->dims[4] == 4"},
-                {"arg_name": "anchor", "mtype": "LN_MEM_CPU",
-                 "sametype": "delta", "sameshape": "delta"},
+                 "check": "src_delta->dims[4] == 4"},
+                {"arg_name": "src_anchor", "mtype": "LN_MEM_CPU",
+                 "sametype": "src_delta", "sameshape": "src_delta"},
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
-                 "ndim": "delta->ndim", "dims": "delta->dims",
-                 "dtype": "delta->dtype"}
+                 "ndim": "src_delta->ndim", "dims": "src_delta->dims",
+                 "dtype": "src_delta->dtype"}
             ],
             "params": [
                 {"arg_name": "width", "ptype": "LN_PARAM_NUMBER",
@@ -57,9 +57,9 @@
                 {"arg_name": "img_height", "ptype": "LN_PARAM_NUMBER",
                  "realtype": "int", "gt": 0},
                 {"arg_name": "x_shift", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0},
+                 "realtype": "int"},
                 {"arg_name": "y_shift", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0},
+                 "realtype": "int"},
             ],
             "run": ""
         },
@@ -68,16 +68,16 @@
             "author": "Zhao Zhixu",
             "arch": "cuda",
             "tensors_in": [
-                {"arg_name": "delta", "mtype": "LN_MEM_CUDA", "ndim": 5,
+                {"arg_name": "src_delta", "mtype": "LN_MEM_CUDA", "ndim": 5,
                  "dtype": "TL_FLOAT",
-                 "check": "delta->dims[4] == 4"},
-                {"arg_name": "anchor", "mtype": "LN_MEM_CUDA",
-                 "sametype": "delta", "sameshape": "delta"},
+                 "check": "src_delta->dims[4] == 4"},
+                {"arg_name": "src_anchor", "mtype": "LN_MEM_CUDA",
+                 "sametype": "src_delta", "sameshape": "src_delta"},
             ],
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
-                 "ndim": "delta->ndim", "dims": "delta->dims",
-                 "dtype": "delta->dtype"}
+                 "ndim": "src_delta->ndim", "dims": "src_delta->dims",
+                 "dtype": "src_delta->dtype"}
             ],
             "params": [
                 {"arg_name": "width", "ptype": "LN_PARAM_NUMBER",
@@ -89,11 +89,11 @@
                 {"arg_name": "img_height", "ptype": "LN_PARAM_NUMBER",
                  "realtype": "int", "gt": 0},
                 {"arg_name": "x_shift", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0},
+                 "realtype": "int"},
                 {"arg_name": "y_shift", "ptype": "LN_PARAM_NUMBER",
-                 "realtype": "int", "gt": 0},
+                 "realtype": "int"},
             ],
-            "run": "tl_tensor_transform_bboxSQD_cuda(delta, anchor, dst, width, height, img_width, img_height, x_shift, y_shift);"
+            "run": "tl_tensor_transform_bboxSQD_cuda(src_delta, src_anchor, dst, width, height, img_width, img_height, x_shift, y_shift);"
         }
     ]
 }

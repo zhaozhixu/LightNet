@@ -1,0 +1,84 @@
+{
+    "ops": [
+        {
+            "optype": "pick1d",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE", "ndim": 1},
+                {"arg_name": "src_index", "mtype": "LN_MEM_NONE", "ndim": 1,
+                 "dtype": "TL_INT32", "ndim": 1},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": 1, "dtype": "src->dtype",
+                 "custom": '''
+int dims[1];
+dims[0] = len;
+dst_dims = dims;
+'''
+                }
+            ],
+            "params": [
+                {"arg_name": "len", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "le": "src_index->len"},
+                {"arg_name": "stride", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1},
+            ]
+        },
+        {
+            "optype": "pick1d_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU", "ndim": 1},
+                {"arg_name": "src_index", "mtype": "LN_MEM_CPU", "ndim": 1,
+                 "dtype": "TL_INT32", "ndim": 1},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": 1, "dtype": "src->dtype",
+                 "custom": '''
+int dims[1];
+dims[0] = len;
+dst_dims = dims;
+'''
+                }
+            ],
+            "params": [
+                {"arg_name": "len", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "le": "src_index->len"},
+                {"arg_name": "stride", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1},
+            ],
+            "run": ""
+        },
+        {
+            "optype": "pick1d_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA", "ndim": 1},
+                {"arg_name": "src_index", "mtype": "LN_MEM_CUDA", "ndim": 1,
+                 "dtype": "TL_INT32", "ndim": 1},
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "ndim": 1, "dtype": "src->dtype",
+                 "custom": '''
+int dims[1];
+dims[0] = len;
+dst_dims = dims;
+'''
+                }
+            ],
+            "params": [
+                {"arg_name": "len", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "le": "src_index->len"},
+                {"arg_name": "stride", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1},
+            ],
+            "run": "tl_tensor_pick1d_cuda(src, src_index, dst, stride, len);"
+        }
+    ]
+}
