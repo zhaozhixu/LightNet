@@ -22,7 +22,7 @@
 
 #include <getopt.h>
 #include "ln_option.h"
-#include "lightnet.h"
+#include "ln_lightnet.h"
 
 static void print_version_exit(void)
 {

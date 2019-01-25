@@ -146,6 +146,7 @@ my $config_str = <<EOF;
 MAJOR = $major
 MINOR = $minor
 MICRO = $micro
+REQUIRES = tensorlight >= 0.1.0
 EOF
 foreach my $key (sort keys %opts) {
     $config_str .= "$key ?= $opts{$key}\n";

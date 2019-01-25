@@ -20,11 +20,12 @@
  * SOFTWARE.
  */
 
-#ifndef _LIGHTNET_H_
-#define _LIGHTNET_H_
+#ifndef _LN_LIGHTNET_H_
+#define _LN_LIGHTNET_H_
+
+/* end of config defines */
 
 #include "ln_util.h"
-#include "ln_cuda.h"
 #include "ln_list.h"
 #include "ln_queue.h"
 #include "ln_msg.h"
@@ -34,6 +35,9 @@
 #include "ln_param.h"
 #include "ln_tensor.h"
 #include "ln_op.h"
+#include "ln_cuda.h"
+#include "ln_cudnn.h"
+#include "ln_tensorrt.h"
 #include "ln_json.h"
 #include "ln_pass.h"
 #include "ln_arch.h"
@@ -46,4 +50,4 @@
 #define LN_MINOR_VERSION (1)
 #define LN_MICRO_VERSION (0)
 
-#endif  /* _LIGHTNET_H_ */
+#endif  /* _LN_LIGHTNET_H_ */

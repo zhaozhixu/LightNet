@@ -4,6 +4,12 @@ include ../common.mk
 TARGET ?= lightnet
 TARGET_BIN = $(TARGET)
 LIBTARGET_A = lib$(TARGET).a
+LIBTARGET_SO = lib$(TARGET).so
+
+CFLAGS += -fPIC
+CXXFLAGS += -fPIC
+CUFLAGS += --compiler-options '-fPIC' --linker-options '-Wl,--no-undefined -shared' -shared
+LDFLAGS += -shared -Wl,--no-undefined
 
 SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
@@ -45,14 +51,21 @@ $(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/op/auto; \
 mkdir -p $(OBJDIR)/arch; fi
 endef
 
-.PHONY: all bin liba clean
-all: bin liba
+.PHONY: all bin liba libso clean
+
+all: bin liba libso
 
 bin: $(OBJDIR)/$(TARGET_BIN)
 
 liba: $(OBJDIR)/$(LIBTARGET_A)
 
+liba: $(OBJDIR)/$(LIBTARGET_SO)
+
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
+	$(ECHO) Linking: $@
+	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+
+$(OBJDIR)/$(LIBTARGET_SO): $(OBJS)
 	$(ECHO) Linking: $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 

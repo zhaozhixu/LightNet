@@ -26,6 +26,7 @@
 #include <err.h>
 #include <assert.h>
 #include <stdarg.h>
+#include <time.h>
 #include <sys/stat.h>
 
 #include "ln_util.h"
@@ -219,6 +220,24 @@ uint32_t ln_str_hash(const void *key)
 int ln_str_cmp(const void *p1, const void *p2)
 {
     return strcmp(p1, p2);
+}
+
+struct timespec ln_clock(void)
+{
+    struct timespec ts;
+
+    if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == -1) {
+        err(EXIT_FAILURE, "ln_clock(): clock_gettime() failed");
+    }
+    return ts;
+}
+
+double ln_clockdiff(struct timespec t1, struct timespec t2)
+{
+    double tdiff;
+
+    tdiff = t2.tv_sec - t1.tv_sec + (t2.tv_nsec - t1.tv_nsec) * 1e-9;
+    return tdiff;
 }
 
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
