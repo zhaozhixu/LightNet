@@ -224,11 +224,15 @@ int ln_str_cmp(const void *p1, const void *p2)
 
 struct timespec ln_clock(void)
 {
+    clockid_t clockid;
     struct timespec ts;
 
-    if (clock_gettime(CLOCK_MONOTONIC_RAW, &ts) == -1) {
+    if (clock_getcpuclockid(0, &clockid) != 0)
+        err(EXIT_FAILURE, "ln_clock(): clock_getcpuclockid() failed");
+
+    if (clock_gettime(clockid, &ts) == -1)
         err(EXIT_FAILURE, "ln_clock(): clock_gettime() failed");
-    }
+
     return ts;
 }
 

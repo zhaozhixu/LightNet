@@ -9,7 +9,7 @@ LIBTARGET_SO = lib$(TARGET).so
 CFLAGS += -fPIC
 CXXFLAGS += -fPIC
 CUFLAGS += --compiler-options '-fPIC' --linker-options '-Wl,--no-undefined -shared' -shared
-LDFLAGS += -shared -Wl,--no-undefined
+LDFLAGS_SO = $(LDFLAGS) -shared -Wl,--no-undefined
 
 SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
@@ -67,7 +67,7 @@ $(OBJDIR)/$(TARGET_BIN): $(OBJS)
 
 $(OBJDIR)/$(LIBTARGET_SO): $(OBJS)
 	$(ECHO) Linking: $@
-	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+	$(AT)$(CC) -o $@ $^ $(LDFLAGS_SO)
 
 $(OBJDIR)/$(LIBTARGET_A): $(OBJS)
 	$(ECHO) Packing: $@
