@@ -117,16 +117,18 @@ char *ln_read_stdin(void)
     char *p;
     size_t size = 4096;
     size_t read_size;
+    size_t n;
 
     str = ln_alloc(size + 1);
     p = str;
     read_size = size;
     while(1) {
-        fread(p, read_size, 1, stdin);
+        n = fread(p, read_size, 1, stdin);
         if (ferror(stdin))
             err(EXIT_FAILURE, "ln_read_stdin(): read stdin failed");
         if (feof(stdin))
             break;
+        assert(n == 1);
         size <<= 1;
         str = ln_realloc(str, size + 1);
         p = str + (size >> 1);

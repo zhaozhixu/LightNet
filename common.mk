@@ -19,6 +19,8 @@ LDFLAGS = $(CFLAGS)
 ifeq ($(DEBUG), yes)
 CFLAGS += -g -O0 -DLN_DEBUG
 CXXFLAGS += -g -O0 -DLN_DEBUG
+# CFLAGS += -g -O3
+# CXXFLAGS += -g -O3
 CUFLAGS += -lineinfo
 LDFLAGS += -g -O0
 else

@@ -334,7 +334,7 @@ int ln_list_length(ln_list *list)
 
 ln_list *ln_list_reverse(ln_list *list)
 {
-     ln_list *l, *next, *prev;
+     ln_list *l = NULL, *next, *prev;
 
      prev = NULL;
      next = list;

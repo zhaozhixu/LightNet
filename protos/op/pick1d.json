@@ -13,10 +13,10 @@
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "ndim": 1, "dtype": "src->dtype",
                  "custom": '''
-int dims[1];
-dims[0] = len;
-dst_dims = dims;
-'''
+dst_dims = ln_alloc(sizeof(int) * 1);
+dst_dims[0] = len * stride;
+''',
+                 "cleanup": "ln_free(dst_dims);"
                 }
             ],
             "params": [
@@ -39,10 +39,10 @@ dst_dims = dims;
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "ndim": 1, "dtype": "src->dtype",
                  "custom": '''
-int dims[1];
-dims[0] = len;
-dst_dims = dims;
-'''
+dst_dims = ln_alloc(sizeof(int) * 1);
+dst_dims[0] = len * stride;
+''',
+                 "cleanup": "ln_free(dst_dims);"
                 }
             ],
             "params": [
@@ -66,10 +66,10 @@ dst_dims = dims;
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "ndim": 1, "dtype": "src->dtype",
                  "custom": '''
-int dims[1];
-dims[0] = len;
-dst_dims = dims;
-'''
+dst_dims = ln_alloc(sizeof(int) * 1);
+dst_dims[0] = len * stride;
+''',
+                 "cleanup": "ln_free(dst_dims);"
                 }
             ],
             "params": [
