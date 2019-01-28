@@ -28,6 +28,7 @@ struct priv_s {
     ln_tensor_entry *dst_entry;
     ln_param_entry  *dtype_entry;
     ln_param_entry  *dims_entry;
+    ln_param_entry  *ran_entry;
     ln_param_entry  *data_entry;
 };
 
@@ -45,6 +46,8 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     ln_param_entry       *dtype_entry;
     int                  *dims;
     ln_param_entry       *dims_entry;
+    double               *ran;
+    ln_param_entry       *ran_entry;
     double               *data;
     ln_param_entry       *data_entry;
     int                   tensors_in_n;
@@ -66,7 +69,7 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
     params_n = ln_param_list_length(op_arg->params);
-    ln_opck_params_len_eq(params_n, 3);
+    ln_opck_params_len_eq(params_n, 4);
 
     dtype_entry = ln_param_list_find(op_arg->params, "dtype");
     ln_opck_param_exist(dtype_entry, "dtype");
@@ -82,6 +85,14 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     dims = dims_entry->value_array_int;
     ln_opck_param_array_int_gt(dims_entry, 0);
     dims = dims;
+
+    ran_entry = ln_param_list_find(op_arg->params, "ran");
+    ln_opck_param_exist(ran_entry, "ran");
+    ln_opck_param_type(ran_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(ran_entry, 2);
+    ran = ran_entry->value_array_double;
+    ran = ran;
+    ln_opck_satisfy(ran[0] <= ran[1]);
 
     data_entry = ln_param_list_find(op_arg->params, "data");
     ln_opck_param_exist(data_entry, "data");
@@ -106,6 +117,7 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     priv->dst_entry = dst_entry;
     priv->dtype_entry = dtype_entry;
     priv->dims_entry = dims_entry;
+    priv->ran_entry = ran_entry;
     priv->data_entry = data_entry;
     op_arg->priv = priv;
 }
@@ -116,13 +128,20 @@ static void create_cpu_static_run(ln_op_arg *op_arg)
     struct priv_s  *priv = op_arg->priv;
     tl_tensor      *dst = priv->dst_entry->tensor;
     int             dtype = priv->dtype_entry->value_int;
+    double         *ran = priv->ran_entry->value_array_double;
     ln_param_entry *data_entry = priv->data_entry;
     double         *data = priv->data_entry->value_array_double;
 
     {
         size_t size = tl_tensor_size(dst);
         void *data_tmp = ln_alloc(size);
-        if (data[0] == 0 && data_entry->array_len == 1) {
+        if (!(ran[0] == 0 && ran[1] == 0)) {
+            srand(time(NULL));
+            for (int i = 0; i < data_entry->array_len; i++) {
+                double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + 1.;
+                tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &r, TL_DOUBLE);
+            }
+        } else if (data[0] == 0 && data_entry->array_len == 1) {
             memset(data_tmp, 0, size);
         } else {
             for (int i = 0; i < data_entry->array_len; i++)
@@ -154,6 +173,7 @@ static const char *out_arg_names[] = {
 static const char *param_arg_names[] = {
     "dtype",
     "dims",
+    "ran",
     "data",
     NULL
 };

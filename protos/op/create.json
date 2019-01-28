@@ -17,6 +17,8 @@
                  "check": "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "gt": 0},
+                {"arg_name": "ran", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "double", "len": 2, "check": "ran[0] <= ran[1]"},
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double"}
             ]
@@ -38,13 +40,21 @@
                  "check": "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "gt": 0},
+                {"arg_name": "ran", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "double", "len": 2, "check": "ran[0] <= ran[1]"},
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double"}
             ],
             "static_run": '''
 size_t size = tl_tensor_size(dst);
 void *data_tmp = ln_alloc(size);
-if (data[0] == 0 && data_entry->array_len == 1) {
+if (!(ran[0] == 0 && ran[1] == 0)) {
+    srand(time(NULL));
+    for (int i = 0; i < data_entry->array_len; i++) {
+        double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + 1.;
+        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &r, TL_DOUBLE);
+    }
+} else if (data[0] == 0 && data_entry->array_len == 1) {
     memset(data_tmp, 0, size);
 } else {
     for (int i = 0; i < data_entry->array_len; i++)
@@ -71,13 +81,21 @@ ln_free(data_tmp);
                  "check": "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "gt": 0},
+                {"arg_name": "ran", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "double", "len": 2, "check": "ran[0] <= ran[1]"},
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double"}
             ],
             "static_run": '''
 size_t size = tl_tensor_size(dst);
 void *data_tmp = ln_alloc(size);
-if (data[0] == 0 && data_entry->array_len == 1) {
+if (!(ran[0] == 0 && ran[1] == 0)) {
+    srand(time(NULL));
+    for (int i = 0; i < data_entry->array_len; i++) {
+        double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + 1.;
+        tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &r, TL_DOUBLE);
+    }
+} else if (data[0] == 0 && data_entry->array_len == 1) {
     memset(data_tmp, 0, size);
 } else {
     for (int i = 0; i < data_entry->array_len; i++)
