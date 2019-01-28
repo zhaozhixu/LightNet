@@ -14,17 +14,17 @@ Convert the input text file INFILEs containing weight numbers to one text file
 OUTFILE in hexadecimal string format.
 
 A OUTFILE starts with a line of an integer for the number of weight arrays in
-this file. Then each weight array is represented in a line, which has the
-following fields seperated in spaces: a weight name in C identifier syntax,
-an integer for the data type, an integer for the length of the array, and an
-array of hexadecimal words of the machine storage format of the weight numbers.
+this file. Each weight array is represented in a line, which has the following
+fields seperated in spaces: a weight name in C identifier syntax, an integer
+for the data type, an integer for the length of the array, and an array of
+hexadecimal words of the machine storage format of the weights.
 
 The weight name will be the initial part conforming to C identifier syntax
 of the file name of a INFILE. The integer for the data type allows 0 (float),
 1 (half), 2 (int8), set with the `type` option (currently it only supports 0
 and 2). The integer for the length of the array will be the number of weight
-numbers in a INFILE. Weight numbers are literal floating or integer constant
-strings seperated by white spaces and some punctuations.
+numbers in a INFILE. Weights are literal floating or integer constant strings
+seperated by white spaces and some punctuations.
 
 [options]
   -h, --help               print this message
@@ -57,8 +57,8 @@ while (my $infile = shift @ARGV) {
         &warn_msg("$infile doesn't look like a \"text\" file");
         next;
     }
-    my $wname;
-    if ($infile =~ /^(\w+)/) {
+    my $wname = (split '/', $infile)[-1];
+    if ($wname =~ /^(\w+)/) {
         $wname = $1;
     } else {
         &warn_msg("${infile}'s name doesn't start with a prefix conforming to C identifier syntax. Skip it");

@@ -39,7 +39,7 @@ void ln_name_cleanup(void)
     ln_hash_free(name_hash);
 }
 
-const char *ln_unique_name(const char *prefix)
+const char *ln_name_unique(const char *prefix)
 {
     struct name_record *nr;
     char *prefix_copy;

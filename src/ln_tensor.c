@@ -22,6 +22,8 @@
 
 #include "ln_tensor.h"
 #include "ln_util.h"
+#include "ln_msg.h"
+#include "ln_name.h"
 
 ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
                                                   const char *name)
@@ -202,4 +204,88 @@ ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name)
 void ln_tensor_table_free(ln_hash *table)
 {
     ln_hash_free(table);
+}
+
+#define TRT_WEIGHT_ERR(file, fmt, varg...)                    \
+    ln_msg_error("load_trt_weight_file(): invalid weight file %s: "#fmt, \
+                 (file), ##varg)
+#define TRT_WEIGHT_WARN(file, fmt, varg...)                              \
+    ln_msg_warning("load_trt_weight_file(): weight file %s: "#fmt, \
+                   (file), ##varg)
+
+static void next_line(FILE *fp, const char *file)
+{
+    char *p = NULL;
+    size_t n = 0;
+
+    if (getline(&p, &n, fp) < 0)
+        TRT_WEIGHT_ERR(file, "error skip one line");
+    ln_free(p);
+}
+
+void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file)
+{
+    FILE *fp;
+    int count, n;
+    char name[LN_MAX_NAME_LEN];
+    int type, len;
+    ln_tensor_entry *te;
+
+    if (!(fp = fopen(file, "r")))
+        ln_msg_error_sys("trt_weight_err(): cannot open %s", file);
+
+    if ((n = fscanf(fp, "%d", &count)) != 1)
+        TRT_WEIGHT_ERR(file, "error reading count number");
+    if (count < 0)
+        TRT_WEIGHT_ERR(file, "negative count number");
+
+    while (count--) {
+        if ((n = fscanf(fp, "%s", name)) != 1)
+            TRT_WEIGHT_ERR(file, "error reading name");
+        if ((n = fscanf(fp, "%d %d", &type, &len)) != 2)
+            TRT_WEIGHT_ERR(file, "error reading the type and len of weight %s",
+                                     name);
+        if (type < 0)
+            TRT_WEIGHT_ERR(file, "negative type of weight %s", name);
+        if (len < 0)
+            TRT_WEIGHT_ERR(file, "negative len of weight %s", name);
+
+        te = ln_tensor_table_find(table, name);
+        if (!te) {
+            TRT_WEIGHT_WARN(file, "ignore unused weight %s", name);
+            next_line(fp, file);
+            continue;
+        }
+        if (len != te->tensor->len)
+            TRT_WEIGHT_ERR(file, "length of weight %s not match", name);
+
+        switch (type) {
+        case 0:                 /* float */
+            if (te->tensor->dtype != TL_FLOAT)
+                TRT_WEIGHT_ERR(file, "data type of weight %s not match", name);
+            for (int i = 0; i < len; i++) {
+                n = fscanf(fp, "%x", &((uint32_t *)te->tensor->data)[i]);
+                if (n != 1)
+                    TRT_WEIGHT_ERR(file, "error reading weight %s", name);
+            }
+            break;
+        case 1:                 /* half */
+            TRT_WEIGHT_ERR(file, "unsupported type of weight %s", name);
+            break;
+        case 2:                 /* int8 */
+            if (te->tensor->dtype != TL_INT8)
+                TRT_WEIGHT_ERR(file, "data type of weight %s not match", name);
+            for (int i = 0; i < len; i++) {
+                n = fscanf(fp, "%hhx", &((uint8_t *)te->tensor->data)[i]);
+                if (n != 1)
+                    TRT_WEIGHT_ERR(file, "error reading weight %s", name);
+            }
+            break;
+        default:
+            TRT_WEIGHT_ERR(file, "unsupported type of weight %s", name);
+            break;
+        }
+    }
+
+    fclose(fp);
 }

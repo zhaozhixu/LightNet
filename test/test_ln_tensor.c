@@ -96,6 +96,37 @@ START_TEST(test_ln_tensor_table)
      ln_tensor_table_free(table);
 }
 END_TEST
+
+START_TEST(test_ln_tensor_table_load_trt_weight_file)
+{
+     ln_hash *table;
+     ln_tensor_entry *te;
+     tl_tensor *wts1, *wts2;
+     float wts1_data[] = {1.2, 1e-3, -3e-2, +2e+5, 0,
+                          1.2, 1e-3, -3e-2, +2e+5, 0};
+     int8_t wts2_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+
+     wts1 = tl_tensor_zeros(1, ARR(int, 10), TL_FLOAT);
+     wts2 = tl_tensor_zeros(1, ARR(int, 10), TL_INT8);
+     table = ln_tensor_table_create();
+     te = ln_tensor_entry_create("wts1", wts1);
+     ln_tensor_table_insert(table, te);
+     te = ln_tensor_entry_create("wts2", wts2);
+     ln_tensor_table_insert(table, te);
+
+     ln_tensor_table_load_trt_weight_file(table, "test_trt_weight.wts");
+     for (int i = 0; i < 10; i++) {
+          ck_assert_float_eq_tol(wts1_data[i], ((float*)wts1->data)[i], 1e-6);
+     }
+     for (int i = 0; i < 10; i++) {
+          ck_assert_int_eq(wts2_data[i], ((int8_t*)wts2->data)[i]);
+     }
+
+     tl_free(wts1->data);
+     tl_free(wts2->data);
+     ln_tensor_table_free(table);
+}
+END_TEST
 /* end of tests */
 
 Suite *make_tensor_suite(void)
@@ -109,6 +140,7 @@ Suite *make_tensor_suite(void)
 
      tcase_add_test(tc_tensor, test_ln_tensor_list);
      tcase_add_test(tc_tensor, test_ln_tensor_table);
+     tcase_add_test(tc_tensor, test_ln_tensor_table_load_trt_weight_file);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_tensor);

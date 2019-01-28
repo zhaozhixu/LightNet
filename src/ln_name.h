@@ -38,7 +38,7 @@ LN_CPPSTART
 void ln_name_init(void);
 void ln_name_cleanup(void);
 /* copy before using */
-const char *ln_unique_name(const char *prefix);
+const char *ln_name_unique(const char *prefix);
 void ln_name_set_idx(const char *prefix, uint32_t idx);
 
 #ifdef __cplusplus

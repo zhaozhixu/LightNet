@@ -90,19 +90,19 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
     char tensor_name[LN_MAX_NAME_LEN];
     int i;
 
-    strncpy(opname, ln_unique_name(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
+    strncpy(opname, ln_name_unique(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
     for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++) {
         if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
             snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         else
-            strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
+            strncpy(tensor_name, ln_name_unique(arg_name), LN_MAX_NAME_LEN);
         tensors_in = ln_tensor_list_append(tensors_in, arg_name, tensor_name);
     }
     for (i = 0; (arg_name = op_proto->op_arg->out_arg_names[i]); i++) {
         if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
             snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         else
-            strncpy(tensor_name, ln_unique_name(arg_name), LN_MAX_NAME_LEN);
+            strncpy(tensor_name, ln_name_unique(arg_name), LN_MAX_NAME_LEN);
         tensors_out = ln_tensor_list_append(tensors_out, arg_name, tensor_name);
     }
 
@@ -119,7 +119,7 @@ ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)
     char opname[LN_MAX_NAME_LEN];
     int i;
 
-    strncpy(opname, ln_unique_name(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
+    strncpy(opname, ln_name_unique(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
     for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++)
         ln_tensor_list_append(tensors_in, arg_name, NULL);
 
