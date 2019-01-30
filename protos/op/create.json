@@ -20,7 +20,8 @@
                 {"arg_name": "ran", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double", "len": 2, "check": "ran[0] <= ran[1]"},
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "double"}
+                 "realtype": "double"},
+                {"arg_name": "from_file", "ptype": "LN_PARAM_BOOL"}
             ]
         },
         {
@@ -43,15 +44,18 @@
                 {"arg_name": "ran", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double", "len": 2, "check": "ran[0] <= ran[1]"},
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "double"}
+                 "realtype": "double"},
+                {"arg_name": "from_file", "ptype": "LN_PARAM_BOOL"}
             ],
             "static_run": '''
+if (from_file)
+    return;
 size_t size = tl_tensor_size(dst);
 void *data_tmp = ln_alloc(size);
 if (!(ran[0] == 0 && ran[1] == 0)) {
     srand(time(NULL));
-    for (int i = 0; i < data_entry->array_len; i++) {
-        double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + 1.;
+    for (int i = 0; i < dst->len; i++) {
+        double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + ran[0];
         tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &r, TL_DOUBLE);
     }
 } else if (data[0] == 0 && data_entry->array_len == 1) {
@@ -84,15 +88,18 @@ ln_free(data_tmp);
                 {"arg_name": "ran", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "double", "len": 2, "check": "ran[0] <= ran[1]"},
                 {"arg_name": "data", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "double"}
+                 "realtype": "double"},
+                {"arg_name": "from_file", "ptype": "LN_PARAM_BOOL"}
             ],
             "static_run": '''
+if (from_file)
+    return;
 size_t size = tl_tensor_size(dst);
 void *data_tmp = ln_alloc(size);
 if (!(ran[0] == 0 && ran[1] == 0)) {
     srand(time(NULL));
-    for (int i = 0; i < data_entry->array_len; i++) {
-        double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + 1.;
+    for (int i = 0; i < dst->len; i++) {
+        double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + ran[0];
         tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &r, TL_DOUBLE);
     }
 } else if (data[0] == 0 && data_entry->array_len == 1) {

@@ -52,9 +52,14 @@
 create(| dst=input | dtype=DTYPE, dims=[1, 3, INPUT_H, INPUT_W], ran=[0, 255],
        data=[0], from_file=true);
 conv_relu(input, conv1, 3, 64, 1, 3, 2, 1, 1);
+fprint(src=conv1_conv_bias | | msg="conv1_conv_bias", file="debug/conv1_conv_bias.txt");
+fprint(src=conv1_conv_wts | | msg="conv1_conv_wts", file="debug/conv1_conv_wts.txt");
+fprint(src=conv1_conv | | msg="conv1_conv", file="debug/conv1_conv.txt");
 maxpool2d(src=conv1 | dst=pool1 | size=[3, 3], stride=[2, 2],
           padding=[1, 1, 1, 1]);
+fprint(src=pool1 | | msg="pool1", file="debug/pool1.txt");
 fire(pool1, fire2, 64, 16, 64, 64);
+fprint(src=fire2_sq1x1 | | msg="fire2_sq1x1", file="debug/fire2_sq1x1.txt");
 fire(fire2, fire3, 128, 16, 64, 64);
 maxpool2d(src=fire3 | dst=pool3 | size=[3, 3], stride=[2, 2],
           padding=[1, 1, 1, 1]);
@@ -69,6 +74,8 @@ fire(fire8, fire9, 512, 64, 256, 256);
 fire(fire9, fire10, 512, 96, 384, 384);
 fire(fire10, fire11, 768, 96, 384, 384);
 conv(fire11, conv12, 768, CONVOUT_C, 1, 3, 1, 1, 1);
+fprint(src=input | | msg="input", file="debug/input.txt");
+fprint(src=conv12 | | msg="convout", file="debug/convout.txt");
 slice(src=conv12 | dst=slice_class | axis=1, start=0, len=CLASS_SLICE_C);
 slice(src=conv12 | dst=slice_conf | axis=1, start=CLASS_SLICE_C,
       len=CONF_SLICE_C);
@@ -109,3 +116,6 @@ pick1d(src=maxreduce_arg1d, src_index=sort_index | dst=final_class |
        len=TOP_N_DETECTION, stride=1);
 pick1d(src=bbox1d, src_index=sort_index | dst=final_bbox |
        len=TOP_N_DETECTION, stride=OUTPUT_BBOX_SIZE);
+fprint(src=final_prob | | msg="final_prob", file="debug/final_prob.txt");
+fprint(src=final_class | | msg="final_class", file="debug/final_class.txt");
+fprint(src=final_bbox | | msg="final_bbox", file="debug/final_bbox.txt");

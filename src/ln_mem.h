@@ -38,21 +38,23 @@ typedef enum ln_mem_type ln_mem_type;
 
 typedef struct ln_mem_plan ln_mem_plan;
 
-struct ln_mtype_info {
-    void  *(*alloc_func)(size_t);
-    void   (*free_func)(void *);
-    size_t  max_size;
-    size_t  align_size;
+struct ln_mem_info {
+    void  *(*alloc_func)(size_t n);
+    void   (*free_func)(void *p);
+    void  *(*memset_func)(void *s, int c, size_t n);
+    size_t   max_size;
+    size_t   align_size;
 };
-typedef struct ln_mtype_info ln_mtype_info;
-
-extern const ln_mtype_info ln_mtype_infos[];
+typedef struct ln_mem_info ln_mem_info;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
 const char *ln_mem_type_name(ln_mem_type mtype);
+const ln_mem_info ln_mem_type_info(ln_mem_type mtype);
+ln_copy_func ln_mem_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype);
+
 ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size);
 void ln_mem_plan_free(ln_mem_plan *mem_plan);
 size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size);

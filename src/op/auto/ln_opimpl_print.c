@@ -26,6 +26,7 @@
 
 struct priv_s {
     ln_tensor_entry *src_entry;
+    ln_param_entry  *msg_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -35,6 +36,8 @@ static void print_pre_run(ln_op_arg *op_arg)
     ln_tensor_list_entry *src_list_entry;
     ln_tensor_entry      *src_entry;
     tl_tensor            *src;
+    char                 *msg;
+    ln_param_entry       *msg_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -56,13 +59,20 @@ static void print_pre_run(ln_op_arg *op_arg)
     ln_opck_tensors_out_len_eq(tensors_out_n, 0);
 
     params_n = ln_param_list_length(op_arg->params);
-    ln_opck_params_len_eq(params_n, 0);
+    ln_opck_params_len_eq(params_n, 1);
+
+    msg_entry = ln_param_list_find(op_arg->params, "msg");
+    ln_opck_param_exist(msg_entry, "msg");
+    ln_opck_param_type(msg_entry, LN_PARAM_STRING);
+    msg = msg_entry->value_string;
+    msg = msg;
 
     /* define output tensor shape, tensor data should be NULL */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
     priv->src_entry = src_entry;
+    priv->msg_entry = msg_entry;
     op_arg->priv = priv;
 }
 
@@ -84,6 +94,7 @@ static const char *out_arg_names[] = {
 };
 
 static const char *param_arg_names[] = {
+    "msg",
     NULL
 };
 

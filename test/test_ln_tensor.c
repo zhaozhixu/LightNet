@@ -110,8 +110,10 @@ START_TEST(test_ln_tensor_table_load_trt_weight_file)
      wts2 = tl_tensor_zeros(1, ARR(int, 10), TL_INT8);
      table = ln_tensor_table_create();
      te = ln_tensor_entry_create("wts1", wts1);
+     te->mtype = LN_MEM_CPU;
      ln_tensor_table_insert(table, te);
      te = ln_tensor_entry_create("wts2", wts2);
+     te->mtype = LN_MEM_CPU;
      ln_tensor_table_insert(table, te);
 
      ln_tensor_table_load_trt_weight_file(table, "test_trt_weight.wts");

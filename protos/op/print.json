@@ -10,6 +10,7 @@
             "tensors_out": [
             ],
             "params": [
+                {"arg_name": "msg", "ptype": "LN_PARAM_STRING"}
             ]
         },
         {
@@ -22,8 +23,12 @@
             "tensors_out": [
             ],
             "params": [
+                {"arg_name": "msg", "ptype": "LN_PARAM_STRING"}
             ],
-            "run": "tl_tensor_print(src, NULL);"
+            "run": '''
+printf("%s\n", msg);
+tl_tensor_print(src, NULL);
+'''
         },
         {
             "optype": "print_cuda",
@@ -35,8 +40,12 @@
             "tensors_out": [
             ],
             "params": [
+                {"arg_name": "msg", "ptype": "LN_PARAM_STRING"}
             ],
-            "run": "tl_tensor_print_cuda(src, NULL);"
+            "run": '''
+printf("%s\n", msg);
+tl_tensor_print_cuda(src, NULL);
+'''
         }
     ]
 }

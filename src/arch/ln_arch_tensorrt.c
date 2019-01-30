@@ -54,6 +54,7 @@ static ln_list *ep_upsample(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_zeros(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_reshape(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_fprint(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_sort1d(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_sort1d_by_key(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_arange(const ln_op *op, const ln_dfg *dfg, int *match);
@@ -82,6 +83,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"zeros", ep_zeros},
     {"reshape", ep_reshape},
     {"print", ep_print},
+    {"fprint", ep_fprint},
     {"sort1d", ep_sort1d},
     {"sort1d_by_key", ep_sort1d_by_key},
     {"arange", ep_arange},
@@ -692,6 +694,7 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match)
          ln_streq(next_op->op_arg->optype, "softmax") ||
          ln_streq(next_op->op_arg->optype, "sigmoid") ||
          ln_streq(next_op->op_arg->optype, "concat") ||
+         /* ln_streq(next_op->op_arg->optype, "fprint") || */
          ln_streq(next_op->op_arg->optype, "transform_bboxSQD") ||
          ln_streq(next_op->op_arg->optype, "rearange") ||
          ln_streq(next_op->op_arg->optype, "tensorrt")))
@@ -940,7 +943,29 @@ static ln_list *ep_print(const ln_op *op, const ln_dfg *dfg, int *match)
     else if (ln_streq(prev_op->op_arg->arch, "tensorrt"))
         optype = "print_cuda";
     else
-        assert(0 && "print's prev op is either of cpu or tensorrt");
+        assert(0 && "print's prev op is either of cpu or cuda or tensorrt");
+
+    return simple_replace(op, optype);
+}
+
+static ln_list *ep_fprint(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    ln_tensor_list_entry *tle;
+    ln_op *prev_op;
+    const char *optype;
+
+    *match = 1;
+    tle = ln_tensor_list_find_by_arg_name(op->op_arg->tensors_in, "src");
+    prev_op = ln_dfg_prev(dfg, op, tle->name);
+    assert(prev_op);
+    if (ln_streq(prev_op->op_arg->arch, "cpu"))
+        optype = "fprint_cpu";
+    else if (ln_streq(prev_op->op_arg->arch, "cuda"))
+        optype = "fprint_cuda";
+    else if (ln_streq(prev_op->op_arg->arch, "tensorrt"))
+        optype = "fprint_cuda";
+    else
+        assert(0 && "fprint's prev op is either of cpu or cuda or tensorrt");
 
     return simple_replace(op, optype);
 }

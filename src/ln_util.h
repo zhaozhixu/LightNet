@@ -35,10 +35,11 @@ enum ln_bool {
 };
 typedef enum ln_bool ln_bool;
 
-typedef int (*ln_cmp_func)(const void *, const void *);
-typedef void (*ln_free_func)(void *);
-typedef void (*ln_fprint_func) (FILE *, const void *);
-typedef uint32_t (*ln_hash_func)(const void *);
+typedef int (*ln_cmp_func)(const void *p1, const void *p2);
+typedef void (*ln_free_func)(void *p);
+typedef void (*ln_fprint_func) (FILE *fp, const void *p);
+typedef uint32_t (*ln_hash_func)(const void *p);
+typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 
 #define ln_free free
 

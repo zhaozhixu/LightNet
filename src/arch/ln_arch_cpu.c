@@ -46,6 +46,7 @@ extern ln_op ln_opimpl_sort1d_by_key_cpu;
 extern ln_op ln_opimpl_transform_bboxSQD_cpu;
 extern ln_op ln_opimpl_rearange_cpu;
 extern ln_op ln_opimpl_pick1d_cpu;
+extern ln_op ln_opimpl_fprint_cpu;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
@@ -74,6 +75,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_transform_bboxSQD_cpu,
     &ln_opimpl_rearange_cpu,
     &ln_opimpl_pick1d_cpu,
+    &ln_opimpl_fprint_cpu,
 /* end of init cpu ops */
     NULL
 };

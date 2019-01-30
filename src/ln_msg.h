@@ -74,16 +74,16 @@ typedef struct ln_msg ln_msg;
 #define ln_msg_inter_error_sys(fmt, varg...)            \
     ln_msg_emit(LN_MSG_INTER_ERROR_SYS, (fmt), ##varg)
 
-#define ln_msg_warning(fmt, varg...)            \
+#define ln_msg_warn(fmt, varg...)            \
     ln_msg_emit(LN_MSG_WARN, (fmt), ##varg)
 
-#define ln_msg_warning_sys(fmt, varg...)        \
+#define ln_msg_warn_sys(fmt, varg...)        \
     ln_msg_emit(LN_MSG_WARN_SYS, (fmt), ##varg)
 
-#define ln_msg_inter_warning(fmt, varg...)              \
+#define ln_msg_inter_warn(fmt, varg...)              \
     ln_msg_emit(LN_MSG_INTER_WARN, (fmt), ##varg)
 
-#define ln_msg_inter_warning_sys(fmt, varg...)          \
+#define ln_msg_inter_warn_sys(fmt, varg...)          \
     ln_msg_emit(LN_MSG_INTER_WARN_SYS, (fmt), ##varg)
 
 #ifdef LN_DEBUG

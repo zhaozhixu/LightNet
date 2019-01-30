@@ -59,7 +59,7 @@ void ln_context_dealloc_mem(ln_context *ctx);
 void ln_context_init(ln_context *ctx, const char *source);
 void ln_context_compile(ln_context *ctx, const char *target);
 void ln_context_print(const ln_context *ctx, const char *outfile);
-void ln_context_load(ln_context *ctx);
+void ln_context_load(ln_context *ctx, const char *datafile);
 void ln_context_run(const ln_context *ctx);
 void ln_context_unload(ln_context *ctx);
 void ln_context_cleanup(ln_context *ctx);

@@ -145,7 +145,10 @@ void ln_context_alloc_mem(ln_context *ctx)
     int i;
 
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        ctx->mem_starts[i] = ln_mtype_infos[i].alloc_func(ctx->mem_sizes[i]);
+        ctx->mem_starts[i] = ln_mem_type_info(i).alloc_func(ctx->mem_sizes[i]);
+        if (ln_mem_type_info(i).memset_func)
+            ln_mem_type_info(i).memset_func(ctx->mem_starts[i], 0,
+                                            ctx->mem_sizes[i]);
         ln_msg_debug("allocate memory %s: %lu bytes at address %p",
                      ln_mem_type_name(i), ctx->mem_sizes[i],
                      ctx->mem_starts[i]);
@@ -181,7 +184,7 @@ void ln_context_dealloc_mem(ln_context *ctx)
         ln_msg_debug("free memory %s: %lu bytes at address %p",
                      ln_mem_type_name(i), ctx->mem_sizes[i],
                      ctx->mem_starts[i]);
-        ln_mtype_infos[i].free_func(ctx->mem_starts[i]);
+        ln_mem_type_info(i).free_func(ctx->mem_starts[i]);
         ctx->mem_starts[i] = 0;
     }
 }
@@ -217,9 +220,11 @@ void ln_context_print(const ln_context *ctx, const char *outfile)
         ln_json_print_file(outfile, ctx);
 }
 
-void ln_context_load(ln_context *ctx)
+void ln_context_load(ln_context *ctx, const char *datafile)
 {
     ln_context_alloc_mem(ctx);
+    if (datafile)
+        ln_tensor_table_load_trt_weight_file(ctx->tensor_table, datafile);
     ln_op_list_do_static_run(ctx->ops);
 }
 

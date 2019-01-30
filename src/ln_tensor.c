@@ -207,10 +207,10 @@ void ln_tensor_table_free(ln_hash *table)
 }
 
 #define TRT_WEIGHT_ERR(file, fmt, varg...)                    \
-    ln_msg_error("load_trt_weight_file(): invalid weight file %s: "#fmt, \
+    ln_msg_error("load_trt_weight_file(): invalid weight file %s: "fmt, \
                  (file), ##varg)
 #define TRT_WEIGHT_WARN(file, fmt, varg...)                              \
-    ln_msg_warning("load_trt_weight_file(): weight file %s: "#fmt, \
+    ln_msg_warn("load_trt_weight_file(): weight file %s: "fmt, \
                    (file), ##varg)
 
 static void next_line(FILE *fp, const char *file)
@@ -221,6 +221,44 @@ static void next_line(FILE *fp, const char *file)
     if (getline(&p, &n, fp) < 0)
         TRT_WEIGHT_ERR(file, "error skip one line");
     ln_free(p);
+}
+
+static void copy_weight_float(FILE *fp, ln_tensor_entry *te, const char *name,
+                              int len, const char *file)
+{
+    int n, i;
+    uint32_t val;
+    ln_copy_func copy;
+
+    if (te->tensor->dtype != TL_FLOAT)
+        TRT_WEIGHT_ERR(file, "data type of weight %s not match", name);
+    ln_msg_debug("loading data %s to 0x%p", name, te->tensor->data);
+    copy = ln_mem_copy_func(te->mtype, LN_MEM_CPU);
+    for (i = 0; i < len; i++) {
+        n = fscanf(fp, "%x", &val);
+        if (n != 1)
+            TRT_WEIGHT_ERR(file, "error reading weight %s", name);
+        copy(&((uint32_t *)te->tensor->data)[i], &val, sizeof(uint32_t));
+    }
+}
+
+static void copy_weight_int8(FILE *fp, ln_tensor_entry *te, const char *name,
+                             int len, const char *file)
+{
+    int n, i;
+    uint8_t val;
+    ln_copy_func copy;
+
+    if (te->tensor->dtype != TL_INT8)
+        TRT_WEIGHT_ERR(file, "data type of weight %s not match", name);
+    ln_msg_debug("loading data %s to 0x%p", name, te->tensor->data);
+    copy = ln_mem_copy_func(te->mtype, LN_MEM_CPU);
+    for (i = 0; i < len; i++) {
+        n = fscanf(fp, "%hhx", &val);
+        if (n != 1)
+            TRT_WEIGHT_ERR(file, "error reading weight %s", name);
+        copy(&((uint8_t *)te->tensor->data)[i], &val, sizeof(uint8_t));
+    }
 }
 
 void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file)
@@ -257,29 +295,18 @@ void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file)
             continue;
         }
         if (len != te->tensor->len)
-            TRT_WEIGHT_ERR(file, "length of weight %s not match", name);
+            TRT_WEIGHT_ERR(file, "length %d of weight %s doesn't match %d", len,
+                           name, te->tensor->len);
 
         switch (type) {
         case 0:                 /* float */
-            if (te->tensor->dtype != TL_FLOAT)
-                TRT_WEIGHT_ERR(file, "data type of weight %s not match", name);
-            for (int i = 0; i < len; i++) {
-                n = fscanf(fp, "%x", &((uint32_t *)te->tensor->data)[i]);
-                if (n != 1)
-                    TRT_WEIGHT_ERR(file, "error reading weight %s", name);
-            }
+            copy_weight_float(fp, te, name, len, file);
             break;
         case 1:                 /* half */
             TRT_WEIGHT_ERR(file, "unsupported type of weight %s", name);
             break;
         case 2:                 /* int8 */
-            if (te->tensor->dtype != TL_INT8)
-                TRT_WEIGHT_ERR(file, "data type of weight %s not match", name);
-            for (int i = 0; i < len; i++) {
-                n = fscanf(fp, "%hhx", &((uint8_t *)te->tensor->data)[i]);
-                if (n != 1)
-                    TRT_WEIGHT_ERR(file, "error reading weight %s", name);
-            }
+            copy_weight_int8(fp, te, name, len, file);
             break;
         default:
             TRT_WEIGHT_ERR(file, "unsupported type of weight %s", name);

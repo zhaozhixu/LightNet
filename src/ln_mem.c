@@ -25,15 +25,15 @@
 #include "ln_msg.h"
 #include "ln_cuda.h"
 
-typedef enum mem_flag mem_flag;
-enum mem_flag {
+typedef enum block_flag block_flag;
+enum block_flag {
     HOLE,
     SYMBOL
 };
 
-typedef struct mem_info mem_info;
-struct mem_info {
-    mem_flag flag;
+typedef struct mem_block mem_block;
+struct mem_block {
+    block_flag flag;
     size_t   start;
     size_t   size;
 };
@@ -54,12 +54,12 @@ static const char *mtype_names[] = {
 #define DEFAULT_MAX_SIZE 17179869184 /* 16GB */
 #define DEFAULT_ALIGN_SIZE 1
 
-const ln_mtype_info ln_mtype_infos[] = {
+static const ln_mem_info ln_mem_infos[] = {
     {NULL, NULL, 0, 0},
-    {ln_alloc, ln_free, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
+    {ln_alloc, ln_free, memset, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
 #ifdef LN_CUDA
     /* 32-byte L2 cache line in compute capability >= 3.0*/
-    {ln_alloc_cuda, ln_free_cuda, DEFAULT_MAX_SIZE, 32},
+    {ln_alloc_cuda, ln_free_cuda, ln_memset_cuda, DEFAULT_MAX_SIZE, 32},
 #else
     {NULL, NULL, 0, 0},
 #endif  /* LN_CUDA */
@@ -74,45 +74,107 @@ const char *ln_mem_type_name(ln_mem_type mtype)
     return mtype_names[mtype];
 }
 
-static mem_info *mem_info_create(mem_flag flag, size_t start, size_t size)
+const ln_mem_info ln_mem_type_info(ln_mem_type mtype)
 {
-    mem_info *minfo;
-    minfo = ln_alloc(sizeof(mem_info));
-    minfo->flag = flag;
-    minfo->start = start;
-    minfo->size = size;
+    ln_mem_info minfo;
+
+    ln_check_mem_type(mtype);
+    minfo = ln_mem_infos[mtype];
+    if (!minfo.align_size && !minfo.max_size &&
+        !minfo.alloc_func && !minfo.free_func)
+        ln_msg_error("unsupported ln_mem_type %s", ln_mem_type_name(mtype));
 
     return minfo;
 }
 
-static void mem_info_free(mem_info *minfo)
+#define MEM_COPY_ERROR ln_msg_error("unsupported copy direction: %s -> %s", \
+                                    ln_mem_type_name(src_mtype),        \
+                                    ln_mem_type_name(dst_mtype))
+
+ln_copy_func ln_mem_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype)
 {
-    ln_free(minfo);
+    ln_copy_func copy;
+
+    ln_check_mem_type(dst_mtype);
+    ln_check_mem_type(src_mtype);
+
+    switch (dst_mtype) {
+    case LN_MEM_CPU:
+        switch (src_mtype) {
+        case LN_MEM_CPU:
+            copy = memmove;
+            break;
+#ifdef LN_CUDA
+        case LN_MEM_CUDA:
+            copy = ln_memcpy_d2h;
+            break;
+#endif  /* LN_CUDA */
+        default:
+            MEM_COPY_ERROR;
+            break;
+        }
+        break;
+#ifdef LN_CUDA
+    case LN_MEM_CUDA:
+        switch (src_mtype) {
+        case LN_MEM_CPU:
+            copy = ln_memcpy_h2d;
+            break;
+        case LN_MEM_CUDA:
+            copy = ln_memcpy_d2d;
+            break;
+        default:
+            MEM_COPY_ERROR;
+            break;
+        }
+        break;
+#endif  /* LN_CUDA */
+    default:
+        MEM_COPY_ERROR;
+        break;
+    }
+    return copy;
+}
+
+static mem_block *mem_block_create(block_flag flag, size_t start, size_t size)
+{
+    mem_block *block;
+    block = ln_alloc(sizeof(mem_block));
+    block->flag = flag;
+    block->start = start;
+    block->size = size;
+
+    return block;
+}
+
+static void mem_block_free(mem_block *block)
+{
+    ln_free(block);
 }
 
 ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size)
 {
     ln_mem_plan *mem_plan;
-    mem_info *minfo;
+    mem_block *block;
 
     assert(size > 0 && align_size > 0);
     mem_plan = ln_alloc(sizeof(ln_mem_plan));
     mem_plan->size = size;
     mem_plan->align_size = align_size;
-    minfo = mem_info_create(HOLE, 1, size);
-    mem_plan->mem_blocks = ln_list_append(NULL, minfo);
+    block = mem_block_create(HOLE, 1, size);
+    mem_plan->mem_blocks = ln_list_append(NULL, block);
 
     return mem_plan;
 }
 
-static void mem_info_free_wrapper(void *minfo)
+static void mem_block_free_wrapper(void *block)
 {
-    mem_info_free((mem_info *)minfo);
+    mem_block_free((mem_block *)block);
 }
 
 void ln_mem_plan_free(ln_mem_plan *mem_plan)
 {
-    ln_list_free_deep(mem_plan->mem_blocks, mem_info_free_wrapper);
+    ln_list_free_deep(mem_plan->mem_blocks, mem_block_free_wrapper);
     ln_free(mem_plan);
 }
 
@@ -126,11 +188,11 @@ static int best_fit(ln_mem_plan *mem_plan, size_t size)
     int i;
 
     for (l = mem_plan->mem_blocks, i = 0; l; l = l->next, i++) {
-        mem_info *minfo = l->data;
-        size_t align_start = minfo->start % align_size == 0 ? minfo->start :
-            align_size - minfo->start % align_size + minfo->start;
-        size_t mem_end = minfo->start + minfo->size - 1;
-        if (minfo->flag != HOLE || align_start + size - 1 > mem_end)
+        mem_block *block = l->data;
+        size_t align_start = block->start % align_size == 0 ? block->start :
+            align_size - block->start % align_size + block->start;
+        size_t mem_end = block->start + block->size - 1;
+        if (block->flag != HOLE || align_start + size - 1 > mem_end)
             continue;
         size_t alignable_size = mem_end - align_start + 1;
         if (!first_hole) {
@@ -157,29 +219,29 @@ size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size)
         ln_msg_error("ln_mem_plan_alloc(): out of virtual memory pool when allocating %ld bytes",
                      size);
 
-    mem_info *minfo = ln_list_nth_data(mem_plan->mem_blocks, fit_idx);
+    mem_block *block = ln_list_nth_data(mem_plan->mem_blocks, fit_idx);
     size_t align_size = mem_plan->align_size;
-    size_t align_start = minfo->start % align_size == 0 ? minfo->start :
-        align_size - minfo->start % align_size + minfo->start;
-    size_t mem_size = size + align_start - minfo->start;
-    mem_info *new_minfo = mem_info_create(SYMBOL, minfo->start, mem_size);
+    size_t align_start = block->start % align_size == 0 ? block->start :
+        align_size - block->start % align_size + block->start;
+    size_t mem_size = size + align_start - block->start;
+    mem_block *new_block = mem_block_create(SYMBOL, block->start, mem_size);
     mem_plan->mem_blocks = ln_list_insert_nth(mem_plan->mem_blocks,
-                                              new_minfo, fit_idx);
-    minfo->start += mem_size;
-    minfo->size -= mem_size;
-    if (minfo->size == 0)
+                                              new_block, fit_idx);
+    block->start += mem_size;
+    block->size -= mem_size;
+    if (block->size == 0)
         mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
                                                        fit_idx + 1,
-                                                       mem_info_free_wrapper);
+                                                       mem_block_free_wrapper);
 
-    size_t hole_size = align_start - new_minfo->start;
+    size_t hole_size = align_start - new_block->start;
     if (hole_size == 0)
         return align_start;
-    mem_info *hole_minfo = mem_info_create(HOLE, new_minfo->start, hole_size);
+    mem_block *hole_block = mem_block_create(HOLE, new_block->start, hole_size);
     mem_plan->mem_blocks = ln_list_insert_nth(mem_plan->mem_blocks,
-                                              hole_minfo, fit_idx);
-    new_minfo->start = align_start;
-    new_minfo->size -= hole_size;
+                                              hole_block, fit_idx);
+    new_block->start = align_start;
+    new_block->size -= hole_size;
     return align_start;
 }
 
@@ -187,26 +249,26 @@ void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr)
 {
     int i;
     ln_list *l, *l_next, *l_before = NULL;
-    mem_info *minfo;
+    mem_block *block;
     for (l = mem_plan->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
-        minfo = l->data;
-        if (minfo->flag != SYMBOL || minfo->start != addr)
+        block = l->data;
+        if (block->flag != SYMBOL || block->start != addr)
             continue;
         l_next = l->next;
-        if (l_next && ((mem_info *)l_next->data)->flag == HOLE) {
-            minfo->size += ((mem_info *)l_next->data)->size;
+        if (l_next && ((mem_block *)l_next->data)->flag == HOLE) {
+            block->size += ((mem_block *)l_next->data)->size;
             mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
                                                            i + 1,
-                                                           mem_info_free_wrapper);
+                                                           mem_block_free_wrapper);
         }
-        if (l_before && ((mem_info *)l_before->data)->flag == HOLE) {
-            minfo->start -= ((mem_info *)l_before->data)->size;
-            minfo->size += ((mem_info *)l_before->data)->size;
+        if (l_before && ((mem_block *)l_before->data)->flag == HOLE) {
+            block->start -= ((mem_block *)l_before->data)->size;
+            block->size += ((mem_block *)l_before->data)->size;
             mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
                                                            i - 1,
-                                                           mem_info_free_wrapper);
+                                                           mem_block_free_wrapper);
         }
-        minfo->flag = HOLE;
+        block->flag = HOLE;
         break;
     }
     if (!l)
@@ -216,10 +278,10 @@ void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr)
 
 int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr)
 {
-    mem_info *minfo;
+    mem_block *block;
 
-    LN_LIST_FOREACH(minfo, mem_plan->mem_blocks) {
-        if (minfo->flag == SYMBOL && minfo->start == addr)
+    LN_LIST_FOREACH(block, mem_plan->mem_blocks) {
+        if (block->flag == SYMBOL && block->start == addr)
             return 1;
     }
     return 0;
@@ -227,12 +289,12 @@ int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr)
 
 void ln_mem_plan_dump(ln_mem_plan *mem_plan, FILE *fp)
 {
-    mem_info *minfo;
+    mem_block *block;
 
     fprintf(fp, "======= Lightnet Memory Plan Map: =======\n");
-    LN_LIST_FOREACH(minfo, mem_plan->mem_blocks) {
-        fprintf(fp, "0x%012lx-0x%012lx %s\n", minfo->start,
-                minfo->start+minfo->size-1, minfo->flag==HOLE?"H":"S");
+    LN_LIST_FOREACH(block, mem_plan->mem_blocks) {
+        fprintf(fp, "0x%012lx-0x%012lx %s\n", block->start,
+                block->start+block->size-1, block->flag==HOLE?"H":"S");
     }
 }
 
@@ -250,8 +312,8 @@ ln_hash *ln_mem_plan_table_create(void)
     mpt = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL,
                          mem_plan_free_wrapper);
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        mp = ln_mem_plan_create(ln_mtype_infos[i].max_size,
-                                ln_mtype_infos[i].align_size);
+        mp = ln_mem_plan_create(ln_mem_infos[i].max_size,
+                                ln_mem_infos[i].align_size);
         ln_hash_insert(mpt, (void *)(size_t)i, mp);
     }
     return mpt;

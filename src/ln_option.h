@@ -27,6 +27,7 @@ struct ln_option {
     const char  *source;
     const char  *outfile;
     const char  *target;
+    const char  *datafile;
     int          compile;
     int          run;
     int          Winter;

@@ -30,6 +30,7 @@ struct priv_s {
     ln_param_entry  *dims_entry;
     ln_param_entry  *ran_entry;
     ln_param_entry  *data_entry;
+    ln_param_entry  *from_file_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -50,6 +51,8 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     ln_param_entry       *ran_entry;
     double               *data;
     ln_param_entry       *data_entry;
+    tl_bool_t             from_file;
+    ln_param_entry       *from_file_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -69,7 +72,7 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     ln_opck_tensor_not_defined(dst_entry, dst_name);
 
     params_n = ln_param_list_length(op_arg->params);
-    ln_opck_params_len_eq(params_n, 4);
+    ln_opck_params_len_eq(params_n, 5);
 
     dtype_entry = ln_param_list_find(op_arg->params, "dtype");
     ln_opck_param_exist(dtype_entry, "dtype");
@@ -100,6 +103,12 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     data = data_entry->value_array_double;
     data = data;
 
+    from_file_entry = ln_param_list_find(op_arg->params, "from_file");
+    ln_opck_param_exist(from_file_entry, "from_file");
+    ln_opck_param_type(from_file_entry, LN_PARAM_BOOL);
+    from_file = from_file_entry->value_bool;
+    from_file = from_file;
+
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = dims_entry->array_len;
     dst_dims = dims;
@@ -119,6 +128,7 @@ static void create_cpu_pre_run(ln_op_arg *op_arg)
     priv->dims_entry = dims_entry;
     priv->ran_entry = ran_entry;
     priv->data_entry = data_entry;
+    priv->from_file_entry = from_file_entry;
     op_arg->priv = priv;
 }
 
@@ -131,14 +141,17 @@ static void create_cpu_static_run(ln_op_arg *op_arg)
     double         *ran = priv->ran_entry->value_array_double;
     ln_param_entry *data_entry = priv->data_entry;
     double         *data = priv->data_entry->value_array_double;
+    tl_bool_t       from_file = priv->from_file_entry->value_bool;
 
     {
+        if (from_file)
+            return;
         size_t size = tl_tensor_size(dst);
         void *data_tmp = ln_alloc(size);
         if (!(ran[0] == 0 && ran[1] == 0)) {
             srand(time(NULL));
-            for (int i = 0; i < data_entry->array_len; i++) {
-                double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + 1.;
+            for (int i = 0; i < dst->len; i++) {
+                double r = rand() * (ran[1] - ran[0]) / (double)RAND_MAX + ran[0];
                 tl_convert(tl_padd(data_tmp, i, tl_size_of(dtype)), dtype, &r, TL_DOUBLE);
             }
         } else if (data[0] == 0 && data_entry->array_len == 1) {
@@ -175,6 +188,7 @@ static const char *param_arg_names[] = {
     "dims",
     "ran",
     "data",
+    "from_file",
     NULL
 };
 

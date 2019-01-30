@@ -75,6 +75,7 @@ ln_option ln_option_get(int argc, char **argv)
         .source = NULL,
         .outfile = NULL,
         .target = NULL,
+        .datafile = NULL,
         .compile = 1,
         .run = 1,
         .Winter = 1,
@@ -86,6 +87,7 @@ ln_option ln_option_get(int argc, char **argv)
         {"version",   no_argument, NULL, 'v'},
         {"outfile",   required_argument, NULL, 'o'},
         {"target",    required_argument, NULL, 't'},
+        {"datafile",  required_argument, NULL, 'f'},
         {"compile",   no_argument, NULL, 'c'},
         {"run",       no_argument, NULL, 'r'},
         {"Winter",    no_argument, &option.Winter, 1},
@@ -96,7 +98,7 @@ ln_option ln_option_get(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long_only(argc, argv, ":hvo:t:crwd",
+    while ((opt = getopt_long_only(argc, argv, ":hvo:t:f:crwd",
                                    longopts, &optindex)) != -1) {
         switch (opt) {
         case 0:
@@ -112,6 +114,9 @@ ln_option ln_option_get(int argc, char **argv)
             break;
         case 't':
             option.target = optarg;
+            break;
+        case 'f':
+            option.datafile = optarg;
             break;
         case 'c':
             if (option.compile == 0 && option.run == 1) {

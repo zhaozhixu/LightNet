@@ -23,15 +23,15 @@
 #include <assert.h>
 #include "ln_op.h"
 #include "ln_arch.h"
-#include "ln_cuda.h"
 
 struct priv_s {
     ln_tensor_entry *src_entry;
     ln_param_entry  *msg_entry;
+    ln_param_entry  *file_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
-static void print_cuda_pre_run(ln_op_arg *op_arg)
+static void fprint_pre_run(ln_op_arg *op_arg)
 {
     char                 *src_name;
     ln_tensor_list_entry *src_list_entry;
@@ -39,6 +39,8 @@ static void print_cuda_pre_run(ln_op_arg *op_arg)
     tl_tensor            *src;
     char                 *msg;
     ln_param_entry       *msg_entry;
+    char                 *file;
+    ln_param_entry       *file_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -55,13 +57,12 @@ static void print_cuda_pre_run(ln_op_arg *op_arg)
     ln_opck_tensor_defined(src_entry, src_name);
     src = src_entry->tensor;
     src = src;
-    ln_opck_tensor_mtype_eq(src_entry, LN_MEM_CUDA);
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 0);
 
     params_n = ln_param_list_length(op_arg->params);
-    ln_opck_params_len_eq(params_n, 1);
+    ln_opck_params_len_eq(params_n, 2);
 
     msg_entry = ln_param_list_find(op_arg->params, "msg");
     ln_opck_param_exist(msg_entry, "msg");
@@ -69,30 +70,24 @@ static void print_cuda_pre_run(ln_op_arg *op_arg)
     msg = msg_entry->value_string;
     msg = msg;
 
+    file_entry = ln_param_list_find(op_arg->params, "file");
+    ln_opck_param_exist(file_entry, "file");
+    ln_opck_param_type(file_entry, LN_PARAM_STRING);
+    file = file_entry->value_string;
+    file = file;
+
     /* define output tensor shape, tensor data should be NULL */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
     priv->src_entry = src_entry;
     priv->msg_entry = msg_entry;
+    priv->file_entry = file_entry;
     op_arg->priv = priv;
 }
 
-/* This function should only do the calculations. */
-static void print_cuda_run(ln_op_arg *op_arg)
-{
-    struct priv_s *priv = op_arg->priv;
-    tl_tensor     *src = priv->src_entry->tensor;
-    char          *msg = priv->msg_entry->value_string;
-
-    {
-        printf("%s\n", msg);
-        tl_tensor_print_cuda(src, NULL);
-    }
-}
-
 /* This function should free all the memory allocated by other *_run()s. */
-static void print_cuda_post_run(ln_op_arg *op_arg)
+static void fprint_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
@@ -110,23 +105,24 @@ static const char *out_arg_names[] = {
 
 static const char *param_arg_names[] = {
     "msg",
+    "file",
     NULL
 };
 
 /* specify other ln_op_arg fields */
-static ln_op_arg op_arg_print_cuda = {
-    .optype = "print_cuda",
-    .arch = "cuda",
+static ln_op_arg op_arg_fprint = {
+    .optype = "fprint",
+    .arch = "none",
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
 };
 
 /* struct used for op registration in ln_oplist.c */
-ln_op ln_opimpl_print_cuda = {
-    .op_arg = &op_arg_print_cuda,
-    .pre_run = print_cuda_pre_run,
+ln_op ln_opimpl_fprint = {
+    .op_arg = &op_arg_fprint,
+    .pre_run = fprint_pre_run,
     .static_run = NULL,
-    .run = print_cuda_run,
-    .post_run = print_cuda_post_run
+    .run = NULL,
+    .post_run = fprint_post_run
 };

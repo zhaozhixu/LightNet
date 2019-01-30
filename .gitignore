@@ -22,3 +22,5 @@ GRTAGS
 GTAGS
 obj/
 build/
+
+debug/

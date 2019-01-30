@@ -1,0 +1,68 @@
+{
+    "ops": [
+        {
+            "optype": "fprint",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+                {"arg_name": "msg", "ptype": "LN_PARAM_STRING"},
+                {"arg_name": "file", "ptype": "LN_PARAM_STRING"},
+            ]
+        },
+        {
+            "optype": "fprint_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+                {"arg_name": "msg", "ptype": "LN_PARAM_STRING"},
+                {"arg_name": "file", "ptype": "LN_PARAM_STRING"},
+            ],
+            "run": '''
+FILE *fp;
+if (!(fp = fopen(file, "w"))) {
+    ln_msg_warn_sys("%s(%s): cannot open file %s; skip printing tensor %s",
+                    op_arg->name, op_arg->optype, file, src_entry->name);
+    return;
+}
+fprintf(fp, "%s\n", msg);
+tl_tensor_fprint(fp, src, NULL);
+fclose(fp);
+'''
+        },
+        {
+            "optype": "fprint_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
+            ],
+            "tensors_out": [
+            ],
+            "params": [
+                {"arg_name": "msg", "ptype": "LN_PARAM_STRING"},
+                {"arg_name": "file", "ptype": "LN_PARAM_STRING"},
+            ],
+            "run": '''
+FILE *fp;
+if (!(fp = fopen(file, "w"))) {
+    ln_msg_warn_sys("%s(%s): cannot open file %s; skip printing tensor %s",
+                    op_arg->name, op_arg->optype, file, src_entry->name);
+    return;
+}
+fprintf(fp, "%s\n", msg);
+tl_tensor_fprint_cuda(fp, src, NULL);
+fclose(fp);
+'''
+        }
+    ]
+}

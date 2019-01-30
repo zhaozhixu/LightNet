@@ -89,31 +89,35 @@ void *ln_alloc_cuda(size_t size)
     return p;
 }
 
-void ln_memset_cuda(void *dst, int c, size_t n)
+void *ln_memset_cuda(void *dst, int c, size_t n)
 {
     assert(ln_is_device_mem(dst));
     LN_CUDA_CK(cudaMemset(dst, c, n));
+    return dst;
 }
 
-void ln_memcpy_h2d(void *dst, const void *src, size_t size)
+void *ln_memcpy_h2d(void *dst, const void *src, size_t size)
 {
     /* assert(!ln_is_device_mem(src)); */
     assert(ln_is_device_mem(dst));
     LN_CUDA_CK(cudaMemcpy(dst, src, size, cudaMemcpyHostToDevice));
+    return dst;
 }
 
-void ln_memcpy_d2h(void *dst, const void *src, size_t size)
+void *ln_memcpy_d2h(void *dst, const void *src, size_t size)
 {
     assert(ln_is_device_mem(src));
     /* assert(!ln_is_device_mem(dst)); */
     LN_CUDA_CK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToHost));
+    return dst;
 }
 
-void ln_memcpy_d2d(void *dst, const void *src, size_t size)
+void *ln_memcpy_d2d(void *dst, const void *src, size_t size)
 {
     assert(ln_is_device_mem(src));
     assert(ln_is_device_mem(dst));
     LN_CUDA_CK(cudaMemcpy(dst, src, size, cudaMemcpyDeviceToDevice));
+    return dst;
 }
 
 void ln_free_cuda(void *p)
