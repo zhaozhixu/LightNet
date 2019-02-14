@@ -178,7 +178,6 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     {
         ln_free(dst_dims);
     }
-
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
     priv->src_entry = src_entry;

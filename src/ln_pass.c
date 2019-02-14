@@ -25,21 +25,66 @@
 
 const int MAX_PEEPHOLE_PASSES = 10;
 
+static int is_tensors_static(const ln_list *tensors, ln_hash *table)
+{
+    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
+
+    LN_LIST_FOREACH(tle, tensors) {
+        te = ln_tensor_table_find(table, tle->name);
+        if (!te->isstatic)
+            return 0;
+    }
+    return 1;
+}
+
+static ln_list **last_tensors_defination(ln_context *ctx, ln_list *tensors)
+{
+    ln_op *op;
+    ln_list **pos;
+    ln_list *l;
+    ln_tensor_entry *te1, *te2;
+    int len;
+
+    if (!tensors)
+        return &ctx->ops;
+
+    len = ln_list_length(tensors);
+    for (l = ctx->ops; l; l = l->next) {
+        op = l->data;
+        LN_LIST_FOREACH(te1, op->op_arg->tensors_out) {
+            LN_LIST_FOREACH(te2, tensors) {
+                if (ln_streq(te1->name, te2->name)) {
+                    if (--len == 0) {
+                        pos = &l;
+                        goto end;
+                    }
+                }
+            }
+        }
+    }
+end:
+    return pos;
+}
+
 void ln_pass_preprocess(ln_context *ctx)
 {
     ln_list **lp;
+    ln_list **pos;
     ln_op *op;
     ln_op *op_copy;
     ln_tensor_list_entry *tle;
     ln_tensor_entry *te;
 
-    /* move all ops without tensors_in and with static tensors_out to the
-       beginning of ops */
+    /* move all ops without tensors_in or with static tensors_in and with static
+       tensors_out to the beginning of ops */
     for (lp = &ctx->ops; *lp;) {
         op = (*lp)->data;
         if (lp == &ctx->ops)    /* skip the first op */
             goto no_move;
-        if (!op->op_arg->tensors_in) {
+        if (!op->op_arg->tensors_in ||
+            is_tensors_static(op->op_arg->tensors_in,
+                              op->op_arg->tensor_table)) {
             LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
                 te = ln_tensor_table_find(op->op_arg->tensor_table, tle->name);
                 if (!te->isstatic)
@@ -47,7 +92,8 @@ void ln_pass_preprocess(ln_context *ctx)
             }
             op_copy = ln_op_copy(op);
             ln_context_remove_op(ctx, lp);
-            ln_context_add_op(ctx, &ctx->ops, op_copy);
+            pos = last_tensors_defination(ctx, op_copy->op_arg->tensors_in);
+            ln_context_add_op(ctx, pos, op_copy);
             continue;
         }
     no_move:

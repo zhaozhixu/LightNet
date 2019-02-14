@@ -242,6 +242,7 @@ double ln_clockdiff(struct timespec t1, struct timespec t2)
 {
     double tdiff;
 
+    printf("%ld.%09ld\n", t2.tv_sec - t1.tv_sec, t2.tv_nsec - t1.tv_nsec);
     tdiff = t2.tv_sec - t1.tv_sec + (t2.tv_nsec - t1.tv_nsec) * 1e-9;
     return tdiff;
 }

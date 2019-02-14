@@ -701,6 +701,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         if (!ln_streqn(tle->arg_name, "src", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
+        printf("%s %s %d\n", op_arg->name, tle->name, index);
         assert(index >= 0);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;
