@@ -93,7 +93,7 @@ const ln_mem_info ln_mem_type_info(ln_mem_type mtype)
 
 ln_copy_func ln_mem_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype)
 {
-    ln_copy_func copy;
+    ln_copy_func copy = NULL;
 
     ln_check_mem_type(dst_mtype);
     ln_check_mem_type(src_mtype);

@@ -105,6 +105,25 @@ static int str_to_pooling_type(const char *str)
     return -1;
 }
 
+static int str_to_elew_type(const char *str)
+{
+    if (ln_streq(str, "kSUM"))
+        return (int)ElementWiseOperation::kSUM;
+    if (ln_streq(str, "kPROD"))
+        return (int)ElementWiseOperation::kPROD;
+    if (ln_streq(str, "kMAX"))
+        return (int)ElementWiseOperation::kMAX;
+    if (ln_streq(str, "kMIN"))
+        return (int)ElementWiseOperation::kMIN;
+    if (ln_streq(str, "kSUB"))
+        return (int)ElementWiseOperation::kSUB;
+    if (ln_streq(str, "kDIV"))
+        return (int)ElementWiseOperation::kDIV;
+    if (ln_streq(str, "kPOW"))
+        return (int)ElementWiseOperation::kPOW;
+    return -1;
+}
+
 static int str_to_scale_mode(const char *str)
 {
     if (ln_streq(str, "kUNIFORM"))
@@ -181,6 +200,19 @@ static void check_softmax(char *opname, ln_op_arg *op_arg)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
     check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg);
+}
+
+static void check_elew(char *opname, ln_op_arg *op_arg)
+{
+    check_param(opname, "src1", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "src2", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "elew_type", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg);
+
+    ln_param_entry *pe;
+    pe = ln_param_list_find2(op_arg->params, opname, "elew_type");
+    ln_opck_satisfy_msg(str_to_elew_type(pe->value_string) != -1,
+                        "unsupported elewop type");
 }
 
 static void check_concat(char *opname, ln_op_arg *op_arg)
@@ -265,6 +297,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
             check_pooling(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "softmax"))
             check_softmax(pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "elew"))
+            check_elew(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "concat"))
             check_concat(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "scale"))
@@ -523,6 +557,39 @@ static void add_softmax(INetworkDefinition *network,
     tensors[dst] = softmax->getOutput(0);
 }
 
+static void add_elew(INetworkDefinition *network,
+                     std::map<std::string, ITensor*> &tensors,
+                     char *opname, ln_op_arg *op_arg)
+{
+    ln_param_entry *pe;
+    char *src1;
+    char *src2;
+    char *dst;
+    char *elew_type;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "src1");
+    assert(pe);
+    src1 = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "src2");
+    assert(pe);
+    src2 = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "elew_type");
+    assert(pe);
+    elew_type = pe->value_string;
+
+    IElementWiseLayer *elew;
+    elew = network->addElementWise(*tensors[src1], *tensors[src2],
+                                   (ElementWiseOperation)str_to_elew_type(elew_type));
+    assert(elew);
+    tensors[dst] = elew->getOutput(0);
+}
+
 // static void print_dims(const Dims &dims)
 // {
 //     for (int i = 0; i < dims.nbDims; i++)
@@ -651,6 +718,8 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
             add_pooling(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "softmax"))
             add_softmax(network, tensors, pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "elew"))
+            add_elew(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "concat"))
             add_concat(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "scale"))
@@ -701,7 +770,7 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         if (!ln_streqn(tle->arg_name, "src", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
-        printf("%s %s %d\n", op_arg->name, tle->name, index);
+        // printf("%s %s %d\n", op_arg->name, tle->name, index);
         assert(index >= 0);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;

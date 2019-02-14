@@ -123,7 +123,6 @@ void ln_context_remove_op(ln_context *ctx, ln_list **position)
 void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)
 {
     ln_list *list = NULL;
-
     list = ln_list_append(list, new_op);
     ln_context_replace_ops(ctx, position, 0, list);
 }

@@ -41,7 +41,7 @@ static int is_tensors_static(const ln_list *tensors, ln_hash *table)
 static ln_list **last_tensors_defination(ln_context *ctx, ln_list *tensors)
 {
     ln_op *op;
-    ln_list **pos;
+    ln_list **pos = NULL;
     ln_list *l;
     ln_tensor_entry *te1, *te2;
     int len;
@@ -56,7 +56,7 @@ static ln_list **last_tensors_defination(ln_context *ctx, ln_list *tensors)
             LN_LIST_FOREACH(te2, tensors) {
                 if (ln_streq(te1->name, te2->name)) {
                     if (--len == 0) {
-                        pos = &l;
+                        pos = &l->next;
                         goto end;
                     }
                 }

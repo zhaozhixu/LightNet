@@ -438,7 +438,7 @@ static void add_pooling_to_trt(ln_op *trt_op, const ln_op *op)
     char *param_op_arg_name;
     char *tensor_name;
     ln_tensor_entry *te;
-    const char *pool_type;
+    char *pool_type = NULL;
     char *param_arg_name;
     ln_param_entry *pe;
 
@@ -458,7 +458,8 @@ static void add_pooling_to_trt(ln_op *trt_op, const ln_op *op)
     else if (ln_streq(op_arg->optype, "averagepool2d"))
         pool_type = "kAVERAGE";
     else
-        assert(0 && "unsupported pooling type");
+        ln_msg_error("unsupported pooling type %s in add_pooling_to_trt()",
+                     op_arg->optype);
 
     param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "pooling_type", '_');
     trt_arg->params = ln_param_list_append_string(trt_arg->params,
@@ -557,6 +558,67 @@ static void add_softmax_to_trt(ln_op *trt_op, const ln_op *op)
                                                       param_arg_name, axes);
         ln_free(param_arg_name);
     }
+
+    ln_free(param_op_arg_name);
+}
+
+static int check_elew(const ln_op *op)
+{
+    return 1;
+}
+
+static void add_elew_to_trt(ln_op *trt_op, const ln_op *op)
+{
+    ln_op_arg *trt_arg = trt_op->op_arg;
+    ln_op_arg *op_arg = op->op_arg;
+    char *param_op_arg_name;
+    char *tensor_name;
+    char *elew_type = NULL;
+    ln_tensor_entry *te;
+    ln_param_entry *pe;
+    char *param_arg_name;
+
+    param_op_arg_name = create_arg_name_in_params(trt_arg->params, "op");
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  param_op_arg_name, "elew");
+
+    add_src(trt_arg, op_arg, param_op_arg_name, "src1", "src1");
+    add_src(trt_arg, op_arg, param_op_arg_name, "src2", "src2");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "dst");
+
+    tensor_name = ln_tensor_list_find_name(op_arg->tensors_in, "src1");
+    te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
+
+    tensor_name = ln_tensor_list_find_name(op_arg->tensors_in, "src2");
+    te = ln_tensor_table_find(op_arg->tensor_table, tensor_name);
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
+
+    pe = ln_param_list_find(op->op_arg->params, "elew_op");
+    assert(pe);
+    if (ln_streq(pe->value_string, "TL_MUL"))
+        elew_type = "kPROD";
+    else if (ln_streq(pe->value_string, "TL_DIV"))
+        elew_type = "kDIV";
+    else if (ln_streq(pe->value_string, "TL_SUM"))
+        elew_type = "kSUM";
+    else if (ln_streq(pe->value_string, "TL_SUB"))
+        elew_type = "kSUB";
+    else if (ln_streq(pe->value_string, "TL_MAX"))
+        elew_type = "kMAX";
+    else if (ln_streq(pe->value_string, "TL_MIN"))
+        elew_type = "kMIN";
+    else if (ln_streq(pe->value_string, "TL_POW"))
+        elew_type = "kPOW";
+    else
+        ln_msg_error("unsupported elew op type %s in add_elew_to_trt()",
+                     pe->value_string);
+
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "elew_type", '_');
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  param_arg_name,
+                                                  elew_type);
+    ln_free(param_arg_name);
 
     ln_free(param_op_arg_name);
 }
@@ -880,8 +942,18 @@ static ln_list *ep_batchnorm(const ln_op *op, const ln_dfg *dfg, int *match)
 
 static ln_list *ep_elew(const ln_op *op, const ln_dfg *dfg, int *match)
 {
+    ln_op *trt_op;
+
     *match = 1;
-    return simple_replace(op, "elew_cuda");
+
+    if (!check_elew(op))
+        return simple_replace(op, "elew_cuda");
+
+    trt_op = ln_op_create_with_opname(&ln_opimpl_tensorrt,
+                                      op->op_arg->tensor_table);
+    add_elew_to_trt(trt_op, op);
+
+    return ln_list_append(NULL, trt_op);
 }
 
 static ln_list *ep_maxreduce(const ln_op *op, const ln_dfg *dfg, int *match)
