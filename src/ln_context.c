@@ -230,11 +230,11 @@ void ln_context_load(ln_context *ctx, const char *datafile)
 
 void ln_context_run(const ln_context *ctx)
 {
-    struct timespec ts1, ts2;
-    ts1 = ln_clock();
+    double t1, t2;
+    t1 = ln_clock();
     ln_op_list_do_run(ctx->ops);
-    ts2 = ln_clock();
-    ln_msg_info("run time: %.5fs", ln_clockdiff(ts1, ts2));
+    t2 = ln_clock();
+    ln_msg_info("run time: %.5fs", t2 - t1);
 }
 
 void ln_context_unload(ln_context *ctx)

@@ -70,8 +70,7 @@ uint32_t ln_direct_hash(const void *key);
 int ln_direct_cmp(const void *p1, const void *p2);
 uint32_t ln_str_hash(const void *key);
 int ln_str_cmp(const void *p1, const void *p2);
-struct timespec ln_clock(void);
-double ln_clockdiff(struct timespec t1, struct timespec t2);
+double ln_clock(void);
 
 void ln_err_msg(const char *fmt, ...);
 void ln_err_cont(int error, const char *fmt, ...);

@@ -224,26 +224,16 @@ int ln_str_cmp(const void *p1, const void *p2)
     return strcmp(p1, p2);
 }
 
-struct timespec ln_clock(void)
+double ln_clock(void)
 {
-    clockid_t clockid;
     struct timespec ts;
-
-    if (clock_getcpuclockid(0, &clockid) != 0)
-        err(EXIT_FAILURE, "ln_clock(): clock_getcpuclockid() failed");
+    double time;
 
     if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
         err(EXIT_FAILURE, "ln_clock(): clock_gettime() failed");
+    time = ts.tv_sec + ts.tv_nsec * 1e-9;
 
-    return ts;
-}
-
-double ln_clockdiff(struct timespec t1, struct timespec t2)
-{
-    double tdiff;
-
-    tdiff = t2.tv_sec - t1.tv_sec + (t2.tv_nsec - t1.tv_nsec) * 1e-9;
-    return tdiff;
+    return time;
 }
 
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
