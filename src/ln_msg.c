@@ -29,10 +29,14 @@
 
 #define MAX_ERROR_LENGTH 4096
 
-#define BRIGHT(str) "\e[1m"str"\e[0m"
+#define BOLD(str) "\e[1m"str"\e[0m"
 #define GREY(str) "\e[2m"str"\e[0m"
 #define RED(str) "\e[31m"str"\e[0m"
+#define GREEN(str) "\e[32m"str"\e[0m"
+#define BROWN(str) "\e[33m"str"\e[0m"
+#define BLUE(str) "\e[34m"str"\e[0m"
 #define PURPLE(str) "\e[35m"str"\e[0m"
+#define CYAN(str) "\e[36m"str"\e[0m"
 
 static int32_t disp_mask = 0;
 
@@ -120,7 +124,7 @@ void ln_msg_handle(ln_msg **msg)
         fflush(NULL);
         break;
     case LN_MSG_INFO:
-        fprintf(stderr, GREY("info: ")"%s\n", (*msg)->err_str);
+        fprintf(stderr, BOLD("info: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         break;
     case LN_MSG_DEBUG:

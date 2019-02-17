@@ -232,7 +232,7 @@ struct timespec ln_clock(void)
     if (clock_getcpuclockid(0, &clockid) != 0)
         err(EXIT_FAILURE, "ln_clock(): clock_getcpuclockid() failed");
 
-    if (clock_gettime(clockid, &ts) == -1)
+    if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
         err(EXIT_FAILURE, "ln_clock(): clock_gettime() failed");
 
     return ts;
@@ -242,7 +242,6 @@ double ln_clockdiff(struct timespec t1, struct timespec t2)
 {
     double tdiff;
 
-    printf("%ld.%09ld\n", t2.tv_sec - t1.tv_sec, t2.tv_nsec - t1.tv_nsec);
     tdiff = t2.tv_sec - t1.tv_sec + (t2.tv_nsec - t1.tv_nsec) * 1e-9;
     return tdiff;
 }

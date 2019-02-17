@@ -234,7 +234,7 @@ void ln_context_run(const ln_context *ctx)
     ts1 = ln_clock();
     ln_op_list_do_run(ctx->ops);
     ts2 = ln_clock();
-    printf("run time: %.5fs\n", ln_clockdiff(ts1, ts2));
+    ln_msg_info("run time: %.5fs", ln_clockdiff(ts1, ts2));
 }
 
 void ln_context_unload(ln_context *ctx)
