@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 import shutil
+import traceback
 
 def msg_exit(msg, num):
     sys.stderr.write(msg + '\n')
@@ -35,13 +36,12 @@ def convert_vars(ckpt_prefix, savename):
         save_vars(ckpt_prefix, tmpdir)
     except Exception, e:
         shutil.rmtree(tmpdir)
-        print (e)
+        traceback.print_exc(e)
         err_exit('An exception has occured')
     current_dir = os.path.split(os.path.realpath(__file__))[0]
     genwts_script = current_dir + '/genwts.pl'
     os.system('chmod +x ' + genwts_script)
     cmd = genwts_script + ' -t 0 -o ' + savename + ' ' + tmpdir + '/*'
-    print (cmd)
     os.system(cmd)
     shutil.rmtree(tmpdir)
 
