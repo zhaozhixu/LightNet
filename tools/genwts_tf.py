@@ -17,9 +17,6 @@ def save_vars(ckpt_prefix, savedir):
     import numpy as np
     import tensorflow as tf
     ckpt_dir = os.path.split(os.path.realpath(ckpt_prefix))[0]
-    if not os.path.isdir(ckpt_dir):
-        shutil.rmtree(savedir)
-        err_exit('CKPT_PREFIX is not a valid directory')
     np.set_printoptions(threshold=sys.maxsize)
     with tf.Session() as sess:
         saver = tf.train.import_meta_graph(ckpt_prefix + '.meta')
@@ -34,7 +31,12 @@ def convert_vars(ckpt_prefix, savename):
     if not os.path.isdir(savedir):
         os.makedirs(savedir)
     tmpdir = tempfile.mkdtemp(prefix='genwts_tf_', dir=savedir)
-    save_vars(ckpt_prefix, tmpdir)
+    try:
+        save_vars(ckpt_prefix, tmpdir)
+    except Exception, e:
+        shutil.rmtree(tmpdir)
+        print (e)
+        err_exit('An exception has occured')
     current_dir = os.path.split(os.path.realpath(__file__))[0]
     genwts_script = current_dir + '/genwts.pl'
     os.system('chmod +x ' + genwts_script)
