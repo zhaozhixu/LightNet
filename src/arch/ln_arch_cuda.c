@@ -46,6 +46,7 @@ extern ln_op ln_opimpl_transform_bboxSQD_cuda;
 extern ln_op ln_opimpl_rearange_cuda;
 extern ln_op ln_opimpl_pick1d_cuda;
 extern ln_op ln_opimpl_fprint_cuda;
+extern ln_op ln_opimpl_lrelu_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -73,6 +74,7 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_rearange_cuda,
     &ln_opimpl_pick1d_cuda,
     &ln_opimpl_fprint_cuda,
+    &ln_opimpl_lrelu_cuda,
 /* end of init cuda ops */
     NULL
 };

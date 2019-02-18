@@ -46,6 +46,7 @@ extern ln_op ln_opimpl_transform_bboxSQD;
 extern ln_op ln_opimpl_rearange;
 extern ln_op ln_opimpl_pick1d;
 extern ln_op ln_opimpl_fprint;
+extern ln_op ln_opimpl_lrelu;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -74,6 +75,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_rearange,
     &ln_opimpl_pick1d,
     &ln_opimpl_fprint,
+    &ln_opimpl_lrelu,
 /* end of init none ops */
     NULL
 };

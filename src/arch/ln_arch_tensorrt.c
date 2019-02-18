@@ -39,6 +39,7 @@ static ln_list *ep_create(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_create_cuda(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_conv2d(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_lrelu(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_sigmoid(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_tanh(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_maxpool2d(const ln_op *op, const ln_dfg *dfg, int *match);
@@ -68,6 +69,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"create_cuda", ep_create_cuda},
     {"conv2d", ep_conv2d},
     {"relu", ep_relu},
+    {"lrelu", ep_lrelu},
     {"sigmoid", ep_sigmoid},
     {"tanh", ep_tanh},
     {"maxpool2d", ep_maxpool2d},
@@ -800,6 +802,12 @@ static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg, int *match)
     add_activation_to_trt(trt_op, op);
 
     return ln_list_append(NULL, trt_op);
+}
+
+static ln_list *ep_lrelu(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "lrelu_cuda");
 }
 
 static ln_list *ep_sigmoid(const ln_op *op, const ln_dfg *dfg, int *match)

@@ -1,0 +1,54 @@
+{
+    "ops": [
+        {
+            "optype": "lrelu",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_NONE"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dtype": "src->dtype", "dims": "src->dims"}
+            ],
+            "params": [
+                {"arg_name": "negslope", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "float"}
+            ]
+        },
+        {
+            "optype": "lrelu_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CPU"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dtype": "src->dtype", "dims": "src->dims"}
+            ],
+            "params": [
+                {"arg_name": "negslope", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "float"}
+            ],
+            "run": "tl_tensor_lrelu(src, dst, negslope);"
+        },
+        {
+            "optype": "lrelu_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA"}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "ndim": "src->ndim", "dtype": "src->dtype", "dims": "src->dims"}
+            ],
+            "params": [
+                {"arg_name": "negslope", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "float"}
+            ],
+            "run": "tl_tensor_lrelu_cuda(src, dst, negslope);"
+        }
+    ]
+}

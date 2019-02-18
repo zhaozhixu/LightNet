@@ -339,11 +339,11 @@ class Logger : public ILogger
 {
 public:
     void log(ILogger::Severity severity, const char* msg) override
-    {
-        // suppress info-level messages
-        if (severity == Severity::kINFO) return;
+        {
+            // suppress info-level messages
+            if (severity == Severity::kINFO) return;
 
-        switch (severity)
+            switch (severity)
             {
             case Severity::kINTERNAL_ERROR: std::cerr << "INTERNAL_ERROR: "; break;
             case Severity::kERROR: std::cerr << "ERROR: "; break;
@@ -351,8 +351,8 @@ public:
             case Severity::kINFO: std::cerr << "INFO: "; break;
             default: std::cerr << "UNKNOWN: "; break;
             }
-        std::cerr << msg << std::endl;
-    }
+            std::cerr << msg << std::endl;
+        }
 };
 
 static Logger global_logger;
