@@ -26,6 +26,7 @@
 
 #include "ln_op.h"
 #include "ln_tensorrt.h"
+#include "ln_tensorrt_plugin.h"
 
 #if NV_TENSORRT_MAJOR < 2
 #error TensorRT version below 2.x.x is not supported.
@@ -181,6 +182,13 @@ static void check_activation(char *opname, ln_op_arg *op_arg)
                         "unsupported activation type");
 }
 
+static void check_lrelu(char *opname, ln_op_arg *op_arg)
+{
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "negslope", LN_PARAM_NUMBER, 0, op_arg);
+}
+
 static void check_pooling(char *opname, ln_op_arg *op_arg)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
@@ -293,6 +301,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
             check_conv(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             check_activation(pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "lrelu"))
+            check_lrelu(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "pooling"))
             check_pooling(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "softmax"))
@@ -476,6 +486,37 @@ static void add_activation(INetworkDefinition *network,
                                         (ActivationType)str_to_activation_type(activation_type));
     assert(activation);
     tensors[dst] = activation->getOutput(0);
+}
+
+static void add_lrelu(INetworkDefinition *network,
+                      std::map<std::string, ITensor*> &tensors,
+                      char *opname, ln_op_arg *op_arg)
+{
+    char *src;
+    char *dst;
+    float negslope;
+    ln_param_entry *pe;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "negslope");
+    assert(pe);
+    negslope = pe->value_float;
+
+    IPlugin *lrelu_plugin = plugin::createPReLUPlugin(negslope);
+    IPluginLayer *pl = network->addPlugin(&tensors[src], 1, *lrelu_plugin);
+    assert(pl);
+    char *name = ln_strcat_delim_alloc("lrelu", opname, '_');
+    pl->setName(name);
+    ln_free(name);
+
+    tensors[dst] = pl->getOutput(0);
 }
 
 static void add_pooling(INetworkDefinition *network,
@@ -714,6 +755,8 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
             add_conv(network, tensors, weights, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             add_activation(network, tensors, pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "lrelu"))
+            add_lrelu(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "pooling"))
             add_pooling(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "softmax"))

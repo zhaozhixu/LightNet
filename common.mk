@@ -52,7 +52,7 @@ CXXFLAGS += -DLN_TENSORRT
 CUFLAGS += -DLN_TENSORRT
 TENSORRT_INSTALL_DIR ?= /usr
 INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
-LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer
+LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer -lnvinfer_plugin
 endif
 endif
 

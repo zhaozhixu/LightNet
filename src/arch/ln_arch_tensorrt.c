@@ -418,6 +418,40 @@ static void add_activation_to_trt(ln_op *trt_op, const ln_op *op)
     ln_free(param_op_arg_name);
 }
 
+static int check_lrelu(const ln_op *op)
+{
+    return 1;
+}
+
+static void add_lrelu_to_trt(ln_op *trt_op, const ln_op *op)
+{
+    ln_op_arg *trt_arg = trt_op->op_arg;
+    ln_op_arg *op_arg = op->op_arg;
+    ln_tensor_entry *te;
+    ln_param_entry *pe;
+    char *param_op_arg_name;
+    char *param_arg_name;
+
+    param_op_arg_name = create_arg_name_in_params(trt_arg->params, "op");
+    trt_arg->params = ln_param_list_append_string(trt_arg->params,
+                                                  param_op_arg_name, "lrelu");
+
+    add_src(trt_arg, op_arg, param_op_arg_name, "src", "src");
+    add_dst(trt_arg, op_arg, param_op_arg_name, "dst", "dst");
+    te = ln_op_find_tensor_entry(op, "src");
+    check_and_add_batch_size(trt_op, te->tensor->dims[0], op_arg->name);
+
+    pe = ln_param_list_find(op->op_arg->params, "negslope");
+    assert(pe);
+
+    param_arg_name = ln_strcat_delim_alloc(param_op_arg_name, "negslope", '_');
+    trt_arg->params = ln_param_list_append_float(trt_arg->params,
+                                                 param_arg_name,
+                                                 pe->value_float);
+    ln_free(param_arg_name);
+    ln_free(param_op_arg_name);
+}
+
 static int check_pooling(const ln_op *op)
 {
     ln_param_entry *pe;
@@ -806,8 +840,18 @@ static ln_list *ep_relu(const ln_op *op, const ln_dfg *dfg, int *match)
 
 static ln_list *ep_lrelu(const ln_op *op, const ln_dfg *dfg, int *match)
 {
+    ln_op *trt_op;
+
     *match = 1;
-    return simple_replace(op, "lrelu_cuda");
+
+    if (!check_lrelu(op))
+        return simple_replace(op, "lrelu_cuda");
+
+    trt_op = ln_op_create_with_opname(&ln_opimpl_tensorrt,
+                                      op->op_arg->tensor_table);
+    add_lrelu_to_trt(trt_op, op);
+
+    return ln_list_append(NULL, trt_op);
 }
 
 static ln_list *ep_sigmoid(const ln_op *op, const ln_dfg *dfg, int *match)
