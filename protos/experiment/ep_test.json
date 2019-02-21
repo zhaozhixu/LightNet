@@ -1,0 +1,40 @@
+{
+  "ops": [
+    {
+      "optype": "create",
+      "rules": [
+        {"cond": ["self.dst->"],
+         "replace": "create_cpu"},
+        {"cond": [
+          "self.dst->conv2d.src",
+          "self.dst->relu.src",
+          "self.dst->maxpool2d.src",
+          "self.dst->softmax.src",
+          "self.dst->sigmoid.src",
+          "self.dst->concat.src",
+          "self.dst->tensorrt.src",
+        ],
+         "replace": "create_cuda"},
+        {"cond": [],
+         "replace": "create_cpu"},
+      ]
+    },
+    {
+      "optype": "create_cuda",
+      "rules": []
+    },
+    {
+      "optype": "conv2d",
+      "case":[
+        {"cond": [
+          "self.padding[0] != self.padding[2]",
+          "self.padding[1] != self.padding[3]"
+        ],
+         "replace": "conv2d_cuda"},
+        {"cond": [],
+         "replace": "tensorrt"
+        }
+      ]
+    },
+  ]
+}
