@@ -47,6 +47,7 @@ extern ln_op ln_opimpl_rearange;
 extern ln_op ln_opimpl_pick1d;
 extern ln_op ln_opimpl_fprint;
 extern ln_op ln_opimpl_lrelu;
+extern ln_op ln_opimpl_detect_yolov3;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -76,6 +77,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_pick1d,
     &ln_opimpl_fprint,
     &ln_opimpl_lrelu,
+    &ln_opimpl_detect_yolov3,
 /* end of init none ops */
     NULL
 };

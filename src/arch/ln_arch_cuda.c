@@ -47,6 +47,7 @@ extern ln_op ln_opimpl_rearange_cuda;
 extern ln_op ln_opimpl_pick1d_cuda;
 extern ln_op ln_opimpl_fprint_cuda;
 extern ln_op ln_opimpl_lrelu_cuda;
+extern ln_op ln_opimpl_detect_yolov3_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -75,6 +76,7 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_pick1d_cuda,
     &ln_opimpl_fprint_cuda,
     &ln_opimpl_lrelu_cuda,
+    &ln_opimpl_detect_yolov3_cuda,
 /* end of init cuda ops */
     NULL
 };
@@ -102,6 +104,8 @@ static inline int can_replace(const char *optype)
         ln_streq(optype, "rearange") ||
         ln_streq(optype, "transform_bboxSQD") ||
         ln_streq(optype, "pick1d") ||
+        ln_streq(optype, "lrelu") ||
+        ln_streq(optype, "detect_yolov3") ||
         ln_streq(optype, "print"))
         return 1;
     return 0;

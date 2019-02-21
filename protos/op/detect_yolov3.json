@@ -1,0 +1,171 @@
+{
+    "ops": [
+        {
+            "optype": "detect_yolov3",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                {"arg_name": "feature", "mtype": "LN_MEM_NONE", "ndim": 4,
+                 "dtype": "TL_FLOAT", "check": "feature->dims[0] == 1"},
+                {"arg_name": "anchors", "mtype": "LN_MEM_NONE", "ndim": 2,
+                 "sametype": "feature"},
+            ],
+            "tensors_out": [
+                {"arg_name": "box_centers", "mtype": "LN_MEM_NONE",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+box_centers_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(box_centers_dims);"},
+                {"arg_name": "box_sizes", "mtype": "LN_MEM_NONE",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+box_sizes_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(box_sizes_dims);"},
+                {"arg_name": "boxes", "mtype": "LN_MEM_NONE",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 4, feature->dims[2], feature->dims[3]};
+boxes_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(boxes_dims);"},
+                {"arg_name": "confs", "mtype": "LN_MEM_NONE",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 1, feature->dims[2], feature->dims[3]};
+confs_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(confs_dims);"},
+                {"arg_name": "probs", "mtype": "LN_MEM_NONE",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], feature->dims[1]/anchors->dims[0]-5,
+             feature->dims[2], feature->dims[3]};
+probs_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(probs_dims);"}
+            ],
+            "params": [
+                {"arg_name": "img_width", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0},
+                {"arg_name": "img_height", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0},
+            ]
+        },
+        {
+            "optype": "detect_yolov3_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                {"arg_name": "feature", "mtype": "LN_MEM_CPU", "ndim": 4,
+                 "dtype": "TL_FLOAT", "check": "feature->dims[0] == 1"},
+                {"arg_name": "anchors", "mtype": "LN_MEM_CPU", "ndim": 2,
+                 "sametype": "feature"},
+            ],
+            "tensors_out": [
+                {"arg_name": "box_centers", "mtype": "LN_MEM_CPU",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+box_centers_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(box_centers_dims);"},
+                {"arg_name": "box_sizes", "mtype": "LN_MEM_CPU",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+box_sizes_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(box_sizes_dims);"},
+                {"arg_name": "boxes", "mtype": "LN_MEM_CPU",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 4, feature->dims[2], feature->dims[3]};
+boxes_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(boxes_dims);"},
+                {"arg_name": "confs", "mtype": "LN_MEM_CPU",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 1, feature->dims[2], feature->dims[3]};
+confs_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(confs_dims);"},
+                {"arg_name": "probs", "mtype": "LN_MEM_CPU",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], feature->dims[1]/anchors->dims[0]-5,
+             feature->dims[2], feature->dims[3]};
+probs_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(probs_dims);"}
+            ],
+            "params": [
+                {"arg_name": "img_width", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0},
+                {"arg_name": "img_height", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0},
+            ],
+            "run": ""
+        },
+        {
+            "optype": "detect_yolov3_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                {"arg_name": "feature", "mtype": "LN_MEM_CUDA", "ndim": 4,
+                 "dtype": "TL_FLOAT", "check": "feature->dims[0] == 1"},
+                {"arg_name": "anchors", "mtype": "LN_MEM_CUDA", "ndim": 2,
+                 "sametype": "feature"},
+            ],
+            "tensors_out": [
+                {"arg_name": "box_centers", "mtype": "LN_MEM_CUDA",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+box_centers_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(box_centers_dims);"},
+                {"arg_name": "box_sizes", "mtype": "LN_MEM_CUDA",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+box_sizes_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(box_sizes_dims);"},
+                {"arg_name": "boxes", "mtype": "LN_MEM_CUDA",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 4, feature->dims[2], feature->dims[3]};
+boxes_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(boxes_dims);"},
+                {"arg_name": "confs", "mtype": "LN_MEM_CUDA",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], 1, feature->dims[2], feature->dims[3]};
+confs_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(confs_dims);"},
+                {"arg_name": "probs", "mtype": "LN_MEM_CUDA",
+                 "ndim": "5", "dtype": "feature->dtype",
+                 "custom": '''
+int dims[] = {1, anchors->dims[0], feature->dims[1]/anchors->dims[0]-5,
+             feature->dims[2], feature->dims[3]};
+probs_dims = ln_clone(dims, sizeof(int)*5);
+''',
+                 "cleanup": "ln_free(probs_dims);"}
+            ],
+            "params": [
+                {"arg_name": "img_width", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0},
+                {"arg_name": "img_height", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "gt": 0},
+            ],
+            "run": "tl_tensor_detect_yolov3_cuda(feature, anchors, box_centers, box_sizes, boxes, confs, probs, img_height, img_width);"
+        }
+    ]
+}

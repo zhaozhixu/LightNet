@@ -40,6 +40,8 @@
 #define INPUT_W 416
 #define CLASS_NUM 80
 #define CLASS_NUM_PLUS5 85
+#define IMG_H 768
+#define IMG_W 1024
 
 #define detection(in_name, out_name, in_size)                           \
     transpose(src=in_name | dst=out_name_##_trans | axes=[0, 2, 3, 1]); \
@@ -91,8 +93,12 @@ conv_bn_lrelu(conv8, conv9, 1024, 512, 1, 1, 1, 0, 1);
 conv_bn_lrelu(conv9, conv10, 512, 1024, 1, 3, 1, 0, 1);
 conv_bn_lrelu(conv10, conv11, 1024, 512, 1, 1, 1, 0, 1);
 conv_bn_lrelu(conv11, conv12, 512, 1024, 1, 3, 1, 0, 1);
-conv_bn_lrelu(conv12, conv13, 1024, 255, 1, 1, 1, 0, 1); //TODO: linear, no bn
-// detection
+conv(conv12, conv13, 1024, 255, 1, 1, 1, 0, 1);
+create_cuda(| dst=anchors1 | dtype=TL_FLOAT, dims=[3, 2], ran=[10, 100],
+            data=[0], from_file=false);
+detect_yolov3(feature=conv13, anchors=anchors1 | box_centers=detect1_centers,
+              box_sizes=detect1_sizes, boxes=detect1_boxes, confs=detect1_confs,
+              probs=detect1_probs | img_width=IMG_W, img_height=IMG_H);
 conv_bn_lrelu(conv11, conv14, 512, 256, 1, 1, 1, 1, 1);
 upsample(src=conv14 | dst=upsample1 | mode=TL_NEAREST, scales=[1, 1, 2, 2]);
 concat(src1=upsample1, src2=res19 | dst=concat1 | axis=1);
@@ -102,8 +108,12 @@ conv_bn_lrelu(conv16, conv17, 512, 256, 1, 1, 1, 0, 1);
 conv_bn_lrelu(conv17, conv18, 256, 512, 1, 3, 1, 0, 1);
 conv_bn_lrelu(conv18, conv19, 512, 256, 1, 1, 1, 0, 1);
 conv_bn_lrelu(conv19, conv20, 256, 512, 1, 3, 1, 0, 1);
-conv_bn_lrelu(conv20, conv21, 512, 255, 1, 1, 1, 0, 1); //TODO: linear, no bn
-// detection
+conv(conv20, conv21, 512, 255, 1, 1, 1, 0, 1);
+create_cuda(| dst=anchors2 | dtype=TL_FLOAT, dims=[3, 2], ran=[10, 100],
+            data=[0], from_file=false);
+detect_yolov3(feature=conv21, anchors=anchors2 | box_centers=detect2_centers,
+              box_sizes=detect2_sizes, boxes=detect2_boxes, confs=detect2_confs,
+              probs=detect2_probs | img_width=IMG_W, img_height=IMG_H);
 conv_bn_lrelu(conv19, conv22, 256, 128, 1, 1, 1, 1, 1);
 upsample(src=conv22 | dst=upsample2 | mode=TL_NEAREST, scales=[1, 1, 2, 2]);
 concat(src1=upsample2, src2=res11 | dst=concat2 | axis=1);
@@ -113,5 +123,9 @@ conv_bn_lrelu(conv24, conv25, 256, 128, 1, 1, 1, 0, 1);
 conv_bn_lrelu(conv25, conv26, 128, 256, 1, 3, 1, 0, 1);
 conv_bn_lrelu(conv26, conv27, 256, 128, 1, 1, 1, 0, 1);
 conv_bn_lrelu(conv27, conv28, 128, 256, 1, 3, 1, 0, 1);
-conv_bn_lrelu(conv28, conv29, 256, 255, 1, 1, 1, 0, 1); //TODO: linear, no bn
-// detection
+conv(conv28, conv29, 256, 255, 1, 1, 1, 0, 1);
+create_cuda(| dst=anchors3 | dtype=TL_FLOAT, dims=[3, 2], ran=[10, 100],
+            data=[0], from_file=false);
+detect_yolov3(feature=conv29, anchors=anchors3 | box_centers=detect3_centers,
+              box_sizes=detect3_sizes, boxes=detect3_boxes, confs=detect3_confs,
+              probs=detect3_probs | img_width=IMG_W, img_height=IMG_H);

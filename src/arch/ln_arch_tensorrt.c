@@ -62,6 +62,7 @@ static ln_list *ep_arange(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_rearange(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_transform_bboxSQD(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_pick1d(const ln_op *op, const ln_dfg *dfg, int *match);
+static ln_list *ep_detect_yolov3(const ln_op *op, const ln_dfg *dfg, int *match);
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
 
 static ln_hash_init_entry init_ep_funcs[] = {
@@ -92,6 +93,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"rearange", ep_rearange},
     {"transform_bboxSQD", ep_transform_bboxSQD},
     {"pick1d", ep_pick1d},
+    {"detect_yolov3", ep_detect_yolov3},
     {"tensorrt", ep_tensorrt},
     LN_HASH_INIT_ENTRY_NULL
 };
@@ -1128,6 +1130,12 @@ static ln_list *ep_pick1d(const ln_op *op, const ln_dfg *dfg, int *match)
 {
     *match = 1;
     return simple_replace(op, "pick1d_cuda");
+}
+
+static ln_list *ep_detect_yolov3(const ln_op *op, const ln_dfg *dfg, int *match)
+{
+    *match = 1;
+    return simple_replace(op, "detect_yolov3_cuda");
 }
 
 static ln_list *ep_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match)
