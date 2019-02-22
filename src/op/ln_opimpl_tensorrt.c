@@ -115,7 +115,7 @@ static const char *out_arg_names[] = {
 };
 
 static const char *param_arg_names[] = {
-    NULL
+    "batch_size"
 };
 
 /* specify other ln_op_arg fields */

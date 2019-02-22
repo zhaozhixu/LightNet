@@ -144,11 +144,14 @@ ln_op *ln_op_copy_to_optype(ln_hash *op_proto_table, const ln_op *op,
 {
     ln_op *new_op_proto;
     ln_op *new_op;
+    char opname[LN_MAX_NAME_LEN];
 
     new_op_proto = ln_hash_find(op_proto_table, new_optype);
     if (!new_op_proto)
         ln_msg_inter_error("optype %s not found", new_optype);
-    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name,
+    strncpy(opname, ln_name_unique(new_op_proto->op_arg->optype),
+            LN_MAX_NAME_LEN);
+    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name, /* FIXME: use opname */
                                      ln_tensor_list_copy(op->op_arg->tensors_in),
                                      ln_tensor_list_copy(op->op_arg->tensors_out),
                                      ln_param_list_copy(op->op_arg->params),

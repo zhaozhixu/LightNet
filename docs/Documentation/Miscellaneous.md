@@ -73,7 +73,7 @@ You can always get help for a tool by typing `tool_name -h`.
 
     A perl module with interfaces for transforming an 
     [easy-to-write JSON format](Miscellaneous.md#an-easy-to-write-json-format)
-    file to an official JSON form file.
+    file to an official JSON format file.
 
 * `genwts.pl`
 

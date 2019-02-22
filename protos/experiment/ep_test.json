@@ -1,40 +1,470 @@
 {
-  "ops": [
-    {
-      "optype": "create",
-      "rules": [
-        {"cond": ["self.dst->"],
-         "replace": "create_cpu"},
-        {"cond": [
-          "self.dst->conv2d.src",
-          "self.dst->relu.src",
-          "self.dst->maxpool2d.src",
-          "self.dst->softmax.src",
-          "self.dst->sigmoid.src",
-          "self.dst->concat.src",
-          "self.dst->tensorrt.src",
-        ],
-         "replace": "create_cuda"},
-        {"cond": [],
-         "replace": "create_cpu"},
-      ]
-    },
-    {
-      "optype": "create_cuda",
-      "rules": []
-    },
-    {
-      "optype": "conv2d",
-      "case":[
-        {"cond": [
-          "self.padding[0] != self.padding[2]",
-          "self.padding[1] != self.padding[3]"
-        ],
-         "replace": "conv2d_cuda"},
-        {"cond": [],
-         "replace": "tensorrt"
+    "arch": "tensorrt"
+    "author": "Zhao Zhixu"
+    "ops": [
+        {
+            "optype": "create",
+            "rules": [
+                {
+                    "cond": ["self.dst=>"],
+                    "replace": ["create_cpu"]
+                },
+                {
+                    "cond": [
+                        "self.dst=>conv2d.src",
+                        "self.dst=>relu.src",
+                        "self.dst=>maxpool2d.src",
+                        "self.dst=>softmax.src",
+                        "self.dst=>sigmoid.src",
+                        "self.dst=>concat.src",
+                        "self.dst=>transform_bboxSQD.src",
+                        "self.dst=>rearange.src",
+                        "self.dst=>tensorrt.src",
+                    ],
+                    "replace": ["create_cuda"]
+                },
+                {
+                    "cond": [],
+                    "replace": ["create_cpu"]
+                },
+            ]
+        },
+        {
+            "optype": "create_cuda",
+            "rules": []
+        },
+        {
+            "optype": "conv2d",
+            "rules":[
+                {
+                    "cond": [
+                        "self.padding[0] != self.padding[2]",
+                        "self.padding[1] != self.padding[3]"
+                    ],
+                    "replace": "conv2d_cuda"
+                },
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.weight$@ = self.weight",
+                        "trt.weight$@ = self.bias",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"conv\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_weight = self.weight",
+                        "trt.op$^_bias = self.bias",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_group = self.group",
+                        "trt.op$^_output_c = self.output_c",
+                        "trt.op$^_size = self.size",
+                        "trt.op$^_stride = self.stride",
+                        "trt.op$^_padding = self.padding",
+                        "trt.op$^_dilation = self.dilation",
+                        "trt.batch_size = self.src.dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "relu",
+            "rules":[
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"activation\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_activation_type = \"kRELU\"",
+                        "trt.batch_size = self.src.dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "lrelu",
+            "rules":[
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"lrelu\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_negslope = self.negslope",
+                        "trt.batch_size = self.src.dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "sigmoid",
+            "rules":[
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"activation\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_activation_type = \"kSIGMOID\"",
+                        "trt.batch_size = self.src.dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "tanh",
+            "rules":[
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"activation\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_activation_type = \"kTANH\"",
+                        "trt.batch_size = self.src.dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "maxpool2d",
+            "rules":[
+                {
+                    "cond": [
+                        "self.padding[0] != self.padding[2]",
+                        "self.padding[1] != self.padding[3]"
+                    ],
+                    "replace": "maxpool2d_cuda"
+                },
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"pooling\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_pooling_type = \"kMAX\"",
+                        "trt.op$^_size = self.size",
+                        "trt.op$^_stride = self.stride",
+                        "trt.op$^_padding[2]"
+                        "trt.op$^_padding[0] = self.padding[0]",
+                        "trt.op$^_padding[1] = self.padding[2]",
+                        "trt.batch_size = self.src.dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "softmax",
+            "rules": [
+                {
+                    "cond": [
+                        "self.axis == 0",
+                        "LN_TRT_VER(\"4.4.0\") < 0 && self.src.ndim < 4 && self.axis != 1",
+                        "LN_TRT_VER(\"4.4.0\") < 0 && self.src.ndim >= 4 && self.axis != self.src.ndim - 3",
+                    ],
+                    "replace": ["softmax_cuda"]
+                },
+                {
+                    "cond": ["LN_TRT_VER(\"4.4.0\") < 0"]
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"softmax\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.batch_size = self.src.dims[0]"
+                    ]
+                },
+                {
+                    "cond": []
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"softmax\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_axes = 0 | (1 << self.axis)",
+                        "trt.batch_size = self.src.dims[0]"
+                    ]
+                }
+            ]
+        },
+        {
+            "optype": "concat",
+            "rules": [
+                {
+                    "cond": [
+                        "self.axis == 0",
+                        "LN_TRT_VER(\"4.0.0\") < 0 && self.src1.ndim < 4 && self.axis != 1",
+                        "LN_TRT_VER(\"4.0.0\") < 0 && self.src1.ndim >= 4 && self.axis != self.src1.ndim - 3"
+                    ],
+                    "replace": ["concat_cuda"]
+                },
+                {
+                    "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src1",
+                        "trt.src$@ = self.src2",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"concat\"",
+                        "trt.op$^_src1 = self.src1",
+                        "trt.op$^_src2 = self.src2",
+                        "trt.batch_size = self.src1.dims[0]"
+                    ]
+                },
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src1",
+                        "trt.src$@ = self.src2",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"concat\"",
+                        "trt.op$^_src1 = self.src1",
+                        "trt.op$^_src2 = self.src2",
+                        "trt.op$^_axis = self.axis",
+                        "trt.batch_size = self.src1.dims[0]"
+                    ]
+                }
+            ]
+        },
+        {
+            "optype": "batchnorm",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["bn2scale_wts_cpu bwc", "tensorrt trt"],
+                    "replace_rule": [
+                        "bwc.src_mean = self.mean",
+                        "bwc.src_var = self.var",
+                        "bwc.src_scale = self.scale",
+                        "bwc.src_offset = self.offset",
+                        "bwc.epsilon = self.epsilon",
+
+                        "trt.src$@ = self.src",
+                        "trt.dst$@ = self.dst",
+                        "trt.weight$@ = bwc.dst_shift",
+                        "trt.weight$@ = bwc.dst_scale",
+                        "trt.weight$@ = bwc.dst_power",
+                        "trt.op$@ = \"scale\"",
+                        "trt.op$^_src = self.src",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_shift = bwc.dst_shift",
+                        "trt.op$^_scale = bwc.dst_scale",
+                        "trt.op$^_power = bwc.dst_power",
+                        "trt.op$^_scale_mode = \"kCHANNEL\"",
+                        "trt.batch_size = self.src.dims[0]",
+                    ]
+                }
+            ]
+        },
+        {
+            "optype": "elew",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "replace_rule": [
+                        "trt.src$@ = self.src1",
+                        "trt.src$@ = self.src2",
+                        "trt.dst$@ = self.dst",
+                        "trt.op$@ = \"elew\"",
+                        "trt.op$^_src1 = self.src1",
+                        "trt.op$^_src2 = self.src2",
+                        "trt.op$^_dst = self.dst",
+                        "trt.op$^_elew_type = ln_trt_elew_name_convert(self.elew_op)",
+                        "trt.batch_size = self.src1.dims[0]",
+                    ]
+                }
+            ]
+        },
+        {
+            "optype": "maxreduce",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["maxreduce_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "maxreduce_arg",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["maxreduce_arg_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "slice",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["slice_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "transpose",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["transpose_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "upsample",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["upsample_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "zeros",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["zeros_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "reshape",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["reshape_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "print",
+            "rules": [
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CPU"],
+                    "replace": ["print_cpu"]
+                },
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CUDA"],
+                    "replace": ["print_CUDA"]
+                }
+                {
+                    "cond": [],
+                    "err": "print's src is either of LN_MEM_CPU or LN_MEM_CUDA"
+                }
+            ]
+        },
+        {
+            "optype": "fprint",
+            "rules": [
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CPU"],
+                    "replace": ["fprint_cpu"]
+                },
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CUDA"],
+                    "replace": ["fprint_CUDA"]
+                }
+                {
+                    "cond": [],
+                    "err": "fprint's src is either of LN_MEM_CPU or LN_MEM_CUDA"
+                }
+            ]
+        },
+        {
+            "optype": "sort1d",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "sort1d_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "sort1d_by_key",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "sort1d_by_key_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "arange",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "arange_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "rearange",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "rearange_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "transform_bboxSQD",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "transform_bboxSQD_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "pick1d",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "pick1d_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "detect_yolov3",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "detect_yolov3_cuda"
+                }
+            ]
+        },
+        {
+            "optype": "tensorrt",
+            "rules": [
+                {
+                    "cond": [],
+                    "match": false
+                }
+            ]
         }
-      ]
-    },
-  ]
+    ]
 }

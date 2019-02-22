@@ -263,8 +263,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
             te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
             ln_opck_tensor_defined(te, tle->name);
             ln_opck_tensor_mtype_eq(te, LN_MEM_CUDA);
-            ln_opck_satisfy_msg(te->tensor->ndim == 4,
-                                "\"src*\" should be a 4-dimensional tensor");
+            // ln_opck_satisfy_msg(te->tensor->ndim == 4,
+            //                     "'src*' should be a 4-dimensional tensor");
             ln_opck(LN_MSG_ERROR, tl_dtype_to_ioTensor_DataType(te->tensor->dtype) != -1,
                     "%s: \"%s\"'s tensor %s have unsupported input tensor dtype %s for building TensorRT %s model",
                     op_arg->optype, op_arg->name, te->name,

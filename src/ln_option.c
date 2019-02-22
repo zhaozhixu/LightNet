@@ -53,6 +53,7 @@ Options:\n\
                          standard output; if FILE is !, do not print;\n\
                          (default: out.json)\n\
   -t, --target=TARGET    specify target platform (default: cpu)\n\
+  -f, --datafile=FILE    specify tensor data file\n\
   -c, --compile          compile only; do not run\n\
   -r, --run              run only; do not compile; SOURCE should have been\n\
                          memory-planned\n\
