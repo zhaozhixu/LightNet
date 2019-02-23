@@ -61,9 +61,10 @@ sub parse_and_generate {
         foreach my $op (@{$json->{ops}}) {
             &gen_code($op);
         }
-    }
-    if (exists $json->{optype}) {
+    } elsif (exists $json->{optype}) {
         &gen_code($json);
+    } else {
+        err_exit("JSON doesn't contain an 'ops' or 'optype' field");
     }
 }
 
