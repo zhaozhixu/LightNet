@@ -59,9 +59,11 @@ sub parse_and_generate {
     my $json = $json_obj->decode($json_text);
     if (exists $json->{ops}) {
         foreach my $op (@{$json->{ops}}) {
+            next if exists $_->{autogen} and not $_->{autogen};
             &gen_code($op);
         }
     } elsif (exists $json->{optype}) {
+        return if exists $json->{autogen} and not $json->{autogen};
         &gen_code($json);
     } else {
         err_exit("JSON doesn't contain an 'ops' or 'optype' field");

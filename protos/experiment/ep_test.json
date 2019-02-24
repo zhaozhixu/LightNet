@@ -31,7 +31,12 @@
         },
         {
             "optype": "create_cuda",
-            "rules": []
+            "rules": [
+                {
+                    "cond": []
+                    "match": false
+                }
+            ]
         },
         {
             "optype": "conv2d",
