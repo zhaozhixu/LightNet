@@ -25,6 +25,8 @@
 #include "ln_msg.h"
 #include "ln_name.h"
 
+#include <ctype.h>
+
 ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
                                                   const char *name)
 {
@@ -124,6 +126,41 @@ ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
 int ln_tensor_list_length(ln_list *list)
 {
     return ln_list_length(list);
+}
+
+static int is_prefix_plus_number(const char *str, const char *prefix)
+{
+    const char *s, *p;
+
+    s = str;
+    p = prefix;
+    while (*s++ == *p++);
+    if (*--s && !*--p) {
+        while (isdigit(*s++));
+        if (!*--s)
+            return 1;
+    }
+    return 0;
+}
+
+char *ln_tensor_list_create_arg_name(ln_list *list, const char *prefix)
+{
+    ln_tensor_list_entry *tle;
+    int max_idx = -1;
+    int idx;
+    char *buf;
+    size_t prefix_len = strlen(prefix);
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
+
+    buf = ln_alloc(sizeof(char)*buf_len);
+    LN_LIST_FOREACH(tle, list) {
+        if (!is_prefix_plus_number(tle->arg_name, prefix))
+            continue;
+        idx = atoi(&tle->arg_name[prefix_len]);
+        max_idx = max_idx < idx ? idx : max_idx;
+    }
+    snprintf(buf, buf_len, "%s%d", prefix, max_idx+1);
+    return buf;
 }
 
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)

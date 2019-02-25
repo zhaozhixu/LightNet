@@ -32,6 +32,8 @@ sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
 
+    my %directives;
+    $op_str = &get_and_remove_directives($op_str, \%directives);
     my @fields = split '.', $op_str;
     my $name = $fields[0];
     unless (exists $defined_ops->{$name}) {
@@ -130,12 +132,23 @@ sub expand_op_str {
                 }
             }
         }
-        when () {
+        when ($directives{auto-in}) {
+
         }
         default {
             &err_unknown_last_field(@fields);
         }
     }
+}
+
+sub get_and_remove_directives {
+    my $op_str = shift;
+    my $hash = shift;
+    if ($op_str =~ /^\$\(([-a-zA-Z0-9_]+)\s+(.+)\)/) {
+        $hash->{$1} = 1;
+        $op_str = $2;
+    }
+    $op_str;
 }
 
 sub field_is_tensor {

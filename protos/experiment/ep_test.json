@@ -52,21 +52,21 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-in trt.weight$@) = self.weight",
-                        "$(auto-in trt.weight$@) = self.bias",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"conv\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_weight) = self.weight",
-                        "$(auto-param trt.op$^_bias) = self.bias",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_group) = self.group",
-                        "$(auto-param trt.op$^_output_c) = self.output_c",
-                        "$(auto-param trt.op$^_size) = self.size",
-                        "$(auto-param trt.op$^_stride) = self.stride",
-                        "$(auto-param trt.op$^_padding) = self.padding",
-                        "$(auto-param trt.op$^_dilation) = self.dilation",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-in trt.weight$@) = self.weight",
+                        "$(add-in trt.weight$@) = self.bias",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"conv\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_weight) = self.weight",
+                        "$(add-param trt.op$^_bias) = self.bias",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_group) = self.group",
+                        "$(add-param trt.op$^_output_c) = self.output_c",
+                        "$(add-param trt.op$^_size) = self.size",
+                        "$(add-param trt.op$^_stride) = self.stride",
+                        "$(add-param trt.op$^_padding) = self.padding",
+                        "$(add-param trt.op$^_dilation) = self.dilation",
                         "trt.batch_size = self.src.dims[0]"
                     ],
                 }
@@ -79,12 +79,12 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"activation\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_activation_type) = \"kRELU\"",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"activation\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_activation_type) = \"kRELU\"",
                         "trt.batch_size = self.src.dims[0]"
                     ],
                 }
@@ -97,12 +97,12 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"lrelu\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_negslope) = self.negslope",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"lrelu\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_negslope) = self.negslope",
                         "trt.batch_size = self.src.dims[0]"
                     ],
                 }
@@ -115,12 +115,12 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"activation\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_activation_type) = \"kSIGMOID\"",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"activation\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_activation_type) = \"kSIGMOID\"",
                         "trt.batch_size = self.src.dims[0]"
                     ],
                 }
@@ -133,12 +133,12 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"activation\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_activation_type) = \"kTANH\"",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"activation\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_activation_type) = \"kTANH\"",
                         "trt.batch_size = self.src.dims[0]"
                     ],
                 }
@@ -158,17 +158,17 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"pooling\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_pooling_type) = \"kMAX\"",
-                        "$(auto-param trt.op$^_size) = self.size",
-                        "$(auto-param trt.op$^_stride) = self.stride",
-                        "$(auto-param trt.op$^_padding)[2]"
-                        "$(auto-param trt.op$^_padding)[0] = self.padding[0]",
-                        "$(auto-param trt.op$^_padding)[1] = self.padding[2]",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"pooling\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_pooling_type) = \"kMAX\"",
+                        "$(add-param trt.op$^_size) = self.size",
+                        "$(add-param trt.op$^_stride) = self.stride",
+                        "$(add-param trt.op$^_padding)[2]"
+                        "$(add-param trt.op$^_padding)[0] = self.padding[0]",
+                        "$(add-param trt.op$^_padding)[1] = self.padding[2]",
                         "trt.batch_size = self.src.dims[0]"
                     ],
                 }
@@ -189,11 +189,11 @@
                     "cond": ["LN_TRT_VER(\"4.4.0\") < 0"]
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"softmax\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"softmax\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
                         "trt.batch_size = self.src.dims[0]"
                     ]
                 },
@@ -201,12 +201,12 @@
                     "cond": []
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"softmax\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_axes) = 0 | (1 << self.axis)",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"softmax\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_axes) = 0 | (1 << self.axis)",
                         "trt.batch_size = self.src.dims[0]"
                     ]
                 }
@@ -227,12 +227,12 @@
                     "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src1",
-                        "$(auto-in trt.src$@) = self.src2",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"concat\"",
-                        "$(auto-param trt.op$^_src1) = self.src1",
-                        "$(auto-param trt.op$^_src2) = self.src2",
+                        "$(add-in trt.src$@) = self.src1",
+                        "$(add-in trt.src$@) = self.src2",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"concat\"",
+                        "$(add-param trt.op$^_src1) = self.src1",
+                        "$(add-param trt.op$^_src2) = self.src2",
                         "trt.batch_size = self.src1.dims[0]"
                     ]
                 },
@@ -240,13 +240,13 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src1",
-                        "$(auto-in trt.src$@) = self.src2",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"concat\"",
-                        "$(auto-param trt.op$^_src1) = self.src1",
-                        "$(auto-param trt.op$^_src2) = self.src2",
-                        "$(auto-param trt.op$^_axis) = self.axis",
+                        "$(add-in trt.src$@) = self.src1",
+                        "$(add-in trt.src$@) = self.src2",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"concat\"",
+                        "$(add-param trt.op$^_src1) = self.src1",
+                        "$(add-param trt.op$^_src2) = self.src2",
+                        "$(add-param trt.op$^_axis) = self.axis",
                         "trt.batch_size = self.src1.dims[0]"
                     ]
                 }
@@ -265,18 +265,18 @@
                         "bwc.src_offset = self.offset",
                         "bwc.epsilon = self.epsilon",
 
-                        "$(auto-in trt.src$@) = self.src",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-in trt.weight$@) = bwc.dst_shift",
-                        "$(auto-in trt.weight$@) = bwc.dst_scale",
-                        "$(auto-in trt.weight$@) = bwc.dst_power",
-                        "$(auto-param trt.op$@) = \"scale\"",
-                        "$(auto-param trt.op$^_src) = self.src",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_shift) = bwc.dst_shift",
-                        "$(auto-param trt.op$^_scale) = bwc.dst_scale",
-                        "$(auto-param trt.op$^_power) = bwc.dst_power",
-                        "$(auto-param trt.op$^_scale_mode) = \"kCHANNEL\"",
+                        "$(add-in trt.src$@) = self.src",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-in trt.weight$@) = bwc.dst_shift",
+                        "$(add-in trt.weight$@) = bwc.dst_scale",
+                        "$(add-in trt.weight$@) = bwc.dst_power",
+                        "$(add-param trt.op$@) = \"scale\"",
+                        "$(add-param trt.op$^_src) = self.src",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_shift) = bwc.dst_shift",
+                        "$(add-param trt.op$^_scale) = bwc.dst_scale",
+                        "$(add-param trt.op$^_power) = bwc.dst_power",
+                        "$(add-param trt.op$^_scale_mode) = \"kCHANNEL\"",
                         "trt.batch_size = self.src.dims[0]",
                     ]
                 }
@@ -289,14 +289,14 @@
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "replace_rule": [
-                        "$(auto-in trt.src$@) = self.src1",
-                        "$(auto-in trt.src$@) = self.src2",
-                        "$(auto-out trt.dst$@) = self.dst",
-                        "$(auto-param trt.op$@) = \"elew\"",
-                        "$(auto-param trt.op$^_src1) = self.src1",
-                        "$(auto-param trt.op$^_src2) = self.src2",
-                        "$(auto-param trt.op$^_dst) = self.dst",
-                        "$(auto-param trt.op$^_elew_type) = ln_trt_elew_name_convert(self.elew_op)",
+                        "$(add-in trt.src$@) = self.src1",
+                        "$(add-in trt.src$@) = self.src2",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"elew\"",
+                        "$(add-param trt.op$^_src1) = self.src1",
+                        "$(add-param trt.op$^_src2) = self.src2",
+                        "$(add-param trt.op$^_dst) = self.dst",
+                        "$(add-param trt.op$^_elew_type) = ln_trt_elew_name_convert(self.elew_op)",
                         "trt.batch_size = self.src1.dims[0]",
                     ]
                 }
