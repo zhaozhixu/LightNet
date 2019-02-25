@@ -225,7 +225,11 @@ void ln_context_load(ln_context *ctx, const char *datafile)
     ln_context_alloc_mem(ctx);
     if (datafile)
         ln_tensor_table_load_trt_weight_file(ctx->tensor_table, datafile);
+    double t1, t2;
+    t1 = ln_clock();
     ln_op_list_do_static_run(ctx->ops);
+    t2 = ln_clock();
+    ln_msg_info("static_run time: %.5fs", t2 - t1);
 }
 
 void ln_context_run(const ln_context *ctx)
