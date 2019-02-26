@@ -27,6 +27,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <time.h>
+#include <ctype.h>
 #include <sys/stat.h>
 
 #include "ln_util.h"
@@ -182,6 +183,21 @@ int ln_streq(const char *s1, const char *s2)
 int ln_streqn(const char *s1, const char *s2, size_t n)
 {
     return !!!strncmp(s1, s2, n);
+}
+
+int ln_is_prefix_plus_number(const char *str, const char *prefix)
+{
+    const char *s, *p;
+
+    s = str;
+    p = prefix;
+    while (*s++ == *p++);
+    if (*--s && !*--p) {
+        while (isdigit(*s++));
+        if (!*--s)
+            return 1;
+    }
+    return 0;
 }
 
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding)

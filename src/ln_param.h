@@ -95,6 +95,7 @@ ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name);
 ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
                                     const char *arg_name2);
 int ln_param_list_length(ln_list *list);
+char *ln_param_list_create_arg_name(ln_list *list, const char *prefix);
 const char *ln_param_type_name(ln_param_type type);
 ln_param_entry *ln_param_entry_copy(const ln_param_entry *pe);
 

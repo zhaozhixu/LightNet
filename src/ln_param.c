@@ -392,6 +392,26 @@ int ln_param_list_length(ln_list *list)
     return ln_list_length(list);
 }
 
+char *ln_param_list_create_arg_name(ln_list *list, const char *prefix)
+{
+    ln_param_entry *pe;
+    int max_idx = -1;
+    int idx;
+    char *buf;
+    size_t prefix_len = strlen(prefix);
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
+
+    buf = ln_alloc(sizeof(char)*buf_len);
+    LN_LIST_FOREACH(pe, list) {
+        if (!ln_is_prefix_plus_number(pe->arg_name, prefix))
+            continue;
+        idx = atoi(&pe->arg_name[prefix_len]);
+        max_idx = max_idx < idx ? idx : max_idx;
+    }
+    snprintf(buf, buf_len, "%s%d", prefix, max_idx+1);
+    return buf;
+}
+
 const char *ln_param_type_name(ln_param_type type)
 {
     switch (type) {

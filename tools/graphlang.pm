@@ -76,9 +76,9 @@ sub expand_op_str {
         when (&field_is_tensor($_, $optype)) {
             $type = "char *";
             $expanded = "ln_op_find_tensor_list_entry($name, $_)->name";
-            return ($type, "($expanded)") unless $fields[3];
+            return ($type, "($expanded)") unless $fields[2];
             $expanded = "ln_op_find_tensor_entry($name, $_)";
-            given ($fields[3]) {
+            given ($fields[2]) {
                 when ("name") {$type = "char *"; continue}
                 when ("owner") {$type = "char *"; continue}
                 when ("creater") {$type = "char *"; continue}
@@ -88,7 +88,7 @@ sub expand_op_str {
                 when ("mtype") {$type = "ln_mem_type"; continue}
                 when (/name|owner|creater|tensor|offset|isstatic|mtype/) {
                     $expanded .= "->$_";
-                    return ($type, "($expanded)") unless $fields[4];
+                    return ($type, "($expanded)") unless $fields[3];
                     &err_unknown_last_field(@fields);
                 }
                 when ("dtype") {$type = "tl_dtype"; continue}
@@ -100,7 +100,7 @@ sub expand_op_str {
                 when ("backend_data") {$type = "void *"; continue}
                 when (/dtype|len|ndim|dims|data|owner|backend_data/) {
                     $expanded .= "->tensor->$_";
-                    return ($type, "($expanded)") unless $fields[4];
+                    return ($type, "($expanded)") unless $fields[3];
                     &err_unknown_last_field(@fields);
                 }
                 default {
@@ -112,19 +112,19 @@ sub expand_op_str {
             my $member;
             ($type, $member) = &param_type_and_member($_, $optype);
             $expanded = "ln_param_list_find($name->op_arg->params, $_)->$member";
-            return ($type, "($expanded)") unless $fields[3];
+            return ($type, "($expanded)") unless $fields[2];
             $expanded = "ln_param_list_find($name->op_arg->params, $_)";
-            given ($fields[3]) {
+            given ($fields[2]) {
                 when ("type") {
                     $type = "ln_param_type";
                     $expanded .= "->type";
-                    return ($type, "($expanded)") unless $fields[4];
+                    return ($type, "($expanded)") unless $fields[3];
                     &err_unknown_last_field(@fields);
                 }
                 when (/array_len|len/) {
                     $type = "int";
                     $expanded .= "->array_len";
-                    return ($type, "($expanded)") unless $fields[4];
+                    return ($type, "($expanded)") unless $fields[3];
                     &err_unknown_last_field(@fields);
                 }
                 default {
@@ -133,7 +133,16 @@ sub expand_op_str {
             }
         }
         when ($directives{auto-in}) {
-
+            $type = "char *";
+            $expanded = <<EOF;
+({
+    ln_list *ins = $name->op_arg->tensors_in;
+    char *arg_name = ln_tensor_list_create_arg_name(ins, $_);
+    $name->op_arg->tensors_in = ln_tensor_list_append(ins, arg_name, "");
+    ln_op_find_tensor_list_entry($name, arg_name)->name;
+})
+EOF
+            $expanded = "({ln_list *ins = ${name}->op_arg->tensors_in; char *arg_name = ln_tensor_list_create_arg_name(ins, $_); $name->op_arg->tensors_in = ln_tensor_list_append(ins, arg_name, \"\")})";
         }
         default {
             &err_unknown_last_field(@fields);
