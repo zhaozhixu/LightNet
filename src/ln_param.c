@@ -24,8 +24,11 @@
 #include <assert.h>
 #include <limits.h>
 #include <float.h>
+
 #include "ln_param.h"
 #include "ln_util.h"
+#include "ln_name.h"
+#include "ln_msg.h"
 
 ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type)
 {
@@ -392,43 +395,47 @@ int ln_param_list_length(ln_list *list)
     return ln_list_length(list);
 }
 
-char *ln_param_list_create_arg_name(ln_list *list, const char *prefix)
+int ln_param_list_sprint_arg_name(ln_list *list, char *buf, const char *prefix)
 {
     ln_param_entry *pe;
     int max_idx = -1;
     int idx;
-    char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
 
-    buf = ln_alloc(sizeof(char)*buf_len);
+    if (prefix_len >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("prefix '%s' length exceeds LN_MAX_NAME_LEN", prefix);
     LN_LIST_FOREACH(pe, list) {
         if (!ln_is_prefix_plus_number(pe->arg_name, prefix))
             continue;
         idx = atoi(&pe->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
-    snprintf(buf, buf_len, "%s%d", prefix, max_idx+1);
-    return buf;
+    max_idx++;
+    if (ln_digit_num(max_idx) + prefix_len >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("result '%s%d' length exceeds LN_MAX_NAME_LEN",
+                           prefix, max_idx);
+    snprintf(buf, LN_MAX_NAME_LEN, "%s%d", prefix, max_idx);
+
+    return max_idx;
 }
 
 const char *ln_param_type_name(ln_param_type type)
 {
     switch (type) {
     case LN_PARAM_NULL:
-        return "null";
+        return "LN_PARAM_NULL";
     case LN_PARAM_STRING:
-        return "String";
+        return "LN_PARAM_STRING";
     case LN_PARAM_NUMBER:
-        return "Number";
+        return "LN_PARAM_NUMBER";
     case LN_PARAM_BOOL:
-        return "Boolean";
+        return "LN_PARAM_BOOL";
     case LN_PARAM_ARRAY_STRING:
-        return "String Array";
+        return "LN_PARAM_ARRAY_STRING";
     case LN_PARAM_ARRAY_NUMBER:
-        return "Number Array";
+        return "LN_PARAM_ARRAY_NUMBER";
     case LN_PARAM_ARRAY_BOOL:
-        return "Boolean Array";
+        return "LN_PARAM_ARRAY_BOOL";
     default:
         assert(0 && "unsupported ln_param_type");
     }

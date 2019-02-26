@@ -126,24 +126,28 @@ int ln_tensor_list_length(ln_list *list)
     return ln_list_length(list);
 }
 
-char *ln_tensor_list_create_arg_name(ln_list *list, const char *prefix)
+int ln_tensor_list_sprint_arg_name(ln_list *list, char *buf, const char *prefix)
 {
     ln_tensor_list_entry *tle;
     int max_idx = -1;
     int idx;
-    char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
 
-    buf = ln_alloc(sizeof(char)*buf_len);
+    if (prefix_len >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("prefix '%s' length exceeds LN_MAX_NAME_LEN", prefix);
     LN_LIST_FOREACH(tle, list) {
         if (!ln_is_prefix_plus_number(tle->arg_name, prefix))
             continue;
         idx = atoi(&tle->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
-    snprintf(buf, buf_len, "%s%d", prefix, max_idx+1);
-    return buf;
+    max_idx++;
+    if (ln_digit_num(max_idx) + prefix_len >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("result '%s%d' length exceeds LN_MAX_NAME_LEN",
+                           prefix, max_idx);
+    snprintf(buf, LN_MAX_NAME_LEN, "%s%d", prefix, max_idx);
+
+    return max_idx;
 }
 
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)

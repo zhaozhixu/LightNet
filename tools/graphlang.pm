@@ -28,6 +28,8 @@ if (my $op = &find_op_desc("reshape")) {
     say $op->{optype};
 }
 
+my @global_vars = ("int last_index");
+
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
@@ -132,17 +134,85 @@ sub expand_op_str {
                 }
             }
         }
-        when ($directives{auto-in}) {
+        when ($directives{add-in}) {
             $type = "char *";
-            $expanded = <<EOF;
+            # TODO: $@ can only exist in the last part of a string
+            if (/\$@$/) {
+                my $field = s/\$@$//r;
+                $expanded = <<EOF;
 ({
     ln_list *ins = $name->op_arg->tensors_in;
-    char *arg_name = ln_tensor_list_create_arg_name(ins, $_);
+    char arg_name[LN_MAX_NAME_LEN];
+    last_index = ln_tensor_list_sprint_arg_name(ins, arg_name, $field);
     $name->op_arg->tensors_in = ln_tensor_list_append(ins, arg_name, "");
     ln_op_find_tensor_list_entry($name, arg_name)->name;
 })
 EOF
-            $expanded = "({ln_list *ins = ${name}->op_arg->tensors_in; char *arg_name = ln_tensor_list_create_arg_name(ins, $_); $name->op_arg->tensors_in = ln_tensor_list_append(ins, arg_name, \"\")})";
+            } else {
+                $expanded = <<EOF;
+({
+    ln_list *ins = $name->op_arg->tensors_in;
+    $name->op_arg->tensors_in = ln_tensor_list_append(ins, $_, "");
+    ln_op_find_tensor_list_entry($name, arg_name)->name;
+})
+EOF
+            }
+            return ($type, "($expanded)") unless $fields[2];
+            &err_unknown_last_field(@fields);
+        }
+        when ($directives{add-out}) {
+            $type = "char *";
+            # TODO: $@ can only exist in the last part of a string
+            if (/\$@$/) {
+                my $field = s/\$@$//r;
+                $expanded = <<EOF;
+({
+    ln_list *outs = $name->op_arg->tensors_out;
+    char arg_name[LN_MAX_NAME_LEN];
+    last_index = ln_tensor_list_sprint_arg_name(outs, arg_name, $field);
+    $name->op_arg->tensors_out = ln_tensor_list_append(outs, arg_name, "");
+    ln_op_find_tensor_list_entry($name, arg_name)->name;
+})
+EOF
+            } else {
+                $expanded = <<EOF;
+({
+    ln_list *outs = $name->op_arg->tensors_out;
+    $name->op_arg->tensors_out = ln_tensor_list_append(outs, $_, "");
+    ln_op_find_tensor_list_entry($name, arg_name)->name;
+})
+EOF
+            }
+            return ($type, "($expanded)") unless $fields[2];
+            &err_unknown_last_field(@fields);
+        }
+        when ($directives{add-param}) {
+            my $member;
+            ($type, $member) = &param_type_and_member($_, $optype);
+            $expanded = "ln_param_list_find($name->op_arg->params, $_)->$member";
+            # TODO: $@ can only exist in the last part of a string
+            if (/\$@$/) {
+                my $field = s/\$@$//r;
+                $expanded = <<EOF;
+({
+    ln_list *params = $name->op_arg->params;
+    char arg_name[LN_MAX_NAME_LEN];
+    last_index = ln_param_list_sprint_arg_name(params, arg_name, $field);
+    $name->op_arg->params = ln_tensor_list_append(params, arg_name, "");
+    ln_op_find_tensor_list_entry($name, arg_name)->name;
+})
+EOF
+            } else {
+                $expanded = <<EOF;
+({
+    ln_list *params = $name->op_arg->params;
+    $name->op_arg->params = ln_tensor_list_append(params, $_, "");
+    ln_op_find_tensor_list_entry($name, arg_name)->name;
+})
+EOF
+            }
+            return ($type, "($expanded)") unless $fields[2];
+            &err_unknown_last_field(@fields);
         }
         default {
             &err_unknown_last_field(@fields);

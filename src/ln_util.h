@@ -65,6 +65,7 @@ char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim);
 int ln_streq(const char *s1, const char *s2);
 int ln_streqn(const char *s1, const char *s2, size_t n);
 int ln_is_prefix_plus_number(const char *str, const char *prefix);
+int ln_digit_num(ssize_t num);
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding);
 int ln_compute_length(int ndim, const int *dims);
 uint32_t ln_direct_hash(const void *key);

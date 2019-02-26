@@ -187,10 +187,11 @@ int ln_streqn(const char *s1, const char *s2, size_t n)
 
 int ln_is_prefix_plus_number(const char *str, const char *prefix)
 {
-    const char *s, *p;
+    if (!str || !prefix)
+        return 0;
 
-    s = str;
-    p = prefix;
+    const char *s = str;
+    const char *p = prefix;
     while (*s++ == *p++);
     if (*--s && !*--p) {
         while (isdigit(*s++));
@@ -198,6 +199,20 @@ int ln_is_prefix_plus_number(const char *str, const char *prefix)
             return 1;
     }
     return 0;
+}
+
+int ln_digit_num(ssize_t num)
+{
+    int n = 0;
+
+    if (num == 0)
+        return 1;
+
+    while (num) {
+        num /= 10;
+        n++;
+    }
+    return n;
 }
 
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding)
