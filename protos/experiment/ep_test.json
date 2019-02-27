@@ -65,7 +65,7 @@
                         "$(add-param trt.op$^_output_c) = self.output_c",
                         "$(add-param trt.op$^_size) = self.size",
                         "$(add-param trt.op$^_stride) = self.stride",
-                        "$(add-param trt.op$^_padding) = self.padding",
+                        "$(add-param trt.op$^_padding) = self.padding[0, 2]",
                         "$(add-param trt.op$^_dilation) = self.dilation",
                         "trt.batch_size = self.src.dims[0]"
                     ],

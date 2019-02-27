@@ -372,7 +372,7 @@ static void add_conv_to_trt(ln_op *trt_op, const ln_op *op)
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         (double[]){pe->value_array_double[0],
-                                                                pe->value_array_double[2]});
+                                                                pe->value_array_double[1]});
     ln_free(param_arg_name);
 
     pe = ln_param_list_find(op_arg->params, "dilation");
@@ -524,7 +524,7 @@ static void add_pooling_to_trt(ln_op *trt_op, const ln_op *op)
     trt_arg->params = ln_param_list_append_array_number(trt_arg->params,
                                                         param_arg_name, 2,
                                                         (double[]){pe->value_array_double[0],
-                                                                pe->value_array_double[2]});
+                                                                pe->value_array_double[1]});
     ln_free(param_arg_name);
 
     ln_free(param_op_arg_name);
