@@ -145,8 +145,6 @@ int ln_tensor_list_sprint_arg_name(ln_list *list, char *buf, const char *prefix)
     int idx;
     size_t prefix_len = strlen(prefix);
 
-    if (prefix_len >= LN_MAX_NAME_LEN)
-        ln_msg_inter_error("prefix '%s' length exceeds LN_MAX_NAME_LEN", prefix);
     LN_LIST_FOREACH(tle, list) {
         if (!ln_is_prefix_plus_number(tle->arg_name, prefix))
             continue;
@@ -155,8 +153,8 @@ int ln_tensor_list_sprint_arg_name(ln_list *list, char *buf, const char *prefix)
     }
     max_idx++;
     if (ln_digit_num(max_idx) + prefix_len >= LN_MAX_NAME_LEN)
-        ln_msg_inter_error("result '%s%d' length exceeds LN_MAX_NAME_LEN",
-                           prefix, max_idx);
+        ln_msg_inter_error("result '%s%d' length exceeds LN_MAX_NAME_LEN = %d",
+                           prefix, max_idx, LN_MAX_NAME_LEN);
     snprintf(buf, LN_MAX_NAME_LEN, "%s%d", prefix, max_idx);
 
     return max_idx;
