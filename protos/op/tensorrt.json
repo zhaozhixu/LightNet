@@ -3,6 +3,7 @@
     "author": "Zhao Zhixu",
     "arch": "tensorrt",
     "autogen": false,
+    "variable_length": true,
     "tensors_in": [
     ],
     "tensors_out": [

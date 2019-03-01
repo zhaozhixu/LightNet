@@ -121,6 +121,18 @@ ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
     return ln_list_find_custom(list, &cmp_entry, cmp_by_name);
 }
 
+ln_tensor_entry *ln_tensor_list_find_entry(ln_list *list, ln_hash *tensor_table,
+                                           const char *arg_name)
+{
+    char *tname;
+
+    tname = ln_tensor_list_find_name(list, arg_name);
+    if (!tname)
+        return NULL;
+
+    return ln_tensor_table_find(tensor_table, tname);
+}
+
 int ln_tensor_list_length(ln_list *list)
 {
     return ln_list_length(list);
