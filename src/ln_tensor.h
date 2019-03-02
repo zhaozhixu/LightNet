@@ -69,7 +69,7 @@ ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list,
 ln_tensor_entry *ln_tensor_list_find_entry(ln_list *list, ln_hash *tensor_table,
                                            const char *arg_name);
 int ln_tensor_list_length(ln_list *list);
-int ln_tensor_list_sprint_arg_name(ln_list *list, char *buf, const char *prefix);
+int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix);
 
 ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);
 void ln_tensor_entry_free(ln_tensor_entry *entry);

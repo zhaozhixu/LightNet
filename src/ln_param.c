@@ -34,7 +34,7 @@ ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type)
 {
     ln_param_entry *entry;
 
-    assert(type >= LN_PARAM_NULL && type < LN_PARAM_INVALID);
+    assert(type >= LN_PARAM_NULL && type <= LN_PARAM_INVALID);
     entry = ln_alloc(sizeof(ln_param_entry));
     entry->arg_name = ln_strdup(arg_name);
     entry->type = type;
@@ -395,7 +395,7 @@ int ln_param_list_length(ln_list *list)
     return ln_list_length(list);
 }
 
-int ln_param_list_sprint_arg_name(ln_list *list, char *buf, const char *prefix)
+int ln_param_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)
 {
     ln_param_entry *pe;
     int max_idx = -1;

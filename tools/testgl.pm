@@ -29,7 +29,7 @@ sub expand_op_str {
     my $op_str = shift;
     my @fs = split /\.|(?=\[)/, $op_str;
     unless (exists $defined_ops->{$fs[0]}) {
-        # TODO:
+        &util::err_exit("undefined operator '$fs[0]'");
     }
     my $optype = $defined_ops->{$fs[0]};
 
@@ -139,7 +139,7 @@ sub expand_tensor {
             $code = <<EOF;
 ({
     char arg_name[LN_MAX_NAME_LEN];
-    last_index = ln_tensor_list_sprint_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
+    last_index = ln_tensor_list_unique_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
     $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, "");
     ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, arg_name);
 })
@@ -238,15 +238,17 @@ sub expand_param {
             $code = <<EOF;
 ({
     char arg_name[LN_MAX_NAME_LEN];
-    last_index = ln_tensor_list_sprint_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
-    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, "");
-    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, arg_name);
+    last_index = ln_param_list_unique_arg_name($opname->op_arg->params, arg_name, "$arg_name");
+    ln_param_entry *entry;
+    entry = ln_param_entry_create(arg_name, LN_PARAM_INVALID);
+    $opname->op_arg->params = ln_list_append($opname->op_arg->params, entry);
+    ln_param_list_find($opname->op_arg->params, arg_name);
 })
 EOF
         } elsif ($arg_name =~ /(.*)\$\^(.*)/) {
             my $arg_name1 = $1;
             my $arg_name2 = $2;
-            $type = "ln_tensor_list_entry *";
+            $type = "ln_param_entry *";
             $code = <<EOF;
 ({
     char arg_name[LN_MAX_NAME_LEN];
@@ -254,22 +256,26 @@ EOF
         ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
                            "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
     snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
-    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, "");
-    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, arg_name);
+    ln_param_entry *entry;
+    entry = ln_param_entry_create(arg_name, LN_PARAM_INVALID);
+    $opname->op_arg->params = ln_list_append($opname->op_arg->params, entry);
+    ln_param_list_find($opname->op_arg->params, arg_name);
 })
 EOF
         } else {
-            $type = "ln_tensor_list_entry *";
+            $type = "ln_param_entry *";
             $code = <<EOF;
 ({
-    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, "$arg_name", "");
-    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, "$arg_name");
+    ln_param_entry *entry;
+    entry = ln_param_entry_create("$arg_name", LN_PARAM_INVALID);
+    $opname->op_arg->params = ln_list_append($opname->op_arg->params, entry);
+    ln_param_list_find($opname->op_arg->params, "$arg_name");
 })
 EOF
         }
         &err_unknown_field(1, @fs) if $fs[1];
     } else {
-        &util::err_exit("$opname($optype) doesn't have a '$arg_name' $tensors");
+        &util::err_exit("$opname($optype) doesn't have a '$arg_name' param");
     }
 
     ($type, $code);
