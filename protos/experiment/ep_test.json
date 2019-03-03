@@ -1,6 +1,7 @@
 {
-    "arch": "tensorrt"
-    "author": "Zhao Zhixu"
+    "arch": "tensorrt",
+    "name": "tensorrt_expander",
+    "author": "Zhao Zhixu",
     "ops": [
         {
             "optype": "create",

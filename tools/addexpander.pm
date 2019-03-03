@@ -22,14 +22,172 @@ no warnings 'experimental::smartmatch';
 my %global_ops;
 my %defined_ops = (conv2d1 => "conv2d", trt => "tensorrt");
 say join " ", &expand_op_str(\%defined_ops, $ARGV[0]);
-my @global_vars = ("int last_index");
+
+my $usage = <<EOF;
+Usage: $0 [OPTION] [JSON_FILE(s)]
+Generate expander code from expander description JSON.
+Read the JSON string from standard input if JSON_FILE(s) are not given.
+Print the output code to standard output if --dir and --root are omited.
+
+Options:
+  -h, --help              print this message
+  -d, --dir=DIRECTORY     save operator defination file(s) in DIRECTORY
+  -r, --root=ROOT         set project root directory; this option will save
+                          operator defination file(s) in ROOT/src/op/auto, and
+                          add operator declarations and such to
+                          ROOT/src/arch/ln_arch_*.c
+Author: Zhao Zhixu
+EOF
+
+my $INDENT_OFFSET = 4;
+my $INDENT_SPACE = " "x$INDENT_OFFSET;
+
+my $root = '';
+my $dir = '';
+GetOptions(
+           'help' => sub {&exit_msg(0, $usage)},
+           'dir=s' => \$dir,
+           'root=s' => sub {$root = abs_path($_[1])},
+          ) or &exit_msg(1, $usage);
+
+my @json_files = @ARGV;
+if (@json_files == 0) {
+    my $json_text = join '', <STDIN>;
+    my $json = &read_json_text($json_text);
+    &gen_code($json);
+} else {
+    foreach my $file (@json_files) {
+        my $json = &read_json($file);
+        &gen_code($json);
+    }
+}
+
+sub gen_code {
+    my $json = shift;
+
+    &err_exit("JSON needs an 'arch'") unless exists $json->{arch};
+    &err_exit("JSON needs an 'name'") unless exists $json->{name};
+    &err_exit("JSON needs an 'author'") unless exists $json->{author};
+    &err_exit("JSON needs an 'ops'") unless exists $json->{ops};
+    my $arch = $json->{arch};
+    my $name = $json->{name};
+    my $author = $json->{author};
+    my $ops = $json->{ops};
+
+    my @blocks = ();
+    push @blocks, &gen_head_block($arch, $author);
+    my @ep_funcs = ();
+    foreach my $op (@$ops) {
+        push @blocks, &gen_expander($op, \@ep_funcs);
+    }
+    push @blocks, &gen_init_ep_funcs(\@ep_funcs);
+    push @blocks, &gen_overall_ep_func($json);
+
+    my $code_str = join "\n", @blocks;
+    if (not $dir and not $root) {
+        print $code_str;
+    }
+    if ($dir) {
+        my $dir_file = "${dir}/ln_expander_${name}.h";
+        &backup_write($dir_file, $code_str);
+    }
+    if ($root) {
+        my $src_file = "${root}/src/arch/auto/ln_expander_${name}.h";
+        &backup_write($src_file, $code_str);
+        my $arch_file = "${root}/src/arch/ln_arch_${arch}.c";
+        &add_to_arch_file($arch_file, $arch, $name);
+    }
+}
+
+sub gen_head_block {
+    my $arch = shift;
+    my $author = shift;
+    my $head_block_tpl = <<EOF;
+/*
+ * Copyright (c) 2019 $author
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+ #include <ctype.h>
+ #include <assert.h>
+
+ #include "ln_arch.h"
+ #include "ln_name.h"
+ #include "ln_$arch.h"
+EOF
+}
+
+sub gen_expander {
+    my $op = shift;
+    &err_exit("needs a 'optype'") unless exists $op->{optype};
+    my $optype = $op->{optype};
+    &err_exit("'${optype}' needs a 'rules'") unless exists $op->{rules};
+    my $rules = $op->{rules};
+
+    my @auto_vars = ("int last_index;");
+
+}
+
+sub gen_init_ep_funcs {
+}
+
+sub gen_overall_ep_func {
+}
+
+sub add_to_arch_file {
+    my $arch_file = shift;
+    my $arch = shift;
+    my $name = shift;
+
+    my $declare = "extern ln_list *ln_expander_$name (const ln_op *op, const ln_dfg *dfg, int *match);";
+    my $item = "ln_expander_$name,";
+
+    copy($arch_file, "${arch_file}.bak")
+        or die "Cannot backup file ${arch_file}: $!";
+    open ARCH_FILE_BAK, '<', "${arch_file}.bak"
+        or die "Cannot open ${arch_file}.bak: $!";
+    open ARCH_FILE, '>', $arch_file
+        or die "Cannot open ${arch_file}: $!";
+
+    my $declared = 0;
+    my $inited = 0;
+    while (<ARCH_FILE_BAK>) {
+        $declared = 1 if /$declare$/;
+        s|/\* end of declare $arch expanders \*/|$declare\n/* end of declare $arch expanders */|
+            unless $declared;
+        $inited = 1 if /$item$/;
+        s|/\* end of $arch expanders \*/|    $item\n/* end of $arch expanders */|
+            unless $inited;
+        print ARCH_FILE;
+    }
+
+    close ARCH_FILE;
+    close ARCH_FILE_BAK;
+}
 
 sub expand_op_str {
     my $defined_ops = shift;
     my $op_str = shift;
     my @fs = split /\.|(?=\[)/, $op_str;
     unless (exists $defined_ops->{$fs[0]}) {
-        &util::err_exit("undefined operator '$fs[0]'");
+        err_exit("undefined operator '$fs[0]'");
     }
     my $optype = $defined_ops->{$fs[0]};
 
@@ -348,7 +506,7 @@ sub find_op_desc {
         foreach (@possible_files) {
             my $file = "$opdir/$_";
             next unless -e $file;
-            &read_ops_from_json_file($file, \%global_ops);
+            &read_ops_json($file, \%global_ops);
             $op = $global_ops{$optype} if exists $global_ops{$optype};
         }
         unless ($op) {
@@ -371,17 +529,22 @@ sub possible_op_files {
     @names;
 }
 
+sub read_json_text {
+    my $json_text = shift;
+    $json_text = easyjson::easy_to_json($json_text);
+    my $json_obj = JSON->new->relaxed();
+    my $json = $json_obj->decode($json_text);
+}
+
 sub read_json {
     my $file = shift;
     open my $fh, '<', $file or die "Cannot open $file: $!";
     my $text = join '', <$fh>;
     close $fh;
-    my $json_text = easyjson::easy_to_json($text);
-    my $json_obj = JSON->new->relaxed();
-    my $json = $json_obj->decode($json_text);
+    &read_json_text($text);
 }
 
-sub read_ops_from_json_file {
+sub read_ops_json {
     my $file = shift;
     my $hash = shift;
     my $json = &read_json($file);

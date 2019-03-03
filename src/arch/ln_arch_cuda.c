@@ -173,12 +173,18 @@ static ln_list *cb_func_single_replace(const ln_list *ops, size_t size,
     return new_ops;
 }
 
+/* end of declare cuda expanders */
+
 ln_expander_func ep_funcs_cuda[] = {
+/* end of cuda expanders */
     NULL
 };
 
+/* end of declare cuda combiners */
+
 ln_combiner_func cb_funcs_cuda[] = {
     cb_func_single_replace,
+/* end of cuda combiners */
     NULL
 };
 

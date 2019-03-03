@@ -1,0 +1,16 @@
+{
+    "name": "ep_cuda",
+    "arch": "cuda",
+    "author": "Zhao Zhixu",
+    "ops": [
+        {
+            "optype": "conv2d",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": "conv2d_cuda"
+                }
+            ]
+        }
+    ]
+}
