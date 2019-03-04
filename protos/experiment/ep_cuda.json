@@ -7,8 +7,51 @@
             "optype": "conv2d",
             "rules": [
                 {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2]",
+                        "self.params[padding][1] != self.params[padding][3]"
+                    ],
+                    "replace": ["conv2d_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "concat",
+            "rules": [
+                {
+                    "cond": [
+                        "self.params[axis] == 0",
+                        "LN_TRT_VER(\"4.0.0\") < 0 && self.ins[src1].ndim < 4 && self.params[axis] != 1",
+                        "LN_TRT_VER(\"4.0.0\") < 0 && self.ins[src1].ndim >= 4 && self.params[axis] != self.ins[src1].ndim - 3"
+                    ],
+                    "replace": ["concat_cuda"]
+                },
+                {
+                    "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "$(add-in trt.src$@) = self.src1",
+                        "$(add-in trt.src$@) = self.src2",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"concat\"",
+                        "$(add-param trt.op$^_src1) = self.src1",
+                        "$(add-param trt.op$^_src2) = self.src2",
+                        "trt.batch_size = self.src1.dims[0]"
+                    ]
+                },
+                {
                     "cond": [],
-                    "replace": "conv2d_cuda"
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "$(add-in trt.src$@) = self.src1",
+                        "$(add-in trt.src$@) = self.src2",
+                        "$(add-out trt.dst$@) = self.dst",
+                        "$(add-param trt.op$@) = \"concat\"",
+                        "$(add-param trt.op$^_src1) = self.src1",
+                        "$(add-param trt.op$^_src2) = self.src2",
+                        "$(add-param trt.op$^_axis) = self.axis",
+                        "trt.batch_size = self.src1.dims[0]"
+                    ]
                 }
             ]
         },
@@ -16,16 +59,16 @@
             "optype": "print",
             "rules": [
                 {
-                    "cond": ["self.src.mtype == LN_MEM_CPU"],
+                    "cond": ["self.ins[src].mtype == LN_MEM_CPU"],
                     "replace": ["print_cpu"]
                 },
                 {
-                    "cond": ["self.src.mtype == LN_MEM_CUDA"],
-                    "replace": ["print_CUDA"]
+                    "cond": ["self.ins[src].mtype == LN_MEM_CUDA"],
+                    "replace": ["print_cuda"]
                 },
                 {
                     "cond": [],
-                    "err": "print's src is either of LN_MEM_CPU or LN_MEM_CUDA"
+                    "err": "optype 'print''s 'src' is either of LN_MEM_CPU or LN_MEM_CUDA"
                 }
             ]
         },
@@ -33,16 +76,16 @@
             "optype": "fprint",
             "rules": [
                 {
-                    "cond": ["self.src.mtype == LN_MEM_CPU"],
+                    "cond": ["self.ins[src].mtype == LN_MEM_CPU"],
                     "replace": ["fprint_cpu"]
                 },
                 {
-                    "cond": ["self.src.mtype == LN_MEM_CUDA"],
-                    "replace": ["fprint_CUDA"]
+                    "cond": ["self.ins[src].mtype == LN_MEM_CUDA"],
+                    "replace": ["fprint_cuda"]
                 },
                 {
                     "cond": [],
-                    "err": "fprint's src is either of LN_MEM_CPU or LN_MEM_CUDA"
+                    "err": "optype 'fprint''s 'src' is either of LN_MEM_CPU or LN_MEM_CUDA"
                 }
             ]
         },

@@ -34,7 +34,7 @@
             "optype": "create_cuda",
             "rules": [
                 {
-                    "cond": []
+                    "cond": [],
                     "match": false
                 }
             ]

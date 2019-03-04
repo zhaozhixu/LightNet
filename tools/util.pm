@@ -52,6 +52,7 @@ sub indent_block {
     foreach (@$states) {
         $_ = " "x$nspaces.$_ unless /^\s*$/;
     }
+    @$states;
 }
 
 sub indent_line {
