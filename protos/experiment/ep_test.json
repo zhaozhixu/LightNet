@@ -52,7 +52,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-in trt.weight$@) = self.weight",
                         "$(add-in trt.weight$@) = self.bias",
@@ -79,7 +79,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"activation\"",
@@ -97,7 +97,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"lrelu\"",
@@ -115,7 +115,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"activation\"",
@@ -133,7 +133,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"activation\"",
@@ -158,7 +158,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"pooling\"",
@@ -189,7 +189,7 @@
                 {
                     "cond": ["LN_TRT_VER(\"4.4.0\") < 0"]
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"softmax\"",
@@ -201,7 +201,7 @@
                 {
                     "cond": []
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src",
                         "$(add-out trt.dst$@) = self.dst",
                         "$(add-param trt.op$@) = \"softmax\"",
@@ -227,7 +227,7 @@
                 {
                     "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src1",
                         "$(add-in trt.src$@) = self.src2",
                         "$(add-out trt.dst$@) = self.dst",
@@ -240,7 +240,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src1",
                         "$(add-in trt.src$@) = self.src2",
                         "$(add-out trt.dst$@) = self.dst",
@@ -259,7 +259,7 @@
                 {
                     "cond": [],
                     "replace": ["bn2scale_wts_cpu bwc", "tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "bwc.src_mean = self.mean",
                         "bwc.src_var = self.var",
                         "bwc.src_scale = self.scale",
@@ -289,7 +289,7 @@
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
-                    "replace_rule": [
+                    "details": [
                         "$(add-in trt.src$@) = self.src1",
                         "$(add-in trt.src$@) = self.src2",
                         "$(add-out trt.dst$@) = self.dst",
@@ -376,7 +376,7 @@
                 {
                     "cond": ["self.src.mtype == LN_MEM_CUDA"],
                     "replace": ["print_CUDA"]
-                }
+                },
                 {
                     "cond": [],
                     "err": "print's src is either of LN_MEM_CPU or LN_MEM_CUDA"
@@ -393,7 +393,7 @@
                 {
                     "cond": ["self.src.mtype == LN_MEM_CUDA"],
                     "replace": ["fprint_CUDA"]
-                }
+                },
                 {
                     "cond": [],
                     "err": "fprint's src is either of LN_MEM_CPU or LN_MEM_CUDA"

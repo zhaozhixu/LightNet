@@ -40,7 +40,6 @@ Author: Zhao Zhixu
 EOF
 
 my $INDENT_OFFSET = 4;
-my $INDENT_SPACE = " "x$INDENT_OFFSET;
 
 my $root = '';
 my $dir = '';
@@ -141,8 +140,54 @@ sub gen_expander {
     &err_exit("'${optype}' needs a 'rules'") unless exists $op->{rules};
     my $rules = $op->{rules};
 
-    my @auto_vars = ("int last_index;");
+    my %defined_ops = (self => $optype);
+    my @auto_vars = ();
+    my $rules_code = "";
+    foreach my $rule (@$rules) {
+        &err_exit("needs a 'cond'") unless exists $rule->{cond};
+        my $cond_code = &gen_cond($rule->{cond}, \%defined_ops);
 
+        my $body_code;
+        if (exists $rule->{replace}) {
+            $body_code = &gen_replace($rule->{replace}, $rule->{details},
+                                      \@auto_vars);
+        } elsif (exists $rule->{err}) {
+            $body_code = "ln_msg_inter_error(\"ep_$optype(): $rule->{err}\");";
+        } else {
+            &err_exit("optype '$optype' needs a 'replace' or 'err'");
+        }
+        if (exists $rule->{warn}) {
+            $body_code .= "\nln_msg_inter_warn(\"ep_$optype(): $rule->{warn}\");";
+        }
+
+        if ($rule == $rules->[0]) {
+            $rules_code .= <<EOF;
+if ($cond_code) {
+    $body_code;
+}
+EOF
+        } else {
+            $rules_code .= <<EOF;
+else if ($cond_code) {
+    $body_code;
+}
+EOF
+        }
+    }
+
+    &make_defs_neat(\@auto_vars);
+    my $auto_vars_code = join "\n", &indent_block($INDENT_OFFSET, \@auto_vars);
+    my @rules = split "\n", $rules_code;
+    $rules_code = join "\n", &indent_block($INDENT_OFFSET, \@rules);
+
+    my $tpl = <<EOF;
+static ln_list *ep_$optype(const ln_op *self, const ln_dfg *dfg, int *match)
+{
+$auto_vars_code
+
+$rules_code
+}
+EOF
 }
 
 sub gen_init_ep_funcs {
@@ -182,9 +227,95 @@ sub add_to_arch_file {
     close ARCH_FILE_BAK;
 }
 
-sub expand_op_str {
+sub gen_cond {
+    my $conds = shift;
     my $defined_ops = shift;
+
+    my $cond_code;
+    my $symbol_p = qr/[a-zA-Z0-9.\[\]"]+/;
+    foreach (@$conds) {
+        while (/($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p)/g) {
+            my ($l_type, $l_code, $l_len) = &expand_op_str($1, $defined_ops);
+            my ($r_type, $r_code, $r_len) = &expand_op_str($3, $defined_ops);
+            my $operator = $2;
+            my $type;
+            if (not defined $l_type and not defined $r_type) {
+                &err_exit("both operands' type are undefined in '$_'");
+            } elsif (defined $l_type and not defined $r_type) {
+                $type = $l_type;
+            } elsif (not defined $l_type and defined $r_type) {
+                $type = $r_type;
+            } elsif ($l_type ne $r_type) {
+                &err_exit("unmatched type '$l_type' and 'r_type' in '$_'");
+            } else {
+                $type = $l_type;
+            }
+            &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$_'")
+                if ($l_len != $r_len);
+
+            $cond_code = &gen_comparator($2, $l_code, $r_code, $type, $l_len);
+        }
+    }
+}
+
+sub gen_comparator {
+    my $op = shift;
+    my $lhs = shift;
+    my $rhs = shift;
+    my $type = shift;
+    my $len = shift;
+
+    my $type;
+    my $code;
+    given ($op) {
+        when (/>|>=|<|<=|==|!=/) {
+            given ($type) {
+                when ("char *") {
+                    $code = "(strcmp($lhs, $rhs) $op 0)"
+                }
+                when ("char **") {
+                    $code = <<EOF;
+({
+    int result = 1;
+    for (int i = 0; i < len; i++) {
+        if (!(strcmp(${lhs}[i], ${rhs}[i]) $op 0)) {
+            result = 0;
+            break;
+        }
+    }
+    result;
+})
+EOF
+                }
+                when (/^\w+ \*$/) {
+                    $code = <<EOF;
+({
+    int result = 1;
+    for (int i = 0; i < len; i++) {
+        if (!({lhs}[i] $op ${rhs}[i])) {
+            result = 0;
+            break;
+        }
+    }
+    result;
+})
+EOF
+                }
+                default {
+                    &err_exit("'$type' is not a supported type in a comparator");
+                }
+            }
+        }
+        default {
+            &err_exit("'$op' is not a comparator operator");
+        }
+    }
+    $code;
+}
+
+sub expand_op_str {
     my $op_str = shift;
+    my $defined_ops = shift;
     my @fs = split /\.|(?=\[)/, $op_str;
     unless (exists $defined_ops->{$fs[0]}) {
         err_exit("undefined operator '$fs[0]'");

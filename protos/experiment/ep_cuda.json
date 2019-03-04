@@ -11,6 +11,40 @@
                     "replace": "conv2d_cuda"
                 }
             ]
-        }
+        },
+        {
+            "optype": "print",
+            "rules": [
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CPU"],
+                    "replace": ["print_cpu"]
+                },
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CUDA"],
+                    "replace": ["print_CUDA"]
+                },
+                {
+                    "cond": [],
+                    "err": "print's src is either of LN_MEM_CPU or LN_MEM_CUDA"
+                }
+            ]
+        },
+        {
+            "optype": "fprint",
+            "rules": [
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CPU"],
+                    "replace": ["fprint_cpu"]
+                },
+                {
+                    "cond": ["self.src.mtype == LN_MEM_CUDA"],
+                    "replace": ["fprint_CUDA"]
+                },
+                {
+                    "cond": [],
+                    "err": "fprint's src is either of LN_MEM_CPU or LN_MEM_CUDA"
+                }
+            ]
+        },
     ]
 }
