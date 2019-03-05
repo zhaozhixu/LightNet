@@ -9,8 +9,8 @@ use File::Copy;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(add_custom_block make_defs_neat indent_block indent_line
-                 backup_write err_exit warn_msg exit_msg);
+our @EXPORT = qw(add_custom_block make_defs_neat indent_block indent_lines
+                 indent_line backup_write err_exit warn_msg exit_msg);
 
 sub add_custom_block {
     my $indent_offset = shift;
@@ -47,6 +47,13 @@ sub make_defs_neat {
 }
 
 sub indent_block {
+    my $nspaces = shift;
+    my $str = shift;
+    my @lines = split "\n", $str;
+    join "\n", &indent_lines($nspaces, \@lines);
+}
+
+sub indent_lines {
     my $nspaces = shift;
     my $states = shift;
     foreach (@$states) {

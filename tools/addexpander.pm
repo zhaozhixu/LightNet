@@ -77,7 +77,6 @@ sub gen_code {
     push @blocks, &gen_head_block($arch, $author);
     my @ep_funcs = ();
     foreach my $op (@$ops) {
-        say $op->{optype};
         push @blocks, &gen_expander($op, \@ep_funcs);
     }
     push @blocks, &gen_init_ep_funcs(\@ep_funcs);
@@ -165,25 +164,25 @@ sub gen_expander {
             $body_code .= "\nln_msg_inter_warn(\"ep_$optype(): $rule->{warn}\");";
         }
 
+        $body_code = &indent_block($INDENT_OFFSET, $body_code);
         if ($rule == $rules->[0]) {
             $rules_code .= <<EOF;
 if ($cond_code) {
-    $body_code
+$body_code
 }
 EOF
         } else {
             $rules_code .= <<EOF;
 else if ($cond_code) {
-    $body_code
+$body_code
 }
 EOF
         }
     }
 
     &make_defs_neat(\@auto_vars);
-    my $auto_vars_code = join "\n", &indent_block($INDENT_OFFSET, \@auto_vars);
-    my @rules = split "\n", $rules_code;
-    $rules_code = join "\n", &indent_block($INDENT_OFFSET, \@rules);
+    my $auto_vars_code = join "\n", &indent_lines($INDENT_OFFSET, \@auto_vars);
+    $rules_code = join "\n", &indent_block($INDENT_OFFSET, $rules_code);
 
     my $tpl = <<EOF;
 static ln_list *ep_$optype(const ln_op *self, const ln_dfg *dfg, int *match)
@@ -193,66 +192,6 @@ $auto_vars_code
 $rules_code
 }
 EOF
-}
-
-sub gen_replace {
-    my $replace = shift;
-    my $details = shift;
-    my $auto_vars = shift;
-    my $defined_ops = shift;
-
-    my $optype = $defined_ops->{self};
-    my $desc = &find_op_desc($optype);
-    my $code;
-    if (not defined $details) {
-        &err_exit("need a 'details' to replace with multiple operators") if (@$replace != 1);
-        my $rep_optype = (split ' ', $replace->[0])[0];
-        my $rep_desc = &find_op_desc($rep_optype);
-        # TODO: check validation
-        $code = <<EOF;
-ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table, self, "$rep_optype");
-return ln_list_append(NULL, new_op);
-EOF
-    }
-    chomp $code;
-    $code;
-}
-
-sub gen_init_ep_funcs {
-}
-
-sub gen_overall_ep_func {
-}
-
-sub add_to_arch_file {
-    my $arch_file = shift;
-    my $arch = shift;
-    my $name = shift;
-
-    my $declare = "extern ln_list *ln_expander_$name (const ln_op *op, const ln_dfg *dfg, int *match);";
-    my $item = "ln_expander_$name,";
-
-    copy($arch_file, "${arch_file}.bak")
-        or die "Cannot backup file ${arch_file}: $!";
-    open ARCH_FILE_BAK, '<', "${arch_file}.bak"
-        or die "Cannot open ${arch_file}.bak: $!";
-    open ARCH_FILE, '>', $arch_file
-        or die "Cannot open ${arch_file}: $!";
-
-    my $declared = 0;
-    my $inited = 0;
-    while (<ARCH_FILE_BAK>) {
-        $declared = 1 if /$declare$/;
-        s|/\* end of declare $arch expanders \*/|$declare\n/* end of declare $arch expanders */|
-            unless $declared;
-        $inited = 1 if /$item$/;
-        s|/\* end of $arch expanders \*/|    $item\n/* end of $arch expanders */|
-            unless $inited;
-        print ARCH_FILE;
-    }
-
-    close ARCH_FILE;
-    close ARCH_FILE_BAK;
 }
 
 sub gen_cond {
@@ -265,23 +204,18 @@ sub gen_cond {
     foreach (@$conds) {
         my $cond = $_;
         while (/(($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p))/g) {
-            my ($l_type, $l_code, $l_len) = &expand_op_str($2, $defined_ops);
-            my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops);
+            my ($l_type, $l_code, $l_len) = &expand_op_str($2, $defined_ops, 0);
+            my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
             my $operator = $3;
-            my $type;
-            if (not defined $l_type and not defined $r_type) {
-                &warn_msg("both operands' type are undefined in '$1', using literal string '$1'");
+            my $type = &type_converse($l_type, $r_type);
+            if (not defined $type) {
+                &warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
                 $cond_code = $1;
                 next;
-            } elsif (defined $l_type and not defined $r_type) {
-                $type = $l_type;
-            } elsif (not defined $l_type and defined $r_type) {
-                $type = $r_type;
-            } elsif ($l_type ne $r_type) {
+            } elsif (not $type) {
                 &err_exit("unmatched type '$l_type' and '$r_type' in '$1'");
-            } else {
-                $type = $l_type;
             }
+
             &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
                 if ((defined $l_len or defined $r_len) and $l_len != $r_len);
 
@@ -355,13 +289,159 @@ EOF
     $code;
 }
 
+sub gen_replace {
+    my $replace = shift;
+    my $details = shift;
+    my $auto_vars = shift;
+    my $defined_ops = shift;
+
+    my $optype = $defined_ops->{self};
+    my $desc = &find_op_desc($optype);
+    my $code;
+    if (not defined $details) {
+        &err_exit("need a 'details' to replace with multiple operators") if (@$replace != 1);
+        my $rep_optype = (split ' ', $replace->[0])[0];
+        my $rep_desc = &find_op_desc($rep_optype);
+        # TODO: check validation
+        $code = <<EOF;
+ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table, self, "$rep_optype");
+return ln_list_append(NULL, new_op);
+EOF
+        chomp $code;
+        return $code;
+    }
+
+    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
+    my @blocks;
+    foreach (@$details) {
+        my $detail = $_;
+        &check_details($_);
+        /(($symbol_p)\s*(=)\s*($symbol_p))/;
+        my ($l_type, $l_code, $l_len) = &expand_op_str($2, $defined_ops, 1);
+        my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
+        my $operator = $3;
+        my $type = &type_converse($l_type, $r_type);
+        if (not defined $type) {
+            &warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
+            $cond_code = $1;
+            next;
+        } elsif (not $type) {
+            $type = $r_type;
+        }
+
+        &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
+            if ((defined $l_len or defined $r_len) and $l_len != $r_len);
+
+        $cond_code = &gen_comparator($3, $l_code, $r_code, $type, $l_len);
+        substr($cond, index($cond, $1), length($1)) = $cond_code;
+        push @conds_replaced, "($cond)";
+    }
+}
+
+sub check_details {
+    my $details = shift;
+    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
+    my %lhs_hash;
+    foreach (@$details) {
+        &err_exit("'details' can only contain assignments: '$_'")
+            unless /(($symbol_p)\s*(=)\s*($symbol_p))/;
+        my $lhs = $2;
+        unless ($lhs =~ /^\w+\.(ins|outs|params)\[(\w+(\$\@)?)|(\w+\$\^\w*)|((\w*\$\^\w+))\]$/) {
+            &err_exit("wrong syntax in the left-hand-side symbol of assignment '$_'");
+        }
+        if (exists $lhs_hash{$lhs}) {
+            if ($lhs =~ /\$\@/) {
+                delete $lhs_hash{$_} if /\$\^/ foreach keys %lhs_hash;
+                next;
+            }
+            &err_exit("duplicated left-hand-side symbol of assignment '$_'");
+        }
+        $lhs_hash{$lhs} = 1;
+    }
+}
+
+sub gen_init_ep_funcs {
+}
+
+sub gen_overall_ep_func {
+}
+
+sub type_converse {
+    my $type1 = shift;
+    my $type2 = shift;
+
+    if (not defined $type1 and not defined $type2) {
+        return undef;
+    }
+    if (defined $type1 and not defined $type2) {
+        return $type1;
+    }
+    if (not defined $type1 and defined $type2) {
+        return $type2;
+    }
+    if ($type1 eq $type2) {
+        return $type1;
+    }
+    my %basic_types = (double=>1, float=>1, int=>1);
+    if (not exists $basic_types{$type1} or not exists $basic_types{$type2}) {
+        return 0;
+    }
+    if ($type1 eq "double" or $type2 eq "double") {
+        return "double";
+    } elsif ($type1 eq "float" or $type2 eq "float") {
+        return "float"
+    } else {
+        return "int";
+    }
+    0;
+}
+
+sub add_to_arch_file {
+    my $arch_file = shift;
+    my $arch = shift;
+    my $name = shift;
+
+    my $declare = "extern ln_list *ln_expander_$name (const ln_op *op, const ln_dfg *dfg, int *match);";
+    my $item = "ln_expander_$name,";
+
+    copy($arch_file, "${arch_file}.bak")
+        or die "Cannot backup file ${arch_file}: $!";
+    open ARCH_FILE_BAK, '<', "${arch_file}.bak"
+        or die "Cannot open ${arch_file}.bak: $!";
+    open ARCH_FILE, '>', $arch_file
+        or die "Cannot open ${arch_file}: $!";
+
+    my $declared = 0;
+    my $inited = 0;
+    while (<ARCH_FILE_BAK>) {
+        $declared = 1 if /$declare$/;
+        s|/\* end of declare $arch expanders \*/|$declare\n/* end of declare $arch expanders */|
+            unless $declared;
+        $inited = 1 if /$item$/;
+        s|/\* end of $arch expanders \*/|    $item\n/* end of $arch expanders */|
+            unless $inited;
+        print ARCH_FILE;
+    }
+
+    close ARCH_FILE;
+    close ARCH_FILE_BAK;
+}
+
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
+    my $allow_variable = shift;
     my @fs = split /\.|(?=\[)/, $op_str;
+    my ($type, $code, $len);
     unless (exists $defined_ops->{$fs[0]}) {
-        # &warn_msg("undefined operator '$fs[0]', using literal string '$op_str'");
-        return (undef, $op_str, undef);
+        if ($fs[0] =~ /\d+/) {
+            $type = "int";
+        } elsif ($fs[0] =~ /("(\\.|[^"\\])*")/) {
+            $type = "char *";
+        } elsif ($fs[0] =~ /([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)/) {
+            $type = "double";
+        }
+        return ($type, $op_str, $len);
     }
     my $optype = $defined_ops->{$fs[0]};
 
@@ -375,21 +455,24 @@ sub expand_op_str {
          ins => {
                  __self => ["ln_list *", "$fs[0]->op_arg->tensors_in"],
                  len => ["int", "ln_list_length($fs[0]->op_arg->tensors_in)"],
-                 "[]" => [\&expand_tensor, "in", $optype, $fs[0], @fs[2..@fs-1]],
+                 "[]" => [\&expand_tensor, $allow_variable, "in", $optype,
+                          $fs[0], @fs[2..@fs-1]],
                 },
          outs => {
                   __self => ["ln_list *", "$fs[0]->op_arg->tensors_out"],
                   len => ["int", "ln_list_length($fs[0]->op_arg->tensors_out)"],
-                  "[]" => [\&expand_tensor, "out", $optype, $fs[0], @fs[2..@fs-1]],
+                  "[]" => [\&expand_tensor, $allow_variable, "out", $optype,
+                           $fs[0], @fs[2..@fs-1]],
                  },
          params => {
                     __self => ["ln_list *", "$fs[0]->op_arg->params"],
                     len => ["int", "ln_list_length($fs[0]->op_arg->params)"],
-                    "[]" => [\&expand_param, $optype, $fs[0], @fs[2..@fs-1]],
+                    "[]" => [\&expand_param, $allow_variable, $optype,
+                             $fs[0], @fs[2..@fs-1]],
                    },
         );
 
-    my ($type, $code, $len) = &parse_member_path(\%member_path, @fs);
+    ($type, $code, $len) = &parse_member_path(\%member_path, @fs);
 }
 
 sub parse_member_path {
@@ -429,6 +512,7 @@ sub parse_member_path {
 }
 
 sub expand_tensor {
+    my $allow_variable = shift;
     my $in_or_out = shift;
     my $optype = shift;
     my $opname = shift;
@@ -467,7 +551,7 @@ sub expand_tensor {
              backend_data => ["void *", "$entry->tensor->backend_data"],
             );
         ($type, $code, $len) = &parse_member_path(\%tensor_member, @fs);
-    } elsif ($op_desc->{variable_length}) {
+    } elsif ($allow_variable and $op_desc->{variable_length}) {
         # TODO: $@ can only exist in the last part of a string
         if ($arg_name =~ /\$\@$/) {
             $arg_name =~ s/\$\@$//;
@@ -513,6 +597,7 @@ EOF
 }
 
 sub expand_param {
+    my $allow_variable = shift;
     my $optype = shift;
     my $opname = shift;
     my @fs = @_;
@@ -606,7 +691,7 @@ sub expand_param {
              "[]" => [\&param_slice, $optype, $entry, $arg_name, $fs[1]],
             );
         ($type, $code, $len) = &parse_member_path(\%param_member, @fs);
-    } elsif ($op_desc->{variable_length}) {
+    } elsif ($allow_variable and $op_desc->{variable_length}) {
         # TODO: $@ can only exist in the last part of a string
         if ($arg_name =~ /\$\@$/) {
             $arg_name =~ s/\$\@$//;
@@ -839,3 +924,5 @@ sub err_unknown_last_field {
     my @fields = @_;
     &err_unknown_field($#fields, @fields);
 }
+
+1;

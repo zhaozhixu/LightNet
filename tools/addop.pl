@@ -233,7 +233,7 @@ sub gen_struct_def {
     }
     &gen_params($op, 1, 0, \@defs);
     &make_defs_neat(\@defs);
-    &indent_block($INDENT_OFFSET, \@defs);
+    &indent_lines($INDENT_OFFSET, \@defs);
 
     my $defs_str = join "\n", @defs;
     my $struct_def_tpl = <<EOF;
@@ -295,7 +295,7 @@ sub gen_pre_run_local_vars {
     push @vars, "int params_n;";
     push @vars, "struct priv_s *priv;";
     &make_defs_neat(\@vars);
-    &indent_block($INDENT_OFFSET, \@vars);
+    &indent_lines($INDENT_OFFSET, \@vars);
     push @vars, "";
 
     join "\n", @vars;
@@ -622,7 +622,7 @@ sub gen_pre_run_checks {
         push @states, "";
     }
 
-    &indent_block($INDENT_OFFSET, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
     join "\n", @states;
 }
 
@@ -673,7 +673,7 @@ sub gen_output_tensor_def {
         push @states, "";
     }
 
-    &indent_block($INDENT_OFFSET, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
     join "\n", @states;
 }
 
@@ -696,7 +696,7 @@ sub gen_priv_assigns {
     }
     push @states, "op_arg->priv = priv;";
 
-    &indent_block($INDENT_OFFSET, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
     join "\n", @states;
 }
 
@@ -816,7 +816,7 @@ sub gen_static_run {
     &make_defs_neat(\@states);
     push @states, "";
     &add_custom_block($op->{static_run}, \@states);
-    &indent_block($INDENT_OFFSET, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
@@ -837,7 +837,7 @@ sub gen_run {
     &make_defs_neat(\@states);
     push @states, "";
     &add_custom_block($op->{run}, \@states);
-    &indent_block($INDENT_OFFSET, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
@@ -864,7 +864,7 @@ sub gen_post_run {
     }
     push @states, "ln_free(priv);";
 
-    &indent_block($INDENT_OFFSET, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
     my $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
@@ -887,7 +887,7 @@ sub gen_op_arg {
         push @in_declares, "\"$_->{arg_name}\",";
     }
     push @in_declares, "NULL";
-    &indent_block($INDENT_OFFSET, \@in_declares);
+    &indent_lines($INDENT_OFFSET, \@in_declares);
     my $in_str = join "\n", @in_declares;
 
     my @out_declares = ();
@@ -895,7 +895,7 @@ sub gen_op_arg {
         push @out_declares, "\"$_->{arg_name}\",";
     }
     push @out_declares, "NULL";
-    &indent_block($INDENT_OFFSET, \@out_declares);
+    &indent_lines($INDENT_OFFSET, \@out_declares);
     my $out_str = join "\n", @out_declares;
 
     my @param_declares = ();
@@ -903,7 +903,7 @@ sub gen_op_arg {
         push @param_declares, "\"$_->{arg_name}\",";
     }
     push @param_declares, "NULL";
-    &indent_block($INDENT_OFFSET, \@param_declares);
+    &indent_lines($INDENT_OFFSET, \@param_declares);
     my $param_str = join "\n", @param_declares;
 
     my $op_arg_tpl = <<EOF;
@@ -951,7 +951,7 @@ sub add_custom_block {
     my $custom_str = shift;
     my $states = shift;
     my @customs = split "\n", $custom_str;
-    &indent_block($INDENT_OFFSET, \@customs);
+    &indent_lines($INDENT_OFFSET, \@customs);
     push @$states, "{";
     push @$states, @customs;
     push @$states, "}";
@@ -980,7 +980,7 @@ sub make_defs_neat {
     }
 }
 
-sub indent_block {
+sub indent_lines {
     my $nspaces = shift;
     my $states = shift;
     foreach (@$states) {

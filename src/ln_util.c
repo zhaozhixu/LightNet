@@ -60,6 +60,7 @@ char *ln_strdup(const char *s)
 {
     char *new_s;
 
+    assert(s);
     new_s = strdup(s);
     if (new_s == NULL) {
         err(EXIT_FAILURE, "ln_strdup(): strdup(%s) failed", s);

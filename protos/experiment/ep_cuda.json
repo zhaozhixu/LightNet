@@ -16,6 +16,36 @@
             ]
         },
         {
+            "optype": "batchnorm",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["bn2scale_wts_cpu bwc", "tensorrt trt"],
+                    "details": [
+                        "bwc.ins[src_mean] = self.ins[mean]",
+                        "bwc.ins[src_var] = self.ins[var]",
+                        "bwc.ins[src_scale] = self.ins[scale]",
+                        "bwc.ins[src_offset] = self.ins[offset]",
+                        "bwc.params[epsilon] = self.params[epsilon]",
+
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.outs[weight$@] = bwc.outs[dst_shift]",
+                        "trt.outs[weight$@] = bwc.outs[dst_scale]",
+                        "trt.outs[weight$@] = bwc.outs[dst_power]",
+                        "trt.params[op$@] = \"scale\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_shift] = bwc.outs[dst_shift]",
+                        "trt.params[op$^_scale] = bwc.outs[dst_scale]",
+                        "trt.params[op$^_power] = bwc.outs[dst_power]",
+                        "trt.params[op$^_scale_mode] = \"kCHANNEL\"",
+                        "trt.params[batch_size] = self.ins[src].dims[0]",
+                    ]
+                }
+            ]
+        },
+        {
             "optype": "concat",
             "rules": [
                 {
@@ -30,27 +60,27 @@
                     "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
                     "replace": ["tensorrt trt"],
                     "details": [
-                        "$(add-in trt.src$@) = self.src1",
-                        "$(add-in trt.src$@) = self.src2",
-                        "$(add-out trt.dst$@) = self.dst",
-                        "$(add-param trt.op$@) = \"concat\"",
-                        "$(add-param trt.op$^_src1) = self.src1",
-                        "$(add-param trt.op$^_src2) = self.src2",
-                        "trt.batch_size = self.src1.dims[0]"
+                        "trt.ins[src$@] = self.ins[src]1",
+                        "trt.ins[src$@] = self.ins[src]2",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[op$@] = \"concat\"",
+                        "trt.params[op$^_src1] = self.ins[src]1",
+                        "trt.params[op$^_src2] = self.ins[src]2",
+                        "trt.params[batch_size] = self.ins[src]1.dims[0]"
                     ]
                 },
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "details": [
-                        "$(add-in trt.src$@) = self.src1",
-                        "$(add-in trt.src$@) = self.src2",
-                        "$(add-out trt.dst$@) = self.dst",
-                        "$(add-param trt.op$@) = \"concat\"",
-                        "$(add-param trt.op$^_src1) = self.src1",
-                        "$(add-param trt.op$^_src2) = self.src2",
-                        "$(add-param trt.op$^_axis) = self.axis",
-                        "trt.batch_size = self.src1.dims[0]"
+                        "trt.ins[src$@] = self.ins[src]1",
+                        "trt.ins[src$@] = self.ins[src]2",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[op$@] = \"concat\"",
+                        "trt.params[op$^_src1] = self.ins[src]1",
+                        "trt.params[op$^_src2] = self.ins[src]2",
+                        "trt.params[op$^_axis] = self.axis",
+                        "trt.params[batch_size] = self.ins[src]1.dims[0]"
                     ]
                 }
             ]
