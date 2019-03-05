@@ -291,15 +291,19 @@ static void check_and_add_batch_size(ln_op *trt_op, int batch_size,
     ln_param_entry *pe;
 
     pe = ln_param_list_find(trt_op->op_arg->params, "batch_size");
-    if (!pe)
+    if (!pe) {
         trt_op->op_arg->params = ln_param_list_append_number(trt_op->op_arg->params,
                                                              "batch_size", batch_size);
-    else if (batch_size != pe->value_int)
+    } else if (pe->value_int == 0) {
+	    pe->value_int = batch_size;
+	    pe->type = LN_PARAM_NUMBER;
+    } else if (batch_size != pe->value_int) {
         ln_msg_emit(LN_MSG_ERROR,
                     "batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
                     pe->value_int, opname, batch_size);
-    else
+    } else {
         return;
+    }
 }
 
 static int check_conv(const ln_op *op)
@@ -1343,9 +1347,12 @@ static void add_trt_to_trt(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg)
     pe = ln_param_list_find(op_arg->params, "batch_size");
     op_batch_size = pe->value_int;
     pe = ln_param_list_find(trt_arg->params, "batch_size");
-    if (pe && op_batch_size != pe->value_int) {
+    if (pe && pe->value_int == 0) {
+	    pe->value_int = op_batch_size;
+	    pe->type = LN_PARAM_NUMBER;
+    } else if (pe && op_batch_size != pe->value_int) {
         ln_msg_emit(LN_MSG_ERROR,
-                    "batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
+		"batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
                     pe->value_int, op->op_arg->name, op_batch_size);
     } else if (!pe) {
         trt_arg->params = ln_param_list_append_int(trt_arg->params,

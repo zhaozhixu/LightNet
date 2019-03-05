@@ -70,6 +70,15 @@ void ln_param_entry_free(ln_param_entry *entry)
     ln_free(entry);
 }
 
+ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name)
+{
+     ln_param_entry *entry;
+
+     entry = ln_param_entry_create(arg_name, LN_PARAM_INVALID);
+     list = ln_list_append(list, entry);
+     return list;
+}
+
 ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
                                      const char *string)
 {
@@ -436,6 +445,8 @@ const char *ln_param_type_name(ln_param_type type)
         return "LN_PARAM_ARRAY_NUMBER";
     case LN_PARAM_ARRAY_BOOL:
         return "LN_PARAM_ARRAY_BOOL";
+    case LN_PARAM_INVALID:
+        return "LN_PARAM_INVALID";
     default:
         assert(0 && "unsupported ln_param_type");
     }

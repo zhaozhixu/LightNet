@@ -338,6 +338,10 @@ EOF
     }
 }
 
+sub gen_assign {
+    my $assign = shift;
+}
+
 sub check_details {
     my $details = shift;
     my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
