@@ -70,11 +70,12 @@ void ln_param_entry_free(ln_param_entry *entry)
     ln_free(entry);
 }
 
-ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name)
+ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name,
+                                    ln_param_type ptype)
 {
      ln_param_entry *entry;
 
-     entry = ln_param_entry_create(arg_name, LN_PARAM_INVALID);
+     entry = ln_param_entry_create(arg_name, ptype);
      list = ln_list_append(list, entry);
      return list;
 }
@@ -313,7 +314,6 @@ ln_list *ln_param_list_copy(ln_list *list)
 {
     ln_list *new_list = NULL;
     ln_param_entry *entry;
-
     LN_LIST_FOREACH(entry, list) {
         switch (entry->type) {
         case LN_PARAM_ARRAY_BOOL:

@@ -115,7 +115,12 @@ static const char *out_arg_names[] = {
 };
 
 static const char *param_arg_names[] = {
-    "batch_size"
+    "batch_size",
+    NULL
+};
+
+static const ln_param_type param_ptypes[] = {
+    LN_PARAM_NUMBER
 };
 
 /* specify other ln_op_arg fields */
@@ -125,6 +130,7 @@ static ln_op_arg op_arg_tensorrt = {
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
+    .param_ptypes = param_ptypes,
 };
 
 /* struct used for op registration in ln_oplist.c */

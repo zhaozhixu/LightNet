@@ -313,12 +313,12 @@ EOF
 
     my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
     my @blocks;
+    &check_details($details);
     foreach (@$details) {
         my $detail = $_;
-        &check_details($_);
         /(($symbol_p)\s*(=)\s*($symbol_p))/;
-        my ($l_type, $l_code, $l_len) = &expand_op_str($2, $defined_ops, 1);
         my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
+
         my $operator = $3;
         my $type = &type_converse($l_type, $r_type);
         if (not defined $type) {
@@ -339,7 +339,115 @@ EOF
 }
 
 sub gen_assign {
-    my $assign = shift;
+    my $lhs = shift;
+    my $rhs_type = shift;
+    my $rhs_code = shift;
+    my $rhs_len = shift;
+    my $auto_vars = shift;
+    my $defined_ops = shift;
+
+    &err_exit("rhs_code cannot be undef") unless defined $rhs_code;
+    unless ($lhs =~ /^(\w+)\.(ins|outs|params)\[((\w+(\$\@)?)|(\w+\$\^\w*)|((\w*\$\^\w+)))\]$/) {
+        &err_exit("wrong syntax in the lhs symbol of assignment '$lhs'");
+    }
+    &err_exit("undefined op '$1'") unless exists $defined_ops->{$1};
+
+    my $opname = $1;
+    my $optype = $defined_ops->{$opname};
+    my $member = $2;
+    my $arg_name = $3;
+    my $code;
+    if ($member eq "ins" or $member eq "outs") {
+        $code = &gen_assign_tensor($opname, $optype, $member, $arg_name,
+                                   $rhs_type, $rhs_code, $rhs_len, $auto_vars);
+    } else {
+        $code = &gen_assign_param($opname, $optype, $member, $arg_name,
+                                  $rhs_type, $rhs_code, $rhs_len, $auto_vars);
+    }
+}
+
+sub gen_assign_tensor {
+    my $opname = shift;
+    my $optype = shift;
+    my $member = shift;
+    my $arg_name = shift;
+    my $rhs_type = shift;
+    my $rhs_code = shift;
+    my $rhs_len = shift;
+    my $auto_vars = shift;
+
+    my $tensors = $member eq "ins" ? "tensors_in" : "tensors_out";
+    &err_exit("rhs symbol must be a string (tensor name) for a tensor type lhs symbol '$lhs'")
+        unless not defined $rhs_type or $rhs_type eq "char *";
+    my $op_desc = &find_op_desc($optype);
+    my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$tensors}};
+    my $code;
+    if ($found) {
+        $code = <<EOF;
+ln_tensor_list_entry *tle = ln_tensor_list_find_entry($opname->op_arg->$tensors,
+                            $opname->op_arg->tensor_table, "$arg_name");
+ln_free(tle->name);
+tle->name = ln_strdup($rhs_code);
+EOF
+    } elsif ($op_desc->{variable_length}) {
+        if ($arg_name =~ /\$\@$/) {
+            $arg_name =~ s/\$\@$//;
+            push @$auto_vars, "int last_index;" unless grep /int last_index;/, @$auto_vars;
+            $code = <<EOF;
+char arg_name[LN_MAX_NAME_LEN];
+last_index = ln_tensor_list_unique_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
+$opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, $rhs_code);
+EOF
+        } elsif ($arg_name =~ /(.*)\$\^(.*)/) {
+            my $arg_name1 = $1;
+            my $arg_name2 = $2;
+            $type = "ln_tensor_list_entry *";
+            $code = <<EOF;
+char arg_name[LN_MAX_NAME_LEN];
+if (strlen("$arg_name1") + strlen("$arg_name2") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+    ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                       "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
+snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
+$opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, $rhs_code);
+EOF
+        } else {
+            $type = "ln_tensor_list_entry *";
+            $code = <<EOF;
+$opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, "$arg_name", $rhs_code);
+ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, "$arg_name");
+EOF
+        }
+    } else {
+        err_exit("$opname($optype) doesn't have a '$arg_name' $tensors");
+    }
+    $code;
+}
+
+sub gen_assign_param {
+    my $opname = shift;
+    my $optype = shift;
+    my $member = shift;
+    my $arg_name = shift;
+    my $rhs_type = shift;
+    my $rhs_code = shift;
+    my $rhs_len = shift;
+    my $auto_vars = shift;
+
+    my $op_desc = &find_op_desc($optype);
+    my @param = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{params}};
+    my $code;
+    if (@param) {
+        my $ptype = $param[0]->{ptype};
+        my ($type, $code, $len) = &param_info($optype, "pe", $arg_name);
+        &err_exit("rhs type '$rhs_type' doesn't match lhs type '$type'")
+            unless not defined $rhs_type or $type eq $rhs_type;
+        &warn_msg("rhs type is not defined when assigning to type '$type': '$rhs_code'")
+            unless defined $rhs_type;
+        $code = <<EOF;
+ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, "$arg_name");
+pe->type = $ptype;
+EOF
+    }
 }
 
 sub check_details {
@@ -351,14 +459,14 @@ sub check_details {
             unless /(($symbol_p)\s*(=)\s*($symbol_p))/;
         my $lhs = $2;
         unless ($lhs =~ /^\w+\.(ins|outs|params)\[(\w+(\$\@)?)|(\w+\$\^\w*)|((\w*\$\^\w+))\]$/) {
-            &err_exit("wrong syntax in the left-hand-side symbol of assignment '$_'");
+            &err_exit("wrong syntax in the lhs symbol of assignment '$_'");
         }
         if (exists $lhs_hash{$lhs}) {
             if ($lhs =~ /\$\@/) {
                 delete $lhs_hash{$_} if /\$\^/ foreach keys %lhs_hash;
                 next;
             }
-            &err_exit("duplicated left-hand-side symbol of assignment '$_'");
+            &err_exit("duplicated lhs symbol of assignment '$_'");
         }
         $lhs_hash{$lhs} = 1;
     }
@@ -438,12 +546,14 @@ sub expand_op_str {
     my @fs = split /\.|(?=\[)/, $op_str;
     my ($type, $code, $len);
     unless (exists $defined_ops->{$fs[0]}) {
-        if ($fs[0] =~ /\d+/) {
+        if ($fs[0] =~ /^\d+$/) {
             $type = "int";
-        } elsif ($fs[0] =~ /("(\\.|[^"\\])*")/) {
+        } elsif ($fs[0] =~ /^("(\\.|[^"\\])*")$/) {
             $type = "char *";
-        } elsif ($fs[0] =~ /([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)/) {
+        } elsif ($fs[0] =~ /^([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)$/) {
             $type = "double";
+        } else {
+            # &warn_msg("undefined symbol '$fs[0]', use literal string");
         }
         return ($type, $op_str, $len);
     }
@@ -525,10 +635,7 @@ sub expand_tensor {
 
     my $tensors = "tensors_$in_or_out";
     my $op_desc = &find_op_desc($optype);
-    my $found = 0;
-    foreach (@{$op_desc->{$tensors}}) {
-        $found = 1 if ($arg_name eq $_->{arg_name});
-    }
+    my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$tensors}};
 
     my ($type, $code, $len);
     if ($found) {
@@ -608,10 +715,7 @@ sub expand_param {
     my $arg_name = $fs[0] =~ s/\[(.+)\]/$1/r;
 
     my $op_desc = &find_op_desc($optype);
-    my $found = 0;
-    foreach (@{$op_desc->{params}}) {
-        $found = 1 if ($arg_name eq $_->{arg_name});
-    }
+    my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{params}};
 
     my ($type, $code, $len);
     if ($found) {
@@ -803,7 +907,7 @@ sub param_slice {
     my $index_str = shift;
     my $op_desc = &find_op_desc($optype);
     my ($element_type, $member);
-    my ($type, $code);
+    my ($type, $code, $len);
     foreach my $arg_name_desc (@{$op_desc->{params}}) {
         next unless $arg_name eq $arg_name_desc->{arg_name};
         given ($arg_name_desc->{ptype}) {
@@ -828,7 +932,7 @@ sub param_slice {
         }
     }
     $code = "$entry->$member";
-    ($type, $code) = &array_slice($element_type, $code, $index_str);
+    ($type, $code, $len) = &array_slice($element_type, $code, $index_str);
 }
 
 sub array_slice {
@@ -838,7 +942,8 @@ sub array_slice {
     $index_str =~ s/\[(.+)\]/$1/;
     my @indexes = split /\s*,\s*/, $index_str;
 
-    my ($type, $code);
+    my ($type, $code, $len);
+    $len = @indexes;
     if (@indexes == 1) {
         ($type, $code) = ($element_type, "${initial_code}[$indexes[0]]");
     } else {
@@ -851,7 +956,7 @@ sub array_slice {
         $code = "(${element_type}[]){$array_str}";
     }
 
-    ($type, $code);
+    ($type, $code, $len);
 }
 
 sub find_op_desc {

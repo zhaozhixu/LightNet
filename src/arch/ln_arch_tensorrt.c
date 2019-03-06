@@ -296,7 +296,6 @@ static void check_and_add_batch_size(ln_op *trt_op, int batch_size,
                                                              "batch_size", batch_size);
     } else if (pe->value_int == 0) {
 	    pe->value_int = batch_size;
-	    pe->type = LN_PARAM_NUMBER;
     } else if (batch_size != pe->value_int) {
         ln_msg_emit(LN_MSG_ERROR,
                     "batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",
@@ -967,9 +966,8 @@ static ln_list *ep_batchnorm(const ln_op *op, const ln_dfg *dfg, int *match)
     ln_free(tle->name);
     te = ln_op_find_tensor_entry(op, "offset");
     tle->name = ln_strdup(te->name);
-    pe = ln_param_list_find(op->op_arg->params, "epsilon");
-    params = ln_param_list_append_float(params, "epsilon", pe->value_float);
-    bn2scale_op->op_arg->params = params;
+    pe = ln_param_list_find(bn2scale_op->op_arg->params, "epsilon");
+    pe->value_float = ln_param_list_find(op->op_arg->params, "epsilon")->value_float;
     new_ops = ln_list_append(new_ops, bn2scale_op);
 
     op_proto = &ln_opimpl_tensorrt;
@@ -1349,7 +1347,6 @@ static void add_trt_to_trt(ln_op *trt_op, const ln_op *op, const ln_dfg *dfg)
     pe = ln_param_list_find(trt_arg->params, "batch_size");
     if (pe && pe->value_int == 0) {
 	    pe->value_int = op_batch_size;
-	    pe->type = LN_PARAM_NUMBER;
     } else if (pe && op_batch_size != pe->value_int) {
         ln_msg_emit(LN_MSG_ERROR,
 		"batch size doesn't match among ops when converting to TensorRT: original batch_size = %d, '%s''s batch_size = %d",

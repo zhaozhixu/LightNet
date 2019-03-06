@@ -906,6 +906,13 @@ sub gen_op_arg {
     &indent_lines($INDENT_OFFSET, \@param_declares);
     my $param_str = join "\n", @param_declares;
 
+    my @param_ptypes = ();
+    foreach (@$params) {
+        push @param_ptypes, "$_->{ptype},";
+    }
+    &indent_lines($INDENT_OFFSET, \@param_ptypes);
+    my $ptype_str = join "\n", @param_ptypes;
+
     my $op_arg_tpl = <<EOF;
 static const char *in_arg_names[] = {
 $in_str
@@ -919,6 +926,10 @@ static const char *param_arg_names[] = {
 $param_str
 };
 
+static const ln_param_type param_ptypes[] = {
+$ptype_str
+};
+
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_$op->{optype} = {
     .optype = "$op->{optype}",
@@ -926,6 +937,7 @@ static ln_op_arg op_arg_$op->{optype} = {
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
+    .param_ptypes = param_ptypes,
 };
 EOF
 }

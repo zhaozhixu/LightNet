@@ -31,17 +31,18 @@
 #include "ln_graph.h"
 
 struct ln_op_arg {
-    char            *name;
-    char            *optype;
-    char            *arch;
-    ln_list         *tensors_in;
-    ln_list         *tensors_out;
-    ln_list         *params;
-    ln_hash         *tensor_table;   /* TODO: goes outside ln_op? */
-    void            *priv;           /* for other private data storage */
-    const char     **in_arg_names;   /* NULL terminated array, as belows */
-    const char     **out_arg_names;
-    const char     **param_arg_names;
+    char                 *name;
+    char                 *optype;
+    char                 *arch;
+    ln_list              *tensors_in;
+    ln_list              *tensors_out;
+    ln_list              *params;
+    ln_hash              *tensor_table;   /* TODO: goes outside ln_op? */
+    void                 *priv;           /* for other private data storage */
+    const char          **in_arg_names;   /* NULL terminated array, as belows */
+    const char          **out_arg_names;
+    const char          **param_arg_names;
+    const ln_param_type  *param_ptypes;
 };
 typedef struct ln_op_arg ln_op_arg;
 

@@ -64,7 +64,8 @@ ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type);
 void ln_param_entry_free(ln_param_entry *entry);
 
 /* TODO: add prepend version */
-ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name);
+ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name,
+                                    ln_param_type ptype);
 ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
                                      const char *string);
 ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name,

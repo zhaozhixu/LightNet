@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Zhao Zhixu
+ * Copyright (c) 2019 Zhao Zhixu
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -318,6 +318,11 @@ static const char *param_arg_names[] = {
     NULL
 };
 
+static const ln_param_type param_ptypes[] = {
+    LN_PARAM_NUMBER,
+    LN_PARAM_NUMBER,
+};
+
 /* specify other ln_op_arg fields */
 static ln_op_arg op_arg_detect_yolov3_cuda = {
     .optype = "detect_yolov3_cuda",
@@ -325,6 +330,7 @@ static ln_op_arg op_arg_detect_yolov3_cuda = {
     .in_arg_names = in_arg_names,
     .out_arg_names = out_arg_names,
     .param_arg_names = param_arg_names,
+    .param_ptypes = param_ptypes,
 };
 
 /* struct used for op registration in ln_oplist.c */
