@@ -20,8 +20,9 @@ use constant CODE => ref sub{};
 no warnings 'experimental::smartmatch';
 
 my %global_ops;
-# my %defined_ops = (conv2d1 => "conv2d", trt => "tensorrt");
-# say join " ", &expand_op_str($ARGV[0], \%defined_ops);
+# TODO: need LN_PARAM_NULL
+my %basic_types = (double=>1, float=>1, int=>1, "char *"=>1, ln_bool=>1);
+my %array_types = ("double *"=>1, "float *"=>1, "int *"=>1, "char **"=>1, "ln_bool *"=>1);
 
 my $usage = <<EOF;
 Usage: $0 [OPTION] [JSON_FILE(s)]
@@ -147,11 +148,14 @@ sub gen_expander {
         my %defined_ops = (self => $optype);
         my $cond_code = &gen_cond($rule->{cond}, \%defined_ops);
 
+        my @new_op_codes;
         my $body_code;
         if (exists $rule->{replace}) {
             foreach (@{$rule->{replace}}) {
                 my ($type, $name) = split;
-                $defined_ops{$name} = $type if defined $name;
+                if (defined $name) {
+                    $defined_ops{$name} = $type;
+                }
             }
             $body_code = &gen_replace($rule->{replace}, $rule->{details},
                                       \@auto_vars, \%defined_ops);
@@ -187,8 +191,10 @@ EOF
     my $tpl = <<EOF;
 static ln_list *ep_$optype(const ln_op *self, const ln_dfg *dfg, int *match)
 {
+    /* auto variables */
 $auto_vars_code
 
+   /* replace self with new ops */
 $rules_code
 }
 EOF
@@ -198,14 +204,16 @@ sub gen_cond {
     my $conds = shift;
     my $defined_ops = shift;
 
+    return "1" if @$conds == 0;
     my $cond_code;
     my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
     my @conds_replaced;
-    foreach (@$conds) {
-        my $cond = $_;
-        while (/(($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p))/g) {
+    foreach my $cond (@$conds) {
+        my $cond_copy = $cond;
+        while ($cond =~ /(($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p))/g) {
             my ($l_type, $l_code, $l_len) = &expand_op_str($2, $defined_ops, 0);
             my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
+            # say ($l_type, $l_code);
             my $operator = $3;
             my $type = &type_converse($l_type, $r_type);
             if (not defined $type) {
@@ -220,15 +228,11 @@ sub gen_cond {
                 if ((defined $l_len or defined $r_len) and $l_len != $r_len);
 
             $cond_code = &gen_comparator($3, $l_code, $r_code, $type, $l_len);
-            substr($cond, index($cond, $1), length($1)) = $cond_code;
+            substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
         }
-        push @conds_replaced, "($cond)";
+        push @conds_replaced, "($cond_copy)";
     }
-    if (@$conds == 0) {
-        "1";
-    } else {
-        join "||", @conds_replaced;
-    }
+    join " ||\n    ", @conds_replaced;
 }
 
 sub gen_comparator {
@@ -311,31 +315,29 @@ EOF
         return $code;
     }
 
-    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
     my @blocks;
-    &check_details($details);
-    foreach (@$details) {
-        my $detail = $_;
-        /(($symbol_p)\s*(=)\s*($symbol_p))/;
-        my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
-
-        my $operator = $3;
-        my $type = &type_converse($l_type, $r_type);
-        if (not defined $type) {
-            &warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
-            $cond_code = $1;
-            next;
-        } elsif (not $type) {
-            $type = $r_type;
-        }
-
-        &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
-            if ((defined $l_len or defined $r_len) and $l_len != $r_len);
-
-        $cond_code = &gen_comparator($3, $l_code, $r_code, $type, $l_len);
-        substr($cond, index($cond, $1), length($1)) = $cond_code;
-        push @conds_replaced, "($cond)";
+    push @blocks, "ln_op *op_proto;";
+    foreach (@$replace) {
+        my ($type, $name) = split;
+        &err_exit("replace details needs a list of new op types and names: '$_'")
+            if not defined $type or not defined $name;
+        my $create_op = <<EOF;
+op_proto = ln_hash_find(LN_ARCH.op_proto_table, "$type");
+assert(op_proto);
+ln_op *$name = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+EOF
+        push @blocks, $create_op;
     }
+    &check_details($details);
+    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\\$\@\^]+/;
+    foreach my $detail (@$details) {
+        $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
+        my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
+        my $replace_code = &gen_assign($2, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
+        substr($detail, index($detail, $1), length($1)) = $replace_code;
+        push @blocks, $detail;
+    }
+    join "\n", @blocks;
 }
 
 sub gen_assign {
@@ -347,7 +349,7 @@ sub gen_assign {
     my $defined_ops = shift;
 
     &err_exit("rhs_code cannot be undef") unless defined $rhs_code;
-    unless ($lhs =~ /^(\w+)\.(ins|outs|params)\[((\w+(\$\@)?)|(\w+\$\^\w*)|((\w*\$\^\w+)))\]$/) {
+    unless ($lhs =~ /^(\w+)\.(ins|outs|params)\[((\w+(\$\@)?)|(\w+\$\^\w*)|(\w*\$\^\w+))\]$/) {
         &err_exit("wrong syntax in the lhs symbol of assignment '$lhs'");
     }
     &err_exit("undefined op '$1'") unless exists $defined_ops->{$1};
@@ -363,7 +365,10 @@ sub gen_assign {
     } else {
         $code = &gen_assign_param($opname, $optype, $member, $arg_name,
                                   $rhs_type, $rhs_code, $rhs_len, $auto_vars);
+        say STDERR $lhs unless defined $code;
+        # say STDERR $code;
     }
+    $code;
 }
 
 sub gen_assign_tensor {
@@ -377,44 +382,50 @@ sub gen_assign_tensor {
     my $auto_vars = shift;
 
     my $tensors = $member eq "ins" ? "tensors_in" : "tensors_out";
-    &err_exit("rhs symbol must be a string (tensor name) for a tensor type lhs symbol '$lhs'")
+    &err_exit("rhs symbol must be a string (tensor name) for a tensor type lhs symbol")
         unless not defined $rhs_type or $rhs_type eq "char *";
     my $op_desc = &find_op_desc($optype);
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$tensors}};
     my $code;
     if ($found) {
         $code = <<EOF;
-ln_tensor_list_entry *tle = ln_tensor_list_find_entry($opname->op_arg->$tensors,
-                            $opname->op_arg->tensor_table, "$arg_name");
-ln_free(tle->name);
-tle->name = ln_strdup($rhs_code);
+{
+    ln_tensor_list_entry *tle = ln_tensor_list_find_entry($opname->op_arg->$tensors,
+                                                          $opname->op_arg->tensor_table, "$arg_name");
+    ln_free(tle->name);
+    tle->name = ln_strdup($rhs_code);
+}
 EOF
     } elsif ($op_desc->{variable_length}) {
         if ($arg_name =~ /\$\@$/) {
             $arg_name =~ s/\$\@$//;
             push @$auto_vars, "int last_index;" unless grep /int last_index;/, @$auto_vars;
             $code = <<EOF;
-char arg_name[LN_MAX_NAME_LEN];
-last_index = ln_tensor_list_unique_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
-$opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, $rhs_code);
+{
+    char arg_name[LN_MAX_NAME_LEN];
+    last_index = ln_tensor_list_unique_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
+    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, $rhs_code);
+}
 EOF
         } elsif ($arg_name =~ /(.*)\$\^(.*)/) {
             my $arg_name1 = $1;
             my $arg_name2 = $2;
-            $type = "ln_tensor_list_entry *";
             $code = <<EOF;
-char arg_name[LN_MAX_NAME_LEN];
-if (strlen("$arg_name1") + strlen("$arg_name2") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
-    ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
-                       "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
-snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
-$opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, $rhs_code);
+{
+    char arg_name[LN_MAX_NAME_LEN];
+    if (strlen("$arg_name1") + strlen("$arg_name2") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                           "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
+    snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
+    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, $rhs_code);
+}
 EOF
         } else {
-            $type = "ln_tensor_list_entry *";
             $code = <<EOF;
-$opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, "$arg_name", $rhs_code);
-ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, "$arg_name");
+{
+    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, "$arg_name", $rhs_code);
+    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, "$arg_name");
+}
 EOF
         }
     } else {
@@ -433,37 +444,148 @@ sub gen_assign_param {
     my $rhs_len = shift;
     my $auto_vars = shift;
 
+    &err_exit("unsupported rhs type '$rhs_type' for assignment")
+        if defined $rhs_type and not exists $basic_types{$rhs_type} and
+        not exists $array_types{$rhs_type};
     my $op_desc = &find_op_desc($optype);
-    my @param = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{params}};
+    my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{params}};
     my $code;
-    if (@param) {
-        my $ptype = $param[0]->{ptype};
-        my ($type, $code, $len) = &param_info($optype, "pe", $arg_name);
+    if ($found) {
+        my $type = (&param_info($optype, "pe", $arg_name))[0];
         &err_exit("rhs type '$rhs_type' doesn't match lhs type '$type'")
             unless not defined $rhs_type or $type eq $rhs_type;
+        &err_exit("lhs of an array type '$type' needs a length from rhs")
+            if exists $array_types{$type} and not defined $rhs_len;
         &warn_msg("rhs type is not defined when assigning to type '$type': '$rhs_code'")
             unless defined $rhs_type;
+        my $assign = &gen_copy_param("pe", $rhs_code, $type, $rhs_len);
+        $assign = &indent_block($INDENT_OFFSET, $assign);
         $code = <<EOF;
-ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, "$arg_name");
-pe->type = $ptype;
+{
+    ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, "$arg_name");
+$assign
+}
 EOF
+    } elsif ($op_desc->{variable_length}) {
+        &err_exit("cannot generate variable-length params with undefined rhs type")
+            unless defined $rhs_type;
+        &err_exit("rhs of an array type '$rhs_type' needs a length")
+            if exists $array_types{$rhs_type} and not defined $rhs_len;
+        my $ptype = &type_to_ptype($rhs_type);
+        my $assign = &gen_copy_param("pe", $rhs_code, $rhs_type, $rhs_len);
+        $assign = &indent_block($INDENT_OFFSET, $assign);
+        if ($arg_name =~ /\$\@$/) {
+            $arg_name =~ s/\$\@$//;
+            push @$auto_vars, "int last_index;" unless grep /int last_index;/, @$auto_vars;
+            $code = <<EOF;
+{
+    char arg_name[LN_MAX_NAME_LEN];
+    last_index = ln_param_list_unique_arg_name($opname->op_arg->params, arg_name, "$arg_name");
+    $opname->op_arg->params = ln_param_list_append_empty($opname->op_arg->params, arg_name, $ptype);
+    ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, arg_name);
+$assign
+}
+EOF
+        } elsif ($arg_name =~ /(.*)\$\^(.*)/) {
+            my $arg_name1 = $1;
+            my $arg_name2 = $2;
+            $code = <<EOF;
+{
+    char arg_name[LN_MAX_NAME_LEN];
+    if (strlen("$arg_name1") + strlen("$arg_name2") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                           "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
+    snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
+    $opname->op_arg->params = ln_param_list_append_empty($opname->op_arg->params, arg_name, $ptype);
+    ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, arg_name);
+$assign
+}
+EOF
+        } else {
+            $code = <<EOF;
+{
+    $opname->op_arg->params = ln_param_list_append_empty($opname->op_arg->params, "$arg_name", $ptype);
+    ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, arg_name);
+$assign
+}
+EOF
+        }
+    } else {
+        &err_exit("$opname($optype) doesn't have a '$arg_name' params");
     }
+    $code;
+}
+
+sub gen_copy_param {
+    my $pe = shift;
+    my $rhs = shift;
+    my $type = shift;
+    my $len = shift;
+
+    my $code;
+    my $member = &type_to_member($type);
+    given ($type) {
+        when ("char *") {
+            $code = <<EOF;
+{
+    ln_free($pe->value_string);
+    $pe->value_string = ln_strdup($rhs);
+}
+EOF
+        }
+        when ("char **") {
+            $code = <<EOF;
+{
+    for (int i = 0; i < $pe->array_len; i++) {
+        ln_free($pe->value_array_string[i]);
+    }
+    $pe->array_len = $len;
+    ln_free($pe->value_array_string);
+    $pe->value_array_string = ln_alloc(sizeof(char *)*($pe->array_len));
+    for (int i = 0; i < $pe->array_len; i++) {
+        $pe->value_array_string[i] = ln_strdup(${rhs}[i]);
+    }
+}
+EOF
+        }
+        when (/^(int|float|double|ln_bool) \*$/) {
+            my $ele_type = s/^(int|float|double|ln_bool) \*$/$1/r;
+            $code = <<EOF;
+{
+    $pe->array_len = $len;
+    ln_free($pe->$member);
+    $pe->$member = ln_clone($rhs, sizeof($ele_type)*$pe->array_len);
+}
+EOF
+        }
+        when (/^(int|float|double|ln_bool)$/) {
+            $code = <<EOF;
+{
+    $pe->$member = $rhs;
+}
+EOF
+        }
+        default {
+            &err_exit("unknown type '$type', cannot generate assignment");
+        }
+    }
+    $code;
 }
 
 sub check_details {
     my $details = shift;
-    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
+    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\\$\@\^]+/;
     my %lhs_hash;
     foreach (@$details) {
         &err_exit("'details' can only contain assignments: '$_'")
             unless /(($symbol_p)\s*(=)\s*($symbol_p))/;
         my $lhs = $2;
-        unless ($lhs =~ /^\w+\.(ins|outs|params)\[(\w+(\$\@)?)|(\w+\$\^\w*)|((\w*\$\^\w+))\]$/) {
+        unless ($lhs =~ /^\w+\.(ins|outs|params)\[(\w+(\$\@)?)|(\w+\$\^\w*)|(\w*\$\^\w+)\]$/) {
             &err_exit("wrong syntax in the lhs symbol of assignment '$_'");
         }
         if (exists $lhs_hash{$lhs}) {
             if ($lhs =~ /\$\@/) {
-                delete $lhs_hash{$_} if /\$\^/ foreach keys %lhs_hash;
+                map {delete $lhs_hash{$_} if /\$\^/} keys %lhs_hash;
                 next;
             }
             &err_exit("duplicated lhs symbol of assignment '$_'");
@@ -494,16 +616,20 @@ sub type_converse {
     if ($type1 eq $type2) {
         return $type1;
     }
-    my %basic_types = (double=>1, float=>1, int=>1);
     if (not exists $basic_types{$type1} or not exists $basic_types{$type2}) {
         return 0;
     }
-    if ($type1 eq "double" or $type2 eq "double") {
+    if ($type1 eq "char *" or $type2 eq "char *") {
+        return 0;
+    }
+    if ($type1 eq "char **" or $type2 eq "char **") {
+        return 0;
+    }
+    if (exists $array_types{$type1} and exists $array_types{$type2}) {
+        return "double *";
+    }
+    if (exists $basic_types{$type1} and exists $basic_types{$type2}) {
         return "double";
-    } elsif ($type1 eq "float" or $type2 eq "float") {
-        return "float"
-    } else {
-        return "int";
     }
     0;
 }
@@ -542,7 +668,6 @@ sub add_to_arch_file {
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
-    my $allow_variable = shift;
     my @fs = split /\.|(?=\[)/, $op_str;
     my ($type, $code, $len);
     unless (exists $defined_ops->{$fs[0]}) {
@@ -569,19 +694,19 @@ sub expand_op_str {
          ins => {
                  __self => ["ln_list *", "$fs[0]->op_arg->tensors_in"],
                  len => ["int", "ln_list_length($fs[0]->op_arg->tensors_in)"],
-                 "[]" => [\&expand_tensor, $allow_variable, "in", $optype,
+                 "[]" => [\&expand_tensor, "in", $optype,
                           $fs[0], @fs[2..@fs-1]],
                 },
          outs => {
                   __self => ["ln_list *", "$fs[0]->op_arg->tensors_out"],
                   len => ["int", "ln_list_length($fs[0]->op_arg->tensors_out)"],
-                  "[]" => [\&expand_tensor, $allow_variable, "out", $optype,
+                  "[]" => [\&expand_tensor, "out", $optype,
                            $fs[0], @fs[2..@fs-1]],
                  },
          params => {
                     __self => ["ln_list *", "$fs[0]->op_arg->params"],
                     len => ["int", "ln_list_length($fs[0]->op_arg->params)"],
-                    "[]" => [\&expand_param, $allow_variable, $optype,
+                    "[]" => [\&expand_param, $optype,
                              $fs[0], @fs[2..@fs-1]],
                    },
         );
@@ -626,7 +751,6 @@ sub parse_member_path {
 }
 
 sub expand_tensor {
-    my $allow_variable = shift;
     my $in_or_out = shift;
     my $optype = shift;
     my $opname = shift;
@@ -662,44 +786,6 @@ sub expand_tensor {
              backend_data => ["void *", "$entry->tensor->backend_data"],
             );
         ($type, $code, $len) = &parse_member_path(\%tensor_member, @fs);
-    } elsif ($allow_variable and $op_desc->{variable_length}) {
-        # TODO: $@ can only exist in the last part of a string
-        if ($arg_name =~ /\$\@$/) {
-            $arg_name =~ s/\$\@$//;
-            $type = "ln_tensor_list_entry *";
-            $code = <<EOF;
-({
-    char arg_name[LN_MAX_NAME_LEN];
-    last_index = ln_tensor_list_unique_arg_name($opname->op_arg->$tensors, arg_name, "$arg_name");
-    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, "");
-    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, arg_name);
-})
-EOF
-        } elsif ($arg_name =~ /(.*)\$\^(.*)/) {
-            my $arg_name1 = $1;
-            my $arg_name2 = $2;
-            $type = "ln_tensor_list_entry *";
-            $code = <<EOF;
-({
-    char arg_name[LN_MAX_NAME_LEN];
-    if (strlen("$arg_name1") + strlen("$arg_name2") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
-        ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
-                           "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
-    snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
-    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, arg_name, "");
-    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, arg_name);
-})
-EOF
-        } else {
-            $type = "ln_tensor_list_entry *";
-            $code = <<EOF;
-({
-    $opname->op_arg->$tensors = ln_tensor_list_append($opname->op_arg->$tensors, "$arg_name", "");
-    ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, "$arg_name");
-})
-EOF
-        }
-        &err_unknown_field(1, @fs) if $fs[1];
     } else {
         &util::err_exit("$opname($optype) doesn't have a '$arg_name' $tensors");
     }
@@ -708,7 +794,6 @@ EOF
 }
 
 sub expand_param {
-    my $allow_variable = shift;
     my $optype = shift;
     my $opname = shift;
     my @fs = @_;
@@ -799,52 +884,8 @@ sub expand_param {
              "[]" => [\&param_slice, $optype, $entry, $arg_name, $fs[1]],
             );
         ($type, $code, $len) = &parse_member_path(\%param_member, @fs);
-    } elsif ($allow_variable and $op_desc->{variable_length}) {
-        # TODO: $@ can only exist in the last part of a string
-        if ($arg_name =~ /\$\@$/) {
-            $arg_name =~ s/\$\@$//;
-            $type = "ln_param_entry *";
-            $code = <<EOF;
-({
-    char arg_name[LN_MAX_NAME_LEN];
-    last_index = ln_param_list_unique_arg_name($opname->op_arg->params, arg_name, "$arg_name");
-    ln_param_entry *entry;
-    entry = ln_param_entry_create(arg_name, LN_PARAM_INVALID);
-    $opname->op_arg->params = ln_list_append($opname->op_arg->params, entry);
-    ln_param_list_find($opname->op_arg->params, arg_name);
-})
-EOF
-        } elsif ($arg_name =~ /(.*)\$\^(.*)/) {
-            my $arg_name1 = $1;
-            my $arg_name2 = $2;
-            $type = "ln_param_entry *";
-            $code = <<EOF;
-({
-    char arg_name[LN_MAX_NAME_LEN];
-    if (strlen("$arg_name1") + strlen("$arg_name2") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
-        ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
-                           "$arg_name1", last_index, "$arg_name2", LN_MAX_NAME_LEN);
-    snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "$arg_name1", last_index, "$arg_name2");
-    ln_param_entry *entry;
-    entry = ln_param_entry_create(arg_name, LN_PARAM_INVALID);
-    $opname->op_arg->params = ln_list_append($opname->op_arg->params, entry);
-    ln_param_list_find($opname->op_arg->params, arg_name);
-})
-EOF
-        } else {
-            $type = "ln_param_entry *";
-            $code = <<EOF;
-({
-    ln_param_entry *entry;
-    entry = ln_param_entry_create("$arg_name", LN_PARAM_INVALID);
-    $opname->op_arg->params = ln_list_append($opname->op_arg->params, entry);
-    ln_param_list_find($opname->op_arg->params, "$arg_name");
-})
-EOF
-        }
-        &err_unknown_field(1, @fs) if $fs[1];
     } else {
-        &util::err_exit("$opname($optype) doesn't have a '$arg_name' param");
+        &err_exit("$opname($optype) doesn't have a '$arg_name' param");
     }
 
     ($type, $code, $len);
@@ -935,6 +976,33 @@ sub param_slice {
     ($type, $code, $len) = &array_slice($element_type, $code, $index_str);
 }
 
+sub type_to_member {
+    my $type = shift;
+
+    my %table = (int => "value_int", double => "value_double", float => "value_float",
+                 ln_bool => "value_bool", "char *" => "value_string",
+                 "char **" => "value_array_string", "double *" => "value_array_double",
+                 "float *" => "value_array_float", "int *" => "value_array_int",
+                 "ln_bool *" => "value_array_bool");
+    &err_exit("unknow type '$type'") unless exists $table{$type};
+    $table{$type};
+}
+
+sub type_to_ptype {
+    my $type = shift;
+
+    my %table = (int => "LN_PARAM_NUMBER", double => "LN_PARAM_NUMBER",
+                 float => "LN_PARAM_NUMBER", ln_bool => "LN_PARAM_BOOL",
+                 "char *" => "LN_PARAM_STRING",
+                 "char **" => "LN_PARAM_ARRAY_STRING",
+                 "double *" => "LN_PARAM_ARRAY_NUMBER",
+                 "float *" => "LN_PARAM_ARRAY_NUMBER",
+                 "int *" => "LN_PARAM_ARRAY_NUMBER",
+                 "ln_bool *" => "LN_PARAM_ARRAY_BOOL");
+    &err_exit("unknow type '$type'") unless exists $table{$type};
+    $table{$type};
+}
+
 sub array_slice {
     my $element_type = shift;
     my $initial_code = shift;
@@ -955,7 +1023,7 @@ sub array_slice {
         my $array_str = join ', ', @array;
         $code = "(${element_type}[]){$array_str}";
     }
-
+    # say "$type $code $len";
     ($type, $code, $len);
 }
 

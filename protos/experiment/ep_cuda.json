@@ -60,26 +60,26 @@
                     "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
                     "replace": ["tensorrt trt"],
                     "details": [
-                        "trt.ins[src$@] = self.ins[src]1",
-                        "trt.ins[src$@] = self.ins[src]2",
+                        "trt.ins[src$@] = self.ins[src1]",
+                        "trt.ins[src$@] = self.ins[src2]",
                         "trt.outs[dst$@] = self.outs[dst]",
                         "trt.params[op$@] = \"concat\"",
-                        "trt.params[op$^_src1] = self.ins[src]1",
-                        "trt.params[op$^_src2] = self.ins[src]2",
-                        "trt.params[batch_size] = self.ins[src]1.dims[0]"
+                        "trt.params[op$^_src1] = self.ins[src1]",
+                        "trt.params[op$^_src2] = self.ins[src2]",
+                        "trt.params[batch_size] = self.ins[src1].dims[0]"
                     ]
                 },
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
                     "details": [
-                        "trt.ins[src$@] = self.ins[src]1",
-                        "trt.ins[src$@] = self.ins[src]2",
+                        "trt.ins[src$@] = self.ins[src1]",
+                        "trt.ins[src$@] = self.ins[src2]",
                         "trt.outs[dst$@] = self.outs[dst]",
                         "trt.params[op$@] = \"concat\"",
-                        "trt.params[op$^_src1] = self.ins[src]1",
-                        "trt.params[op$^_src2] = self.ins[src]2",
-                        "trt.params[op$^_axis] = self.axis",
+                        "trt.params[op$^_src1] = self.ins[src1]",
+                        "trt.params[op$^_src2] = self.ins[src2]",
+                        "trt.params[op$^_axis] = self.params[axis]",
                         "trt.params[batch_size] = self.ins[src]1.dims[0]"
                     ]
                 }

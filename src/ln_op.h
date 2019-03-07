@@ -68,10 +68,11 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
                                ln_list *tensors_in, ln_list *tensors_out,
                                ln_list *params, ln_hash *tensor_table);
 void ln_op_free(ln_op *op);
-/* create with tensors_in, tensors_out, and with auto-generated unique op name
-   and tensor names */
+/* create tensors_in, tensors_out and params, with auto-generated unique
+   op name and tensor names */
 ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table);
-/* create with tensors_in, tensors_out, and with auto-generated unique op name */
+/* create tensors_in, tensors_out and params, with auto-generated unique
+   op name */
 ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table);
 ln_op *ln_op_copy(const ln_op *op);
 ln_op *ln_op_copy_to_optype(ln_hash *op_proto_table, const ln_op *op,
