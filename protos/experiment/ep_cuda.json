@@ -1,8 +1,45 @@
 {
-    "name": "ep_cuda",
+    "name": "cuda_normal",
     "arch": "cuda",
     "author": "Zhao Zhixu",
     "ops": [
+        {
+            "optype": "create",
+            "rules": [
+                {
+                    "cond": ["self.outs[dst]=>"],
+                    "replace": ["create_cpu"]
+                },
+                {
+                    "cond": [
+                        "self.outs[dst]=>conv2d.ins[src]",
+                        "self.outs[dst]=>relu.ins[src]",
+                        "self.outs[dst]=>maxpool2d.ins[src]",
+                        "self.outs[dst]=>softmax.ins[src]",
+                        "self.outs[dst]=>sigmoid.ins[src]",
+                        "self.outs[dst]=>concat.ins[src1]",
+                        "self.outs[dst]=>concat.ins[src2]",
+                        "self.outs[dst]=>transform_bboxSQD.ins[src_delta]",
+                        "self.outs[dst]=>transform_bboxSQD.ins[src_anchor]",
+                        "self.outs[dst]=>rearange.ins[src]",
+                    ],
+                    "replace": ["create_cuda"]
+                },
+                {
+                    "cond": [],
+                    "replace": ["create_cpu"]
+                },
+            ]
+        },
+        {
+            "optype": "create_cuda",
+            "rules": [
+                {
+                    "cond": [],
+                    "match": false
+                }
+            ]
+        },
         {
             "optype": "conv2d",
             "rules": [
@@ -80,7 +117,7 @@
                         "trt.params[op$^_src1] = self.ins[src1]",
                         "trt.params[op$^_src2] = self.ins[src2]",
                         "trt.params[op$^_axis] = self.params[axis]",
-                        "trt.params[batch_size] = self.ins[src]1.dims[0]"
+                        "trt.params[batch_size] = self.ins[src1].dims[0]"
                     ]
                 }
             ]

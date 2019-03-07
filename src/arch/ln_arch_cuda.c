@@ -188,9 +188,23 @@ ln_combiner_func cb_funcs_cuda[] = {
     NULL
 };
 
+/* end of declare cuda init funcs */
+
+static void init_cuda(void **context_p)
+{
+/* end of exec cuda init funcs */
+}
+
+/* end of declare cuda cleanup funcs */
+
+static void cleanup_cuda(void **context_p)
+{
+/* end of exec cuda cleanup funcs */
+}
+
 ln_arch ln_arch_cuda = {
-    .init_func = NULL,
-    .cleanup_func = NULL,
+    .init_func = init_cuda,
+    .cleanup_func = cleanup_cuda,
     .reg_ops = ops_cuda,
     .ep_funcs = ep_funcs_cuda,
     .cb_funcs = cb_funcs_cuda,

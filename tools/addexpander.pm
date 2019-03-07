@@ -20,7 +20,6 @@ use constant CODE => ref sub{};
 no warnings 'experimental::smartmatch';
 
 my %global_ops;
-# TODO: need LN_PARAM_NULL
 my %basic_types = (double=>1, float=>1, int=>1, "char *"=>1, ln_bool=>1);
 my %array_types = ("double *"=>1, "float *"=>1, "int *"=>1, "char **"=>1, "ln_bool *"=>1);
 
@@ -80,8 +79,8 @@ sub gen_code {
     foreach my $op (@$ops) {
         push @blocks, &gen_expander($op, \@ep_funcs);
     }
-    push @blocks, &gen_init_ep_funcs(\@ep_funcs);
-    push @blocks, &gen_overall_ep_func($json);
+    push @blocks, &gen_ep_funcs(\@ep_funcs);
+    push @blocks, &gen_overall_funcs($name);
 
     my $code_str = join "\n", @blocks;
     if (not $dir and not $root) {
@@ -136,6 +135,7 @@ EOF
 
 sub gen_expander {
     my $op = shift;
+    my $ep_funcs = shift;
     &err_exit("needs a 'optype'") unless exists $op->{optype};
     my $optype = $op->{optype};
     &err_exit("'${optype}' needs a 'rules'") unless exists $op->{rules};
@@ -161,8 +161,10 @@ sub gen_expander {
                                       \@auto_vars, \%defined_ops);
         } elsif (exists $rule->{err}) {
             $body_code = "ln_msg_inter_error(\"ep_$optype(): $rule->{err}\");";
+        } elsif (exists $rule->{match} and not $rule->{match}) {
+            $body_code = "*match = 0;\nreturn NULL;";
         } else {
-            &err_exit("optype '$optype' needs a 'replace' or 'err'");
+            &err_exit("optype '$optype' needs a 'replace' or 'match' or 'err'");
         }
         if (exists $rule->{warn}) {
             $body_code .= "\nln_msg_inter_warn(\"ep_$optype(): $rule->{warn}\");";
@@ -188,6 +190,7 @@ EOF
     my $auto_vars_code = join "\n", &indent_lines($INDENT_OFFSET, \@auto_vars);
     $rules_code = join "\n", &indent_block($INDENT_OFFSET, $rules_code);
 
+    push @$ep_funcs, "{\"$optype\", ep_$optype},";
     my $tpl = <<EOF;
 static ln_list *ep_$optype(const ln_op *self, const ln_dfg *dfg, int *match)
 {
@@ -210,11 +213,17 @@ sub gen_cond {
     my @conds_replaced;
     foreach my $cond (@$conds) {
         my $cond_copy = $cond;
+        # while ($cond =~ /(($symbol_p)\s*(=>)\s*($symbol_p)?)/g) {
+        #     $cond_code = (&expand_op_str($1, $defined_ops))[1];
+        #     substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
+        # }
         while ($cond =~ /(($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p))/g) {
-            my ($l_type, $l_code, $l_len) = &expand_op_str($2, $defined_ops, 0);
-            my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
-            # say ($l_type, $l_code);
             my $operator = $3;
+            my $lhs = $2;
+            my $rhs = $4;
+            my ($l_type, $l_code, $l_len) = &expand_op_str($lhs, $defined_ops);
+            my ($r_type, $r_code, $r_len) = &expand_op_str($rhs, $defined_ops);
+            # say ($l_type, $l_code);
             my $type = &type_converse($l_type, $r_type);
             if (not defined $type) {
                 &warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
@@ -226,8 +235,9 @@ sub gen_cond {
 
             &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
                 if ((defined $l_len or defined $r_len) and $l_len != $r_len);
+            $cond_code = &gen_comparator($operator, $l_code, $r_code, $type, $l_len);
 
-            $cond_code = &gen_comparator($3, $l_code, $r_code, $type, $l_len);
+            $cond_code = (&expand_op_str($1, $defined_ops))[1];
             substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
         }
         push @conds_replaced, "($cond_copy)";
@@ -332,7 +342,7 @@ EOF
     my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\\$\@\^]+/;
     foreach my $detail (@$details) {
         $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
-        my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops, 0);
+        my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops);
         my $replace_code = &gen_assign($2, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
         substr($detail, index($detail, $1), length($1)) = $replace_code;
         push @blocks, $detail;
@@ -594,10 +604,51 @@ sub check_details {
     }
 }
 
-sub gen_init_ep_funcs {
+sub gen_ep_funcs {
+    my $ep_funcs = shift;
+
+    push @$ep_funcs, "LN_HASH_INIT_ENTRY_NULL";
+    &indent_lines($INDENT_OFFSET, $ep_funcs);
+    my $entries = join "\n", @$ep_funcs;
+    my $tpl = <<EOF;
+static ln_hash_init_entry init_ep_funcs[] = {
+$entries
+};
+static ln_hash *ep_funcs_hash = NULL;
+EOF
 }
 
-sub gen_overall_ep_func {
+sub gen_overall_funcs {
+    my $name = shift;
+
+    my $tpl = <<EOF;
+void init_$name(void **context_p)
+{
+    ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
+    ln_hash_init(ep_funcs_hash, init_ep_funcs);
+}
+
+void void cleanup_$name(void **context_p)
+{
+    ln_hash_free(ep_funcs_hash);
+}
+
+ln_list *ep_func_$name(const ln_op *self, const ln_dfg *dfg, int *match)
+{
+    ln_expander_func  ep_func;
+    ln_list          *new_ops;
+    void             *value;
+
+    if (!ln_hash_find_extended(ep_funcs_hash, self->op_arg->optype, NULL, &value))
+        ln_msg_inter_error("unsupported optype \\"%s\\" for $name expander",
+                           self->op_arg->optype);
+
+    ep_func = value;
+    new_ops = ep_func(self, dfg, match);
+
+    return new_ops;
+}
+EOF
 }
 
 sub type_converse {
@@ -639,8 +690,12 @@ sub add_to_arch_file {
     my $arch = shift;
     my $name = shift;
 
-    my $declare = "extern ln_list *ln_expander_$name (const ln_op *op, const ln_dfg *dfg, int *match);";
-    my $item = "ln_expander_$name,";
+    my $declare = "extern ln_list *ln_expander_${name}(const ln_op *op, const ln_dfg *dfg, int *match);";
+    my $item = "ln_expander_${name},";
+    my $init_func = "extern void ln_expander_${name}_init(void **context_p);";
+    my $init_func_exec = "ln_expander_${name}_init(context_p);";
+    my $cleanup_func = "extern void ln_expander_${name}_cleanup(void **context_p);";
+    my $cleanup_func_exec = "ln_expander_${name}_cleanup(context_p);";
 
     copy($arch_file, "${arch_file}.bak")
         or die "Cannot backup file ${arch_file}: $!";
@@ -649,15 +704,31 @@ sub add_to_arch_file {
     open ARCH_FILE, '>', $arch_file
         or die "Cannot open ${arch_file}: $!";
 
-    my $declared = 0;
-    my $inited = 0;
+    my $declared_done = 0;
+    my $item_done = 0;
+    my $init_func_done = 0;
+    my $init_func_exec_done = 0;
+    my $cleanup_func_done = 0;
+    my $cleanup_func_exec_done = 0;
     while (<ARCH_FILE_BAK>) {
-        $declared = 1 if /$declare$/;
+        $declared_done = 1 if /$declare$/;
         s|/\* end of declare $arch expanders \*/|$declare\n/* end of declare $arch expanders */|
-            unless $declared;
-        $inited = 1 if /$item$/;
+            unless $declared_done;
+        $item_done = 1 if /$item$/;
         s|/\* end of $arch expanders \*/|    $item\n/* end of $arch expanders */|
-            unless $inited;
+            unless $item_done;
+        $init_func_done = 1 if /$init_func$/;
+        s|/\* end of declare $arch init funcs \*/|$init_func\n/* end of declare $arch init funcs */|
+            unless $init_func_done;
+        $init_func_exec_done = 1 if /$init_func_exec$/;
+        s|/\* end of exec $arch init funcs \*/|    $init_func_exec\n/* end of exec $arch init funcs */|
+            unless $init_func_exec_done;
+        $cleanup_func_done = 1 if /$cleanup_func$/;
+        s|/\* end of declare $arch cleanup funcs \*/|$cleanup_func\n/* end of declare $arch cleanup funcs */|
+            unless $cleanup_func_done;
+        $cleanup_func_exec_done = 1 if /$cleanup_func_exec$/;
+        s|/\* end of exec $arch cleanup funcs \*/|    $cleanup_func_exec\n/* end of exec $arch cleanup funcs */|
+            unless $cleanup_func_exec_done;
         print ARCH_FILE;
     }
 
@@ -668,7 +739,7 @@ sub add_to_arch_file {
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
-    my @fs = split /\.|(?=\[)/, $op_str;
+    my @fs = split /\.|(?=\[)|(?==>)/, $op_str;
     my ($type, $code, $len);
     unless (exists $defined_ops->{$fs[0]}) {
         if ($fs[0] =~ /^\d+$/) {
@@ -730,9 +801,12 @@ sub parse_member_path {
                 ($type, $code, $len) = @{$ref->{__self}};
             }
             if ($next_f) {
-                if ($next_f =~ /\[.+\]/) {
+                if ($next_f =~ /^\[.+\]$/) {
                     &err_unknown_field($index+1, @fs) unless exists $ref->{"[]"};
                     $ref = $ref->{"[]"};
+                } elsif ($next_f =~ /^=>/) {
+                    &err_unknown_field($index+1, @fs) unless exists $ref->{"=>"};
+                    $ref = $ref->{"=>"};
                 } elsif (exists $ref->{$next_f}) {
                     $ref = $ref->{$next_f};
                 } else {
@@ -767,6 +841,7 @@ sub expand_tensor {
         my %tensor_member =
             (
              __self => ["char *", "$entry->name"],
+             "=>" => [\&topo_cond, $entry, @fs[1..@fs-1]],
              name => ["char *", "$entry->name"],
              owner => ["char *", "$entry->owner"],
              creater => ["char *", "$entry->creater"],
@@ -789,6 +864,79 @@ sub expand_tensor {
     } else {
         &util::err_exit("$opname($optype) doesn't have a '$arg_name' $tensors");
     }
+
+    ($type, $code, $len);
+}
+
+sub topo_cond {
+    my $entry = shift;
+    my @params = @_;
+
+    &err_exit("wrong syntax in a topo condition expr")
+        unless $params[0] =~ /^=>\s*(\w+)?$/;
+    my $optype = $1;
+
+    unless (defined $optype) {
+        my ($type, $code, $len);
+        $type = "int";
+        $code = <<EOF;
+({
+    ln_op *next_op;
+    ln_tensor_list_entry *tle;
+    int ret;
+
+    tle = $entry;
+    next_op = ln_dfg_next(dfg, self, tle->name);
+    if (!next_op) {
+        ret = 1;
+    } else {
+        ret = 0
+    }
+    ret;
+})
+EOF
+        return ($type, $code, $len);
+    }
+
+    &err_exit("rhs in a topo condition expr should have 3 fields")
+        unless @params == 3;
+    &err_exit("wrong syntax in a topo condition expr")
+        unless $params[1] =~ /^(ins|outs)$/;
+    my $member = $1 eq "ins" ? "tensors_in" : "tensors_out";
+    &err_exit("wrong syntax in a topo condition expr")
+        unless $params[2] =~ /^\[(\w+)\]$/;
+    my $arg_name = $1;
+
+    my $op_desc = &find_op_desc($optype); # TODO: =>tensorrt.ins
+    my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$member}};
+    &err_exit("arg_name '$arg_name' of $op_desc->{optype} of the rhs in a topo condition expr not found")
+        unless $found;
+
+    my ($type, $code, $len);
+    $type = "int";
+    $code = <<EOF;
+({
+    ln_op *next_op;
+    ln_tensor_list_entry *tle;
+    ln_tensor_list_entry *tle_next;
+    int ret;
+
+    tle = $entry;
+    next_op = ln_dfg_next(dfg, self, tle->name);
+    if (!next_op) {
+        ret = 0;
+    } else {
+        tle_next = ln_tensor_list_find_by_name(next_op->op_arg->$member, tle->name);
+        if (!tle_next)
+            ret = 0;
+        else if (!ln_streq(tle_next->arg_name, "$arg_name"))
+            ret = 0;
+        else
+            ret = 1;
+    }
+    ret;
+})
+EOF
 
     ($type, $code, $len);
 }
