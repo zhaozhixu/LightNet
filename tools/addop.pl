@@ -8,6 +8,7 @@ use File::Copy;
 use Cwd 'abs_path';
 use Getopt::Long;
 use File::Basename;
+use File::Path qw(make_path);
 use lib abs_path(dirname(__FILE__));
 use easyjson;
 no warnings 'experimental::smartmatch';
@@ -36,7 +37,7 @@ my $dir = '';
 GetOptions(
            'help' => sub {&exit_msg(0, $usage)},
            'dir=s' => \$dir,
-           'root=s' => sub {$root = abs_path($_[1])},
+           'root=s' => \$root,
           ) or &exit_msg(1, $usage);
 
 my @json_files = @ARGV;
@@ -106,10 +107,18 @@ sub gen_code {
         print $code_str;
     }
     if ($dir) {
+        unless (-d $dir) {
+            make_path($dir, {mode => 0755})
+                or die "Cannot create directory $dir: $!";
+        }
         my $dir_file = "${dir}/ln_opimpl_${optype}.c";
         &backup_write($dir_file, $code_str);
     }
     if ($root) {
+        unless (-d "${root}/src/op/auto") {
+            make_path("${root}/src/op/auto", {mode => 0755})
+                or die "Cannot create directory $dir: $!";
+        }
         my $src_file = "${root}/src/op/auto/ln_opimpl_${optype}.c";
         &backup_write($src_file, $code_str);
         my $arch_file = "${root}/src/arch/ln_arch_${arch}.c";

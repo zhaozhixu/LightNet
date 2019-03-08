@@ -10,6 +10,7 @@ use File::Copy;
 use Cwd 'abs_path';
 use Getopt::Long;
 use Scalar::Util qw(reftype);
+use File::Path qw(make_path);
 use File::Basename;
 use lib abs_path(dirname(__FILE__));
 use util;
@@ -46,7 +47,7 @@ my $dir = '';
 GetOptions(
            'help' => sub {&exit_msg(0, $usage)},
            'dir=s' => \$dir,
-           'root=s' => sub {$root = abs_path($_[1])},
+           'root=s' => \$root,
           ) or &exit_msg(1, $usage);
 
 my @json_files = @ARGV;
@@ -82,17 +83,25 @@ sub gen_code {
     push @blocks, &gen_ep_funcs(\@ep_funcs);
     push @blocks, &gen_overall_funcs($name);
 
-    my $code_str = join "\n", @blocks;
+    my $c_code_str = join "\n", @blocks;
     if (not $dir and not $root) {
-        print $code_str;
+        print $c_code_str;
     }
     if ($dir) {
-        my $dir_file = "${dir}/ln_expander_${name}.h";
-        &backup_write($dir_file, $code_str);
+        unless (-d $dir) {
+            make_path($dir, {mode => 0755})
+                or die "Cannot create directory $dir: $!";
+        }
+        my $dir_file = "${dir}/ln_expander_${name}.c";
+        &backup_write($dir_file, $c_code_str);
     }
     if ($root) {
-        my $src_file = "${root}/src/arch/auto/ln_expander_${name}.h";
-        &backup_write($src_file, $code_str);
+        unless (-d "${root}/src/arch/auto") {
+            make_path("${root}/src/arch/auto", {mode => 0755})
+                or die "Cannot create directory $dir: $!";
+        }
+        my $src_file = "${root}/src/arch/auto/ln_expander_${name}.c";
+        &backup_write($src_file, $c_code_str);
         my $arch_file = "${root}/src/arch/ln_arch_${arch}.c";
         &add_to_arch_file($arch_file, $arch, $name);
     }
@@ -124,7 +133,6 @@ sub gen_head_block {
  * SOFTWARE.
  */
 
- #include <ctype.h>
  #include <assert.h>
 
  #include "ln_arch.h"
@@ -142,14 +150,20 @@ sub gen_expander {
     my $rules = $op->{rules};
 
     my @auto_vars = ();
-    my $rules_code = "";
+    my @rules_codes;
+    my $found_default = 0;
     foreach my $rule (@$rules) {
         &err_exit("needs a 'cond'") unless exists $rule->{cond};
+        $found_default = 1 if @{$rule->{cond}} == 0;
         my %defined_ops = (self => $optype);
         my $cond_code = &gen_cond($rule->{cond}, \%defined_ops);
 
         my @new_op_codes;
-        my $body_code;
+        my @body_codes;
+        if (exists $rule->{warn}) {
+            push @body_codes, "ln_msg_inter_warn(\"ep_$optype(): $rule->{warn}\");";
+        }
+
         if (exists $rule->{replace}) {
             foreach (@{$rule->{replace}}) {
                 my ($type, $name) = split;
@@ -157,38 +171,40 @@ sub gen_expander {
                     $defined_ops{$name} = $type;
                 }
             }
-            $body_code = &gen_replace($rule->{replace}, $rule->{details},
-                                      \@auto_vars, \%defined_ops);
+            push @body_codes, &gen_replace($rule->{replace}, $rule->{details},
+                                           \@auto_vars, \%defined_ops);
         } elsif (exists $rule->{err}) {
-            $body_code = "ln_msg_inter_error(\"ep_$optype(): $rule->{err}\");";
+            push @body_codes, <<EOF;
+ln_msg_inter_error("ep_$optype(): $rule->{err}");
+return NULL;
+EOF
         } elsif (exists $rule->{match} and not $rule->{match}) {
-            $body_code = "*match = 0;\nreturn NULL;";
+            push @body_codes, "*match = 0;\nreturn NULL;";
         } else {
             &err_exit("optype '$optype' needs a 'replace' or 'match' or 'err'");
         }
-        if (exists $rule->{warn}) {
-            $body_code .= "\nln_msg_inter_warn(\"ep_$optype(): $rule->{warn}\");";
-        }
 
-        $body_code = &indent_block($INDENT_OFFSET, $body_code);
+        my $body_code = &indent_block($INDENT_OFFSET, (join "\n", @body_codes));
         if ($rule == $rules->[0]) {
-            $rules_code .= <<EOF;
+            push @rules_codes, <<EOF;
 if ($cond_code) {
 $body_code
 }
 EOF
         } else {
-            $rules_code .= <<EOF;
+            push @rules_codes, <<EOF;
 else if ($cond_code) {
 $body_code
 }
 EOF
         }
     }
+    &warn_msg("default conditions (\"cond\": []) not found in optype '$optype'")
+        unless $found_default;
 
     &make_defs_neat(\@auto_vars);
     my $auto_vars_code = join "\n", &indent_lines($INDENT_OFFSET, \@auto_vars);
-    $rules_code = join "\n", &indent_block($INDENT_OFFSET, $rules_code);
+    my $rules_code = &indent_block($INDENT_OFFSET, (join "\n", @rules_codes));
 
     push @$ep_funcs, "{\"$optype\", ep_$optype},";
     my $tpl = <<EOF;
@@ -325,6 +341,8 @@ EOF
 
     my @blocks;
     push @blocks, "ln_op *op_proto;";
+    push @blocks, "ln_list *new_ops = NULL;";
+    push @blocks, "";
     foreach (@$replace) {
         my ($type, $name) = split;
         &err_exit("replace details needs a list of new op types and names: '$_'")
@@ -333,11 +351,12 @@ EOF
 op_proto = ln_hash_find(LN_ARCH.op_proto_table, "$type");
 assert(op_proto);
 ln_op *$name = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+new_ops = ln_list_append(new_ops, $name);
 EOF
         push @blocks, $create_op;
     }
     &check_details($details);
-    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\\$\@\^]+/;
+    my $symbol_p = qr/[a-zA-Z0-9.,\[\]()_"\\\$\@\^]+/;
     foreach my $detail (@$details) {
         $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
         my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops);
@@ -345,6 +364,7 @@ EOF
         substr($detail, index($detail, $1), length($1)) = $replace_code;
         push @blocks, $detail;
     }
+    push @blocks, "return new_ops;";
     join "\n", @blocks;
 }
 
@@ -396,8 +416,8 @@ sub gen_assign_tensor {
     if ($found) {
         $code = <<EOF;
 {
-    ln_tensor_list_entry *tle = ln_tensor_list_find_entry($opname->op_arg->$tensors,
-                                                          $opname->op_arg->tensor_table, "$arg_name");
+    ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors,
+                                                                "$arg_name");
     ln_free(tle->name);
     tle->name = ln_strdup($rhs_code);
 }
@@ -618,18 +638,18 @@ sub gen_overall_funcs {
     my $name = shift;
 
     my $tpl = <<EOF;
-void init_$name(void **context_p)
+void ln_expander_init_$name(void **context_p)
 {
     ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     ln_hash_init(ep_funcs_hash, init_ep_funcs);
 }
 
-void void cleanup_$name(void **context_p)
+void ln_expander_cleanup_$name(void **context_p)
 {
     ln_hash_free(ep_funcs_hash);
 }
 
-ln_list *ep_func_$name(const ln_op *self, const ln_dfg *dfg, int *match)
+ln_list *ln_expander_$name(const ln_op *self, const ln_dfg *dfg, int *match)
 {
     ln_expander_func  ep_func;
     ln_list          *new_ops;
@@ -686,12 +706,12 @@ sub add_to_arch_file {
     my $arch = shift;
     my $name = shift;
 
-    my $declare = "extern ln_list *ln_expander_${name}(const ln_op *op, const ln_dfg *dfg, int *match);";
-    my $item = "ln_expander_${name},";
-    my $init_func = "extern void ln_expander_${name}_init(void **context_p);";
-    my $init_func_exec = "ln_expander_${name}_init(context_p);";
-    my $cleanup_func = "extern void ln_expander_${name}_cleanup(void **context_p);";
-    my $cleanup_func_exec = "ln_expander_${name}_cleanup(context_p);";
+    my $declare = "extern ln_list *ln_expander_${name}(const ln_op *op, const ln_dfg *dfg, int *match);\n";
+    my $item = "    ln_expander_${name},\n";
+    my $init_func = "extern void ln_expander_init_${name}(void **context_p);\n";
+    my $init_func_exec = "    ln_expander_init_${name}(context_p);\n";
+    my $cleanup_func = "extern void ln_expander_cleanup_${name}(void **context_p);\n";
+    my $cleanup_func_exec = "    ln_expander_cleanup_${name}(context_p);\n";
 
     copy($arch_file, "${arch_file}.bak")
         or die "Cannot backup file ${arch_file}: $!";
@@ -707,23 +727,23 @@ sub add_to_arch_file {
     my $cleanup_func_done = 0;
     my $cleanup_func_exec_done = 0;
     while (<ARCH_FILE_BAK>) {
-        $declared_done = 1 if /$declare$/;
-        s|/\* end of declare $arch expanders \*/|$declare\n/* end of declare $arch expanders */|
+        $declared_done = 1 if $_ eq $declare;
+        s|/\* end of declare $arch expanders \*/|$declare/* end of declare $arch expanders */|
             unless $declared_done;
-        $item_done = 1 if /$item$/;
-        s|/\* end of $arch expanders \*/|    $item\n/* end of $arch expanders */|
+        $item_done = 1 if $_ eq $item;
+        s|/\* end of $arch expanders \*/|$item/* end of $arch expanders */|
             unless $item_done;
-        $init_func_done = 1 if /$init_func$/;
-        s|/\* end of declare $arch init funcs \*/|$init_func\n/* end of declare $arch init funcs */|
+        $init_func_done = 1 if $_ eq $init_func;
+        s|/\* end of declare $arch init funcs \*/|$init_func/* end of declare $arch init funcs */|
             unless $init_func_done;
-        $init_func_exec_done = 1 if /$init_func_exec$/;
-        s|/\* end of exec $arch init funcs \*/|    $init_func_exec\n/* end of exec $arch init funcs */|
+        $init_func_exec_done = 1 if $_ eq $init_func_exec;
+        s|/\* end of exec $arch init funcs \*/|$init_func_exec/* end of exec $arch init funcs */|
             unless $init_func_exec_done;
-        $cleanup_func_done = 1 if /$cleanup_func$/;
-        s|/\* end of declare $arch cleanup funcs \*/|$cleanup_func\n/* end of declare $arch cleanup funcs */|
+        $cleanup_func_done = 1 if $_ eq $cleanup_func;
+        s|/\* end of declare $arch cleanup funcs \*/|$cleanup_func/* end of declare $arch cleanup funcs */|
             unless $cleanup_func_done;
-        $cleanup_func_exec_done = 1 if /$cleanup_func_exec$/;
-        s|/\* end of exec $arch cleanup funcs \*/|    $cleanup_func_exec\n/* end of exec $arch cleanup funcs */|
+        $cleanup_func_exec_done = 1 if $_ eq $cleanup_func_exec;
+        s|/\* end of exec $arch cleanup funcs \*/|$cleanup_func_exec/* end of exec $arch cleanup funcs */|
             unless $cleanup_func_exec_done;
         print ARCH_FILE;
     }
@@ -878,15 +898,15 @@ sub topo_cond {
         $code = <<EOF;
 ({
     ln_op *next_op;
-    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
     int ret;
 
-    tle = $entry;
-    next_op = ln_dfg_next(dfg, self, tle->name);
+    te = $entry;
+    next_op = ln_dfg_next(dfg, self, te->name);
     if (!next_op) {
         ret = 1;
     } else {
-        ret = 0
+        ret = 0;
     }
     ret;
 })
@@ -913,16 +933,16 @@ EOF
     $code = <<EOF;
 ({
     ln_op *next_op;
-    ln_tensor_list_entry *tle;
+    ln_tensor_entry *te;
     ln_tensor_list_entry *tle_next;
     int ret;
 
-    tle = $entry;
-    next_op = ln_dfg_next(dfg, self, tle->name);
+    te = $entry;
+    next_op = ln_dfg_next(dfg, self, te->name);
     if (!next_op || !ln_streq(next_op->op_arg->optype, "$optype")) {
         ret = 0;
     } else {
-        tle_next = ln_tensor_list_find_by_name(next_op->op_arg->$member, tle->name);
+        tle_next = ln_tensor_list_find_by_name(next_op->op_arg->$member, te->name);
         if (!tle_next)
             ret = 0;
         else if (!ln_streq(tle_next->arg_name, "$arg_name"))

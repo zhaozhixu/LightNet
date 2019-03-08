@@ -938,7 +938,6 @@ static ln_list *ep_batchnorm(const ln_op *op, const ln_dfg *dfg, int *match)
     ln_list *new_ops = NULL;
     ln_op *bn2scale_op, *trt_op;
     ln_op *op_proto;
-    ln_list *params = NULL;
     ln_param_entry *pe;
     ln_tensor_entry *te;
     ln_tensor_list_entry *tle;

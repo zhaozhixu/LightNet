@@ -49,6 +49,28 @@
                         "self.params[padding][1] != self.params[padding][3]"
                     ],
                     "replace": ["conv2d_cuda"]
+                },
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.ins[weight$@] = self.ins[weight]",
+                        "trt.ins[weight$@] = self.ins[bias]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[op$@] = \"conv\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_weight] = self.ins[weight]",
+                        "trt.params[op$^_bias] = self.ins[bias]",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_group] = self.params[group]",
+                        "trt.params[op$^_output_c] = self.ins[weight].dims[1]",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_padding] = self.params[padding][0,2]",
+                        "trt.params[op$^_dilation] = self.params[dilation]",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ],
                 }
             ]
         },
@@ -85,27 +107,27 @@
         {
             "optype": "concat",
             "rules": [
-                {
-                    "cond": [
-                        "self.params[axis] == 0",
-                        "LN_TRT_VER(\"4.0.0\") < 0 && self.ins[src1].ndim < 4 && self.params[axis] != 1",
-                        "LN_TRT_VER(\"4.0.0\") < 0 && self.ins[src1].ndim >= 4 && self.params[axis] != self.ins[src1].ndim - 3"
-                    ],
-                    "replace": ["concat_cuda"]
-                },
-                {
-                    "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
-                    "replace": ["tensorrt trt"],
-                    "details": [
-                        "trt.ins[src$@] = self.ins[src1]",
-                        "trt.ins[src$@] = self.ins[src2]",
-                        "trt.outs[dst$@] = self.outs[dst]",
-                        "trt.params[op$@] = \"concat\"",
-                        "trt.params[op$^_src1] = self.ins[src1]",
-                        "trt.params[op$^_src2] = self.ins[src2]",
-                        "trt.params[batch_size] = self.ins[src1].dims[0]"
-                    ]
-                },
+                // {
+                //     "cond": [
+                //         "self.params[axis] == 0",
+                //         "LN_TRT_VER(\"4.0.0\") < 0 && self.ins[src1].ndim < 4 && self.params[axis] != 1",
+                //         "LN_TRT_VER(\"4.0.0\") < 0 && self.ins[src1].ndim >= 4 && self.params[axis] != self.ins[src1].ndim - 3"
+                //     ],
+                //     "replace": ["concat_cuda"]
+                // },
+                // {
+                //     "cond": ["LN_TRT_VER(\"4.0.0\") < 0"],
+                //     "replace": ["tensorrt trt"],
+                //     "details": [
+                //         "trt.ins[src$@] = self.ins[src1]",
+                //         "trt.ins[src$@] = self.ins[src2]",
+                //         "trt.outs[dst$@] = self.outs[dst]",
+                //         "trt.params[op$@] = \"concat\"",
+                //         "trt.params[op$^_src1] = self.ins[src1]",
+                //         "trt.params[op$^_src2] = self.ins[src2]",
+                //         "trt.params[batch_size] = self.ins[src1].dims[0]"
+                //     ]
+                // },
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
