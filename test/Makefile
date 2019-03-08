@@ -5,7 +5,7 @@ TARGET ?= lightnet
 TARGET_TEST = test_$(TARGET)
 LIBTARGET_A = lib$(TARGET).a
 
-INCPATHS += `pkg-config --cflags check`
+INCPATHS += -I../src -I../src/arch -I../src/op `pkg-config --cflags check`
 LDFLAGS += `pkg-config --libs check` -lpthread
 
 CFLAGS += $(INCPATHS)

@@ -6,6 +6,7 @@ TARGET_BIN = $(TARGET)
 LIBTARGET_A = lib$(TARGET).a
 LIBTARGET_SO = lib$(TARGET).so
 
+INCPATHS += -Iarch -Iop
 CFLAGS += -fPIC
 CXXFLAGS += -fPIC
 CUFLAGS += --compiler-options '-fPIC' --linker-options '-Wl,--no-undefined -shared' -shared

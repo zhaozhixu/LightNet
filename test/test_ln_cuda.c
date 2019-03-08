@@ -21,7 +21,7 @@
  */
 
 #include "test_lightnet.h"
-#include "../src/ln_cuda.h"
+#include "../src/arch/ln_cuda.h"
 
 static void checked_setup(void)
 {

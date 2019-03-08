@@ -24,10 +24,10 @@ CXXFLAGS += -g -O0 -DLN_DEBUG
 CUFLAGS += -lineinfo
 LDFLAGS += -g -O0
 else
-CFLAGS += -O3
-CXXFLAGS += -O3
-CUFLAGS += -O3
-LDFLAGS += -O3
+CFLAGS += -O2
+CXXFLAGS += -O2
+CUFLAGS += -O2
+LDFLAGS += -O2
 endif
 
 INCPATHS = -I/usr/local/include -I. `pkg-config --cflags tensorlight`
