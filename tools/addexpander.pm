@@ -213,17 +213,16 @@ sub gen_cond {
     my @conds_replaced;
     foreach my $cond (@$conds) {
         my $cond_copy = $cond;
-        # while ($cond =~ /(($symbol_p)\s*(=>)\s*($symbol_p)?)/g) {
-        #     $cond_code = (&expand_op_str($1, $defined_ops))[1];
-        #     substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
-        # }
+        while ($cond =~ /(($symbol_p)\s*(=>)\s*($symbol_p)?)/g) {
+            $cond_code = (&expand_op_str($1, $defined_ops))[1];
+            substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
+        }
         while ($cond =~ /(($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p))/g) {
             my $operator = $3;
             my $lhs = $2;
             my $rhs = $4;
             my ($l_type, $l_code, $l_len) = &expand_op_str($lhs, $defined_ops);
             my ($r_type, $r_code, $r_len) = &expand_op_str($rhs, $defined_ops);
-            # say ($l_type, $l_code);
             my $type = &type_converse($l_type, $r_type);
             if (not defined $type) {
                 &warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
@@ -237,7 +236,6 @@ sub gen_cond {
                 if ((defined $l_len or defined $r_len) and $l_len != $r_len);
             $cond_code = &gen_comparator($operator, $l_code, $r_code, $type, $l_len);
 
-            $cond_code = (&expand_op_str($1, $defined_ops))[1];
             substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
         }
         push @conds_replaced, "($cond_copy)";
@@ -375,8 +373,6 @@ sub gen_assign {
     } else {
         $code = &gen_assign_param($opname, $optype, $member, $arg_name,
                                   $rhs_type, $rhs_code, $rhs_len, $auto_vars);
-        say STDERR $lhs unless defined $code;
-        # say STDERR $code;
     }
     $code;
 }
@@ -909,7 +905,7 @@ EOF
 
     my $op_desc = &find_op_desc($optype); # TODO: =>tensorrt.ins
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$member}};
-    &err_exit("arg_name '$arg_name' of $op_desc->{optype} of the rhs in a topo condition expr not found")
+    &err_exit("unknown arg_name '$arg_name' of $op_desc->{optype} of the rhs in a topo condition expr")
         unless $found;
 
     my ($type, $code, $len);
@@ -923,7 +919,7 @@ EOF
 
     tle = $entry;
     next_op = ln_dfg_next(dfg, self, tle->name);
-    if (!next_op) {
+    if (!next_op || !ln_streq(next_op->op_arg->optype, "$optype")) {
         ret = 0;
     } else {
         tle_next = ln_tensor_list_find_by_name(next_op->op_arg->$member, tle->name);
@@ -1171,7 +1167,6 @@ sub array_slice {
         my $array_str = join ', ', @array;
         $code = "(${element_type}[]){$array_str}";
     }
-    # say "$type $code $len";
     ($type, $code, $len);
 }
 
