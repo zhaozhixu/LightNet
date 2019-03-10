@@ -23,6 +23,8 @@ no warnings 'experimental::smartmatch';
 my %global_ops;
 my %basic_types = (double=>1, float=>1, int=>1, "char *"=>1, ln_bool=>1);
 my %array_types = ("double *"=>1, "float *"=>1, "int *"=>1, "char **"=>1, "ln_bool *"=>1);
+my $directive_p = qr/\$\([a-zA-Z0-9_-]+\s+ .+\)/;
+my $symbol_p = qr/[a-zA-Z0-9.,\[\]()_"\\\$\@\^]+/;
 
 my $usage = <<EOF;
 Usage: $0 [OPTION] [JSON_FILE(s)]
@@ -225,7 +227,6 @@ sub gen_cond {
 
     return "1" if @$conds == 0;
     my $cond_code;
-    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\]+/;
     my @conds_replaced;
     foreach my $cond (@$conds) {
         my $cond_copy = $cond;
@@ -356,9 +357,10 @@ EOF
         push @blocks, $create_op;
     }
     &check_details($details);
-    my $symbol_p = qr/[a-zA-Z0-9.,\[\]()_"\\\$\@\^]+/;
     foreach my $detail (@$details) {
-        $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
+        # $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
+        $detail =~ /(($symbol_p)\s*(=)\s*(.+))/;
+        say $4;
         my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops);
         my $replace_code = &gen_assign($2, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
         substr($detail, index($detail, $1), length($1)) = $replace_code;
@@ -600,7 +602,6 @@ EOF
 
 sub check_details {
     my $details = shift;
-    my $symbol_p = qr/[a-zA-Z0-9.\[\]()_"\\\$\@\^]+/;
     my %lhs_hash;
     foreach (@$details) {
         &err_exit("'details' can only contain assignments: '$_'")
@@ -755,9 +756,21 @@ sub add_to_arch_file {
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
+    my ($directive, @directive_args);
+    if ($op_str =~ /^\$\(.+\)$/) {
+        &err_exit("wrong directive syntax: $op_str")
+            unless ($op_str =~ /^\$\((?<directive>[a-zA-Z0-9_-]+)(?:\((?<arg>.+)?\))?\s+(?<op>.+)\)/);
+        $directive = $+{directive};
+        @directive_args = split /,/, $+{arg} if exists $+{arg};
+        $op_str =$+{op};
+    }
+    while ($op_str =~ /($symbol_p/g) {
+        my $op_code = (&expand_op($1, $defined_ops))[1];
+        substr($op_str, index($op_str, $1), length($1)) = $op_code;
+    }
     my @fs = split /\.|(?=\[)|(?==>)/, $op_str;
     my ($type, $code, $len);
-    unless (exists $defined_ops->{$fs[0]}) {
+    unless ((defined $directive and $directive eq "type") or exists $defined_ops->{$fs[0]}) {
         if ($fs[0] =~ /^\d+$/) {
             $type = "int";
         } elsif ($fs[0] =~ /^("(\\.|[^"\\])*")$/) {
@@ -799,6 +812,14 @@ sub expand_op_str {
         );
 
     ($type, $code, $len) = &parse_member_path(\%member_path, @fs);
+
+    if (defined $directive and $directive eq "type") {
+        &err_exit("directive 'type' needs one argument: $op_str")
+            unless @directive_args == 1;
+        $type = $directive_args[0];
+    }
+
+    ($type, $code, $len);
 }
 
 sub parse_member_path {
