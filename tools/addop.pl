@@ -117,7 +117,7 @@ sub gen_code {
     if ($root) {
         unless (-d "${root}/src/op/auto") {
             make_path("${root}/src/op/auto", {mode => 0755})
-                or die "Cannot create directory $dir: $!";
+                or die "Cannot create directory ${root}/src/op/auto: $!";
         }
         my $src_file = "${root}/src/op/auto/ln_opimpl_${optype}.c";
         &backup_write($src_file, $code_str);

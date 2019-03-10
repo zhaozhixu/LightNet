@@ -22,32 +22,32 @@
 
 #include "ln_arch.h"
 
-extern ln_arch ln_arch_none;
-extern ln_arch ln_arch_cpu;
+extern ln_arch ln_archimpl_none;
+extern ln_arch ln_archimpl_cpu;
 
 #ifdef LN_CUDA
-extern ln_arch ln_arch_cuda;
+extern ln_arch ln_archimpl_cuda;
 #endif
 
 #ifdef LN_CUDNN
-extern ln_arch ln_arch_cudnn;
+extern ln_arch ln_archimpl_cudnn;
 #endif
 
 #ifdef LN_TENSORRT
-extern ln_arch ln_arch_tensorrt;
+extern ln_arch ln_archimpl_tensorrt;
 #endif
 
 static ln_arch *archs[] = {
-    &ln_arch_none,
-    &ln_arch_cpu,
+    &ln_archimpl_none,
+    &ln_archimpl_cpu,
 #ifdef LN_CUDA
-    &ln_arch_cuda,
+    &ln_archimpl_cuda,
 #endif
 #ifdef LN_CUDNN
-    &ln_arch_cudnn,
+    &ln_archimpl_cudnn,
 #endif
 #ifdef LN_TENSORRT
-    &ln_arch_tensorrt,
+    &ln_archimpl_tensorrt,
 #endif
     NULL
 };

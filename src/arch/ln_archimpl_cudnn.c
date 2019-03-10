@@ -50,7 +50,7 @@ ln_combiner_func cb_funcs_cudnn[] = {
     NULL
 };
 
-ln_arch ln_arch_cudnn = {
+ln_arch ln_archimpl_cudnn = {
     .init_func = init_cudnn,
     .cleanup_func = cleanup_cudnn,
     .reg_ops = ops_cudnn,

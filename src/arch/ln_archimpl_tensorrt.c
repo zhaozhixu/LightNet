@@ -115,7 +115,7 @@ ln_combiner_func cb_funcs_tensorrt[] = {
     NULL
 };
 
-ln_arch ln_arch_tensorrt = {
+ln_arch ln_archimpl_tensorrt = {
     .init_func = init,
     .cleanup_func = cleanup,
     .reg_ops = ops_tensorrt,

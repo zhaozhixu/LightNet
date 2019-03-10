@@ -90,7 +90,7 @@ ln_combiner_func cb_funcs_none[] = {
     NULL
 };
 
-ln_arch ln_arch_none = {
+ln_arch ln_archimpl_none = {
     .init_func = NULL,
     .cleanup_func = NULL,
     .reg_ops = ops_none,

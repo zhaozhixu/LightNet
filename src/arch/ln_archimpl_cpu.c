@@ -98,7 +98,7 @@ ln_combiner_func cb_funcs_cpu[] = {
     NULL
 };
 
-ln_arch ln_arch_cpu = {
+ln_arch ln_archimpl_cpu = {
     .init_func = NULL,
     .cleanup_func = NULL,
     .reg_ops = ops_cpu,

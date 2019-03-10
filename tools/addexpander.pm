@@ -98,7 +98,7 @@ sub gen_code {
     if ($root) {
         unless (-d "${root}/src/arch/auto") {
             make_path("${root}/src/arch/auto", {mode => 0755})
-                or die "Cannot create directory $dir: $!";
+                or die "Cannot create directory ${root}/src/arch/auto: $!";
         }
         my $src_file = "${root}/src/arch/auto/ln_expander_${name}.c";
         &backup_write($src_file, $c_code_str);

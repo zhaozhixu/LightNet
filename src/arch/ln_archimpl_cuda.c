@@ -208,7 +208,7 @@ static void cleanup_cuda(void **context_p)
 /* end of exec cuda cleanup funcs */
 }
 
-ln_arch ln_arch_cuda = {
+ln_arch ln_archimpl_cuda = {
     .init_func = init_cuda,
     .cleanup_func = cleanup_cuda,
     .reg_ops = ops_cuda,
