@@ -93,14 +93,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     ln_opck_tensor_defined(weight_entry, weight_name);
     weight = weight_entry->tensor;
     weight = weight;
-    ln_opck_tensor_ndim(weight_entry, 5);
-    {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(weight->dims[2] == src->dims[1], "`weight` (%s)'s dims[2] should be equal to the dims[1] of `src` (%s)", ln_sprint_shape(shape1, weight->ndim, weight->dims), ln_sprint_shape(shape2, src->ndim, src->dims));
-        }
-    }
+    ln_opck_tensor_ndim(weight_entry, 4);
 
     bias_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "bias");
     ln_opck_tensor_in_exist(bias_list_entry, "bias");
@@ -114,7 +107,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
         {
             char shape1[LN_MAXLINE];
             char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` (%s) should have the size of dims[1] of `weight` (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+            ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
         }
     }
 
@@ -136,7 +129,13 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     group = group_entry->value_int;
     ln_opck_param_int_ge(group_entry, 1);
     group = group;
-    ln_opck_satisfy_msg(group == weight->dims[0], "`group` should be equal to the 1st dimension of `weight`");
+    {
+        {
+            char shape1[LN_MAXLINE];
+            char shape2[LN_MAXLINE];
+            ln_opck_satisfy_msg(weight->dims[1]*group == src->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to the dims[1] of 'src' (%s)", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src->ndim, src->dims));
+        }
+    }
 
     size_entry = ln_param_list_find(op_arg->params, "size");
     ln_opck_param_exist(size_entry, "size");
@@ -145,7 +144,13 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     size = size_entry->value_array_int;
     ln_opck_param_array_int_ge(size_entry, 1);
     size = size;
-    ln_opck_satisfy_msg(size[0] == weight->dims[3] && size[1] == weight->dims[4], "`size` should be equal to the last two dimensions of `weight`");
+    {
+        {
+            char shape1[LN_MAXLINE];
+            char shape2[LN_MAXLINE];
+            ln_opck_satisfy_msg(size[0] == weight->dims[2] && size[1] == weight->dims[3], "'size' (%s) should be equal to the last two dimensions of 'weight' (%s)", ln_sprint_shape(shape1, size_entry->array_len, size), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+        }
+    }
 
     stride_entry = ln_param_list_find(op_arg->params, "stride");
     ln_opck_param_exist(stride_entry, "stride");
@@ -177,7 +182,7 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     {
         dst_dims = ln_alloc(sizeof(int)*4);
         dst_dims[0] = src->dims[0];
-        dst_dims[1] = weight->dims[1];
+        dst_dims[1] = weight->dims[0];
         dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
         dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
     }
