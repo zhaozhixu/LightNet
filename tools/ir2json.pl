@@ -94,13 +94,12 @@ sub gen_op {
     }
 
     # TODO:FIXME: incorrect when a string contains ','
-    my @empty_array = ();
     my %op = (
               'optype' => $optype,
               'name' => $name,
-              'tensors_in' => $ins_str ? &gen_tensors($ins_str) : \@empty_array,
-              'tensors_out' => $outs_str ? &gen_tensors($outs_str) : \@empty_array,
-              'params' => $params_str ? &gen_params($params_str) : \@empty_array,
+              'tensors_in' => $ins_str ? &gen_tensors($ins_str) : [],
+              'tensors_out' => $outs_str ? &gen_tensors($outs_str) : [],
+              'params' => $params_str ? &gen_params($params_str) : [],
              );
     \%op;
 }
@@ -229,7 +228,16 @@ sub preprocess {
     unlink "${tmp_name}.i" or die "Cannot unlink file ${tmp_name}.i: $!";
     my @in_lines;
     foreach (split "\n", $in_text) {
-        push @in_lines, $_ unless /^#/ or /^\/\//;
+        next if /^#/ or /^\/\//;
+        # TODO: use a grammar to compute complex expression
+        while (/(\$\(eval\s+(.+?)\))/g) {
+            if ($2 =~ /\$\(eval\s+.+?/) {
+                next;
+            }
+            my $res = eval $2 or die "eval '$2' failed: $@";
+            substr($_, index($_, $1), length($1)) = $res;
+        }
+        push @in_lines, $_;
     }
     $in_text = join "\n", @in_lines;
 }
