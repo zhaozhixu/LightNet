@@ -105,7 +105,7 @@ static void maxpool2d_cuda_pre_run(ln_op_arg *op_arg)
     ln_opck_param_type(padding_entry, LN_PARAM_ARRAY_NUMBER);
     ln_opck_param_array_len_eq(padding_entry, 4);
     padding = padding_entry->value_array_int;
-    ln_opck_param_array_int_gt(padding_entry, 0);
+    ln_opck_param_array_int_ge(padding_entry, 0);
     padding = padding;
 
     /* define output tensor shape, tensor data should be NULL */

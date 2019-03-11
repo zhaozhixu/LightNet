@@ -1,7 +1,7 @@
 {
     "ops": [
         {
-            "optype": "maxpool2d",
+            "optype": "avgpool2d",
             "author": "Zhao Zhixu",
             "arch": "none",
             "tensors_in": [
@@ -33,7 +33,7 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
             ]
         },
         {
-            "optype": "maxpool2d_cpu",
+            "optype": "avgpool2d_cpu",
             "author": "Zhao Zhixu",
             "arch": "cpu",
             "tensors_in": [
@@ -66,7 +66,7 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
             "run": ""
         },
         {
-            "optype": "maxpool2d_cuda",
+            "optype": "avgpool2d_cuda",
             "author": "Zhao Zhixu",
             "arch": "cuda",
             "tensors_in": [

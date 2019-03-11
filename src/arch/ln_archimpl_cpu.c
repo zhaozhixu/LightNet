@@ -49,6 +49,7 @@ extern ln_op ln_opimpl_pick1d_cpu;
 extern ln_op ln_opimpl_fprint_cpu;
 extern ln_op ln_opimpl_lrelu_cpu;
 extern ln_op ln_opimpl_detect_yolov3_cpu;
+extern ln_op ln_opimpl_avgpool2d_cpu;
 /* end of declare cpu ops */
 
 /* TODO: use a hash */
@@ -80,6 +81,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_fprint_cpu,
     &ln_opimpl_lrelu_cpu,
     &ln_opimpl_detect_yolov3_cpu,
+    &ln_opimpl_avgpool2d_cpu,
 /* end of init cpu ops */
     NULL
 };

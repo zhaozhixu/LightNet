@@ -230,6 +230,30 @@ int ln_compute_length(int ndim, const int *dims)
     return len;
 }
 
+void ln_print_shape(int ndim, int *dims)
+{
+    printf("[");
+    for (int i = 0; i < ndim; i++) {
+        printf("%d", dims[i]);
+        if (i != ndim - 1)
+            printf(", ");
+    }
+    printf("]");
+}
+
+char *ln_sprint_shape(char *buf, int ndim, int *dims)
+{
+    int n = 0;
+    n += snprintf(buf, 2, "[");
+    for (int i = 0; i < ndim; i++) {
+        n += snprintf(buf+n, ln_digit_num(dims[i])+1, "%d", dims[i]);
+        if (i != ndim - 1)
+            n += snprintf(buf+n, 3, ", ");
+    }
+    snprintf(buf+n, 2, "]");
+    return buf;
+}
+
 uint32_t ln_direct_hash(const void *key)
 {
     return (uint32_t)(long)key;

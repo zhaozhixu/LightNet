@@ -20,13 +20,22 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
             "params": [
                 {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
                  "realtype": "int",
-                 "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` %d should match the dimensions of `src1` (%s )and `src2` (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
+}
+'''
+                }
             ],
             "custom": '''
 for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
-    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
 }
 '''
         },
@@ -51,13 +60,22 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
             "params": [
                 {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
                  "realtype": "int",
-                 "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` %d should match the dimensions of `src1` (%s )and `src2` (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
+}
+'''
+                }
             ],
             "custom": '''
 for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
-    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
 }
 ''',
             "run": ""
@@ -83,13 +101,22 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
             "params": [
                 {"arg_name": "axis", "ptype": "LN_PARAM_NUMBER",
                  "realtype": "int",
-                 "check": "axis >= 0 && axis < src1->ndim, \"`axis` should match the dimensions of `src1` and `src2`\""}
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` %d should match the dimensions of `src1` (%s )and `src2` (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
+}
+'''
+                }
             ],
             "custom": '''
 for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
-    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` and `src2` should have the same shape, except in the dimension corresponding to `axis`");
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
 }
 ''',
             "run": ""

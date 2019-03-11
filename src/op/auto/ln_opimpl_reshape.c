@@ -81,7 +81,13 @@ static void reshape_pre_run(ln_op_arg *op_arg)
     dims = dims_entry->value_array_int;
     ln_opck_param_array_int_ge(dims_entry, 1);
     dims = dims;
-    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` tensor length should be equal to the reshaped length");
+    {
+        {
+            char shape1[LN_MAXLINE];
+            char shape2[LN_MAXLINE];
+            ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
+        }
+    }
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = dims_entry->array_len;

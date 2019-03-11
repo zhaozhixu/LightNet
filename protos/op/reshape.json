@@ -15,7 +15,14 @@
             "params": [
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "ge": 1,
-                 "check": "src->len == ln_compute_length(dims_entry->array_len, dims), \"`src` tensor length should be equal to the reshaped length\""}
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
+}
+'''
+                 }
             ]
         },
         {
@@ -33,7 +40,14 @@
             "params": [
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "ge": 1,
-                 "check": "src->len == ln_compute_length(dims_entry->array_len, dims), \"`src` tensor length should be equal to the reshaped length\""}
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
+}
+'''
+                }
             ],
             "static_run": "dst->data = src->data;"
         },
@@ -52,7 +66,14 @@
             "params": [
                 {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "ge": 1,
-                 "check": "src->len == ln_compute_length(dims_entry->array_len, dims), \"`src` tensor length should be equal to the reshaped length\""}
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
+}
+'''
+                }
             ],
             "static_run": "dst->data = src->data;"
         }

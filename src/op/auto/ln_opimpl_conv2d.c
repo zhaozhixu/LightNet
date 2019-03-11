@@ -94,7 +94,13 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     weight = weight_entry->tensor;
     weight = weight;
     ln_opck_tensor_ndim(weight_entry, 5);
-    ln_opck_satisfy_msg(weight->dims[2] == src->dims[1], "`weight`'s 3rd dimension should be equal to the 2nd dimension of `src`");
+    {
+        {
+            char shape1[LN_MAXLINE];
+            char shape2[LN_MAXLINE];
+            ln_opck_satisfy_msg(weight->dims[2] == src->dims[1], "`weight` (%s)'s dims[2] should be equal to the dims[1] of `src` (%s)", ln_sprint_shape(shape1, weight->ndim, weight->dims), ln_sprint_shape(shape2, src->ndim, src->dims));
+        }
+    }
 
     bias_list_entry = ln_tensor_list_find_by_arg_name(op_arg->tensors_in, "bias");
     ln_opck_tensor_in_exist(bias_list_entry, "bias");
@@ -104,7 +110,13 @@ static void conv2d_pre_run(ln_op_arg *op_arg)
     bias = bias_entry->tensor;
     bias = bias;
     ln_opck_tensor_ndim(bias_entry, 1);
-    ln_opck_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` should have the size of the 2nd dimision of `weight`");
+    {
+        {
+            char shape1[LN_MAXLINE];
+            char shape2[LN_MAXLINE];
+            ln_opck_satisfy_msg(bias->dims[0] == weight->dims[1], "`bias` (%s) should have the size of dims[1] of `weight` (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+        }
+    }
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);

@@ -48,6 +48,7 @@ extern ln_op ln_opimpl_pick1d_cuda;
 extern ln_op ln_opimpl_fprint_cuda;
 extern ln_op ln_opimpl_lrelu_cuda;
 extern ln_op ln_opimpl_detect_yolov3_cuda;
+extern ln_op ln_opimpl_avgpool2d_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -77,6 +78,7 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_fprint_cuda,
     &ln_opimpl_lrelu_cuda,
     &ln_opimpl_detect_yolov3_cuda,
+    &ln_opimpl_avgpool2d_cuda,
 /* end of init cuda ops */
     NULL
 };
