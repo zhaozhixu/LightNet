@@ -134,6 +134,7 @@ static ln_op *op_array[] = {
      &opimpl0,
      &opimpl1,
      &opimpl2,
+     NULL
 };
 
 static ln_list *test_op_list;
