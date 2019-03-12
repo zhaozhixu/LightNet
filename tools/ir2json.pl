@@ -230,14 +230,18 @@ sub preprocess {
     foreach (split "\n", $in_text) {
         next if /^#/ or /^\/\//;
         # TODO: use a grammar to compute complex expression
-        while (/(\$\(eval\s+(.+?)\))/g) {
-            if ($2 =~ /\$\(eval\s+.+?/) {
+        my $line = $_;
+        while ($line =~ /\$\{eval\s+(.+?)\}/g) {
+            my $match = $1;
+            if ($match =~ /\$\{eval\s+/) {
+                pos($line) = pos($line)-length($match)-1;
                 next;
             }
-            my $res = eval $2 or die "eval '$2' failed: $@";
-            substr($_, index($_, $1), length($1)) = $res;
+            my $res = eval $match or die "eval '$match' failed: $@";
+            substr($line, pos($line)-length($&), length($&)) = $res;
+            pos($line) = 0;
         }
-        push @in_lines, $_;
+        push @in_lines, $line;
     }
     $in_text = join "\n", @in_lines;
 }
