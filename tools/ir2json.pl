@@ -232,14 +232,14 @@ sub preprocess {
         # TODO: use a grammar to compute complex expression
         my $line = $_;
         while ($line =~ /\$\{eval\s+(.+?)\}/g) {
-            my $match = $1;
-            if ($match =~ /\$\{eval\s+/) {
-                pos($line) = pos($line)-length($match)-1;
+            my $expr = $1;
+            if ($expr =~ /\$\{eval\s+/) {
+                pos($line) = pos($line)-length($expr)-1;
                 next;
             }
-            my $res = eval $match or die "eval '$match' failed: $@";
+            my $res = eval $expr or die "eval '$expr' failed: $@";
             substr($line, pos($line)-length($&), length($&)) = $res;
-            pos($line) = 0;
+            # pos($line) = 0;   # perl seems to set pos($line) = 0 automatically
         }
         push @in_lines, $line;
     }

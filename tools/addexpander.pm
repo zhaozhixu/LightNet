@@ -23,7 +23,7 @@ no warnings 'experimental::smartmatch';
 my %global_ops;
 my %basic_types = (double=>1, float=>1, int=>1, "char *"=>1, ln_bool=>1);
 my %array_types = ("double *"=>1, "float *"=>1, "int *"=>1, "char **"=>1, "ln_bool *"=>1);
-my $directive_p = qr/\$\([a-zA-Z0-9_-]+\s+ .+\)/;
+my $directive_p = qr/\$\{[a-zA-Z0-9_-]+\s+ .+\}/;
 my $symbol_p = qr/[a-zA-Z0-9.,\[\]()_"\\\$\@\^]+/;
 
 my $usage = <<EOF;
@@ -34,11 +34,11 @@ Print the output code to standard output if --dir and --root are omited.
 
 Options:
   -h, --help              print this message
-  -d, --dir=DIRECTORY     save operator defination file(s) in DIRECTORY
+  -d, --dir=DIRECTORY     save expander file(s) in DIRECTORY
   -r, --root=ROOT         set project root directory; this option will save
-                          operator defination file(s) in ROOT/src/op/auto, and
-                          add operator declarations and such to
-                          ROOT/src/arch/ln_arch_*.c
+                          expanders file(s) in ROOT/src/arch/auto, and add
+                          expander declarations and such to
+                          ROOT/src/arch/ln_archimpl_*.c
 Author: Zhao Zhixu
 EOF
 
@@ -104,7 +104,7 @@ sub gen_code {
         }
         my $src_file = "${root}/src/arch/auto/ln_expander_${name}.c";
         &backup_write($src_file, $c_code_str);
-        my $arch_file = "${root}/src/arch/ln_arch_${arch}.c";
+        my $arch_file = "${root}/src/arch/ln_archimpl_${arch}.c";
         &add_to_arch_file($arch_file, $arch, $name);
     }
 }
@@ -229,10 +229,12 @@ sub gen_cond {
     my $cond_code;
     my @conds_replaced;
     foreach my $cond (@$conds) {
-        my $cond_copy = $cond;
-        while ($cond =~ /(($symbol_p)\s*(=>)\s*($symbol_p)?)/g) {
-            $cond_code = (&expand_op_str($1, $defined_ops))[1];
-            substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
+        $cond = &do_rh($cond, $defined_ops);
+        while ($cond =~ /($symbol_p)\s*(=>)\s*($symbol_p)?/g) {
+            $cond_code = (&expand_op_str($&, $defined_ops))[1];
+            my $pos_bak = pos($cond);
+            substr($cond, pos($cond)-length($&), length($&)) = $cond_code;
+            pos($cond) = $pos_bak-length($&)+length($cond_code);
         }
         while ($cond =~ /(($symbol_p)\s*(>|>=|<|<=|==|!=)\s*($symbol_p))/g) {
             my $operator = $3;
@@ -252,10 +254,11 @@ sub gen_cond {
             &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
                 if ((defined $l_len or defined $r_len) and $l_len != $r_len);
             $cond_code = &gen_comparator($operator, $l_code, $r_code, $type, $l_len);
-
-            substr($cond_copy, index($cond_copy, $1), length($1)) = $cond_code;
+            my $pos_bak = pos($cond);
+            substr($cond, pos($cond)-length($&), length($&)) = $cond_code;
+            pos($cond) = $pos_bak-length($&)+length($cond_code);
         }
-        push @conds_replaced, "($cond_copy)";
+        push @conds_replaced, "($cond)";
     }
     join " ||\n    ", @conds_replaced;
 }
@@ -358,12 +361,14 @@ EOF
     }
     &check_details($details);
     foreach my $detail (@$details) {
+        $detail = &do_rh($detail, $defined_ops);
         # $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
-        $detail =~ /(($symbol_p)\s*(=)\s*(.+))/;
-        say $4;
-        my ($r_type, $r_code, $r_len) = &expand_op_str($4, $defined_ops);
-        my $replace_code = &gen_assign($2, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
-        substr($detail, index($detail, $1), length($1)) = $replace_code;
+        &err_exit("wrong syntax in detail '$detail'")
+            unless ($detail =~ /^\s*($symbol_p)\s*(=)\s*(.+)\s*$/);
+        # say $3;
+        my ($r_type, $r_code, $r_len) = &expand_op_str($3, $defined_ops);
+        my $replace_code = &gen_assign($1, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
+        substr($detail, 0, length($&)) = $replace_code;
         push @blocks, $detail;
     }
     push @blocks, "return new_ops;";
@@ -753,32 +758,50 @@ sub add_to_arch_file {
     close ARCH_FILE_BAK;
 }
 
+sub do_rh {
+    my $str = shift;
+    my $defined_ops = shift;
+
+    my $code;
+    while ($str =~ /\$\{rh\s+($symbol_p)\s*\}/g) {
+        $code = (&expand_op_str($1, $defined_ops))[1];
+        my $pos_bak = pos($str);
+        substr($str, pos($str)-length($&), length($&)) = $code;
+        pos($str) = $pos_bak-length($&)+length($code);
+    }
+    $str;
+}
+
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
     my ($directive, @directive_args);
-    if ($op_str =~ /^\$\(.+\)$/) {
+    if ($op_str =~ /^\$\{.+\}$/) {
         &err_exit("wrong directive syntax: $op_str")
-            unless ($op_str =~ /^\$\((?<directive>[a-zA-Z0-9_-]+)(?:\((?<arg>.+)?\))?\s+(?<op>.+)\)/);
+            unless ($op_str =~ /^\$\{(?<directive>[a-zA-Z0-9_-]+)(?:\((?<arg>.+)?\))?\s+(?<op>.+)\}/);
         $directive = $+{directive};
         @directive_args = split /,/, $+{arg} if exists $+{arg};
-        $op_str =$+{op};
+        $op_str = $+{op};
     }
-    while ($op_str =~ /($symbol_p/g) {
-        my $op_code = (&expand_op($1, $defined_ops))[1];
-        substr($op_str, index($op_str, $1), length($1)) = $op_code;
-    }
+    # while ($op_str =~ /($symbol_p)/g) {
+    #     my $op_code = (&expand_op($1, $defined_ops))[1];
+    #     substr($op_str, index($op_str, $1), length($1)) = $op_code;
+    # }
     my @fs = split /\.|(?=\[)|(?==>)/, $op_str;
     my ($type, $code, $len);
-    unless ((defined $directive and $directive eq "type") or exists $defined_ops->{$fs[0]}) {
-        if ($fs[0] =~ /^\d+$/) {
+    unless (exists $defined_ops->{$fs[0]}) {
+        if ($op_str =~ /^\d+$/) {
             $type = "int";
-        } elsif ($fs[0] =~ /^("(\\.|[^"\\])*")$/) {
+        } elsif ($op_str =~ /^("(\\.|[^"\\])*")$/) {
             $type = "char *";
-        } elsif ($fs[0] =~ /^([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)$/) {
+        } elsif ($op_str =~ /^([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)$/) {
             $type = "double";
+        } elsif (defined $directive and $directive eq "type") {
+            &err_exit("directive 'type' needs one argument: $op_str")
+                unless @directive_args == 1;
+            $type = $directive_args[0];
         } else {
-            # &warn_msg("undefined symbol '$fs[0]', use literal string");
+            &warn_msg("undefined symbol '$op_str' and its type");
         }
         return ($type, $op_str, $len);
     }
