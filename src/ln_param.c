@@ -70,6 +70,167 @@ void ln_param_entry_free(ln_param_entry *entry)
     ln_free(entry);
 }
 
+void ln_param_assign_bool(ln_param_entry *entry, ln_bool bool)
+{
+    assert(entry);
+    entry->value_bool = bool;
+}
+
+void ln_param_assign_satu_number(ln_param_entry *entry, double number)
+{
+    assert(entry);
+
+    entry->value_double = number;
+
+    /* use saturation in case of overflow */
+    if (number >= FLT_MAX)
+        entry->value_float = FLT_MAX;
+    else if (number <= FLT_MIN)
+        entry->value_float = FLT_MIN;
+    else
+        entry->value_float = (float)number;
+
+    if (number >= INT_MAX)
+        entry->value_int = INT_MAX;
+    else if (number <= INT_MIN)
+        entry->value_int = INT_MIN;
+    else
+        entry->value_int = (int)number;
+}
+
+void ln_param_assign_string(ln_param_entry *entry, const char *string)
+{
+    assert(entry);
+    ln_free(entry->value_string);
+    entry->value_string = ln_strdup(string);
+}
+
+void ln_param_assign_satu_array_number(ln_param_entry *entry, int array_len,
+                                       const double *array_number)
+{
+    int i;
+    assert(entry);
+    assert(array_len > 0);
+
+    ln_free(entry->value_array_double);
+    ln_free(entry->value_array_float);
+    ln_free(entry->value_array_int);
+    entry->array_len = array_len;
+    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
+    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+
+    memmove(entry->value_array_double, array_number, sizeof(double)*array_len);
+
+    /* use saturation in case of overflow */
+    for (i = 0; i < array_len; i++) {
+        if (array_number[i] >= FLT_MAX)
+            entry->value_array_float[i] = FLT_MAX;
+        else if (array_number[i] <= FLT_MIN)
+            entry->value_array_float[i] = FLT_MIN;
+        else
+            entry->value_array_float[i] = (float)array_number[i];
+    }
+
+    for (i = 0; i < array_len; i++) {
+        if (array_number[i] >= INT_MAX)
+            entry->value_array_int[i] = INT_MAX;
+        else if (array_number[i] <= INT_MIN)
+            entry->value_array_int[i] = INT_MIN;
+        else
+            entry->value_array_int[i] = (int)array_number[i];
+    }
+}
+
+void ln_param_assign_satu_array_double(ln_param_entry *entry, int array_len,
+                                       const double *array_number)
+{
+    ln_param_assign_satu_array_number(entry, array_len, array_number);
+}
+
+void ln_param_assign_satu_array_float(ln_param_entry *entry, int array_len,
+                                      const float *array_number)
+{
+    int i;
+    assert(entry);
+    assert(array_len > 0);
+
+    ln_free(entry->value_array_double);
+    ln_free(entry->value_array_float);
+    ln_free(entry->value_array_int);
+    entry->array_len = array_len;
+    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
+    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+
+    memmove(entry->value_array_float, array_number, sizeof(float)*array_len);
+
+    for (i = 0; i < array_len; i++)
+        entry->value_array_double[i] = (double)array_number[i];
+
+    /* use saturation in case of overflow */
+    for (i = 0; i < array_len; i++) {
+        if (array_number[i] >= INT_MAX)
+            entry->value_array_int[i] = INT_MAX;
+        else if (array_number[i] <= INT_MIN)
+            entry->value_array_int[i] = INT_MIN;
+        else
+            entry->value_array_int[i] = (int)array_number[i];
+    }
+}
+
+void ln_param_assign_satu_array_int(ln_param_entry *entry, int array_len,
+                                    const int *array_number)
+{
+    int i;
+    assert(entry);
+    assert(array_len > 0);
+
+    ln_free(entry->value_array_double);
+    ln_free(entry->value_array_float);
+    ln_free(entry->value_array_int);
+    entry->array_len = array_len;
+    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
+    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
+    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
+
+    memmove(entry->value_array_int, array_number, sizeof(int)*array_len);
+
+    for (i = 0; i < array_len; i++) {
+        entry->value_array_double[i] = (double)array_number[i];
+        entry->value_array_float[i] = (float)array_number[i];
+    }
+}
+
+void ln_param_assign_array_string(ln_param_entry *entry, int array_len,
+                                  const char **array_string)
+{
+    int i;
+    assert(entry);
+    assert(array_len > 0);
+
+    for (i = 0; i < entry->array_len; i++)
+        ln_free(entry->value_array_string[i]);
+    ln_free(entry->value_array_string);
+    entry->array_len = array_len;
+    entry->value_array_string = ln_alloc(sizeof(char *)*array_len);
+    for (i = 0; i < array_len; i++) {
+        entry->value_array_string[i] = ln_strdup(array_string[i]);
+    }
+}
+
+void ln_param_assign_array_bool(ln_param_entry *entry, int array_len,
+                                const ln_bool *array_bool)
+{
+    assert(entry);
+    assert(array_len > 0);
+
+    ln_free(entry->value_array_bool);
+    entry->array_len = array_len;
+    entry->value_array_bool = ln_alloc(sizeof(ln_bool)*array_len);
+    memmove(entry->value_array_bool, array_bool, sizeof(ln_bool)*array_len);
+}
+
 ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name,
                                     ln_param_type ptype)
 {
@@ -160,12 +321,12 @@ ln_list *ln_param_list_append_int(ln_list *list, const char *arg_name,
 }
 
 ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name,
-                                   ln_bool bool)
+                                   ln_bool bool_value)
 {
     ln_param_entry *entry;
 
     entry = ln_param_entry_create(arg_name, LN_PARAM_BOOL);
-    entry->value_bool = bool;
+    entry->value_bool = bool_value;
     list = ln_list_append(list, entry);
     return list;
 }
@@ -180,132 +341,69 @@ ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name)
 }
 
 ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
-                                           int array_len, char **array_string)
+                                           int array_len,
+                                           const char **array_string)
 {
     ln_param_entry *entry;
-    int i;
 
-    assert(array_len >= 0);
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_STRING);
-    entry->array_len = array_len;
-    entry->value_array_string = ln_alloc(sizeof(char *)*array_len);
-    for (i = 0; i < array_len; i++) {
-        entry->value_array_string[i] = ln_strdup(array_string[i]);
-    }
+    ln_param_assign_array_string(entry, array_len, array_string);
     list = ln_list_append(list, entry);
     return list;
 }
 
 ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
-                                           int array_len, double *array_number)
+                                           int array_len,
+                                           const double *array_number)
 {
     ln_param_entry *entry;
-    int i;
 
-    assert(array_len >= 0);
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
-    entry->array_len = array_len;
-    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
-    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
-    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
-
-    memmove(entry->value_array_double, array_number, sizeof(double)*array_len);
-
-    /* use saturation in case of overflow */
-    for (i = 0; i < array_len; i++) {
-        if (array_number[i] >= FLT_MAX)
-            entry->value_array_float[i] = FLT_MAX;
-        else if (array_number[i] <= FLT_MIN)
-            entry->value_array_float[i] = FLT_MIN;
-        else
-            entry->value_array_float[i] = (float)array_number[i];
-    }
-
-    for (i = 0; i < array_len; i++) {
-        if (array_number[i] >= INT_MAX)
-            entry->value_array_int[i] = INT_MAX;
-        else if (array_number[i] <= INT_MIN)
-            entry->value_array_int[i] = INT_MIN;
-        else
-            entry->value_array_int[i] = (int)array_number[i];
-    }
-
+    ln_param_assign_satu_array_number(entry, array_len, array_number);
     list = ln_list_append(list, entry);
     return list;
 }
 
 ln_list *ln_param_list_append_array_double(ln_list *list, const char *arg_name,
-                                           int array_len, double *array_number)
+                                           int array_len,
+                                           const double *array_number)
 {
-    return ln_param_list_append_array_number(list, arg_name, array_len, array_number);
+    return ln_param_list_append_array_number(list, arg_name, array_len,
+                                             array_number);
 }
 
 ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name,
-                                          int array_len, float *array_number)
+                                          int array_len,
+                                          const float *array_number)
 {
     ln_param_entry *entry;
-    int i;
 
-    assert(array_len >= 0);
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
-    entry->array_len = array_len;
-    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
-    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
-    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
-
-    memmove(entry->value_array_float, array_number, sizeof(float)*array_len);
-
-    for (i = 0; i < array_len; i++)
-        entry->value_array_double[i] = (double)array_number[i];
-
-    /* use saturation in case of overflow */
-    for (i = 0; i < array_len; i++) {
-        if (array_number[i] >= INT_MAX)
-            entry->value_array_int[i] = INT_MAX;
-        else if (array_number[i] <= INT_MIN)
-            entry->value_array_int[i] = INT_MIN;
-        else
-            entry->value_array_int[i] = (int)array_number[i];
-    }
-
+    ln_param_assign_satu_array_float(entry, array_len, array_number);
     list = ln_list_append(list, entry);
     return list;
 }
 
 ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
-                                        int array_len, int *array_int)
+                                        int array_len, const int *array_number)
 {
     ln_param_entry *entry;
-    int i;
 
-    assert(array_len >= 0);
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
-    entry->array_len = array_len;
-    entry->value_array_double = ln_alloc(sizeof(double)*array_len);
-    entry->value_array_float = ln_alloc(sizeof(float)*array_len);
-    entry->value_array_int = ln_alloc(sizeof(int)*array_len);
-
-    memmove(entry->value_array_int, array_int, sizeof(int)*array_len);
-
-    for (i = 0; i < array_len; i++) {
-        entry->value_array_double[i] = (double)array_int[i];
-        entry->value_array_float[i] = (float)array_int[i];
-    }
-
+    ln_param_assign_satu_array_int(entry, array_len, array_number);
     list = ln_list_append(list, entry);
     return list;
 }
 
 ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
-                                         int array_len, ln_bool *array_bool)
+                                         int array_len,
+                                         const ln_bool *array_bool)
 {
     ln_param_entry *entry;
 
     assert(array_len >= 0);
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_BOOL);
-    entry->array_len = array_len;
-    entry->value_array_bool = ln_alloc(sizeof(ln_bool)*array_len);
-    memmove(entry->value_array_bool, array_bool, sizeof(ln_bool)*array_len);
+    ln_param_assign_array_bool(entry, array_len, array_bool);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -331,7 +429,7 @@ ln_list *ln_param_list_copy(ln_list *list)
             new_list = ln_param_list_append_array_string(new_list,
                                                          entry->arg_name,
                                                          entry->array_len,
-                                                         entry->value_array_string);
+                                                         (const char **)entry->value_array_string);
             break;
         case LN_PARAM_BOOL:
             new_list = ln_param_list_append_bool(new_list, entry->arg_name,

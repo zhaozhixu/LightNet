@@ -220,7 +220,7 @@ void ln_pass_mem_plan(ln_context *ctx)
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             mp = ln_hash_find(mem_plans, (void *)te->mtype);
             if (te->mtype == LN_MEM_NONE)
-                ln_msg_inter_error("tensor \"%s\" has an unresolved memory type %s",
+                ln_msg_inter_error("tensor '%s' has an unresolved memory type %s",
                                    te->name, ln_mem_type_name(te->mtype));
             if (te->owner)
                 continue;

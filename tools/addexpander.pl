@@ -336,7 +336,9 @@ sub gen_replace {
         my $rep_desc = &find_op_desc($rep_optype);
         # TODO: check validation
         $code = <<EOF;
-ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table, self, "$rep_optype");
+ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                     self, "$rep_optype");
+*match = 1;
 return ln_list_append(NULL, new_op);
 EOF
         chomp $code;
@@ -371,6 +373,7 @@ EOF
         substr($detail, 0, length($&)) = $replace_code;
         push @blocks, $detail;
     }
+    push @blocks, "*match = 1;";
     push @blocks, "return new_ops;";
     join "\n", @blocks;
 }
@@ -560,42 +563,42 @@ sub gen_copy_param {
     given ($type) {
         when ("char *") {
             $code = <<EOF;
-{
-    ln_free($pe->value_string);
-    $pe->value_string = ln_strdup($rhs);
-}
+ln_param_assign_string($pe, $rhs);
 EOF
         }
         when ("char **") {
             $code = <<EOF;
-{
-    for (int i = 0; i < $pe->array_len; i++) {
-        ln_free($pe->value_array_string[i]);
-    }
-    $pe->array_len = $len;
-    ln_free($pe->value_array_string);
-    $pe->value_array_string = ln_alloc(sizeof(char *)*($pe->array_len));
-    for (int i = 0; i < $pe->array_len; i++) {
-        $pe->value_array_string[i] = ln_strdup(${rhs}[i]);
-    }
-}
+ln_param_assign_array_string($pe, $len, (const char **)($rhs));
 EOF
         }
-        when (/^(int|float|double|ln_bool) \*$/) {
-            my $ele_type = s/^(int|float|double|ln_bool) \*$/$1/r;
+        when (/^int \*$/) {
             $code = <<EOF;
-{
-    $pe->array_len = $len;
-    ln_free($pe->$member);
-    $pe->$member = ln_clone($rhs, sizeof($ele_type)*$pe->array_len);
-}
+ln_param_assign_satu_array_int($pe, $len, $rhs);
 EOF
         }
-        when (/^(int|float|double|ln_bool)$/) {
+        when (/^float \*$/) {
             $code = <<EOF;
-{
-    $pe->$member = $rhs;
-}
+ln_param_assign_satu_array_float($pe, $len, $rhs);
+EOF
+        }
+        when (/^double \*$/) {
+            $code = <<EOF;
+ln_param_assign_satu_array_double($pe, $len, $rhs);
+EOF
+        }
+        when (/^ln_bool \*$/) {
+            $code = <<EOF;
+ln_param_assign_array_bool($pe, $len, $rhs);
+EOF
+        }
+        when (/^(int|float|double)$/) {
+            $code = <<EOF;
+ln_param_assign_satu_number($pe, (double)($rhs));
+EOF
+        }
+        when (/^ln_bool$/) {
+            $code = <<EOF;
+ln_param_assign_bool($pe, $rhs);
 EOF
         }
         default {
@@ -662,7 +665,7 @@ ln_list *ln_expander_$name(const ln_op *self, const ln_dfg *dfg, int *match)
     void             *value;
 
     if (!ln_hash_find_extended(ep_funcs_hash, self->op_arg->optype, NULL, &value))
-        ln_msg_inter_error("unsupported optype \\"%s\\" for $name expander",
+        ln_msg_inter_error("unsupported optype '%s' for $name expander",
                            self->op_arg->optype);
 
     ep_func = value;
@@ -897,12 +900,13 @@ sub expand_tensor {
 
     my ($type, $code, $len);
     if ($found) {
+        my $list_entry = "ln_tensor_list_find_by_arg_name($opname->op_arg->$tensors, \"$arg_name\")";
         my $entry = "ln_tensor_list_find_entry($opname->op_arg->$tensors, $opname->op_arg->tensor_table, \"$arg_name\")";
         my %tensor_member =
             (
-             __self => ["char *", "$entry->name"],
+             __self => ["char *", "$list_entry->name"],
              "=>" => [\&topo_cond, $entry, @fs[1..@fs-1]],
-             name => ["char *", "$entry->name"],
+             name => ["char *", "$list_entry->name"],
              owner => ["char *", "$entry->owner"],
              creater => ["char *", "$entry->creater"],
              tensor => ["tl_tensor *", "$entry->tensor"],

@@ -128,9 +128,11 @@ START_TEST(test_ln_param_list_append_array_string)
     char *array_string2[] = {"array2_str1", "array2_str2"};
 
     params = ln_param_list_append_array_string(NULL, "arg_name1",
-                                               array_len1, array_string1);
+                                               array_len1,
+                                               (const char**)array_string1);
     params = ln_param_list_append_array_string(params, "arg_name2",
-                                               array_len2, array_string2);
+                                               array_len2,
+                                               (const char **)array_string2);
     ck_assert_int_eq(ln_param_list_length(params), 2);
 
     entry = ln_param_list_find(params, "arg_name1");

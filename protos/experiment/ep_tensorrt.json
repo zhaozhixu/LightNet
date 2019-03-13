@@ -58,6 +58,8 @@
                         "trt.ins[weight$@] = self.ins[weight]",
                         "trt.ins[weight$@] = self.ins[bias]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"conv\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_weight] = self.ins[weight]",
@@ -83,6 +85,8 @@
                     "details": [
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"activation\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_dst] = self.outs[dst]",
@@ -101,6 +105,8 @@
                     "details": [
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"lrelu\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_dst] = self.outs[dst]",
@@ -119,6 +125,8 @@
                     "details": [
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"activation\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_dst] = self.outs[dst]",
@@ -144,10 +152,42 @@
                     "details": [
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"pooling\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_dst] = self.outs[dst]",
                         "trt.params[op$^_pooling_type] = \"kMAX\"",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_padding] = self.params[padding][0,2]",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "avgpool2d",
+            "rules":[
+                {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2]",
+                        "self.params[padding][1] != self.params[padding][3]"
+                    ],
+                    "replace": ["avgpool2d_cuda"]
+                },
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+                        "trt.params[op$@] = \"pooling\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_pooling_type] = \"kAVERAGE\"",
                         "trt.params[op$^_size] = self.params[size]",
                         "trt.params[op$^_stride] = self.params[stride]",
                         "trt.params[op$^_padding] = self.params[padding][0,2]",
@@ -173,6 +213,8 @@
                     "details": [
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"softmax\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_dst] = self.outs[dst]",
@@ -185,6 +227,8 @@
                     "details": [
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"softmax\"",
                         "trt.params[op$^_src] = self.ins[src]",
                         "trt.params[op$^_dst] = self.outs[dst]",
@@ -212,9 +256,12 @@
                         "trt.ins[src$@] = self.ins[src1]",
                         "trt.ins[src$@] = self.ins[src2]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"concat\"",
                         "trt.params[op$^_src1] = self.ins[src1]",
                         "trt.params[op$^_src2] = self.ins[src2]",
+                        "trt.params[op$^_dst] = self.outs[dst]",
                         "trt.params[batch_size] = self.ins[src1].dims[0]"
                     ]
                 },
@@ -225,9 +272,12 @@
                         "trt.ins[src$@] = self.ins[src1]",
                         "trt.ins[src$@] = self.ins[src2]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"concat\"",
                         "trt.params[op$^_src1] = self.ins[src1]",
                         "trt.params[op$^_src2] = self.ins[src2]",
+                        "trt.params[op$^_dst] = self.outs[dst]",
                         "trt.params[op$^_axis] = self.params[axis]",
                         "trt.params[batch_size] = self.ins[src1].dims[0]"
                     ]
@@ -249,6 +299,8 @@
 
                         "trt.ins[src$@] = self.ins[src]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.ins[weight$@] = bwc.outs[dst_shift]",
                         "trt.ins[weight$@] = bwc.outs[dst_scale]",
                         "trt.ins[weight$@] = bwc.outs[dst_power]",
@@ -274,6 +326,8 @@
                         "trt.ins[src$@] = self.ins[src1]",
                         "trt.ins[src$@] = self.ins[src2]",
                         "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
                         "trt.params[op$@] = \"elew\"",
                         "trt.params[op$^_src1] = self.ins[src1]",
                         "trt.params[op$^_src2] = self.ins[src2]",

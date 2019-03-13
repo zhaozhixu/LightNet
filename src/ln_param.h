@@ -63,6 +63,19 @@ LN_CPPSTART
 ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type);
 void ln_param_entry_free(ln_param_entry *entry);
 
+void ln_param_assign_bool(ln_param_entry *entry, ln_bool bool_value);
+void ln_param_assign_string(ln_param_entry *entry, const char *string);
+void ln_param_assign_satu_number(ln_param_entry *entry, double number);
+void ln_param_assign_satu_array_number(ln_param_entry *entry, int array_len,
+                                       const double *array_number);
+void ln_param_assign_satu_array_double(ln_param_entry *entry, int array_len,
+                                       const double *array_number);
+void ln_param_assign_satu_array_float(ln_param_entry *entry, int array_len,
+                                      const float *array_number);
+void ln_param_assign_satu_array_int(ln_param_entry *entry, int array_len,
+                                    const int *array_number);
+void ln_param_assign_array_string(ln_param_entry *entry, int array_len,
+                                  const char **array_string);
 /* TODO: add prepend version */
 ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name,
                                     ln_param_type ptype);
@@ -80,17 +93,22 @@ ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name,
                                    ln_bool bool_value);
 ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name);
 ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
-                                           int array_len, char **array_string);
+                                           int array_len,
+                                           const char **array_string);
 ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
-                                           int array_len, double *array_number);
+                                           int array_len,
+                                           const double *array_number);
 ln_list *ln_param_list_append_array_double(ln_list *list, const char *arg_name,
-                                           int array_len, double *array_number);
+                                           int array_len,
+                                           const double *array_number);
 ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name,
-                                          int array_len, float *array_number);
+                                          int array_len,
+                                          const float *array_number);
 ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
-                                        int array_len, int *array_int);
+                                        int array_len, const int *array_int);
 ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
-                                         int array_len, ln_bool *array_bool);
+                                         int array_len,
+                                         const ln_bool *array_bool);
 void ln_param_list_free(ln_list *list);
 ln_list *ln_param_list_copy(ln_list *list);
 ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name);

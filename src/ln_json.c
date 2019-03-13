@@ -124,7 +124,7 @@ static ln_list *parse_array_value(const cJSON *array_json,
     case LN_PARAM_STRING:
         param_list = ln_param_list_append_array_string(param_list,
                                                        param_arg_name_json->valuestring,
-                                                       array_len, array_string);
+                                                       array_len, (const char **)array_string);
         break;
     case LN_PARAM_NUMBER:
         param_list = ln_param_list_append_array_number(param_list,

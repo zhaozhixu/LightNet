@@ -208,6 +208,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_op_list_do_post_run(ctx->ops);
     assert(ln_hash_size(ctx->tensor_table) == 0);
     ln_op_list_do_pre_run(ctx->ops);
+    /* ln_context_print(ctx, "out.json"); */
 
     ln_pass_mem_plan(ctx);
 }
