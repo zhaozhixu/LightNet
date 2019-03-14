@@ -62,6 +62,12 @@ ifeq ($(WITH_TENSORRT), yes)
 CONFIG_DEFINES += LN_TENSORRT
 endif
 
+ifeq ($(DOC), yes)
+MAKE_DOC = mkdocs build -c -d $(BUILD_DOC)
+else
+MAKE_DOC =
+endif
+
 ifdef VERBOSE
 AT =
 else
@@ -100,7 +106,7 @@ $(AT)ln -sf $(BUILD_BIN_MMM) $(BUILD_BIN)
 endef
 
 define make-doc
-$(AT)mkdocs build -c -d $(BUILD_DOC)
+$(AT)$(MAKE_DOC)
 endef
 
 define make-install
