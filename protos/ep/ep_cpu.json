@@ -1,15 +1,14 @@
 {
     "author": "Zhao Zhixu",
-    "name": "cuda_expander",
-    "arch": "cuda",
-    "head": "#include \"ln_cuda.h\"",
+    "name": "cpu_expander",
+    "arch": "cpu",
     "ops": [
         {
             "optype": "create",
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["create_cuda"]
+                    "replace": ["create_cpu"]
                 },
             ]
         },
@@ -18,7 +17,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["conv2d_cuda"]
+                    "replace": ["conv2d_cpu"]
                 }
             ]
         },
@@ -27,7 +26,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["maxpool2d_cuda"]
+                    "replace": ["maxpool2d_cpu"]
                 }
             ]
         },
@@ -36,7 +35,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["maxreduce_cuda"]
+                    "replace": ["maxreduce_cpu"]
                 }
             ]
         },
@@ -45,7 +44,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["relu_cuda"]
+                    "replace": ["relu_cpu"]
                 }
             ]
         },
@@ -54,7 +53,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["reshape_cuda"]
+                    "replace": ["reshape_cpu"]
                 }
             ]
         },
@@ -63,7 +62,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["slice_cuda"]
+                    "replace": ["slice_cpu"]
                 }
             ]
         },
@@ -72,7 +71,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["transpose_cuda"]
+                    "replace": ["transpose_cpu"]
                 }
             ]
         },
@@ -81,7 +80,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["zeros_cuda"]
+                    "replace": ["zeros_cpu"]
                 }
             ]
         },
@@ -90,7 +89,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["elew_cuda"]
+                    "replace": ["elew_cpu"]
                 }
             ]
         },
@@ -99,7 +98,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["softmax_cuda"]
+                    "replace": ["softmax_cpu"]
                 }
             ]
         },
@@ -108,7 +107,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["concat_cuda"]
+                    "replace": ["concat_cpu"]
                 }
             ]
         },
@@ -117,7 +116,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["batchnorm_cuda"]
+                    "replace": ["batchnorm_cpu"]
                 }
             ]
         },
@@ -126,7 +125,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["upsample_cuda"]
+                    "replace": ["upsample_cpu"]
                 }
             ]
         },
@@ -135,7 +134,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["maxreduce_arg_cuda"]
+                    "replace": ["maxreduce_arg_cpu"]
                 }
             ]
         },
@@ -144,7 +143,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["print_cuda"]
+                    "replace": ["print_cpu"]
                 }
             ]
         },
@@ -153,7 +152,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["sigmoid_cuda"]
+                    "replace": ["sigmoid_cpu"]
                 }
             ]
         },
@@ -162,7 +161,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["sort1d_cuda"]
+                    "replace": ["sort1d_cpu"]
                 }
             ]
         },
@@ -171,7 +170,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["sort1d_by_key_cuda"]
+                    "replace": ["sort1d_by_key_cpu"]
                 }
             ]
         },
@@ -180,7 +179,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["arange_cuda"]
+                    "replace": ["arange_cpu"]
                 }
             ]
         },
@@ -189,7 +188,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["transform_bboxSQD_cuda"]
+                    "replace": ["transform_bboxSQD_cpu"]
                 }
             ]
         },
@@ -198,7 +197,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["rearange_cuda"]
+                    "replace": ["rearange_cpu"]
                 }
             ]
         },
@@ -207,7 +206,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["pick1d_cuda"]
+                    "replace": ["pick1d_cpu"]
                 }
             ]
         },
@@ -216,7 +215,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["fprint_cuda"]
+                    "replace": ["fprint_cpu"]
                 }
             ]
         },
@@ -225,7 +224,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["lrelu_cuda"]
+                    "replace": ["lrelu_cpu"]
                 }
             ]
         },
@@ -234,7 +233,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["detect_yolov3_cuda"]
+                    "replace": ["detect_yolov3_cpu"]
                 }
             ]
         },
@@ -243,7 +242,7 @@
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["avgpool2d_cuda"]
+                    "replace": ["avgpool2d_cpu"]
                 }
             ]
         },
