@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <time.h>
 #include <ctype.h>
+#include <math.h>
 #include <sys/stat.h>
 
 #include "ln_util.h"
@@ -219,6 +220,51 @@ int ln_digit_num(ssize_t num)
 int ln_compute_output_dim(int input_dim, int size, int stride, int padding)
 {
     return ((input_dim + padding) - size) / stride + 1;
+}
+
+int *ln_autopading(int *padding, const int *input_shape, const int *size,
+                   const int *stride, int ndim, const char *mode)
+{
+    if (ln_streq(mode, "VALID")) {
+        for (int i = 0; i < ndim; i++)
+            padding[i] = 0;
+        return padding;
+    }
+
+    int *output_shape = ln_alloc(sizeof(int) * ndim);
+    int *pad_shape = ln_alloc(sizeof(int) * ndim);
+    for (int i = 0; i < ndim; i++) {
+        output_shape[i] = (int)ceil((double)input_shape[i] / (double)stride[i]);
+        pad_shape[i] = (output_shape[i] - 1) * stride[i] + size[i]
+            - input_shape[i];
+    }
+    if (ln_streq(mode, "SAME_UPPER")) {
+        for (int i = 0; i < ndim; i++) {
+            if (pad_shape[i] % 2) {
+                padding[i] = 0;
+                padding[i+ndim] = pad_shape[i];
+            } else {
+                padding[i] = pad_shape[i] / 2;
+                padding[i+ndim] = pad_shape[i] / 2;
+            }
+        }
+    } else if (ln_streq(mode, "SAME_LOWER")) {
+        for (int i = 0; i < ndim; i++) {
+            if (pad_shape[i] % 2) {
+                padding[i] = pad_shape[i];
+                padding[i+ndim] = 0;
+            } else {
+                padding[i] = pad_shape[i] / 2;
+                padding[i+ndim] = pad_shape[i] / 2;
+            }
+        }
+    } else {
+        assert(0 && "unsupported padding mode");
+    }
+
+    ln_free(output_shape);
+    ln_free(pad_shape);
+    return padding;
 }
 
 int ln_compute_length(int ndim, const int *dims)

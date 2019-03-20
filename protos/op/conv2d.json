@@ -59,6 +59,17 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
                 // [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 4, "ge": 0},
+                {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
+                 "custom": '''
+if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
+    ln_streq(autopad, "SAME_LOWER")) {
+    ln_autopading(padding, src->dims, size, stride, 2, autopad);
+} else if (ln_streq(autopad, "NOTSET")){
+} else {
+    ln_msg_warn("unsupported 'autopad' %s", autopad);
+}
+'''
+                },
                 // [height, width]
                 {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 2, "ge": 1}
@@ -123,6 +134,17 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
                 // [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 4, "ge": 0},
+                {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
+                 "custom": '''
+if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
+    ln_streq(autopad, "SAME_LOWER")) {
+    ln_autopading(padding, src->dims, size, stride, 2, autopad);
+} else if (ln_streq(autopad, "NOTSET")){
+} else {
+    ln_msg_warn("unsupported 'autopad' %s", autopad);
+}
+'''
+                },
                 // [height, width]
                 {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 2, "ge": 1}
@@ -188,6 +210,17 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
                 // [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 4, "ge": 0},
+                {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
+                 "custom": '''
+if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
+    ln_streq(autopad, "SAME_LOWER")) {
+    ln_autopading(padding, src->dims, size, stride, 2, autopad);
+} else if (ln_streq(autopad, "NOTSET")){
+} else {
+    ln_msg_warn("unsupported 'autopad' %s", autopad);
+}
+'''
+                },
                 // [height, width]
                 {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 2, "ge": 1}

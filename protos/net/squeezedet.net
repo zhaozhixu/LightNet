@@ -11,6 +11,7 @@
            dst=out_name | group=1, size=[_size, _size],                 \
            stride=[_stride, _stride],                                   \
            padding=[_padding, _padding, _padding, _padding],            \
+           autopad="NOTSET",                                            \
            dilation=[_dilation, _dilation])
 
 #define conv_relu(in_name, out_name, in_c, out_c,       \
@@ -53,15 +54,15 @@ create(| dst=input | dtype=DTYPE, dims=[1, 3, INPUT_H, INPUT_W], ran=[0, 255],
        data=[0], from_file=true);
 conv_relu(input, conv1, 3, 64, 3, 2, 1, 1);
 maxpool2d(src=conv1 | dst=pool1 | size=[3, 3], stride=[2, 2],
-          padding=[1, 1, 1, 1]);
+          padding=[1, 1, 1, 1], autopad="NOTSET");
 fire(pool1, fire2, 64, 16, 64, 64);
 fire(fire2, fire3, 128, 16, 64, 64);
 maxpool2d(src=fire3 | dst=pool3 | size=[3, 3], stride=[2, 2],
-          padding=[1, 1, 1, 1]);
+          padding=[1, 1, 1, 1], autopad="NOTSET");
 fire(pool3, fire4, 128, 32, 128, 128);
 fire(fire4, fire5, 256, 32, 128, 128);
 maxpool2d(src=fire5 | dst=pool5 | size=[3, 3], stride=[2, 2],
-          padding=[1, 1, 1, 1]);
+          padding=[1, 1, 1, 1], autopad="NOTSET");
 fire(pool5, fire6, 256, 48, 192, 192);
 fire(fire6, fire7, 384, 48, 192, 192);
 fire(fire7, fire8, 384, 64, 256, 256);

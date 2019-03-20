@@ -311,6 +311,7 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
    /* replace self with new ops */
     if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2])) ||
         ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]))) {
+        ln_msg_inter_warn("ep_conv2d(): tensorrt doesn't support asymmetrical conv2d's 'padding', use conv2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "conv2d_cuda");
         *match = 1;
@@ -808,6 +809,7 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
    /* replace self with new ops */
     if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2])) ||
         ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]))) {
+        ln_msg_inter_warn("ep_maxpool2d(): tensorrt doesn't support asymmetrical maxpool2d's 'padding', use maxpool2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "maxpool2d_cuda");
         *match = 1;
@@ -949,6 +951,7 @@ static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
    /* replace self with new ops */
     if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2])) ||
         ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]))) {
+        ln_msg_inter_warn("ep_avgpool2d(): tensorrt doesn't support asymmetrical avgpool2d's 'padding', use avgpool2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "avgpool2d_cuda");
         *match = 1;

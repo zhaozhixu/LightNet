@@ -11,6 +11,7 @@
            dst=out_name | group=_group, size=[_size, _size],            \
            stride=[_stride, _stride],                                   \
            padding=[_padding, _padding, _padding, _padding],            \
+           autopad="NOTSET",                                            \
            dilation=[_dilation, _dilation])
 
 #define conv_bn_relu(in_name, out_name, in_c, out_c,                    \
@@ -174,7 +175,7 @@
 create(| dst=input | dtype=DTYPE, dims=[1, 3, INPUT_H, INPUT_W], ran=[0, 255],
        data=[0], from_file=true);
 conv_bn_relu(input, conv1, 3, 24, 1, 3, 2, 1, 1);
-maxpool2d(src=conv1 | dst=pool1 | size=[2, 2], stride=[2, 2], padding=[0, 0, 0, 0]);
+maxpool2d(src=conv1 | dst=pool1 | size=[2, 2], stride=[2, 2], padding=[0, 0, 0, 0], autopad="NOTSET");
 shufflev2_downsample(pool1, stage2_downsample, GROUP, 24,
                      STAGE2_C, STAGE2_H, STAGE2_W, 3, 2, 1, 1);
 shufflev2_block(stage2_downsample, stage2_shuffle1, GROUP, STAGE2_C,

@@ -59,7 +59,7 @@ int ln_tensorrt_version_cmp(const char *ver_compare_to)
 
 const char *ln_tensorrt_elew_name(const char *elew_name_tl)
 {
-    const char *elew_type;
+    const char *elew_type = NULL;
 
     if (ln_streq(elew_name_tl, "TL_MUL"))
         elew_type = "kPROD";
