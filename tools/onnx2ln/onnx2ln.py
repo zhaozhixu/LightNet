@@ -63,7 +63,9 @@ def onnx_get_model(onnx_graph, opset):
 
     for node in onnx_graph.node:
         onnx_node = OnnxNode(node)
-        model['ops'].append(onnx_node_to_ln_op(onnx_node))
+        ops = onnx_node_to_ln_op(onnx_node)
+        for op in ops:
+            model['ops'].append(op)
 
     return model
 
