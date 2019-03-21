@@ -8,7 +8,8 @@ from onnx import numpy_helper
 from onnx_tf.common import data_type
 from pb_wrapper import OnnxNode
 from pb_wrapper import OnnxGraph
-from onnx_node_converter import new_opname
+from node_converter import new_opname
+from node_converter import onnx_node_to_ln_op
 
 TENSOR_TYPE_TO_TL_TYPE = {
     int(TensorProto.FLOAT): 'TL_FLOAT',
@@ -51,19 +52,21 @@ def onnx_get_model(onnx_graph, opset):
             d.dim_value if (d.dim_value > 0 and d.dim_param == "") else None
             for d in value_info.type.tensor_type.shape.dim)
         tensor = {'name': value_info.name,
-              'dtype': dtype_onnx2tl(value_info.type.tensor_type.elem_type),
-              'dims': shape,
-              'data': [0]}
-        input_tensors.append(tensor)
+                  'dtype': dtype_onnx2tl(value_info.type.tensor_type.elem_type),
+                  'dims': shape,
+                  'data': None}
+        input_tensors.append((value_info.name, tensor))
 
+    input_dict = dict(input_tensors)
+    tensor_dict = dict(input_tensors)
     model = {'ops': []}
 
     for tensor in input_tensors:
-        model['ops'].append(new_create_op(tensor))
+        model['ops'].append(new_create_op(tensor[1]))
 
     for node in onnx_graph.node:
         onnx_node = OnnxNode(node)
-        ops = onnx_node_to_ln_op(onnx_node)
+        ops = onnx_node_to_ln_op(onnx_node, tensor_dict)
         for op in ops:
             model['ops'].append(op)
 
@@ -79,24 +82,22 @@ def onnx_initializer_to_data_tensors(initializer):
     def tensor2list(onnx_tensor):
         # Use the onnx.numpy_helper because the data may be raw
         return numpy_helper.to_array(onnx_tensor).flatten().tolist()
-    tensors = [{'name': init.name,
-                'dtype': dtype_onnx2tl(init.data_type),
-                'dims': init.dims,
-                'data': tensor2list(init)}
+    tensors = [(init.name, {'name': init.name,
+                            'dtype': dtype_onnx2tl(init.data_type),
+                            'dims': init.dims,
+                            'data': tensor2list(init)})
                for init in initializer]
     return tensors
 
-def onnx_node_to_ln_op(onnx_node):
-    pass
-
 def new_create_op(tensor):
+    data = [0] if tensor['data'] is None else tensor['data']
     op = {'name': new_opname("create"),
           'optype': 'create',
           'tensors_in': [],
           'tensors_out': [{'arg_name': 'dst', 'name': tensor['name']}],
           'params': [{'arg_name': 'dtype', 'value': tensor['dtype']},
                      {'arg_name': 'dims', 'value': tensor['dims']},
-                     {'arg_name': 'data', 'value': tensor['data']},
+                     {'arg_name': 'data', 'value': data},
                      {'arg_name': 'ran', 'value': [0, 0]},
-                     {'arg_name': 'from_file', 'value': false}]}
+                     {'arg_name': 'from_file', 'value': False}]}
     return op

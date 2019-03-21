@@ -49,6 +49,7 @@ extern ln_op ln_opimpl_fprint;
 extern ln_op ln_opimpl_lrelu;
 extern ln_op ln_opimpl_detect_yolov3;
 extern ln_op ln_opimpl_avgpool2d;
+extern ln_op ln_opimpl_resize;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -80,6 +81,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_lrelu,
     &ln_opimpl_detect_yolov3,
     &ln_opimpl_avgpool2d,
+    &ln_opimpl_resize,
 /* end of init none ops */
     NULL
 };
