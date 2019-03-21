@@ -179,7 +179,7 @@ onnx_to_ln_op_converters = {
     'Div', Div,
     'LeakyRelu', LeakyRelu,
     'MaxPool', MaxPool,
-    'Pow', Pow
+    'Pow', Pow,
 }
 
 def unsupported_node(node):
