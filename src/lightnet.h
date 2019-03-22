@@ -25,6 +25,10 @@
 
 /* end of config defines */
 
+#define LN_MAJOR_VERSION (0)
+#define LN_MINOR_VERSION (1)
+#define LN_MICRO_VERSION (0)
+
 #include "ln_util.h"
 #include "ln_list.h"
 #include "ln_queue.h"
@@ -45,9 +49,5 @@
 #include "ln_context.h"
 #include "ln_name.h"
 #include "ln_option.h"
-
-#define LN_MAJOR_VERSION (0)
-#define LN_MINOR_VERSION (1)
-#define LN_MICRO_VERSION (0)
 
 #endif  /* _LN_LIGHTNET_H_ */

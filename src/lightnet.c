@@ -20,7 +20,7 @@
  * SOFTWARE.
  */
 
-#include "ln_lightnet.h"
+#include "lightnet.h"
 
 int main(int argc, char **argv)
 {

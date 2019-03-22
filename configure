@@ -4,6 +4,10 @@ use warnings;
 use strict;
 use Sort::strverscmp;
 
+# version information and dependencies
+my ($major, $minor, $micro) = &get_version("src/lightnet.h");
+my $requires = "tensorlight >= 0.1.0";
+
 my $usage = <<EOF;
 Usage: $0 [<option>[=<value>]...]
 Generate configuration makefile for building LightNet.
@@ -123,30 +127,12 @@ if ($opts{DOC} eq "yes") {
     }
 }
 
-# get current version
-my $major = 0;
-my $minor = 1;
-my $micro = 0;
-# my ($major, $minor, $micro);
-# my $version_h = "src/tl_tensor.h";
-# open my $version_h_fh, '<', $version_h or die "Cannot open $version_h: $!";
-# while (<$version_h_fh>) {
-#   $major = $1 if /MAJOR_VERSION \((\d)\)/;
-#   $minor = $1 if /MINOR_VERSION \((\d)\)/;
-#   $micro = $1 if /MICRO_VERSION \((\d)\)/;
-# }
-# close $version_h_fh;
-# if (not defined $major or not defined $minor or not defined $micro) {
-#   &err_exit("cannot find version macros in $version_h, maybe a bug?");
-# }
-
-# print configuration
 my $config_str = <<EOF;
 .SUFFIXES:
 MAJOR = $major
 MINOR = $minor
 MICRO = $micro
-REQUIRES = tensorlight >= 0.1.0
+REQUIRES = $requires
 EOF
 foreach my $key (sort keys %opts) {
     $config_str .= "$key ?= $opts{$key}\n";
@@ -162,6 +148,22 @@ sub mkdocs_version {
     my $version = "";
     $version = $1 if $str =~ /version (\d\.\d\.\d)/;
     $version;
+}
+
+sub get_version {
+    my $version_h = shift;
+    open my $version_h_fh, '<', $version_h or die "Cannot open $version_h: $!";
+    my ($major, $minor, $micro);
+    while (<$version_h_fh>) {
+        $major = $1 if /MAJOR_VERSION \((\d)\)/;
+        $minor = $1 if /MINOR_VERSION \((\d)\)/;
+        $micro = $1 if /MICRO_VERSION \((\d)\)/;
+    }
+    close $version_h_fh;
+    if (not defined $major or not defined $minor or not defined $micro) {
+        &err_exit("cannot find version macros in $version_h, maybe a bug?");
+    }
+    ($major, $minor, $micro);
 }
 
 # subroutines

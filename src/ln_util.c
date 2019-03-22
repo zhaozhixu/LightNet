@@ -231,8 +231,8 @@ int *ln_autopading(int *padding, const int *input_shape, const int *size,
         return padding;
     }
 
-    int *output_shape = ln_alloc(sizeof(int) * ndim);
-    int *pad_shape = ln_alloc(sizeof(int) * ndim);
+    int output_shape[TL_MAXDIM];
+    int pad_shape[TL_MAXDIM];
     for (int i = 0; i < ndim; i++) {
         output_shape[i] = (int)ceil((double)input_shape[i] / (double)stride[i]);
         pad_shape[i] = (output_shape[i] - 1) * stride[i] + size[i]
@@ -262,8 +262,6 @@ int *ln_autopading(int *padding, const int *input_shape, const int *size,
         assert(0 && "unsupported padding mode");
     }
 
-    ln_free(output_shape);
-    ln_free(pad_shape);
     return padding;
 }
 

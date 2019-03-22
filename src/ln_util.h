@@ -29,6 +29,8 @@
 #include <string.h>
 #include <time.h>
 
+#include "tl_tensor.h"
+
 enum ln_bool {
     LN_FALSE = 0,
     LN_TRUE = 1

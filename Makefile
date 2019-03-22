@@ -18,7 +18,7 @@ BIN_MMM = $(BIN).$(MAJOR).$(MINOR).$(MICRO)
 OBJ_A = $(OBJ_DIR)/$(LIBTARGET_A)
 OBJ_SO = $(OBJ_DIR)/$(LIBTARGET_SO)
 OBJ_BIN = $(OBJ_DIR)/$(BIN)
-SRC_HEADERS = $(wildcard $(SRC_DIR)/$(ABBR)_*.h)
+SRC_HEADERS = $(wildcard $(SRC_DIR)/*.h) $(wildcard $(SRC_DIR)/arch/*.h)
 
 BUILD_DIR ?= build
 BUILD_INCLUDE_DIR = $(BUILD_DIR)/include/$(TARGET)
@@ -50,16 +50,16 @@ INSTALL_DOC = $(INSTALL_DOC_DIR)/$(TARGET)
 
 PKGCONFIG_DIR ?= /usr/local/lib/pkgconfig
 
-CONFIG_HEADER = $(BUILD_INCLUDE_DIR)/$(ABBR)_$(TARGET).h
+CONFIG_HEADER = $(BUILD_INCLUDE_DIR)/$(TARGET).h
 CONFIG_DEFINES =
 ifeq ($(WITH_CUDA), yes)
-CONFIG_DEFINES += LN_CUDA
+CONFIG_DEFINES += "LN_CUDA"
 endif
 ifeq ($(WITH_CUDNN), yes)
-CONFIG_DEFINES += LN_CUDNN
+CONFIG_DEFINES += "LN_CUDNN"
 endif
 ifeq ($(WITH_TENSORRT), yes)
-CONFIG_DEFINES += LN_TENSORRT
+CONFIG_DEFINES += "LN_TENSORRT"
 endif
 
 ifeq ($(DOC), yes)
@@ -97,7 +97,7 @@ $(AT)cp $(OBJ_A) $(BUILD_A)
 $(AT)cp $(OBJ_SO) $(BUILD_SO_MMM)
 $(AT)ln -sf $(BUILD_SO_MMM) $(BUILD_SO_MM)
 $(AT)ln -sf $(BUILD_SO_MMM) $(BUILD_SO)
-$(AT)tools/addconfig.pl $(CONFIG_HEADER) $(CONFIG_DEFINES)
+$(AT)perl tools/addconfig.pl $(CONFIG_HEADER) $(CONFIG_DEFINES)
 endef
 
 define make-bin
