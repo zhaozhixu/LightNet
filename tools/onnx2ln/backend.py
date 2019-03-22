@@ -35,7 +35,7 @@ def dtype_onnx2tl(onnx_dtype):
         warnings.warn("Can't convert onnx dtype {} to TensorLight dtype. Return TL_DTYPE_INVALID".format(onnx_dtype))
         return tl_dtype
 
-def onnx_get_model(onnx_graph, opset):
+def get_model(onnx_graph):
     if onnx_graph.initializer:
         input_tensors = onnx_initializer_to_data_tensors(
             onnx_graph.initializer);

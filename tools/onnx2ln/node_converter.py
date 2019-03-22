@@ -253,7 +253,7 @@ def Relu(node, tensor_dict):
 
 def Reshape(node, tensor_dict):
     assert node.op_type == 'Reshape'
-    assert tensor_dict.has_key(node.inputs[1]):
+    assert tensor_dict.has_key(node.inputs[1])
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'shape' tensor now"%(node.op_type, node.name))
 
@@ -275,12 +275,12 @@ def Resize(node, tensor_dict):
         mode = 'TL_NEAREST'
     elif node.attrs['mode'] == 'nearest':
         mode = 'TL_NEAREST'
-    elif node.attrs.['mode'] == 'linear':
+    elif node.attrs['mode'] == 'linear':
         mode = 'TL_LINEAR'
     else:
         error("'%s' for node '%s' doesn't support 'mode' == '%s'"%(node.op_type, node.name, node.attrs['mode']))
 
-    assert tensor_dict.has_key(node.inputs[1]):
+    assert tensor_dict.has_key(node.inputs[1])
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'scales' tensor now"%(node.op_type, node.name))
 
@@ -313,10 +313,10 @@ def Sigmoid(node, tensor_dict):
 
 def Slice(node, tensor_dict):
     assert node.op_type == 'Slice'
-    assert tensor_dict.has_key(node.inputs[1]):
-    assert tensor_dict.has_key(node.inputs[2]):
-    assert tensor_dict.has_key(node.inputs[3]):
-    assert tensor_dict.has_key(node.inputs[4]):
+    assert tensor_dict.has_key(node.inputs[1])
+    assert tensor_dict.has_key(node.inputs[2])
+    assert tensor_dict.has_key(node.inputs[3])
+    assert tensor_dict.has_key(node.inputs[4])
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'starts' tensor now"%(node.op_type, node.name))
     if tensor_dict[node.inputs[2]]['data'] is None:
@@ -384,12 +384,12 @@ def Upsample(node, tensor_dict):
         mode = 'TL_NEAREST'
     elif node.attrs['mode'] == 'nearest':
         mode = 'TL_NEAREST'
-    elif node.attrs.['mode'] == 'linear':
+    elif node.attrs['mode'] == 'linear':
         mode = 'TL_LINEAR'
     else:
         error("'%s' for node '%s' doesn't support 'mode' == '%s'"%(node.op_type, node.name, node.attrs['mode']))
 
-    assert tensor_dict.has_key(node.inputs[1]):
+    assert tensor_dict.has_key(node.inputs[1])
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'scales' tensor now"%(node.op_type, node.name))
 
@@ -410,21 +410,21 @@ onnx_to_ln_op_converters = {
     'Add': Add,
     'ArgMax': ArgMax,
     'AveragePool': AveragePool,
-    'BatchNormalization', BatchNormalization,
-    'Concat', Concat,
-    'Conv', Conv,
-    'Div', Div,
-    'LeakyRelu', LeakyRelu,
-    'MaxPool', MaxPool,
-    'Pow', Pow,
-    'ReduceMax', ReduceMax,
-    'Relu', Relu,
-    'Reshape', Reshape,
-    'Resize', Resize,
-    'Sigmoid', Sigmoid,
-    'Slice', Slice,
-    'Softmax', Softmax,
-    'Upsample', Upsample,
+    'BatchNormalization': BatchNormalization,
+    'Concat': Concat,
+    'Conv': Conv,
+    'Div': Div,
+    'LeakyRelu': LeakyRelu,
+    'MaxPool': MaxPool,
+    'Pow': Pow,
+    'ReduceMax': ReduceMax,
+    'Relu': Relu,
+    'Reshape': Reshape,
+    'Resize': Resize,
+    'Sigmoid': Sigmoid,
+    'Slice': Slice,
+    'Softmax': Softmax,
+    'Upsample': Upsample,
 }
 
 def unsupported_node(node, tensor_dict):
