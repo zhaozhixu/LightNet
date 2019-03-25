@@ -5,11 +5,11 @@ use warnings;
 use strict;
 use JSON;
 use File::Copy;
-use Cwd 'abs_path';
 use Getopt::Long;
+use Cwd 'abs_path';
 use File::Basename;
-use File::Path qw(make_path);
 use lib abs_path(dirname(__FILE__));
+use File::Path qw(make_path);
 use easyjson;
 no warnings 'experimental::smartmatch';
 

@@ -2,45 +2,60 @@
 
 use warnings;
 use strict;
-use File::Copy;
+use Cwd 'abs_path';
+use File::Basename;
+use lib abs_path(dirname(__FILE__));
+use util;
 
 my $usage = <<EOF;
-Usage: $0 FILE DEFINE(s)
-Generate c defines in FILE before /* end of config defines */.
+Usage: $0 SRC DST -d DEFINE(s) -i INCLUDES
+Generate C defines and includes after /* start of config */ from SRC to DST.
 
 Example:
-	tools/addconfig.pl build/include/config.h USE_XXX USE_YYY
+	tools/addconfig.pl src/config.h.in build/include/config.h \
+    -d USE_XXX USE_YYY -i a.h b.h
 
 	This example will generate
+	/* start of config */
 	#define USE_XXX
 	#define USE_YYY
-	before /* end of config defines */ in build/inlcude/config.h.
+
+    #include "a.h"
+    #include "b.h"
 EOF
-if (@ARGV < 1 or $ARGV[0] eq "-h" or $ARGV[0] eq "--help") {
-  print $usage;
-  exit;
+
+util::exit_msg($usage) if $ARGV[0] eq "-h" or $ARGV[0] eq "--help";
+util::err_exit($usage) if @ARGV < 4;
+
+my $src = shift @ARGV;
+my $dst = shift @ARGV;
+util::err_exit($usage) if shift @ARGV ne "-d";
+
+my @defines;
+my $define;
+while (($define = shift @ARGV) ne "-i") {
+    push @defines, $define;
 }
 
-my $file = shift @ARGV;
-my @defines = @ARGV;
+my @includes = @ARGV;
 
-if (@defines == 0) {
-  exit;
-}
-
-my $config_defines = "";
+my @configs;
 foreach (@defines) {
-  $config_defines .= "#define $_\n";
+    push @configs, "#ifndef ".(split)[0];
+    push @configs, "#define $_";
+    push @configs, "#endif"
 }
+push @configs, "";
+foreach (@includes) {
+    push @configs, "#include \"$_\"";
+}
+my $config_str = join "\n", @configs;
 
-my $bak_file = "$file.bak";
-copy($file, $bak_file) or die "Cannot copy $file: $!";
-open FILE, '>', $file or die "Cannot open $file: $!";
-open BAK_FILE, '<', $bak_file or die "Cannot open $bak_file: $!";
-while (<BAK_FILE>) {
-  s|/\* end of config defines \*/|$config_defines/* end of config defines */|;
-  print FILE;
+open DST, '>', $dst or die "Cannot open $dst: $!";
+open SRC, '<', $src or die "Cannot open $src: $!";
+while (<SRC>) {
+    s|/\* start of config \*/|/\* start of config \*/\n$config_str|;
+    print DST;
 }
-close FILE;
-close BAK_FILE;
-unlink $bak_file;
+close SRC;
+close DST;

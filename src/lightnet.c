@@ -25,33 +25,33 @@
 int main(int argc, char **argv)
 {
     ln_context *ctx;
-    ln_option option;
+    ln_option *option;
 
-    option = ln_option_get(argc, argv);
-    ln_msg_init(&option);
+    option = ln_option_create(argc, argv);
+    ln_msg_init(option);
     ln_arch_init();
     ln_name_init();
     ctx = ln_context_create();
+    ln_context_init(ctx, option->source);
 
-    ln_context_init(ctx, option.source);
+    if (option->compile)
+        ln_context_compile(ctx, option->target);
 
-    if (option.compile)
-        ln_context_compile(ctx, option.target);
+    if (!ln_streq(option->outfile, "!"))
+        ln_context_print(ctx, option->outfile);
 
-    if (!ln_streq(option.outfile, "!"))
-        ln_context_print(ctx, option.outfile);
-
-    if (option.run) {
-        ln_context_load(ctx, option.datafile);
+    if (option->run) {
+        ln_context_load(ctx, option->datafile);
         ln_context_run(ctx);
         ln_context_unload(ctx);
     }
 
     ln_context_cleanup(ctx);
-
     ln_context_free(ctx);
-    ln_arch_cleanup();
     ln_name_cleanup();
+    ln_arch_cleanup();
+    ln_msg_cleanup();
+    ln_option_free(option);
 
     return 0;
 }

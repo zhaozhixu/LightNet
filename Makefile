@@ -18,7 +18,7 @@ BIN_MMM = $(BIN).$(MAJOR).$(MINOR).$(MICRO)
 OBJ_A = $(OBJ_DIR)/$(LIBTARGET_A)
 OBJ_SO = $(OBJ_DIR)/$(LIBTARGET_SO)
 OBJ_BIN = $(OBJ_DIR)/$(BIN)
-SRC_HEADERS = $(wildcard $(SRC_DIR)/*.h) $(wildcard $(SRC_DIR)/arch/*.h)
+SRC_HEADERS = $(wildcard $(SRC_DIR)/*.h)
 
 BUILD_DIR ?= build
 BUILD_INCLUDE_DIR = $(BUILD_DIR)/include/$(TARGET)
@@ -50,8 +50,12 @@ INSTALL_DOC = $(INSTALL_DOC_DIR)/$(TARGET)
 
 PKGCONFIG_DIR ?= /usr/local/lib/pkgconfig
 
-CONFIG_HEADER = $(BUILD_INCLUDE_DIR)/$(TARGET).h
+CONFIG_SRC = $(SRC_DIR)/$(TARGET).h.in
+CONFIG_DST = $(BUILD_INCLUDE_DIR)/$(TARGET).h
 CONFIG_DEFINES =
+CONFIG_DEFINES += "LN_MAJOR_VERSION ($(MAJOR))"
+CONFIG_DEFINES += "LN_MINOR_VERSION ($(MINOR))"
+CONFIG_DEFINES += "LN_MICRO_VERSION ($(MICRO))"
 ifeq ($(WITH_CUDA), yes)
 CONFIG_DEFINES += "LN_CUDA"
 endif
@@ -91,13 +95,16 @@ $(AT)if [ ! -d $(INSTALL_DOC_DIR) ]; then mkdir -p $(INSTALL_DOC_DIR); fi
 $(AT)if [ ! -d $(PKGCONFIG_DIR) ]; then mkdir -p $(PKGCONFIG_DIR); fi
 endef
 
+define pre-make-lib
+$(AT)perl tools/addconfig.pl $(CONFIG_SRC) $(CONFIG_DST) -d $(CONFIG_DEFINES) -i
+endef
+
 define make-lib
 $(AT)cp $(SRC_HEADERS) $(BUILD_INCLUDE_DIR)
 $(AT)cp $(OBJ_A) $(BUILD_A)
 $(AT)cp $(OBJ_SO) $(BUILD_SO_MMM)
 $(AT)ln -sf $(BUILD_SO_MMM) $(BUILD_SO_MM)
 $(AT)ln -sf $(BUILD_SO_MMM) $(BUILD_SO)
-$(AT)perl tools/addconfig.pl $(CONFIG_HEADER) $(CONFIG_DEFINES)
 endef
 
 define make-bin
@@ -155,8 +162,9 @@ bin: lib
 	$(call make-bin)
 
 lib:
-	$(AT)(cd $(SRC_DIR) && make)
 	$(call make-build-dir)
+	$(call pre-make-lib)
+	$(AT)(cd $(SRC_DIR) && make)
 	$(call make-lib)
 
 doc:

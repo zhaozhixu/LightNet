@@ -101,6 +101,7 @@ LN_CPPSTART
 #endif
 
 void ln_msg_init(ln_option *option);
+void ln_msg_cleanup(void);
 ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...);
 void ln_msg_free(ln_msg *error);
 void ln_msg_handle(ln_msg **error);

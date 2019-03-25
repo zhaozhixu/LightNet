@@ -40,7 +40,19 @@ typedef struct ln_option ln_option;
 LN_CPPSTART
 #endif
 
-ln_option ln_option_get(int argc, char **argv);
+ln_option *ln_option_create(int argc, char **argv);
+void ln_option_free(ln_option *option);
+
+/* those getters are for the convinence of python bindings */
+const char *ln_option_get_source(ln_option *option);
+const char *ln_option_get_outfile(ln_option *option);
+const char *ln_option_get_target(ln_option *option);
+const char *ln_option_get_datafile(ln_option *option);
+int ln_option_get_compile(ln_option *option);
+int ln_option_get_run(ln_option *option);
+int ln_option_get_Winter(ln_option *option);
+int ln_option_get_Wwarn(ln_option *option);
+int ln_option_get_debug(ln_option *option);
 
 #ifdef __cplusplus
 LN_CPPEND

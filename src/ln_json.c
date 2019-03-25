@@ -22,7 +22,7 @@
 
 #include <string.h>
 #include <assert.h>
-#include "cJSON.h"
+#include "ln_cJSON.h"
 #include "ln_json.h"
 
 #define MASK_32L 0xffffffff

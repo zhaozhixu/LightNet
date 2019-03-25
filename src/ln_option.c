@@ -67,21 +67,22 @@ Options:\n\
     exit(EXIT_SUCCESS);
 }
 
-ln_option ln_option_get(int argc, char **argv)
+ln_option *ln_option_create(int argc, char **argv)
 {
     int opt;
     int optindex;
-    ln_option option = {
-        .source = NULL,
-        .outfile = NULL,
-        .target = NULL,
-        .datafile = NULL,
-        .compile = 1,
-        .run = 1,
-        .Winter = 1,
-        .Wwarn = 1,
-        .debug = 0,
-    };
+    ln_option *option = ln_alloc(sizeof(ln_option));
+
+    option->source = NULL;
+    option->outfile = NULL;
+    option->target = NULL;
+    option->datafile = NULL;
+    option->compile = 1;
+    option->run = 1;
+    option->Winter = 1;
+    option->Wwarn = 1;
+    option->debug = 0;
+
     const struct option longopts[] = {
         {"help",      no_argument, NULL, 'h'},
         {"version",   no_argument, NULL, 'v'},
@@ -90,11 +91,11 @@ ln_option ln_option_get(int argc, char **argv)
         {"datafile",  required_argument, NULL, 'f'},
         {"compile",   no_argument, NULL, 'c'},
         {"run",       no_argument, NULL, 'r'},
-        {"Winter",    no_argument, &option.Winter, 1},
-        {"Wno-inter", no_argument, &option.Winter, 0},
-        {"Wwarn",     no_argument, &option.Wwarn, 1},
-        {"Wno-warn",  no_argument, &option.Wwarn, 0}, /* w */
-        {"debug",     no_argument, &option.debug, 1}, /* d */
+        {"Winter",    no_argument, &option->Winter, 1},
+        {"Wno-inter", no_argument, &option->Winter, 0},
+        {"Wwarn",     no_argument, &option->Wwarn, 1},
+        {"Wno-warn",  no_argument, &option->Wwarn, 0}, /* w */
+        {"debug",     no_argument, &option->debug, 1}, /* d */
         {0, 0, 0, 0}
     };
 
@@ -110,35 +111,35 @@ ln_option ln_option_get(int argc, char **argv)
             print_version_exit();
             break;
         case 'o':
-            option.outfile = optarg;
+            option->outfile = optarg;
             break;
         case 't':
-            option.target = optarg;
+            option->target = optarg;
             break;
         case 'f':
-            option.datafile = optarg;
+            option->datafile = optarg;
             break;
         case 'c':
-            if (option.compile == 0 && option.run == 1) {
-                option.compile = 1;
+            if (option->compile == 0 && option->run == 1) {
+                option->compile = 1;
                 break;
             }
-            option.compile = 1;
-            option.run = 0;
+            option->compile = 1;
+            option->run = 0;
             break;
         case 'r':
-            if (option.compile == 1 && option.run == 0) {
-                option.run = 1;
+            if (option->compile == 1 && option->run == 0) {
+                option->run = 1;
                 break;
             }
-            option.compile = 0;
-            option.run = 1;
+            option->compile = 0;
+            option->run = 1;
             break;
         case 'w':
-            option.Wwarn = 0;
+            option->Wwarn = 0;
             break;
         case 'd':
-            option.debug = 1;
+            option->debug = 1;
             break;
         case ':':
             ln_msg_error("option %s needs a value", argv[optind-1]);
@@ -154,12 +155,62 @@ ln_option ln_option_get(int argc, char **argv)
     if (optind >= argc)
         ln_msg_error("no input file");
     else
-        option.source = argv[optind++];
+        option->source = argv[optind++];
 
-    if (!option.outfile)
-        option.outfile = "out.json";
-    if (!option.target)
-        option.target = "cpu";
+    if (!option->outfile)
+        option->outfile = "out.json";
+    if (!option->target)
+        option->target = "cpu";
 
     return option;
+}
+
+void ln_option_free(ln_option *option)
+{
+    ln_free(option);
+}
+
+const char *ln_option_get_source(ln_option *option)
+{
+    return option->source;
+}
+
+const char *ln_option_get_outfile(ln_option *option)
+{
+    return option->outfile;
+}
+
+const char *ln_option_get_target(ln_option *option)
+{
+    return option->target;
+}
+
+const char *ln_option_get_datafile(ln_option *option)
+{
+    return option->datafile;
+}
+
+int ln_option_get_compile(ln_option *option)
+{
+    return option->compile;
+}
+
+int ln_option_get_run(ln_option *option)
+{
+    return option->run;
+}
+
+int ln_option_get_Winter(ln_option *option)
+{
+    return option->Winter;
+}
+
+int ln_option_get_Wwarn(ln_option *option)
+{
+    return option->Wwarn;
+}
+
+int ln_option_get_debug(ln_option *option)
+{
+    return option->debug;
 }

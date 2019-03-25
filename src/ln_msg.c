@@ -55,6 +55,11 @@ void ln_msg_init(ln_option *option)
     }
 }
 
+void ln_msg_cleanup(void)
+{
+    disp_mask = 0;
+}
+
 ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
 {
     ln_msg *msg;

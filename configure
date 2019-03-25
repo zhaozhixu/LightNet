@@ -5,7 +5,10 @@ use strict;
 use Sort::strverscmp;
 
 # version information and dependencies
-my ($major, $minor, $micro) = &get_version("src/lightnet.h");
+my $major = 0;
+my $minor = 1;
+my $micro = 0;
+# my ($major, $minor, $micro) = &get_version("src/lightnet.h");
 my $requires = "tensorlight >= 0.1.0";
 
 my $usage = <<EOF;
