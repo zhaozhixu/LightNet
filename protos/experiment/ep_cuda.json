@@ -8,7 +8,7 @@
             "rules": [
                 {
                     "cond": ["self.outs[dst]=>"],
-                    "replace": ["create_cpu"]
+                    "replace": ["create_cpu"],
                 },
                 {
                     "cond": [
@@ -29,7 +29,7 @@
                     "cond": [],
                     "replace": ["create_cpu"]
                 },
-            ]
+            ],
         },
         {
             "optype": "create_cuda",
