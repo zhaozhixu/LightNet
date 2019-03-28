@@ -32,6 +32,14 @@
 #include <sys/stat.h>
 
 #include "ln_util.h"
+#include "lightnet.h"
+
+char *ln_sprint_version(char *buf)
+{
+    snprintf(buf, 20, "%d.%d.%d",
+             LN_MAJOR_VERSION, LN_MINOR_VERSION, LN_MICRO_VERSION);
+    return buf;
+}
 
 void *ln_alloc(size_t size)
 {

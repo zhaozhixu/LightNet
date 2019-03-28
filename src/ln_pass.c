@@ -151,8 +151,7 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
                 ln_context_check(ctx);
             }
         }
-        count++;
-        if (count > MAX_PEEPHOLE_PASSES) {
+        if (++count > MAX_PEEPHOLE_PASSES) {
             ln_msg_emit(LN_MSG_INTER_WARN,
                           "peephole passes exceeds limit of %d",
                           MAX_PEEPHOLE_PASSES);

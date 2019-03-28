@@ -24,5 +24,8 @@ GRTAGS
 GTAGS
 obj/
 build/
+dist/
+__pycache__/
+*.egg-info/
 
 debug/

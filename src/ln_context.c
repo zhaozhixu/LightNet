@@ -229,6 +229,11 @@ void ln_context_load(ln_context *ctx, const char *datafile)
     ln_op_list_do_static_run(ctx->ops);
 }
 
+void ln_context_init_data(ln_context *ctx, const char *name, void *data)
+{
+    ln_tensor_table_init_data(ctx->tensor_table, name, data);
+}
+
 void ln_context_run(const ln_context *ctx)
 {
     ln_op_list_do_run(ctx->ops);
