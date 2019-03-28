@@ -240,6 +240,19 @@ void ln_tensor_table_free(ln_hash *table)
     ln_hash_free(table);
 }
 
+void ln_tensor_table_init_data(ln_hash *table, const char *name,
+                               const void *data)
+{
+    ln_tensor_entry *te;
+    ln_copy_func copy;
+
+    te = ln_tensor_table_find(table, name);
+    if (!te)
+        ln_msg_inter_error("tensor name '%s' not found", name);
+    copy = ln_mem_copy_func(te->mtype, LN_MEM_CPU);
+    copy(te->tensor->data, data, tl_tensor_size(te->tensor));
+}
+
 #define TRT_WEIGHT_ERR(file, fmt, varg...)                    \
     ln_msg_error("load_trt_weight_file(): invalid weight file %s: "fmt, \
                  (file), ##varg)
