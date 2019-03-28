@@ -194,7 +194,9 @@ EOF
             &err_exit("optype '$optype' needs a 'replace' or 'match' or 'err'");
         }
 
-        my $body_code = &indent_block($INDENT_OFFSET, (join "\n", @body_codes));
+        my $body_code = join "\n", @body_codes;
+        $body_code = &gen_custom($rule, $body_code);
+        $body_code = &indent_block($INDENT_OFFSET, $body_code);
         if ($rule == $rules->[0]) {
             push @rules_codes, <<EOF;
 if ($cond_code) {
@@ -214,7 +216,9 @@ EOF
 
     &make_defs_neat(\@auto_vars);
     my $auto_vars_code = join "\n", &indent_lines($INDENT_OFFSET, \@auto_vars);
-    my $rules_code = &indent_block($INDENT_OFFSET, (join "\n", @rules_codes));
+    my $rules_code = join "\n", @rules_codes;
+    $rules_code = &gen_custom($op, $rules_code);
+    $rules_code = &indent_block($INDENT_OFFSET, $rules_code);
 
     push @$ep_funcs, "{\"$optype\", ep_$optype},";
     my $tpl = <<EOF;
@@ -338,8 +342,15 @@ sub gen_replace {
     my $optype = $defined_ops->{self};
     my $desc = &find_op_desc($optype);
     my $code;
+
+    if (@$replace == 0) {
+        $code = "return NULL;";
+        return $code;
+    }
+
     if (not defined $details) {
-        &err_exit("need a 'details' to replace with multiple operators") if (@$replace != 1);
+        &err_exit("need a 'details' to replace with multiple operators")
+            if (@$replace > 1);
         my $rep_optype = (split ' ', $replace->[0])[0];
         my $rep_desc = &find_op_desc($rep_optype);
         # TODO: check validation
@@ -1244,6 +1255,19 @@ sub array_slice {
         $code = "(${element_type}[]){$array_str}";
     }
     ($type, $code, $len);
+}
+
+sub gen_custom {
+    my $top = shift;
+    my $code = shift;
+
+    if (exists $top->{custom_before}) {
+        $code = $top->{custom_before}."\n\n".$code;
+    }
+    if (exists $top->{custom_after}) {
+        $code = $code."\n\n".$top->{custom_after};
+    }
+    $code;
 }
 
 sub find_op_desc {
