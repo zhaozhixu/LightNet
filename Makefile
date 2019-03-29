@@ -66,6 +66,17 @@ ifeq ($(WITH_TENSORRT), yes)
 CONFIG_DEFINES += "LN_TENSORRT"
 endif
 
+ifeq ($(WITH_PYTHON), yes)
+PYTHON_TARGET = py$(TARGET)
+PYTHON_DIR = tools/py$(TARGET)
+PYTHON_BIN = python$(PYTHON_VERSION)
+INSTALL_PYTHON = (cd $(PYTHON_DIR) && $(PYTHON_BIN) setup.py install --prefix $(PYTHON_PREFIX) --record .install-log)
+UNINSTALL_PYTHON = perl tools/uninstallpy.pl $(PYTHON_DIR)/.install-log $(PYTHON_TARGET) $(PYTHON_VERSION) $(PYTHON_PREFIX)
+else
+INSTALL_PYTHON =
+UNINSTALL_PYTHON =
+endif
+
 ifeq ($(DOC), yes)
 MAKE_DOC = mkdocs build -c -d $(BUILD_DOC)
 else
@@ -126,6 +137,7 @@ cp $(BUILD_BIN_MMM) $(INSTALL_BIN_MMM)
 ln -sf $(INSTALL_BIN_MMM) $(INSTALL_BIN)
 cp -r $(BUILD_DOC) $(INSTALL_DOC)
 perl tools/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
+$(INSTALL_PYTHON)
 endef
 
 define make-uninstall
@@ -138,6 +150,7 @@ rm -f $(INSTALL_BIN)
 rm -f $(INSTALL_BIN_MMM)
 rm -rf $(INSTALL_DOC)
 rm -f $(PKGCONFIG_DIR)/$(TARGET).pc
+$(UNINSTALL_PYTHON)
 endef
 
 define make-clean
