@@ -69,8 +69,7 @@ endif
 ifeq ($(WITH_PYTHON), yes)
 PYTHON_TARGET = py$(TARGET)
 PYTHON_DIR = tools/py$(TARGET)
-PYTHON_BIN = python$(PYTHON_VERSION)
-INSTALL_PYTHON = (cd $(PYTHON_DIR) && $(PYTHON_BIN) setup.py install --prefix $(PYTHON_PREFIX) --record .install-log)
+INSTALL_PYTHON = (cd $(PYTHON_DIR) && $(PYTHON_CMD) setup.py install --prefix $(PYTHON_PREFIX) --record .install-log)
 UNINSTALL_PYTHON = perl tools/uninstallpy.pl $(PYTHON_DIR)/.install-log $(PYTHON_TARGET) $(PYTHON_VERSION) $(PYTHON_PREFIX)
 else
 INSTALL_PYTHON =

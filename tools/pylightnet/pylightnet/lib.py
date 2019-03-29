@@ -2,37 +2,40 @@ import sys
 from ctypes import *
 
 libln = None
+IS_PYTHON3 = sys.version_info > (3,)
 
 def is_py3():
     return sys.version_info > (3,)
 
-def lib_init():
+def init():
     global libln
     if not libln is None:
         return
     libln = cdll.LoadLibrary("liblightnet.so")
     # print("initialize liblightnet.so")
 
-def lib_cleanup():
+def cleanup():
     libln = None
 
 def str_array(str_list):
-    array_type = c_char_p * len(str_list)
-    array = array_type();
+    array = (c_char_p * len(str_list))();
     for i in range(len(str_list)):
-        if is_py3():
+        if IS_PYTHON3:
             array[i] = bytes(str_list[i], encoding = "utf8")
         else:
             array[i] = str_list[i]
     return array
 
-def alloc(init, size=None):
-    return create_string_buffer(init, size)
+def alloc(init_or_size, size=None):
+    return create_string_buffer(init_or_size, size)
+
+def cast_buf(buf, ctype):
+    return cast(buf, POINTER(ctype))
 
 def version():
     buf = alloc(20)
     libln.ln_sprint_version(buf)
-    if is_py3():
+    if IS_PYTHON3:
         return str(buf.value, encoding = "utf8")
     else:
         return str(buf.value)

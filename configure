@@ -35,6 +35,7 @@ options:
                               set to your virtualenv directory if using
                               virtualenv [/usr/local]
   --python-version=VERSION    python version [3]
+  --python-cmd=CMD            python command [python3]
   --debug=BOOL                set to yes when debugging [no]
   --doc=BOOL                  set to yes if build the documents too [yes]
 EOF
@@ -55,6 +56,7 @@ my %opts = (
             "WITH_PYTHON" => "no",
             "PYTHON_PREFIX" => "/usr/local",
             "PYTHON_VERSION" => "3",
+            "PYTHON_CMD" => "python3",
             "DEBUG" => "no",
             "DOC" => "yes",
            );
@@ -77,6 +79,7 @@ GetOptions(
            'with-python=s' => \$opts{WITH_PYTHON},
            'python-prefix=s' => \$opts{PYTHON_PREFIX},
            'python-version=s' => \$opts{PYTHON_VERSION},
+           'python-cmd=s' => \$opts{PYTHON_CMD},
            'debug=s' => \$opts{DEBUG},
            'doc=s' => \$opts{DOC},
           ) or &exit_msg(1, $usage);
@@ -131,10 +134,15 @@ if ($opts{WITH_CUDA} eq "yes") {
 }
 
 if ($opts{WITH_PYTHON} eq "yes") {
-    my $python_bin = "python$opts{PYTHON_VERSION}";
-    $output = `$python_bin --version`;;
-    if (!defined $output or $output eq "") {
-        &err_exit("$python_bin is not installed");
+    $output = `$opts{PYTHON_CMD} --version 2>&1`;
+    if (!defined $output or $output eq "" or
+        not &version_roughly_match($output, $opts{PYTHON_VERSION})) {
+        &warn_msg("PYTHON_CMD $opts{PYTHON_CMD} is not installed or doesn't match PYTHON_VERSION $opts{PYTHON_VERSION}, now set to python$opts{PYTHON_VERSION}");
+        $opts{PYTHON_CMD} = "python$opts{PYTHON_VERSION}";
+        $output = `$opts{PYTHON_CMD} --version 2>&1`;
+        if (!defined $output or $output eq "") {
+            &err_exit("$opts{PYTHON_CMD} is not installed");
+        }
     }
 }
 
@@ -206,4 +214,20 @@ sub exit_msg {
 sub warn_msg {
     my $msg = shift;
     print STDERR "\e[35mWarning:\e[0m $msg\n";
+}
+
+sub match_version {
+    my $input = shift;
+    my $version;
+    $version = $1 if $input =~ /([0-9a-z.]+)/;
+}
+
+sub version_roughly_match {
+    my $ver1 = &match_version(shift);
+    my $ver2 = &match_version(shift);
+    if (index($ver1, $ver2) == -1 and index($ver2, $ver1) == -1) {
+        return 0;
+    } else {
+        return 1;
+    }
 }

@@ -4,6 +4,7 @@ use 5.014;
 use warnings;
 use strict;
 
+die "$0 requires 4 arguments" unless @ARGV == 4;
 my $logfile = shift @ARGV;
 my $pkgname = shift @ARGV;
 my $pyversion = shift @ARGV;

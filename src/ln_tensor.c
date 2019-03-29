@@ -240,17 +240,36 @@ void ln_tensor_table_free(ln_hash *table)
     ln_hash_free(table);
 }
 
-void ln_tensor_table_init_data(ln_hash *table, const char *name,
-                               const void *data)
+void ln_tensor_table_set_data(ln_hash *table, const char *name, const void *data)
 {
     ln_tensor_entry *te;
     ln_copy_func copy;
 
     te = ln_tensor_table_find(table, name);
     if (!te)
-        ln_msg_inter_error("tensor name '%s' not found", name);
+        ln_msg_error("tensor name '%s' not found", name);
     copy = ln_mem_copy_func(te->mtype, LN_MEM_CPU);
     copy(te->tensor->data, data, tl_tensor_size(te->tensor));
+}
+
+void *ln_tensor_table_get_data(ln_hash *table, const char *name)
+{
+    ln_tensor_entry *te;
+
+    te = ln_tensor_table_find(table, name);
+    if (!te)
+        ln_msg_error("tensor name '%s' not found", name);
+    return te->tensor->data;
+}
+
+size_t ln_tensor_table_data_size(ln_hash *table, const char *name)
+{
+    ln_tensor_entry *te;
+
+    te = ln_tensor_table_find(table, name);
+    if (!te)
+        ln_msg_error("tensor name '%s' not found", name);
+    return tl_tensor_size(te->tensor);
 }
 
 #define TRT_WEIGHT_ERR(file, fmt, varg...)                    \

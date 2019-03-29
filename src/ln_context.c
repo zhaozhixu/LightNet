@@ -229,9 +229,19 @@ void ln_context_load(ln_context *ctx, const char *datafile)
     ln_op_list_do_static_run(ctx->ops);
 }
 
-void ln_context_init_data(ln_context *ctx, const char *name, void *data)
+void ln_context_set_data(ln_context *ctx, const char *name, void *data)
 {
-    ln_tensor_table_init_data(ctx->tensor_table, name, data);
+    ln_tensor_table_set_data(ctx->tensor_table, name, data);
+}
+
+void *ln_context_get_data(ln_context *ctx, const char *name)
+{
+    return ln_tensor_table_get_data(ctx->tensor_table, name);
+}
+
+size_t ln_context_data_size(ln_context *ctx, const char *name)
+{
+    return ln_tensor_table_data_size(ctx->tensor_table, name);
 }
 
 void ln_context_run(const ln_context *ctx)

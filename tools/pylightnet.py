@@ -1,11 +1,11 @@
-#! /usr/bin/python
+#! /usr/bin/env python
 
 import sys
 # If this file is not in 'tools' directory, just write 'import pylightnet as ln'
 import pylightnet.pylightnet as ln
 
 def main(argv):
-    ln.lib.lib_init()
+    ln.lib.init()
     option = ln.option.create(ln.lib.str_array(argv))
     ln.msg.init(option)
     ln.arch.init()

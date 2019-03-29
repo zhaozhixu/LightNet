@@ -10,7 +10,8 @@ import msg
 import name
 import option
 import util
+import infer
 
-lib.lib_init()
+lib.init()
 
 __version__ = lib.version()
