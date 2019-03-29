@@ -3,6 +3,7 @@
 use warnings;
 use strict;
 use Sort::strverscmp;
+use Getopt::Long;
 
 # version information and dependencies
 my $major = 0;
@@ -12,23 +13,30 @@ my $micro = 0;
 my $requires = "tensorlight >= 0.1.0";
 
 my $usage = <<EOF;
-Usage: $0 [<option>[=<value>]...]
+Usage: $0 [OPTION[=VALUE]...]
 Generate configuration makefile for building LightNet.
 
 options:
-  -h, --help                     print help information
-  --target=<name>                target name [lightnet]
-  --abbr=<abbr>                  abbreviation name [ln]
-  --build-dir=<path>             building directory [build]
-  --install-dir=<path>           installation directory [/usr/local]
-  --pkgconfig-dir=<path>         pkgconfig directory [/usr/local/lib/pkgconfig]
-  --with-cuda=<bool>             set to yes if build with CUDA [no]
-  --with-cudnn=<bool>            set to yes if build with cudnn library [no]
-  --cuda-install-dir=<path>      cuda installation directory [/usr/local/cuda]
-  --with-tensorrt=<bool>         set to yes if build with TensorRT [no]
-  --tensorrt-install-dir=<path>  tensorrt installation directory [/usr]
-  --debug=<bool>                 set to yes when debugging [no]
-  --doc=<bool>                   set to yes if build the documents too [yes]
+  -h, --help                  print help information
+  --target=NAME               target name [lightnet]
+  --abbr=ABBR                 abbreviation name [ln]
+  --build-dir=DIR             building directory [build]
+  --install-dir=DIR           installation directory [/usr/local]
+  --prefix=DIR                same as --install-dir; who comes later counts
+  --pkgconfig-dir=DIR         pkgconfig directory [/usr/local/lib/pkgconfig]
+  --with-cuda=BOOL            set to yes if build with CUDA [no]
+  --cuda-install-dir=DIR      cuda installation directory [/usr/local/cuda]
+  --with-cudnn=BOOL           set to yes if build with cudnn library [no]
+  --cudnn-install-dir=DIR     cudn installation directory [/usr/local/cuda]
+  --with-tensorrt=BOOL        set to yes if build with TensorRT [no]
+  --tensorrt-install-dir=DIR  tensorrt installation directory [/usr]
+  --with-python=BOOL          set to yes if build with Python [no]
+  --python-prefix=DIR         python package installation directory;
+                              set to your virtualenv directory if using
+                              virtualenv [/usr/local]
+  --python-version=VERSION    python version [3]
+  --debug=BOOL                set to yes when debugging [no]
+  --doc=BOOL                  set to yes if build the documents too [yes]
 EOF
 
 # default options, go in config.mk
@@ -39,62 +47,66 @@ my %opts = (
             "INSTALL_DIR" => "/usr/local",
             "PKGCONFIG_DIR" => "/usr/local/lib/pkgconfig",
             "WITH_CUDA" => "no",
-            "WITH_CUDNN" => "no",
             "CUDA_INSTALL_DIR" => "/usr/local/cuda",
+            "WITH_CUDNN" => "no",
+            "CUDNN_INSTALL_DIR" => "/usr/local/cuda",
             "WITH_TENSORRT" => "no",
             "TENSORRT_INSTALL_DIR" => "/usr",
+            "WITH_PYTHON" => "no",
+            "PYTHON_PREFIX" => "/usr/local",
+            "PYTHON_VERSION" => "3",
             "DEBUG" => "no",
             "DOC" => "yes",
            );
 
 # parse arguments
-while (@ARGV > 0) {
-    my $arg = shift @ARGV;
-    if ($arg eq "-h" or $arg eq "--help") {
-        print $usage;
-        exit;
-    }
-    if (not $arg =~ /^--(\S+)$/) {
-        &err_exit("wrong format in argument \"$arg\"");
-    }
-    my ($opt, $value) = split /=/, $1;
-    if (not defined $value or $value eq "") {
-        &err_exit("option \"$arg\" doesn't have a value");
-    }
-    $opt =~ s/(\S+)/\U$1/gi;
-    $opt =~ s/-/_/g;
-    if (not exists $opts{$opt}) {
-        &err_exit("invalid option \"$arg\"");
-    }
-    $opts{$opt} = $value;
-}
+GetOptions(
+           'help' => sub {&exit_msg(0, $usage)},
+           'target=s' => \$opts{TARGET},
+           'abbr=s' => \$opts{ABBR},
+           'build-dir=s' => \$opts{BUILD_DIR},
+           'install-dir=s' => \$opts{INSTALL_DIR},
+           'prefix=s' => \$opts{INSTALL_DIR},
+           'pkgconfig-dir=s' => \$opts{PKGCONFIG_DIR},
+           'with-cuda=s' => \$opts{WITH_CUDA},
+           'cuda-install-dir=s' => \$opts{CUDA_INSTALL_DIR},
+           'with-cudnn=s' => \$opts{WITH_CUDNN},
+           'cudnn-install-dir=s' => \$opts{CUDNN_INSTALL_DIR},
+           'with-tensorrt=s' => \$opts{WITH_TENSORRT},
+           'tensorrt-install-dir=s' => \$opts{TENSORRT_INSTALL_DIR},
+           'with-python=s' => \$opts{WITH_PYTHON},
+           'python-prefix=s' => \$opts{PYTHON_PREFIX},
+           'python-version=s' => \$opts{PYTHON_VERSION},
+           'debug=s' => \$opts{DEBUG},
+           'doc=s' => \$opts{DOC},
+          ) or &exit_msg(1, $usage);
 
 # check configuration
 # TODO: check versions
 my $output;
 $output = `gcc --version`;
 if (!defined $output or $output eq "") {
-    &err_exit("gcc not installed");
+    &err_exit("gcc is not installed");
 }
 
 $output = `make --version`;;
 if (!defined $output or $output eq "") {
-    &err_exit("make not installed");
+    &err_exit("make is not installed");
 }
 
 $output = `pkg-config --version`;;
 if (!defined $output or $output eq "") {
-    &err_exit("pkg-config not installed");
+    &err_exit("pkg-config is not installed");
 }
 
 $output = `pkg-config --modversion check`;
 if (!defined $output or $output eq "") {
-    &err_exit("check not installed");
+    &err_exit("check is not installed");
 }
 
 $output = `pkg-config --modversion tensorlight`;
 if (!defined $output or $output eq "") {
-    &err_exit("tensorlight not installed");
+    &err_exit("tensorlight is not installed");
 }
 
 if ($opts{WITH_CUDNN} eq "yes") {
@@ -114,14 +126,22 @@ if ($opts{WITH_TENSORRT} eq "yes") {
 if ($opts{WITH_CUDA} eq "yes") {
     $output = `nvcc --version`;;
     if (!defined $output or $output eq "") {
-        &err_exit("nvcc not installed");
+        &err_exit("nvcc is not installed");
+    }
+}
+
+if ($opts{WITH_PYTHON} eq "yes") {
+    my $python_bin = "python$opts{PYTHON_VERSION}";
+    $output = `$python_bin --version`;;
+    if (!defined $output or $output eq "") {
+        &err_exit("$python_bin is not installed");
     }
 }
 
 if ($opts{DOC} eq "yes") {
     $output = `mkdocs --version`;;
     if (!defined $output or $output eq "") {
-        &warn_msg("mkdocs is not installed; documents are not going to be built");
+        &warn_msg("mkdocs is is not installed; documents are not going to be built");
         $opts{DOC} = "no";
     } elsif (strverscmp(&mkdocs_version($output), "1.0.0") < 0) {
         my $version = &mkdocs_version($output);
@@ -171,12 +191,19 @@ sub get_version {
 
 # subroutines
 sub err_exit {
-    my $msg = $_[0];
+    my $msg = shift;
     print STDERR "\e[31mError:\e[0m $msg\n";
     exit 1;
 }
 
+sub exit_msg {
+    my $code = shift;
+    my $msg = shift;
+    print $msg;
+    exit $code;
+}
+
 sub warn_msg {
-    my $msg = $_[0];
+    my $msg = shift;
     print STDERR "\e[35mWarning:\e[0m $msg\n";
 }

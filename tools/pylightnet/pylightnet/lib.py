@@ -3,6 +3,9 @@ from ctypes import *
 
 libln = None
 
+def is_py3():
+    return sys.version_info > (3,)
+
 def lib_init():
     global libln
     if not libln is None:
@@ -17,14 +20,14 @@ def str_array(str_list):
     array_type = c_char_p * len(str_list)
     array = array_type();
     for i in range(len(str_list)):
-        array[i] = str_list[i]
+        if is_py3():
+            array[i] = bytes(str_list[i], encoding = "utf8")
+        else:
+            array[i] = str_list[i]
     return array
 
 def alloc(init, size=None):
     return create_string_buffer(init, size)
-
-def is_py3():
-    return sys.version_info > (3,)
 
 def version():
     buf = alloc(20)

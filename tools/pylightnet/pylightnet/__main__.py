@@ -1,8 +1,7 @@
 #! /usr/bin/python
 
 import sys
-# If this file is not in 'tools' directory, just write 'import pylightnet as ln'
-import pylightnet.pylightnet as ln
+import pylightnet as ln
 
 def main(argv):
     ln.lib.lib_init()

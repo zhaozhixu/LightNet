@@ -67,9 +67,9 @@ build LightNet.
     There are options to custom your building and installation process.
     You can append them after `./configure`. For example, use
     
-        ./configure --install-dir=DIR
+        ./configure --prefix=DIR
         
-    to set the installation directory (default is `/usr/local`). Use
+    to set the installation directory to DIR (default is `/usr/local`). Use
     
         ./configure --with-cuda=yes
         

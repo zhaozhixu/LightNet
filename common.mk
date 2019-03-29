@@ -44,7 +44,9 @@ ifeq ($(WITH_CUDNN), yes)
 CFLAGS += -DLN_CUDNN
 CXXFLAGS += -DLN_CUDNN
 CUFLAGS += -DLN_CUDNN
-LDFLAGS += -lcudnn
+CUDNN_INSTALL_DIR ?= /usr/local/cuda
+INCPATHS += -I$(CUDNN_INSTALL_DIR)/include
+LDFLAGS += -L$(CUDNN_INSTALL_DIR)/lib -lcudnn
 endif
 ifeq ($(WITH_TENSORRT), yes)
 CFLAGS += -DLN_TENSORRT
