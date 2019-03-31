@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <float.h>
+#include <stdarg.h>
 
 #include "ln_param.h"
 #include "ln_util.h"
@@ -70,13 +71,19 @@ void ln_param_entry_free(ln_param_entry *entry)
     ln_free(entry);
 }
 
-void ln_param_assign_bool(ln_param_entry *entry, ln_bool bool)
+void ln_param_set_bool(ln_param_entry *entry, ln_bool bool)
 {
     assert(entry);
     entry->value_bool = bool;
 }
 
-void ln_param_assign_satu_number(ln_param_entry *entry, double number)
+void ln_param_set_null(ln_param_entry *entry)
+{
+    assert(entry);
+    entry->type = LN_PARAM_NULL;
+}
+
+void ln_param_set_satu_number(ln_param_entry *entry, double number)
 {
     assert(entry);
 
@@ -98,15 +105,15 @@ void ln_param_assign_satu_number(ln_param_entry *entry, double number)
         entry->value_int = (int)number;
 }
 
-void ln_param_assign_string(ln_param_entry *entry, const char *string)
+void ln_param_set_string(ln_param_entry *entry, const char *string)
 {
     assert(entry);
     ln_free(entry->value_string);
     entry->value_string = ln_strdup(string);
 }
 
-void ln_param_assign_satu_array_number(ln_param_entry *entry, int array_len,
-                                       const double *array_number)
+void ln_param_set_satu_array_number(ln_param_entry *entry, int array_len,
+                                    const double *array_number)
 {
     int i;
     assert(entry);
@@ -142,14 +149,14 @@ void ln_param_assign_satu_array_number(ln_param_entry *entry, int array_len,
     }
 }
 
-void ln_param_assign_satu_array_double(ln_param_entry *entry, int array_len,
-                                       const double *array_number)
+void ln_param_set_satu_array_double(ln_param_entry *entry, int array_len,
+                                    const double *array_number)
 {
-    ln_param_assign_satu_array_number(entry, array_len, array_number);
+    ln_param_set_satu_array_number(entry, array_len, array_number);
 }
 
-void ln_param_assign_satu_array_float(ln_param_entry *entry, int array_len,
-                                      const float *array_number)
+void ln_param_set_satu_array_float(ln_param_entry *entry, int array_len,
+                                   const float *array_number)
 {
     int i;
     assert(entry);
@@ -179,8 +186,8 @@ void ln_param_assign_satu_array_float(ln_param_entry *entry, int array_len,
     }
 }
 
-void ln_param_assign_satu_array_int(ln_param_entry *entry, int array_len,
-                                    const int *array_number)
+void ln_param_set_satu_array_int(ln_param_entry *entry, int array_len,
+                                 const int *array_number)
 {
     int i;
     assert(entry);
@@ -202,8 +209,8 @@ void ln_param_assign_satu_array_int(ln_param_entry *entry, int array_len,
     }
 }
 
-void ln_param_assign_array_string(ln_param_entry *entry, int array_len,
-                                  const char **array_string)
+void ln_param_set_array_string(ln_param_entry *entry, int array_len,
+                               const char **array_string)
 {
     int i;
     assert(entry);
@@ -219,8 +226,8 @@ void ln_param_assign_array_string(ln_param_entry *entry, int array_len,
     }
 }
 
-void ln_param_assign_array_bool(ln_param_entry *entry, int array_len,
-                                const ln_bool *array_bool)
+void ln_param_set_array_bool(ln_param_entry *entry, int array_len,
+                             const ln_bool *array_bool)
 {
     assert(entry);
     assert(array_len > 0);
@@ -231,14 +238,70 @@ void ln_param_assign_array_bool(ln_param_entry *entry, int array_len,
     memmove(entry->value_array_bool, array_bool, sizeof(ln_bool)*array_len);
 }
 
+void ln_param_vset(ln_param_entry *entry, va_list ap)
+{
+    int len;
+    ln_bool *array_bool;
+    double *array_double;
+    char **array_string;
+    ln_bool bool_value;
+    double number;
+    char *string;
+
+    switch (entry->type) {
+    case LN_PARAM_ARRAY_BOOL:
+        array_bool = va_arg(ap, ln_bool *);
+        len = va_arg(ap, int);
+        ln_param_set_array_bool(entry, len, array_bool);
+        break;
+    case LN_PARAM_ARRAY_NUMBER:
+        array_double = va_arg(ap, double *);
+        len = va_arg(ap, int);
+        ln_param_set_satu_array_number(entry, len, array_double);
+        break;
+    case LN_PARAM_ARRAY_STRING:
+        array_string = va_arg(ap, char **);
+        len = va_arg(ap, int);
+        ln_param_set_array_string(entry, len, (const char **)array_string);
+        break;
+    case LN_PARAM_BOOL:
+        bool_value = va_arg(ap, ln_bool);
+        ln_param_set_bool(entry, bool_value);
+        break;
+    case LN_PARAM_NULL:
+        ln_param_set_null(entry);
+        break;
+    case LN_PARAM_NUMBER:
+        number = va_arg(ap, double);
+        ln_param_set_satu_number(entry, number);
+        break;
+    case LN_PARAM_STRING:
+        string = va_arg(ap, char *);
+        ln_param_set_string(entry, string);
+        break;
+    case LN_PARAM_INVALID:
+    default:
+        assert(0 && "unsupported ln_param_type");
+        break;
+    }
+}
+
+void ln_param_set(ln_param_entry *entry, ...)
+{
+    va_list ap;
+    va_start(ap, entry);
+    ln_param_vset(entry, ap);
+    va_end(ap);
+}
+
 ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name,
                                     ln_param_type ptype)
 {
-     ln_param_entry *entry;
+    ln_param_entry *entry;
 
-     entry = ln_param_entry_create(arg_name, ptype);
-     list = ln_list_append(list, entry);
-     return list;
+    entry = ln_param_entry_create(arg_name, ptype);
+    list = ln_list_append(list, entry);
+    return list;
 }
 
 ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name,
@@ -347,7 +410,7 @@ ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name,
     ln_param_entry *entry;
 
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_STRING);
-    ln_param_assign_array_string(entry, array_len, array_string);
+    ln_param_set_array_string(entry, array_len, array_string);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -359,7 +422,7 @@ ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name,
     ln_param_entry *entry;
 
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
-    ln_param_assign_satu_array_number(entry, array_len, array_number);
+    ln_param_set_satu_array_number(entry, array_len, array_number);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -379,7 +442,7 @@ ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name,
     ln_param_entry *entry;
 
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
-    ln_param_assign_satu_array_float(entry, array_len, array_number);
+    ln_param_set_satu_array_float(entry, array_len, array_number);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -390,7 +453,7 @@ ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name,
     ln_param_entry *entry;
 
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_NUMBER);
-    ln_param_assign_satu_array_int(entry, array_len, array_number);
+    ln_param_set_satu_array_int(entry, array_len, array_number);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -403,7 +466,7 @@ ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name,
 
     assert(array_len >= 0);
     entry = ln_param_entry_create(arg_name, LN_PARAM_ARRAY_BOOL);
-    ln_param_assign_array_bool(entry, array_len, array_bool);
+    ln_param_set_array_bool(entry, array_len, array_bool);
     list = ln_list_append(list, entry);
     return list;
 }
@@ -446,6 +509,7 @@ ln_list *ln_param_list_copy(ln_list *list)
             new_list = ln_param_list_append_string(new_list, entry->arg_name,
                                                    entry->value_string);
             break;
+        case LN_PARAM_INVALID:
         default:
             assert(0 && "unsupported ln_param_type");
             break;
@@ -477,9 +541,8 @@ ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name)
     ln_param_entry cmp_entry;
     ln_param_entry *result_entry;
 
-    cmp_entry.arg_name = ln_strdup(arg_name);
+    cmp_entry.arg_name = (char *)arg_name;
     result_entry = ln_list_find_custom(list, &cmp_entry, find_by_arg_name);
-    ln_free(cmp_entry.arg_name);
 
     return result_entry;
 }

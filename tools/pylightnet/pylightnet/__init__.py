@@ -10,6 +10,7 @@ import msg
 import name
 import option
 import util
+import compiler
 import infer
 
 lib.init()

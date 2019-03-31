@@ -17,13 +17,16 @@ def init():
 def cleanup():
     libln = None
 
+def str2bytes(s):
+    if IS_PYTHON3:
+        return s.encode('utf8')
+    else:
+        return s
+
 def str_array(str_list):
     array = (c_char_p * len(str_list))();
     for i in range(len(str_list)):
-        if IS_PYTHON3:
-            array[i] = bytes(str_list[i], encoding = "utf8")
-        else:
-            array[i] = str_list[i]
+        array[i] = str2bytes(str_list[i])
     return array
 
 def alloc(init_or_size, size=None):

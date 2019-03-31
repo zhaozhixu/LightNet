@@ -37,7 +37,6 @@
 #include "ln_context.h"
 #include "ln_arch.h"
 #include "ln_json.h"
-#include "ln_cJSON.h"
 #include "ln_queue.h"
 #include "ln_util.h"
 #include "ln_param.h"

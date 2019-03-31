@@ -582,42 +582,42 @@ sub gen_copy_param {
     given ($type) {
         when ("char *") {
             $code = <<EOF;
-ln_param_assign_string($pe, $rhs);
+ln_param_set_string($pe, $rhs);
 EOF
         }
         when ("char **") {
             $code = <<EOF;
-ln_param_assign_array_string($pe, $len, (const char **)($rhs));
+ln_param_set_array_string($pe, $len, (const char **)($rhs));
 EOF
         }
         when (/^int \*$/) {
             $code = <<EOF;
-ln_param_assign_satu_array_int($pe, $len, $rhs);
+ln_param_set_satu_array_int($pe, $len, $rhs);
 EOF
         }
         when (/^float \*$/) {
             $code = <<EOF;
-ln_param_assign_satu_array_float($pe, $len, $rhs);
+ln_param_set_satu_array_float($pe, $len, $rhs);
 EOF
         }
         when (/^double \*$/) {
             $code = <<EOF;
-ln_param_assign_satu_array_double($pe, $len, $rhs);
+ln_param_set_satu_array_double($pe, $len, $rhs);
 EOF
         }
         when (/^ln_bool \*$/) {
             $code = <<EOF;
-ln_param_assign_array_bool($pe, $len, $rhs);
+ln_param_set_array_bool($pe, $len, $rhs);
 EOF
         }
         when (/^(int|float|double)$/) {
             $code = <<EOF;
-ln_param_assign_satu_number($pe, (double)($rhs));
+ln_param_set_satu_number($pe, (double)($rhs));
 EOF
         }
         when (/^ln_bool$/) {
             $code = <<EOF;
-ln_param_assign_bool($pe, $rhs);
+ln_param_set_bool($pe, $rhs);
 EOF
         }
         default {

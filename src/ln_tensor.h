@@ -89,7 +89,7 @@ int ln_tensor_table_remove(ln_hash *table, const char *name);
 ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);
 void ln_tensor_table_free(ln_hash *table);
 void ln_tensor_table_set_data(ln_hash *table, const char *name, const void *data);
-void *ln_tensor_table_get_data(ln_hash *table, const char *name);
+void *ln_tensor_table_get_data(ln_hash *table, const char *name, void *data);
 size_t ln_tensor_table_data_size(ln_hash *table, const char *name);
 void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file);
 

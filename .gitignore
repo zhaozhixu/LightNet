@@ -11,6 +11,7 @@
 *.i
 *.pyc
 *out.json
+*out_debug.json
 test.json
 .clang_complete
 vgcore*

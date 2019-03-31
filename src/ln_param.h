@@ -23,6 +23,7 @@
 #ifndef _LN_PARAM_H_
 #define _LN_PARAM_H_
 
+#include <stdarg.h>
 #include "ln_list.h"
 
 enum ln_param_type {
@@ -63,19 +64,24 @@ LN_CPPSTART
 ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type);
 void ln_param_entry_free(ln_param_entry *entry);
 
-void ln_param_assign_bool(ln_param_entry *entry, ln_bool bool_value);
-void ln_param_assign_string(ln_param_entry *entry, const char *string);
-void ln_param_assign_satu_number(ln_param_entry *entry, double number);
-void ln_param_assign_satu_array_number(ln_param_entry *entry, int array_len,
+void ln_param_vset(ln_param_entry *entry, va_list ap);
+void ln_param_set(ln_param_entry *entry, ...);
+void ln_param_set_null(ln_param_entry *entry);
+void ln_param_set_bool(ln_param_entry *entry, ln_bool bool_value);
+void ln_param_set_string(ln_param_entry *entry, const char *string);
+void ln_param_set_satu_number(ln_param_entry *entry, double number);
+void ln_param_set_satu_array_number(ln_param_entry *entry, int array_len,
                                        const double *array_number);
-void ln_param_assign_satu_array_double(ln_param_entry *entry, int array_len,
+void ln_param_set_satu_array_double(ln_param_entry *entry, int array_len,
                                        const double *array_number);
-void ln_param_assign_satu_array_float(ln_param_entry *entry, int array_len,
+void ln_param_set_satu_array_float(ln_param_entry *entry, int array_len,
                                       const float *array_number);
-void ln_param_assign_satu_array_int(ln_param_entry *entry, int array_len,
+void ln_param_set_satu_array_int(ln_param_entry *entry, int array_len,
                                     const int *array_number);
-void ln_param_assign_array_string(ln_param_entry *entry, int array_len,
+void ln_param_set_array_string(ln_param_entry *entry, int array_len,
                                   const char **array_string);
+void ln_param_set_array_bool(ln_param_entry *entry, int array_len,
+                             const ln_bool *array_bool);
 /* TODO: add prepend version */
 ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name,
                                     ln_param_type ptype);

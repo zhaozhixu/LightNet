@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <stdarg.h>
 #include "ln_context.h"
 #include "ln_json.h"
 #include "ln_pass.h"
@@ -208,7 +209,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_op_list_do_post_run(ctx->ops);
     assert(ln_hash_size(ctx->tensor_table) == 0);
     ln_op_list_do_pre_run(ctx->ops);
-    /* ln_context_print(ctx, "out.json"); */
+    /* ln_context_print(ctx, "out_debug.json"); */
 
     ln_pass_mem_plan(ctx);
 }
@@ -229,19 +230,29 @@ void ln_context_load(ln_context *ctx, const char *datafile)
     ln_op_list_do_static_run(ctx->ops);
 }
 
-void ln_context_set_data(ln_context *ctx, const char *name, void *data)
+void ln_context_set_data(ln_context *ctx, const char *tname, const void *data)
 {
-    ln_tensor_table_set_data(ctx->tensor_table, name, data);
+    ln_tensor_table_set_data(ctx->tensor_table, tname, data);
 }
 
-void *ln_context_get_data(ln_context *ctx, const char *name)
+void *ln_context_get_data(ln_context *ctx, const char *tname, void *data)
 {
-    return ln_tensor_table_get_data(ctx->tensor_table, name);
+    return ln_tensor_table_get_data(ctx->tensor_table, tname, data);
 }
 
-size_t ln_context_data_size(ln_context *ctx, const char *name)
+size_t ln_context_data_size(ln_context *ctx, const char *tname)
 {
-    return ln_tensor_table_data_size(ctx->tensor_table, name);
+    return ln_tensor_table_data_size(ctx->tensor_table, tname);
+}
+
+void ln_context_set_param(ln_context *ctx, const char *opname,
+                          const char *pname, ...)
+{
+    va_list ap;
+
+    va_start(ap, pname);
+    ln_op_table_vset_param(ctx->op_table, opname, pname, ap);
+    va_end(ap);
 }
 
 void ln_context_run(const ln_context *ctx)

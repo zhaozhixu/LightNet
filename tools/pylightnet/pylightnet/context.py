@@ -23,16 +23,24 @@ def Print(ctx, outfile):
 def load(ctx, datafile):
     lib.libln.ln_context_load(ctx, datafile)
 
-def set_data(ctx, name, data):
-    lib.libln.ln_context_set_data(ctx, name, data)
+def set_data(ctx, tname, data):
+    lib.libln.ln_context_set_data(ctx, tname, data)
 
-def get_data(ctx, name):
+def get_data(ctx, tname, data):
     lib.libln.ln_context_get_data.restype = c_void_p
-    return lib.libln.ln_context_get_data(ctx, name)
+    return lib.libln.ln_context_get_data(ctx, tname, data)
 
-def data_size(ctx, name):
+def data_size(ctx, tname):
     lib.libln.ln_context_data_size.restype = c_size_t
-    return lib.libln.ln_context_data_size(ctx, name)
+    return lib.libln.ln_context_data_size(ctx, tname)
+
+def set_param(ctx, opname, pname, *args):
+    if len(args) == 1:
+        lib.libln.ln_context_set_param(ctx, opname, pname, args[0])
+    elif len(args == 2):
+        lib.libln.ln_context_set_param(ctx, opname, pname, args[0], args[1])
+    else:
+        assert False;
 
 def run(ctx):
     lib.libln.ln_context_run(ctx)
