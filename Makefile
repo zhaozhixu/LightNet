@@ -78,8 +78,10 @@ endif
 
 ifeq ($(DOC), yes)
 MAKE_DOC = mkdocs build -c -d $(BUILD_DOC)
+INSTALL_DOC_CMD = cp -r $(BUILD_DOC) $(INSTALL_DOC)
 else
 MAKE_DOC =
+INSTALL_DOC_CMD =
 endif
 
 ifdef VERBOSE
@@ -137,7 +139,7 @@ ln -sf $(INSTALL_SO_MMM) $(INSTALL_SO)
 cp $(BUILD_BIN_MMM) $(INSTALL_BIN_MMM)
 ln -sf $(INSTALL_BIN_MMM) $(INSTALL_BIN)
 cp $(BUILD_BIN_DIR)/ir2json.pl $(INSTALL_BIN_DIR)/ir2json.pl
-cp -r $(BUILD_DOC) $(INSTALL_DOC)
+$(INSTALL_DOC_CMD)
 perl tools/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
 $(INSTALL_PYTHON)
 endef
