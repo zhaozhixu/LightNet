@@ -344,6 +344,16 @@ double ln_clock(void)
     return time;
 }
 
+void ln_img_submean(const unsigned char *data, const float *mean, float *out,
+                    int H, int W, int C)
+{
+    for (int c = 0; c < C; c++) {
+        for (int i = 0; i < H * W; i++) {
+            out[c * H * W + i] = (float)data[i * C + c] - mean[c];
+        }
+    }
+}
+
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
     char buf[LN_MAXLINE];

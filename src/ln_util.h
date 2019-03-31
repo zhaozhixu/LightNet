@@ -80,6 +80,8 @@ int ln_direct_cmp(const void *p1, const void *p2);
 uint32_t ln_str_hash(const void *key);
 int ln_str_cmp(const void *p1, const void *p2);
 double ln_clock(void);
+void ln_img_submean(const unsigned char *data, const float *mean, float *out,
+                    int H, int W, int C);
 
 void ln_err_msg(const char *fmt, ...);
 void ln_err_cont(int error, const char *fmt, ...);

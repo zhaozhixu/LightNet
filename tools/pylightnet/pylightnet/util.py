@@ -8,3 +8,6 @@ def sprint_version(buf):
 def streq(str1, str2):
     lib.libln.ln_streq.restype = c_int
     return lib.libln.ln_streq(str1, str2)
+
+def img_submean(data, mean, out, H, W, C):
+    lib.libln.ln_img_submean(data, mean, out, H, W, C)
