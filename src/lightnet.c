@@ -42,7 +42,9 @@ int main(int argc, char **argv)
 
     if (option->run) {
         ln_context_load(ctx, option->datafile);
+        LN_TIMEIT_START;
         ln_context_run(ctx);
+        LN_TIMEIT_END("run time: ");
         ln_context_unload(ctx);
     }
 
