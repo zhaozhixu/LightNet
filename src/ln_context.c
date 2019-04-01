@@ -257,7 +257,11 @@ void ln_context_set_param(ln_context *ctx, const char *opname,
 
 void ln_context_run(const ln_context *ctx)
 {
+    double t1, t2;
+    t1 = ln_clock();
     ln_op_list_do_run(ctx->ops);
+    t2 = ln_clock();
+    ln_msg_info("run time: %.3fs", t2 - t1);
 }
 
 void ln_context_unload(ln_context *ctx)

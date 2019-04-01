@@ -15,6 +15,7 @@ def init():
     # print("initialize liblightnet.so")
 
 def cleanup():
+    global libln
     libln = None
 
 def str2bytes(s):
