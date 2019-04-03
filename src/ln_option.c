@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Zhao Zhixu
+ * Copyright (c) 2018-2019 Zhao Zhixu
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ static void print_version_exit(void)
     char version_str[20] = {0};
     const char *version = "\
 lightnet %s\n\
-Copyright (C) 2018, Zhao Zhixu\n\
+Copyright (c) 2018-2019, Zhao Zhixu\n\
 Released under the MIT License.\n\
 ";
 
