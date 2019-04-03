@@ -38,8 +38,8 @@ struct mem_block {
     size_t   size;
 };
 
-typedef struct ln_mem_plan ln_mem_plan;
-struct ln_mem_plan {
+typedef struct ln_mem_pool ln_mem_pool;
+struct ln_mem_pool {
     size_t   size;
     size_t   align_size;
     ln_list *mem_blocks;
@@ -152,19 +152,19 @@ static void mem_block_free(mem_block *block)
     ln_free(block);
 }
 
-ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size)
+ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)
 {
-    ln_mem_plan *mem_plan;
+    ln_mem_pool *mem_pool;
     mem_block *block;
 
     assert(size > 0 && align_size > 0);
-    mem_plan = ln_alloc(sizeof(ln_mem_plan));
-    mem_plan->size = size;
-    mem_plan->align_size = align_size;
+    mem_pool = ln_alloc(sizeof(ln_mem_pool));
+    mem_pool->size = size;
+    mem_pool->align_size = align_size;
     block = mem_block_create(HOLE, 1, size);
-    mem_plan->mem_blocks = ln_list_append(NULL, block);
+    mem_pool->mem_blocks = ln_list_append(NULL, block);
 
-    return mem_plan;
+    return mem_pool;
 }
 
 static void mem_block_free_wrapper(void *block)
@@ -172,22 +172,22 @@ static void mem_block_free_wrapper(void *block)
     mem_block_free((mem_block *)block);
 }
 
-void ln_mem_plan_free(ln_mem_plan *mem_plan)
+void ln_mem_pool_free(ln_mem_pool *mem_pool)
 {
-    ln_list_free_deep(mem_plan->mem_blocks, mem_block_free_wrapper);
-    ln_free(mem_plan);
+    ln_list_free_deep(mem_pool->mem_blocks, mem_block_free_wrapper);
+    ln_free(mem_pool);
 }
 
-static int best_fit(ln_mem_plan *mem_plan, size_t size)
+static int best_fit(ln_mem_pool *mem_pool, size_t size)
 {
     int first_hole = 0;
     size_t min_size;
-    size_t align_size = mem_plan->align_size;
+    size_t align_size = mem_pool->align_size;
     int min_idx;
     ln_list *l;
     int i;
 
-    for (l = mem_plan->mem_blocks, i = 0; l; l = l->next, i++) {
+    for (l = mem_pool->mem_blocks, i = 0; l; l = l->next, i++) {
         mem_block *block = l->data;
         size_t align_start = block->start % align_size == 0 ? block->start :
             align_size - block->start % align_size + block->start;
@@ -211,26 +211,26 @@ static int best_fit(ln_mem_plan *mem_plan, size_t size)
     return min_idx;
 }
 
-size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size)
+size_t ln_mem_pool_alloc(ln_mem_pool *mem_pool, size_t size)
 {
     assert(size > 0);
-    int fit_idx = best_fit(mem_plan, size);
+    int fit_idx = best_fit(mem_pool, size);
     if (fit_idx < 0)
-        ln_msg_error("ln_mem_plan_alloc(): out of virtual memory pool when allocating %ld bytes",
+        ln_msg_error("ln_mem_pool_alloc(): out of virtual memory pool when allocating %ld bytes",
                      size);
 
-    mem_block *block = ln_list_nth_data(mem_plan->mem_blocks, fit_idx);
-    size_t align_size = mem_plan->align_size;
+    mem_block *block = ln_list_nth_data(mem_pool->mem_blocks, fit_idx);
+    size_t align_size = mem_pool->align_size;
     size_t align_start = block->start % align_size == 0 ? block->start :
         align_size - block->start % align_size + block->start;
     size_t mem_size = size + align_start - block->start;
     mem_block *new_block = mem_block_create(SYMBOL, block->start, mem_size);
-    mem_plan->mem_blocks = ln_list_insert_nth(mem_plan->mem_blocks,
+    mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
                                               new_block, fit_idx);
     block->start += mem_size;
     block->size -= mem_size;
     if (block->size == 0)
-        mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
+        mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
                                                        fit_idx + 1,
                                                        mem_block_free_wrapper);
 
@@ -238,33 +238,33 @@ size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size)
     if (hole_size == 0)
         return align_start;
     mem_block *hole_block = mem_block_create(HOLE, new_block->start, hole_size);
-    mem_plan->mem_blocks = ln_list_insert_nth(mem_plan->mem_blocks,
+    mem_pool->mem_blocks = ln_list_insert_nth(mem_pool->mem_blocks,
                                               hole_block, fit_idx);
     new_block->start = align_start;
     new_block->size -= hole_size;
     return align_start;
 }
 
-void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr)
+void ln_mem_pool_dealloc(ln_mem_pool *mem_pool, size_t addr)
 {
     int i;
     ln_list *l, *l_next, *l_before = NULL;
     mem_block *block;
-    for (l = mem_plan->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
+    for (l = mem_pool->mem_blocks, i = 0; l; l_before = l, l = l->next, i++) {
         block = l->data;
         if (block->flag != SYMBOL || block->start != addr)
             continue;
         l_next = l->next;
         if (l_next && ((mem_block *)l_next->data)->flag == HOLE) {
             block->size += ((mem_block *)l_next->data)->size;
-            mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
+            mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
                                                            i + 1,
                                                            mem_block_free_wrapper);
         }
         if (l_before && ((mem_block *)l_before->data)->flag == HOLE) {
             block->start -= ((mem_block *)l_before->data)->size;
             block->size += ((mem_block *)l_before->data)->size;
-            mem_plan->mem_blocks = ln_list_remove_nth_deep(mem_plan->mem_blocks,
+            mem_pool->mem_blocks = ln_list_remove_nth_deep(mem_pool->mem_blocks,
                                                            i - 1,
                                                            mem_block_free_wrapper);
         }
@@ -272,54 +272,54 @@ void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr)
         break;
     }
     if (!l)
-        ln_msg_error("ln_mem_plan_dealloc(): invalid address: 0x%012lx",
+        ln_msg_error("ln_mem_pool_dealloc(): invalid address: 0x%012lx",
                      addr);
 }
 
-int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr)
+int ln_mem_pool_exist(ln_mem_pool *mem_pool, size_t addr)
 {
     mem_block *block;
 
-    LN_LIST_FOREACH(block, mem_plan->mem_blocks) {
+    LN_LIST_FOREACH(block, mem_pool->mem_blocks) {
         if (block->flag == SYMBOL && block->start == addr)
             return 1;
     }
     return 0;
 }
 
-void ln_mem_plan_dump(ln_mem_plan *mem_plan, FILE *fp)
+void ln_mem_pool_dump(ln_mem_pool *mem_pool, FILE *fp)
 {
     mem_block *block;
 
     fprintf(fp, "======= Lightnet Memory Plan Map: =======\n");
-    LN_LIST_FOREACH(block, mem_plan->mem_blocks) {
+    LN_LIST_FOREACH(block, mem_pool->mem_blocks) {
         fprintf(fp, "0x%012lx-0x%012lx %s\n", block->start,
                 block->start+block->size-1, block->flag==HOLE?"H":"S");
     }
 }
 
-static void mem_plan_free_wrapper(void *p)
+static void mem_pool_free_wrapper(void *p)
 {
-    ln_mem_plan_free(p);
+    ln_mem_pool_free(p);
 }
 
-ln_hash *ln_mem_plan_table_create(void)
+ln_hash *ln_mem_pool_table_create(void)
 {
     ln_hash *mpt;
-    ln_mem_plan *mp;
+    ln_mem_pool *mp;
     int i;
 
     mpt = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL,
-                         mem_plan_free_wrapper);
+                         mem_pool_free_wrapper);
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
-        mp = ln_mem_plan_create(ln_mem_infos[i].max_size,
+        mp = ln_mem_pool_create(ln_mem_infos[i].max_size,
                                 ln_mem_infos[i].align_size);
         ln_hash_insert(mpt, (void *)(size_t)i, mp);
     }
     return mpt;
 }
 
-void ln_mem_plan_table_free(ln_hash *mpt)
+void ln_mem_pool_table_free(ln_hash *mpt)
 {
     ln_hash_free(mpt);
 }

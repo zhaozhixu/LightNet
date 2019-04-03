@@ -36,7 +36,7 @@ enum ln_mem_type {
 };
 typedef enum ln_mem_type ln_mem_type;
 
-typedef struct ln_mem_plan ln_mem_plan;
+typedef struct ln_mem_pool ln_mem_pool;
 
 struct ln_mem_info {
     void  *(*alloc_func)(size_t n);
@@ -55,14 +55,14 @@ const char *ln_mem_type_name(ln_mem_type mtype);
 const ln_mem_info ln_mem_type_info(ln_mem_type mtype);
 ln_copy_func ln_mem_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype);
 
-ln_mem_plan *ln_mem_plan_create(size_t size, size_t align_size);
-void ln_mem_plan_free(ln_mem_plan *mem_plan);
-size_t ln_mem_plan_alloc(ln_mem_plan *mem_plan, size_t size);
-void ln_mem_plan_dealloc(ln_mem_plan *mem_plan, size_t addr);
-int ln_mem_plan_exist(ln_mem_plan *mem_plan, size_t addr);
-void ln_mem_plan_dump(ln_mem_plan *mem_plan, FILE *fp);
-ln_hash *ln_mem_plan_table_create(void);
-void ln_mem_plan_table_free(ln_hash *mpt);
+ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size);
+void ln_mem_pool_free(ln_mem_pool *mem_pool);
+size_t ln_mem_pool_alloc(ln_mem_pool *mem_pool, size_t size);
+void ln_mem_pool_dealloc(ln_mem_pool *mem_pool, size_t addr);
+int ln_mem_pool_exist(ln_mem_pool *mem_pool, size_t addr);
+void ln_mem_pool_dump(ln_mem_pool *mem_pool, FILE *fp);
+ln_hash *ln_mem_pool_table_create(void);
+void ln_mem_pool_table_free(ln_hash *mpt);
 
 #ifdef __cplusplus
 LN_CPPEND

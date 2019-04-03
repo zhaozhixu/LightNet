@@ -197,7 +197,7 @@ static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
     return uc;
 }
 
-void ln_pass_mem_plan(ln_context *ctx)
+void ln_pass_mem_pool(ln_context *ctx)
 {
     ln_op *op;
     ln_op_arg *arg;
@@ -205,26 +205,26 @@ void ln_pass_mem_plan(ln_context *ctx)
     ln_tensor_entry *te;
     ln_tensor_entry *owner_te;
     ln_tensor_list_entry *tle;
-    ln_hash *mem_plans;
-    ln_mem_plan *mp;
+    ln_hash *mem_pools;
+    ln_mem_pool *mp;
     ln_list *unused_tles;
     size_t total_sums[LN_MEM_TYPE_SIZE] = {0};
     size_t water_level;
 
-    mem_plans = ln_mem_plan_table_create();
+    mem_pools = ln_mem_pool_table_create();
     use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     LN_LIST_FOREACH(op, ctx->ops) {
         arg = op->op_arg;
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_plans, (void *)te->mtype);
+            mp = ln_hash_find(mem_pools, (void *)te->mtype);
             if (te->mtype == LN_MEM_NONE)
                 ln_msg_inter_error("tensor '%s' has an unresolved memory type %s",
                                    te->name, ln_mem_type_name(te->mtype));
             if (te->owner)
                 continue;
             if (te->isstatic) {
-                te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
+                te->offset = ln_mem_pool_alloc(mp, tl_tensor_size(te->tensor));
                 water_level = te->offset + tl_tensor_size(te->tensor);
                 ctx->mem_sizes[te->mtype] =
                     ctx->mem_sizes[te->mtype] > water_level ?
@@ -258,7 +258,7 @@ void ln_pass_mem_plan(ln_context *ctx)
         unused_tles = NULL;
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_plans, (void *)te->mtype);
+            mp = ln_hash_find(mem_pools, (void *)te->mtype);
             if (te->owner) {
                 owner_te = ln_tensor_table_find(arg->tensor_table, te->owner);
                 assert(owner_te);
@@ -270,10 +270,10 @@ void ln_pass_mem_plan(ln_context *ctx)
             }
             if (te->isstatic)
                 continue;
-            if (ln_mem_plan_exist(mp, te->offset)) {
+            if (ln_mem_pool_exist(mp, te->offset)) {
                 use_count_dec(use_counts, te->name);
             } else {
-                te->offset = ln_mem_plan_alloc(mp, tl_tensor_size(te->tensor));
+                te->offset = ln_mem_pool_alloc(mp, tl_tensor_size(te->tensor));
                 water_level = te->offset + tl_tensor_size(te->tensor);
                 ctx->mem_sizes[te->mtype] =
                     ctx->mem_sizes[te->mtype] > water_level ?
@@ -288,19 +288,19 @@ void ln_pass_mem_plan(ln_context *ctx)
         }
         LN_LIST_FOREACH(tle, unused_tles) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_plans, (void *)te->mtype);
-            ln_mem_plan_dealloc(mp, te->offset);
+            mp = ln_hash_find(mem_pools, (void *)te->mtype);
+            ln_mem_pool_dealloc(mp, te->offset);
         }
         ln_list_free(unused_tles);
         LN_LIST_FOREACH(tle, arg->tensors_in) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_plans, (void *)te->mtype);
+            mp = ln_hash_find(mem_pools, (void *)te->mtype);
             if (te->owner) {
                 if (use_count_dec(use_counts, te->owner) == 0) {
                     te = ln_tensor_table_find(arg->tensor_table, te->owner);
                     if (te->isstatic)
                         continue;
-                    ln_mem_plan_dealloc(mp, te->offset);
+                    ln_mem_pool_dealloc(mp, te->offset);
                 }
                 continue;
             }
@@ -309,7 +309,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                 continue;
             }
             if (use_count_dec(use_counts, te->name) == 0) {
-                ln_mem_plan_dealloc(mp, te->offset);
+                ln_mem_pool_dealloc(mp, te->offset);
             }
         }
     }
@@ -325,5 +325,5 @@ void ln_pass_mem_plan(ln_context *ctx)
 #endif  /* LN_DEBUG */
 
     ln_hash_free(use_counts);
-    ln_mem_plan_table_free(mem_plans);
+    ln_mem_pool_table_free(mem_pools);
 }
