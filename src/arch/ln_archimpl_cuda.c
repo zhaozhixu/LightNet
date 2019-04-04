@@ -195,21 +195,21 @@ ln_combiner_func cb_funcs_cuda[] = {
     NULL
 };
 
-extern void ln_expander_init_cuda_expander(void **context_p);
+extern void ln_expander_init_cuda_expander(void **priv_p);
 /* end of declare cuda init funcs */
 
-static void init_cuda(void **context_p)
+static void init_cuda(void **priv_p)
 {
-    ln_expander_init_cuda_expander(context_p);
+    ln_expander_init_cuda_expander(priv_p);
 /* end of exec cuda init funcs */
 }
 
-extern void ln_expander_cleanup_cuda_expander(void **context_p);
+extern void ln_expander_cleanup_cuda_expander(void **priv_p);
 /* end of declare cuda cleanup funcs */
 
-static void cleanup_cuda(void **context_p)
+static void cleanup_cuda(void **priv_p)
 {
-    ln_expander_cleanup_cuda_expander(context_p);
+    ln_expander_cleanup_cuda_expander(priv_p);
 /* end of exec cuda cleanup funcs */
 }
 

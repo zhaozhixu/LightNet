@@ -440,13 +440,13 @@ static ln_hash_init_entry init_ep_funcs[] = {
 };
 static ln_hash *ep_funcs_hash = NULL;
 
-void ln_expander_init_cuda_expander(void **context_p)
+void ln_expander_init_cuda_expander(void **priv_p)
 {
     ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     ln_hash_init(ep_funcs_hash, init_ep_funcs);
 }
 
-void ln_expander_cleanup_cuda_expander(void **context_p)
+void ln_expander_cleanup_cuda_expander(void **priv_p)
 {
     ln_hash_free(ep_funcs_hash);
 }

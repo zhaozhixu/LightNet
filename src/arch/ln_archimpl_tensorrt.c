@@ -54,21 +54,21 @@ ln_combiner_func cb_funcs_tensorrt[] = {
     NULL
 };
 
-extern void ln_expander_init_tensorrt_expander(void **context_p);
+extern void ln_expander_init_tensorrt_expander(void **priv_p);
 /* end of declare tensorrt init funcs */
 
-static void init_tensorrt(void **context_p)
+static void init_tensorrt(void **priv_p)
 {
-    ln_expander_init_tensorrt_expander(context_p);
+    ln_expander_init_tensorrt_expander(priv_p);
 /* end of exec tensorrt init funcs */
 }
 
-extern void ln_expander_cleanup_tensorrt_expander(void **context_p);
+extern void ln_expander_cleanup_tensorrt_expander(void **priv_p);
 /* end of declare tensorrt cleanup funcs */
 
-static void cleanup_tensorrt(void **context_p)
+static void cleanup_tensorrt(void **priv_p)
 {
-    ln_expander_cleanup_tensorrt_expander(context_p);
+    ln_expander_cleanup_tensorrt_expander(priv_p);
 /* end of exec tensorrt cleanup funcs */
 }
 

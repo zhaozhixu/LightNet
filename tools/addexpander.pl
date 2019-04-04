@@ -666,13 +666,13 @@ sub gen_overall_funcs {
     my $name = shift;
 
     my $tpl = <<EOF;
-void ln_expander_init_$name(void **context_p)
+void ln_expander_init_$name(void **priv_p)
 {
     ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     ln_hash_init(ep_funcs_hash, init_ep_funcs);
 }
 
-void ln_expander_cleanup_$name(void **context_p)
+void ln_expander_cleanup_$name(void **priv_p)
 {
     ln_hash_free(ep_funcs_hash);
 }
@@ -736,10 +736,10 @@ sub add_to_arch_file {
 
     my $declare = "extern ln_list *ln_expander_${name}(const ln_op *op, const ln_dfg *dfg, int *match);\n";
     my $item = "    ln_expander_${name},\n";
-    my $init_func = "extern void ln_expander_init_${name}(void **context_p);\n";
-    my $init_func_exec = "    ln_expander_init_${name}(context_p);\n";
-    my $cleanup_func = "extern void ln_expander_cleanup_${name}(void **context_p);\n";
-    my $cleanup_func_exec = "    ln_expander_cleanup_${name}(context_p);\n";
+    my $init_func = "extern void ln_expander_init_${name}(void **priv_p);\n";
+    my $init_func_exec = "    ln_expander_init_${name}(priv_p);\n";
+    my $cleanup_func = "extern void ln_expander_cleanup_${name}(void **priv_p);\n";
+    my $cleanup_func_exec = "    ln_expander_cleanup_${name}(priv_p);\n";
 
     copy($arch_file, "${arch_file}.bak")
         or die "Cannot backup file ${arch_file}: $!";

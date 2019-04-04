@@ -32,14 +32,14 @@ static ln_op *ops_cudnn[] = {
     NULL
 };
 
-void init_cudnn(void **context_p)
+void init_cudnn(void **priv_p)
 {
-    *context_p = ln_cudnn_context_create();
+    *priv_p = ln_cudnn_context_create();
 }
 
-void cleanup_cudnn(void **context_p)
+void cleanup_cudnn(void **priv_p)
 {
-    ln_cudnn_context_free(*context_p);
+    ln_cudnn_context_free(*priv_p);
 }
 
 ln_expander_func ep_funcs_cudnn[] = {

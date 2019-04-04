@@ -84,14 +84,14 @@ ln_combiner_func cb_funcs_${arch}[] = {
 
 /* end of declare ${arch} init funcs */
 
-static void init_${arch}(void **context_p)
+static void init_${arch}(void **priv_p)
 {
 /* end of exec ${arch} init funcs */
 }
 
 /* end of declare ${arch} cleanup funcs */
 
-static void cleanup_${arch}(void **context_p)
+static void cleanup_${arch}(void **priv_p)
 {
 /* end of exec ${arch} cleanup funcs */
 }

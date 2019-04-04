@@ -103,21 +103,21 @@ ln_combiner_func cb_funcs_cpu[] = {
     NULL
 };
 
-extern void ln_expander_init_cpu_expander(void **context_p);
+extern void ln_expander_init_cpu_expander(void **priv_p);
 /* end of declare cpu init funcs */
 
-static void init_cpu(void **context_p)
+static void init_cpu(void **priv_p)
 {
-    ln_expander_init_cpu_expander(context_p);
+    ln_expander_init_cpu_expander(priv_p);
 /* end of exec cpu init funcs */
 }
 
-extern void ln_expander_cleanup_cpu_expander(void **context_p);
+extern void ln_expander_cleanup_cpu_expander(void **priv_p);
 /* end of declare cpu cleanup funcs */
 
-static void cleanup_cpu(void **context_p)
+static void cleanup_cpu(void **priv_p)
 {
-    ln_expander_cleanup_cpu_expander(context_p);
+    ln_expander_cleanup_cpu_expander(priv_p);
 /* end of exec cpu cleanup funcs */
 }
 
