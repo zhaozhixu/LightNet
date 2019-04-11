@@ -197,7 +197,7 @@ static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
     return uc;
 }
 
-void ln_pass_mem_pool(ln_context *ctx)
+void ln_pass_mem_plan(ln_context *ctx)
 {
     ln_op *op;
     ln_op_arg *arg;

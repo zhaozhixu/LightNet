@@ -54,7 +54,7 @@ typedef struct ln_graph ln_graph;
 LN_CPPSTART
 #endif
 
-/* The graph don't own any of its data, so free it yourself. */
+/* The graph doesn't own any of its data, so free it yourself. */
 ln_graph_node *ln_graph_node_create(void *data, ln_cmp_func node_data_cmp);
 void ln_graph_node_free(ln_graph_node *node);
 ln_graph_edge_node *ln_graph_edge_node_create(void *edge_data,

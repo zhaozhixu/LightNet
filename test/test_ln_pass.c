@@ -217,7 +217,7 @@ START_TEST(test_ln_pass_mem)
      mem_pool_none = ln_mem_pool_create(4096, 1);
      ln_hash_insert(mem_pools, (void *)LN_MEM_NONE, mem_pool_none);
 
-     ln_pass_mem_pool(ctx);
+     ln_pass_mem_plan(ctx);
 
      te = ln_tensor_table_find(ctx->tensor_table, "create1");
      ck_assert_ptr_ne(te, NULL);

@@ -145,6 +145,8 @@ void ln_context_alloc_mem(ln_context *ctx)
     int i;
 
     for (i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
+        if (ctx->mem_sizes[i] == 0)
+            continue;
         ctx->mem_starts[i] = ln_mem_type_info(i).alloc_func(ctx->mem_sizes[i]);
         if (ln_mem_type_info(i).memset_func)
             ln_mem_type_info(i).memset_func(ctx->mem_starts[i], 0,
@@ -211,7 +213,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_op_list_do_pre_run(ctx->ops);
     /* ln_context_print(ctx, "out_debug.json"); */
 
-    ln_pass_mem_pool(ctx);
+    ln_pass_mem_plan(ctx);
 }
 
 void ln_context_print(const ln_context *ctx, const char *outfile)

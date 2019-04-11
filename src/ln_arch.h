@@ -32,7 +32,7 @@ typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
                                       const ln_dfg *dfg, int *match);
 
 struct ln_arch {
-    void              (*init_func)(void **priv_p); /* pointer to context */
+    void              (*init_func)(void **priv_p); /* pointer to priv */
     void              (*cleanup_func)(void **priv_p);
     void               *priv;
     ln_op             **reg_ops;       /* NULL terminated */
