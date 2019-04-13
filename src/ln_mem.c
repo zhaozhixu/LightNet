@@ -178,6 +178,23 @@ void ln_mem_pool_free(ln_mem_pool *mem_pool)
     ln_free(mem_pool);
 }
 
+/* static int first_fit(ln_mem_pool *mem_pool, size_t size) */
+/* { */
+/*     size_t align_size = mem_pool->align_size; */
+/*     ln_list *l; */
+/*     int i; */
+
+/*     for (l = mem_pool->mem_blocks, i = 0; l; l = l->next, i++) { */
+/*         mem_block *block = l->data; */
+/*         size_t align_start = block->start % align_size == 0 ? block->start : */
+/*             align_size - block->start % align_size + block->start; */
+/*         size_t mem_end = block->start + block->size - 1; */
+/*         if (block->flag == HOLE && align_start + size - 1 <= mem_end) */
+/*             return i; */
+/*     } */
+/*     return -1; */
+/* } */
+
 static int best_fit(ln_mem_pool *mem_pool, size_t size)
 {
     int first_hole = 0;
