@@ -101,14 +101,21 @@ void ln_msg_handle(ln_msg **msg)
     case LN_MSG_ERROR_SYS:
         fprintf(stderr, RED("error: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
-        /* exit(EXIT_FAILURE); */
+#ifdef LN_DEBUG
         abort();
+#else
+        exit(EXIT_FAILURE);
+#endif
         break;
     case LN_MSG_INTER_ERROR:
     case LN_MSG_INTER_ERROR_SYS:
         fprintf(stderr, RED("internal error: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
+#ifdef LN_DEBUG
         abort();
+#else
+        exit(EXIT_FAILURE);
+#endif
         break;
     case LN_MSG_WARN:
         if (!(disp_mask & 1 << LN_MSG_WARN))
