@@ -131,9 +131,9 @@
 #define STAGE4_C_2_0 976
 #define CONV5_C_2_0 2048
 
-#define STAGE2_C_DET 64
-#define STAGE3_C_DET 128
-#define STAGE4_C_DET 256
+#define STAGE2_C_DET 128
+#define STAGE3_C_DET 256
+#define STAGE4_C_DET 512
 
 #define STAGE2_H_DET 46
 #define STAGE3_H_DET 23
