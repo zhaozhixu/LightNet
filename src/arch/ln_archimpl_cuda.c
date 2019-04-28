@@ -178,11 +178,11 @@ static ln_list *cb_func_single_replace(const ln_list *ops, size_t size,
     return new_ops;
 }
 
-extern ln_list *ln_expander_cuda_expander(const ln_op *op, const ln_dfg *dfg, int *match);
+extern ln_list *ln_expander_expander_cuda(const ln_op *op, const ln_dfg *dfg, int *match);
 /* end of declare cuda expanders */
 
 ln_expander_func ep_funcs_cuda[] = {
-    ln_expander_cuda_expander,
+    ln_expander_expander_cuda,
 /* end of cuda expanders */
     NULL
 };
@@ -195,21 +195,21 @@ ln_combiner_func cb_funcs_cuda[] = {
     NULL
 };
 
-extern void ln_expander_init_cuda_expander(void **priv_p);
+extern void ln_expander_init_expander_cuda(void **priv_p);
 /* end of declare cuda init funcs */
 
 static void init_cuda(void **priv_p)
 {
-    ln_expander_init_cuda_expander(priv_p);
+    ln_expander_init_expander_cuda(priv_p);
 /* end of exec cuda init funcs */
 }
 
-extern void ln_expander_cleanup_cuda_expander(void **priv_p);
+extern void ln_expander_cleanup_expander_cuda(void **priv_p);
 /* end of declare cuda cleanup funcs */
 
 static void cleanup_cuda(void **priv_p)
 {
-    ln_expander_cleanup_cuda_expander(priv_p);
+    ln_expander_cleanup_expander_cuda(priv_p);
 /* end of exec cuda cleanup funcs */
 }
 

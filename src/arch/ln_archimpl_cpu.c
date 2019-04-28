@@ -87,11 +87,11 @@ static ln_op *ops_cpu[] = {
     NULL
 };
 
-extern ln_list *ln_expander_cpu_expander(const ln_op *op, const ln_dfg *dfg, int *match);
+extern ln_list *ln_expander_expander_cpu(const ln_op *op, const ln_dfg *dfg, int *match);
 /* end of declare cpu expanders */
 
 ln_expander_func ep_funcs_cpu[] = {
-    ln_expander_cpu_expander,
+    ln_expander_expander_cpu,
 /* end of cpu expanders */
     NULL
 };
@@ -103,21 +103,21 @@ ln_combiner_func cb_funcs_cpu[] = {
     NULL
 };
 
-extern void ln_expander_init_cpu_expander(void **priv_p);
+extern void ln_expander_init_expander_cpu(void **priv_p);
 /* end of declare cpu init funcs */
 
 static void init_cpu(void **priv_p)
 {
-    ln_expander_init_cpu_expander(priv_p);
+    ln_expander_init_expander_cpu(priv_p);
 /* end of exec cpu init funcs */
 }
 
-extern void ln_expander_cleanup_cpu_expander(void **priv_p);
+extern void ln_expander_cleanup_expander_cpu(void **priv_p);
 /* end of declare cpu cleanup funcs */
 
 static void cleanup_cpu(void **priv_p)
 {
-    ln_expander_cleanup_cpu_expander(priv_p);
+    ln_expander_cleanup_expander_cpu(priv_p);
 /* end of exec cpu cleanup funcs */
 }
 
