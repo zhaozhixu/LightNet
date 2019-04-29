@@ -68,6 +68,7 @@ static void assert_op_eq(ln_op *op, char *optype, char *opname)
 /* TODO: test it throughly */
 START_TEST(test_ln_pass_combiner)
 {
+#ifdef LN_CUDA
      ln_op *op;
      ln_param_entry *param_entry;
      char *tensor_name;
@@ -196,6 +197,7 @@ START_TEST(test_ln_pass_combiner)
      ck_assert_ptr_ne(param_entry, NULL);
      ck_assert_int_eq(param_entry->type, LN_PARAM_ARRAY_NUMBER);
      ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,2,4), 2);
+#endif
 }
 END_TEST
 
@@ -206,6 +208,7 @@ static void mem_pools_free_wrapper(void *p)
 
 START_TEST(test_ln_pass_mem)
 {
+#ifdef LN_CUDA
      ln_hash *mem_pools;
      ln_mem_pool *mem_pool_none;
      ln_tensor_entry *te;
@@ -242,6 +245,7 @@ START_TEST(test_ln_pass_mem)
      ck_assert_int_eq(te->offset, 64);
 
      ln_hash_free(mem_pools);
+#endif
 }
 END_TEST
 /* end of tests */
