@@ -2,8 +2,11 @@ from ctypes import *
 import pylightnet as ln
 
 class infer(object):
-    def __init__(self, source, weight, options=[]):
-        argv = ['', '-r', '-f', weight, source] + options
+    def __init__(self, source, weight=None, options=[]):
+        if weight is None:
+            argv = ['', '-r', source] + options
+        else:
+            argv = ['', '-r', '-f', weight, source] + options
         self.option = ln.option.create(ln.lib.str_array(argv))
         ln.msg.init(self.option)
         ln.arch.init()

@@ -4,20 +4,17 @@ use 5.014;
 use warnings;
 use strict;
 
-die "$0 requires 4 arguments" unless @ARGV == 4;
+die "$0 requires 2 arguments" unless @ARGV == 2;
 my $logfile = shift @ARGV;
 my $pkgname = shift @ARGV;
-my $pyversion = shift @ARGV;
-my $prefix = shift @ARGV;
 open LOG, '<', $logfile or die "Cannot open log file $logfile: $!";
 $_ = <LOG>;
 close LOG;
-my $re = qr|$prefix/lib/python${pyversion}[0-9a-z.]*/(site\|dist)-packages/$pkgname|;
+my $re = qr|^.+/(site\|dist)-packages/$pkgname[^/]+|;
 if (m|$re|) {
-    foreach (glob "$&*") {
-        say "rm -rf $_";
-        !system "rm -rf $_" or die "error removing $_";
-    }
+    say "rm -rf $&";
+    !system "rm -rf $&" or die "error removing $&";
+    !system "rm -f $logfile" or die "error removing $logfile";
 } else {
-    die "Cannot match installed file $_";
+    die "Cannot match installed directory $&";
 }

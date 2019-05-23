@@ -1,10 +1,5 @@
 # Getting Started
 
-## Overview
-
-LightNet is a lightweight neural network compiler framework for different
-software/hardware backends.
-
 ## Installation
 
 ### Requirements
@@ -18,7 +13,8 @@ Most required packages can be installed using the following commands
     apt-get install build-essential perl git pkg-config check
     cpan install JSON Sort::strverscmp
 
-This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight), a lightweight tensor operation library. Install it according to 
+This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight),
+a lightweight tensor operation library. Install it according to 
 [its repository](https://github.com/zhaozhixu/TensorLight) before continuing to
 build LightNet.
 
@@ -28,6 +24,13 @@ build LightNet.
     
         apt-get install python3-pip
         pip3 install mkdocs
+
+* (Optional) Packages for building python packages
+
+    Use the following commands to install the packages for building python packages 
+    (python3 for example):
+    
+        apt-get install python3-setuptools
 
 * (Optional) CUDA dependency
 
@@ -93,7 +96,23 @@ build LightNet.
     the installation directory.
 
 ## Usage
-After compilation, use `lightnet -h` to learn the usage for this program, as 
+
+After compilation, the following components will be installed:
+
+- lightnet: LightNet command tool
+- liblightnet.so: LightNet runtime library
+- ir2json.pl: LightNet intermediate language (IL) interpreter
+- pylightnet (optional): LightNet python wrapper package
+
+LightNet provides 3 interfaces which can be used by developers and users:
+
+- [Command line](Getting-Started.md#Command-line)
+- [C API](Getting-Started.md#C-API)
+- [Python API](Getting-Started.md#Python-API)
+
+### Command line
+
+From the command line, type `lightnet -h` can display the program usage, as 
 follows.
 
 ```
@@ -108,6 +127,7 @@ Options:
                          standard output; if FILE is !, do not print;
                          (default: out.json)
   -t, --target=TARGET    specify target platform (default: cpu)
+  -f, --datafile=FILE    specify tensor data file
   -c, --compile          compile only; do not run
   -r, --run              run only; do not compile; SOURCE should have been
                          memory-planned
@@ -118,3 +138,7 @@ Options:
   -debug                 display debug messages (only works with LN_DEBUG
                          defined when compiling)
 ```
+
+### C API
+
+### Python API

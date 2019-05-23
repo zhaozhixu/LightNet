@@ -1,20 +1,22 @@
 # Welcome to LightNet
 
-A lightweight neural network frontend framework for different software/hardware
-backends.
+LightNet is a light-weight neural network inference optimizer for different
+software/hardware backends.
 
 ## Getting Started
 
-* [Overview](Getting-Started.md#overview)
 * [Installation](Getting-Started.md#installation)
 * [Usage](Getting-Started.md#usage)
 
 ## Documentation
 
+* [Overview](Documentation/Overview.md)
 * [Project Structure](Documentation/Project-Structure.md)
 * [Build Options](Documentation/Build-Options.md)
+* [Data Structures](Documentation/Data-Structures.md)
 * [Intermediate Representation](Documentation/Intermediate-Representation.md)
 * [Operator Description](Documentation/Operator-Description.md)
+* [Optimizer Description](Documentation/Optimizer-Description.md)
 * [Miscellaneous](Documentation/Miscellaneous.md)
 
 ## Hacking

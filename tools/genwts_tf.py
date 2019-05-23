@@ -20,10 +20,12 @@ def save_vars(ckpt_prefix, savedir):
     ckpt_dir = os.path.split(os.path.realpath(ckpt_prefix))[0]
     np.set_printoptions(threshold=sys.maxsize)
     with tf.Session() as sess:
-        saver = tf.train.import_meta_graph(ckpt_prefix + '.meta')
+        saver = tf.train.import_meta_graph(ckpt_prefix + '.meta', clear_devices=True)
         saver.restore(sess, tf.train.latest_checkpoint(ckpt_dir))
         for x in tf.global_variables():
             filename = savedir + '/' + re.sub(r'/', '_', x.op.name) + '.txt'
+            if len(x.shape.as_list()) == 4: # transpose weights to [out, in, h, w]
+                x = tf.transpose(x, [3, 2, 0, 1])
             with open(filename, 'w') as f:
                 f.write(str(x.eval(session=sess)))
 
