@@ -23,7 +23,7 @@
 
         [Operator description](Operator-Description.md) files for generating 
         operator defination C source code.
-    
+            
 * `lightnet/src`
 
     Core LightNet source code.

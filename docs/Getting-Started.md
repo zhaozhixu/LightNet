@@ -1,10 +1,5 @@
 # Getting Started
 
-## Overview
-
-LightNet is a lightweight neural network compiler framework for different
-software/hardware backends.
-
 ## Installation
 
 ### Requirements
@@ -109,11 +104,11 @@ After compilation, the following components will be installed:
 - ir2json.pl: LightNet intermediate language (IL) interpreter
 - pylightnet (optional): LightNet python wrapper package
 
-LightNet provides 3 interfaces to be used by developers and users:
+LightNet provides 3 interfaces which can be used by developers and users:
 
-- Command line
-- C API
-- Python API
+- [Command line](Getting-Started.md#Command-line)
+- [C API](Getting-Started.md#C-API)
+- [Python API](Getting-Started.md#Python-API)
 
 ### Command line
 
@@ -144,5 +139,6 @@ Options:
                          defined when compiling)
 ```
 
-This example shows a simple operator sequence written in LightNet IL,
-the use of IL interpreter, and
+### C API
+
+### Python API
