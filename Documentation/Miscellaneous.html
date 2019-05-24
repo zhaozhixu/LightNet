@@ -55,11 +55,19 @@
                                 <ul class="dropdown-menu">
                                     
 <li >
+    <a href="Overview.html">Overview</a>
+</li>
+                                    
+<li >
     <a href="Project-Structure.html">Project Structure</a>
 </li>
                                     
 <li >
-    <a href="Building-Options.html">Building Options</a>
+    <a href="Build-Options.html">Build Options</a>
+</li>
+                                    
+<li >
+    <a href="Data-Structures.html">Data Structures</a>
 </li>
                                     
 <li >
@@ -68,6 +76,10 @@
                                     
 <li >
     <a href="Operator-Description.html">Operator Description</a>
+</li>
+                                    
+<li >
+    <a href="Optimizer-Description.html">Optimizer Description</a>
 </li>
                                     
 <li class="active">
@@ -87,7 +99,7 @@
                             </a>
                         </li>
                             <li >
-                                <a rel="next" href="Operator-Description.html">
+                                <a rel="next" href="Optimizer-Description.html">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
@@ -97,7 +109,7 @@
                                 </a>
                             </li>
                             <li>
-                                <a href="https://github.com/zhaozhixu/LightNet/edit/master/docs/Documentation/Miscellaneous.md"><i class="fa fa-github"></i> Edit on GitHub</a>
+                                <a href="https://github.com/zhaozhixu/LightNet"><i class="fa fa-github"></i> GitHub</a>
                             </li>
                     </ul>
                 </div>
@@ -116,8 +128,9 @@
 
 <h1 id="miscellaneous">Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permanent link">&para;</a></h1>
 <h2 id="an-easy-to-write-json-format">An Easy-to-Write JSON Format<a class="headerlink" href="#an-easy-to-write-json-format" title="Permanent link">&para;</a></h2>
-<p>For the convenience of write JSON format files (operator descriptions, IR etc.)
-used in this project, we add several extensions to the <a href="http://json.org/">official JSON format</a>.</p>
+<p>For the convenience of writing JSON format files such as 
+<a href="Operator-Description.html">operator descriptions</a> used in this project, 
+we add several extensions to the <a href="http://json.org/">official JSON format</a>.</p>
 <p>The JSON extensions:</p>
 <ol>
 <li>The last elements in arrays and objects can have a trailing comma <code>,</code>.</li>
@@ -128,8 +141,33 @@ used in this project, we add several extensions to the <a href="http://json.org/
    such as newlines, qoutes<code>"</code>, etc. The triple qoutes must be at the end of a
    line except that the ending qoutes can have a comma following them.</li>
 </ol>
+<p>E.g:</p>
+<pre class="codehilite"><code class="language-js">{
+    &quot;some_array&quot;: [
+        {&quot;element1&quot;: 1},
+        {&quot;element2&quot;: 2},
+    ],
+    // some very useful comments
+    &quot;some_string&quot;: '''
+    No worries about &quot;strings&quot; and
+newlines here!
+''',
+}</code></pre>
+
+
 <p>JSON files using above extensions can be easily transformed into official JSON 
-files with <a href="Tools#easyjson.pl">easyjson.pl</a></p>
+files with <code>lightnet/tools/easyjson.pl</code>. For example, the above code
+would be transformed into the following JSON:</p>
+<pre class="codehilite"><code class="language-js">{
+    &quot;some_array&quot;: [
+        {&quot;element1&quot;: 1},
+        {&quot;element2&quot;: 2}
+    ],
+
+    &quot;some_string&quot;: &quot;    No worries about \&quot;strings\&quot; and\nnewlines here!&quot;
+}</code></pre>
+
+
 <h2 id="tools">Tools<a class="headerlink" href="#tools" title="Permanent link">&para;</a></h2>
 <p>Executables, scripts and modules helping the development and use of LightNet, 
 located in <code>lightnet/tools</code>.
@@ -138,13 +176,11 @@ You can always get help for a tool by typing <code>tool_name -h</code>.</p>
 <li>
 <p><code>addop.pl</code></p>
 <p>Generate operator defination code from operator description JSON file.
+It supports the <a href="Miscellaneous.html#an-easy-to-write-json-format">easy-to-write JSON format</a>
+for its input.
 When used with <code>-r ROOT</code> option, it will save operator definations in
 <code>ROOT/src/op/auto</code>, and add operator declarations into corresponding
 <code>ROOT/src/arch/ln_arch_*.c</code> file.</p>
-</li>
-<li>
-<p><code>addop_simple.pl</code></p>
-<p>Not used now. An old simple script for operator code generation.</p>
 </li>
 <li>
 <p><code>addtest.pl</code></p>
@@ -157,8 +193,8 @@ When used with <code>-r ROOT</code> option, it will save operator definations in
 <li>
 <p><code>easyjson.pm</code></p>
 <p>A perl module with interfaces for transforming an 
-<a href="Miscellaneous.html#An-Easy-to-Write-JSON-Format">easy-to-write JSON format</a>
-file to an official JSON form file.</p>
+<a href="Miscellaneous.html#an-easy-to-write-json-format">easy-to-write JSON format</a>
+file to an official JSON format file.</p>
 </li>
 <li>
 <p><code>genwts.pl</code></p>
@@ -179,7 +215,7 @@ numbers to one text file in hexadecimal string format.</p>
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+                shortcuts = {"next": 78, "previous": 80, "search": 83, "help": 191};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../search/main.js" defer></script>

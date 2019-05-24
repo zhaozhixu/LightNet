@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Operator Description - LightNet</title>
+        <title>Overview - LightNet</title>
         <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
         <link href="../css/font-awesome.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
@@ -54,7 +54,7 @@
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation <b class="caret"></b></a>
                                 <ul class="dropdown-menu">
                                     
-<li >
+<li class="active">
     <a href="Overview.html">Overview</a>
 </li>
                                     
@@ -74,7 +74,7 @@
     <a href="Intermediate-Representation.html">Intermediate Representation</a>
 </li>
                                     
-<li class="active">
+<li >
     <a href="Operator-Description.html">Operator Description</a>
 </li>
                                     
@@ -99,12 +99,12 @@
                             </a>
                         </li>
                             <li >
-                                <a rel="next" href="Intermediate-Representation.html">
+                                <a rel="next" href="../Getting-Started.html">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li >
-                                <a rel="prev" href="Optimizer-Description.html">
+                                <a rel="prev" href="Project-Structure.html">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -119,12 +119,63 @@
         <div class="container">
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
-        <li class="main active"><a href="#operator-description">Operator Description</a></li>
+        <li class="main active"><a href="#overview">Overview</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h1 id="operator-description">Operator Description<a class="headerlink" href="#operator-description" title="Permanent link">&para;</a></h1></div>
+<h1 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h1>
+<p>LightNet is a light-weight neural network inference optimizer for different
+software/hardware backends.</p>
+<p>The deep learning algorithms for various application scenarios are becoming more
+and more mature. However, highly real-time algorithms in terminal devices such
+as Edge Computing Devices or Autonomous Agents (such as unmanned vehicles and
+drones) often require heterogeneous computing systems which are low-power and
+highly real-time. Such heterogeneous computing systems generally need to be
+developed with specific hardware-related languages ​​(such as CUDA, OpenCL, 
+Verilog, C/C++ etc.), which have the disadvantages of low development efficiency
+and long iteration period.</p>
+<p>In order to overcome those shortcomings, LightNet refers to traditional compiler
+optimization technologies, designs and develops a neural network optimizer for
+heterogeneous platforms. LightNet can accept neural network models from various 
+popular deep learning frameworks, optimize them according to the user's choice 
+of backend platforms, and save the optimized models which can be directly run 
+by LightNet.</p>
+<p>LightNet for now mainly focuses on the high-level optimization of a NN model, 
+which can be completed with substitutions of the operators in a computing 
+graph. Those optimizations are processed by the "peephole optimizers" of the
+corresponding backend, according to the optimization capabilities provided
+by the backend platforms. After the high-level optimizations, LightNet will
+plan the relative memory address used by each tensor, which can be converted to
+real memory address at runtime, at the same time keep the total memory usage as
+low as possible.</p>
+<p>LightNet essentially is an end-to-end NN optimizer framework that can be easily
+extended to supported different model formats and backend computing platforms.
+However there are 3 diversification problems when designing a such an optimizer
+which leads to enormous coding efforts: </p>
+<ul>
+<li>diversification of model formats, such as Tensorflow's checkpoint, 
+    Pytorch's pt.</li>
+<li>diversification of operators, operators are highly diverse and new operators
+    are emerging.</li>
+<li>diversification of operator optimization capabilities of different backend 
+    platforms.</li>
+</ul>
+<p>LightNet provides 3 methods to solve those problems respectively:</p>
+<ul>
+<li>a unified model format and conversion tools for various frameworks</li>
+<li>an operator description language and code generation tools</li>
+<li>an optimizer description language and code generation tools</li>
+</ul>
+<p>Combined with its tensor operation library 
+<a href="https://github.com/zhaozhixu/TensorLight">TensorLight</a>, LightNet can reuse
+existing highly optimized tensor operation libraries to construct neural network
+models.
+which can realize the rapid construction and automatic
+optimization of neural network inference algorithms.</p>
+<p>LightNet's core architecture is developed with C, which has the advantages of 
+light weight, high efficieny and unified binary interface, which can be easiy 
+combined with other languages and deployed in various hardware platforms.</p></div>
         </div>
 
         <footer class="col-md-12">
