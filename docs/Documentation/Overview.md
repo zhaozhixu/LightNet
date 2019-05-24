@@ -14,7 +14,7 @@ and long iteration period.
 
 In order to overcome those shortcomings, LightNet refers to traditional compiler
 optimization technologies, designs and develops a neural network optimizer for
-heterogeneous platforms. LightNet can accept neural network models from various 
+heterogeneous platforms, which can accept neural network models from various 
 popular deep learning frameworks, optimize them according to the user's choice 
 of backend platforms, and save the optimized models which can be directly run 
 by LightNet.
@@ -28,9 +28,11 @@ plan the relative memory address used by each tensor, which can be converted to
 real memory address at runtime, at the same time keep the total memory usage as
 low as possible.
 
+![Overview of LightNet](../img/overview.png)
+
 LightNet essentially is an end-to-end NN optimizer framework that can be easily
-extended to supported different model formats and backend computing platforms.
-However there are 3 diversification problems when designing a such an optimizer
+extended to support different model formats and backend computing platforms.
+However there are 3 diversification problems when designing such an optimizer
 which leads to enormous coding efforts: 
 
   * diversification of model formats, such as Tensorflow's checkpoint, 
@@ -46,12 +48,10 @@ LightNet provides 3 methods to solve those problems respectively:
   * an operator description language and code generation tools
   * an optimizer description language and code generation tools
 
-Combined with its tensor operation library 
-[TensorLight](https://github.com/zhaozhixu/TensorLight), LightNet can reuse
-existing highly optimized tensor operation libraries to construct neural network
-models.
-which can realize the rapid construction and automatic
-optimization of neural network inference algorithms.
+Combined with the above methods, LightNet can be easily extended to support 
+different model formats, all kinds of operators, and various backends with different
+optimization capabilities, to realize the rapid construction and automatic
+optimization of NN models.
 
 LightNet's core architecture is developed with C, which has the advantages of 
 light weight, high efficieny and unified binary interface, which can be easiy 
