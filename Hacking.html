@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="img/favicon.ico">
+        <title>Hacking - LightNet</title>
+        <link href="css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="css/font-awesome.min.css" rel="stylesheet">
+        <link href="css/base.css" rel="stylesheet">
+        <link href="css/codehilite.css" rel="stylesheet">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="js/jquery-1.10.2.min.js" defer></script>
+        <script src="js/bootstrap-3.0.3.min.js" defer></script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="index.html">LightNet</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="index.html">Home</a>
+                            </li>
+                            <li >
+                                <a href="Getting-Started.html">Getting Started</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li >
+    <a href="Documentation/Project-Structure.html">Project Structure</a>
+</li>
+                                    
+<li >
+    <a href="Documentation/Building-Options.html">Building Options</a>
+</li>
+                                    
+<li >
+    <a href="Documentation/Intermediate-Representation.html">Intermediate Representation</a>
+</li>
+                                    
+<li >
+    <a href="Documentation/Operator-Description.html">Operator Description</a>
+</li>
+                                    
+<li >
+    <a href="Documentation/Miscellaneous.html">Miscellaneous</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="active">
+                                <a href="Hacking.html">Hacking</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="Documentation/Miscellaneous.html">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="disabled">
+                                <a rel="prev" >
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://github.com/zhaozhixu/LightNet/edit/master/docs/Hacking.md"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#hacking">Hacking</a></li>
+            <li><a href="#commit-guidelines">Commit Guidelines</a></li>
+            <li><a href="#code-conventions">Code Conventions</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="hacking">Hacking<a class="headerlink" href="#hacking" title="Permanent link">&para;</a></h1>
+<h2 id="commit-guidelines">Commit Guidelines<a class="headerlink" href="#commit-guidelines" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://github.com/zhaozhixu/LightNet/issues/new">Submit an issue</a> if you
+found a bug or have a feature request.</li>
+<li><a href="https://github.com/zhaozhixu/LightNet/fork">Fork</a> and 
+<a href="https://github.com/zhaozhixu/LightNet/compare">open a pull request</a>
+when you prepared to contribute. Before that, it is encouraged to open an 
+issue to discuss.</li>
+<li>When committing to the git repository make sure to include a meaningful 
+commit message. Commit messages should have the following format:<div class="codehilite"><pre><span></span>Short explanation of the commit
+
+Longer explanation explaining exactly what&#39;s changed, whether any
+external or private interfaces changed, what bugs were fixed (with bug
+tracker reference if applicable) and so on. Be concise but not too brief.
+</pre></div>
+
+
+</li>
+</ul>
+<h2 id="code-conventions">Code Conventions<a class="headerlink" href="#code-conventions" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Indent the C code with 4 spaces.</li>
+<li>Use <code>/* */</code> comments in the C code.</li>
+<li>The limit on the length of lines is 80 columns and this is a strongly
+  preferred limit, unless exceeding 80 columns significantly increases 
+  readability. However, never break user-visible strings such as <code>printf</code>
+  messages.</li>
+<li>
+<p>Placing Braces</p>
+<ol>
+<li>Put the opening brace last on the line except namely functions. </li>
+<li>Put the closing brace first except in the cases where it is followed by a
+continuation of the same statement, ie a while in a do-statement or an else
+in an if-statement.</li>
+<li>Do not unnecessarily use braces where a single statement will do except 
+that only one branch of a conditional statement is a single statement.</li>
+</ol>
+<p>E.g.:</p>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">function</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">condition</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">a</span><span class="p">;</span>
+        <span class="k">do</span> <span class="n">b</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+        <span class="k">do</span> <span class="n">e</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">condition</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">f</span><span class="p">;</span>
+        <span class="k">do</span> <span class="n">g</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">h</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">do</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">c</span><span class="p">;</span>
+        <span class="k">do</span> <span class="n">d</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">condition</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+</li>
+<li>
+<p>Spaces</p>
+<ol>
+<li>Use a space after control-flow keywords:
+<code>if, switch, case, for, do, while</code>.</li>
+<li>Use a space after each comma.</li>
+<li>Use spaces around most binary and ternary operators but no space
+after unary operators.</li>
+<li>Avoid trailing space.</li>
+</ol>
+</li>
+<li>Don't hide pointers with <code>typedef</code>. Bad example:
+<code>typedef struct foo * foo;</code></li>
+<li>As a general rule of thumb, follow the same coding style as the surrounding
+code.</li>
+</ul></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = ".",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="js/base.js" defer></script>
+        <script src="search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

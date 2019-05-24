@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Miscellaneous - LightNet</title>
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link href="../css/codehilite.css" rel="stylesheet">
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap-3.0.3.min.js" defer></script> 
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+
+                <!-- Collapsed navigation -->
+                <div class="navbar-header">
+                    <!-- Expander button -->
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="../index.html">LightNet</a>
+                </div>
+
+                <!-- Expanded navigation -->
+                <div class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li >
+                                <a href="../index.html">Home</a>
+                            </li>
+                            <li >
+                                <a href="../Getting-Started.html">Getting Started</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li >
+    <a href="Project-Structure.html">Project Structure</a>
+</li>
+                                    
+<li >
+    <a href="Building-Options.html">Building Options</a>
+</li>
+                                    
+<li >
+    <a href="Intermediate-Representation.html">Intermediate Representation</a>
+</li>
+                                    
+<li >
+    <a href="Operator-Description.html">Operator Description</a>
+</li>
+                                    
+<li class="active">
+    <a href="Miscellaneous.html">Miscellaneous</a>
+</li>
+                                </ul>
+                            </li>
+                            <li >
+                                <a href="../Hacking.html">Hacking</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav navbar-right">
+                        <li>
+                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li >
+                                <a rel="next" href="Operator-Description.html">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li >
+                                <a rel="prev" href="../Hacking.html">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://github.com/zhaozhixu/LightNet/edit/master/docs/Documentation/Miscellaneous.md"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+        <li class="main active"><a href="#miscellaneous">Miscellaneous</a></li>
+            <li><a href="#an-easy-to-write-json-format">An Easy-to-Write JSON Format</a></li>
+            <li><a href="#tools">Tools</a></li>
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="miscellaneous">Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permanent link">&para;</a></h1>
+<h2 id="an-easy-to-write-json-format">An Easy-to-Write JSON Format<a class="headerlink" href="#an-easy-to-write-json-format" title="Permanent link">&para;</a></h2>
+<p>For the convenience of write JSON format files (operator descriptions, IR etc.)
+used in this project, we add several extensions to the <a href="http://json.org/">official JSON format</a>.</p>
+<p>The JSON extensions:</p>
+<ol>
+<li>The last elements in arrays and objects can have a trailing comma <code>,</code>.</li>
+<li>Comments are supported; every thing from double slashs <code>//</code> to the end of
+   the line is a comment.</li>
+<li>String values can be heredoc-ed with two triple qoutes <code>'''</code>, each in a
+   seperated line, between which special characters can be auto-escaped,
+   such as newlines, qoutes<code>"</code>, etc. The triple qoutes must be at the end of a
+   line except that the ending qoutes can have a comma following them.</li>
+</ol>
+<p>JSON files using above extensions can be easily transformed into official JSON 
+files with <a href="Tools#easyjson.pl">easyjson.pl</a></p>
+<h2 id="tools">Tools<a class="headerlink" href="#tools" title="Permanent link">&para;</a></h2>
+<p>Executables, scripts and modules helping the development and use of LightNet, 
+located in <code>lightnet/tools</code>.
+You can always get help for a tool by typing <code>tool_name -h</code>.</p>
+<ul>
+<li>
+<p><code>addop.pl</code></p>
+<p>Generate operator defination code from operator description JSON file.
+When used with <code>-r ROOT</code> option, it will save operator definations in
+<code>ROOT/src/op/auto</code>, and add operator declarations into corresponding
+<code>ROOT/src/arch/ln_arch_*.c</code> file.</p>
+</li>
+<li>
+<p><code>addop_simple.pl</code></p>
+<p>Not used now. An old simple script for operator code generation.</p>
+</li>
+<li>
+<p><code>addtest.pl</code></p>
+<p>Generate test templates for a module.</p>
+</li>
+<li>
+<p><code>easyjson.pl</code></p>
+<p>A user interface for <code>easyjson.pm</code>.</p>
+</li>
+<li>
+<p><code>easyjson.pm</code></p>
+<p>A perl module with interfaces for transforming an 
+<a href="Miscellaneous.html#An-Easy-to-Write-JSON-Format">easy-to-write JSON format</a>
+file to an official JSON form file.</p>
+</li>
+<li>
+<p><code>genwts.pl</code></p>
+<p>A weight file generator. Convert the input text file containing weight
+numbers to one text file in hexadecimal string format.</p>
+</li>
+<li>
+<p><code>ir2json.pl</code></p>
+<p>Generate JSON-format IR code from input file which is in 
+<a href="">simplified IR format</a>.</p>
+</li>
+</ul></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form role="form">
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
