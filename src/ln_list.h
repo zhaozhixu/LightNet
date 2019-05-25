@@ -56,18 +56,18 @@ ln_list *ln_list_remove_custom_deep(ln_list *list, void *data, ln_cmp_func cmp,
 ln_list *ln_list_remove_all_custom_deep(ln_list *list, void *data,
                                         ln_cmp_func cmp,
                                         void (*free_func)(void *));
-ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *llink);
+ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *node);
 ln_list *ln_list_insert_nth(ln_list *list, void *data, int n);
 void *ln_list_find(ln_list *list, void *data);
 void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp);
 ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp);
-int ln_list_position(ln_list *list, ln_list *llink);
+int ln_list_position(ln_list *list, ln_list *node);
 int ln_list_index(ln_list *list, void *data);
 int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp);
 int ln_list_length(ln_list *list);
 ln_list *ln_list_reverse(ln_list *list);
 ln_list *ln_list_from_array_size_t(size_t *array, size_t n);
-ln_list *ln_list_copy_size_t(ln_list *list);
+ln_list *ln_list_copy(ln_list *list);
 
 #ifdef __cplusplus
 LN_CPPEND

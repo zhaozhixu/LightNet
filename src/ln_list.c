@@ -208,18 +208,18 @@ ln_list *ln_list_remove_nth_deep(ln_list *list, int n,
     return list;
 }
 
-ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *llink)
+ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *node)
 {
     ln_list **lp;
 
-    if (!llink)
+    if (!node)
         return ln_list_append(list, data);
 
     for (lp = &list; *lp; lp = &(*lp)->next) {
-        if (*lp == llink) {
+        if (*lp == node) {
             *lp = ln_alloc(sizeof(ln_list));
             (*lp)->data = data;
-            (*lp)->next = llink;
+            (*lp)->next = node;
             break;
         }
     }
@@ -289,13 +289,13 @@ ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)
     return res;
 }
 
-int ln_list_position(ln_list *list, ln_list *llink)
+int ln_list_position(ln_list *list, ln_list *node)
 {
     ln_list *l;
     int i;
 
     for (i = 0, l = list; l; l = l->next, i++)
-        if (l == llink)
+        if (l == node)
             return i;
     return -1;
 }
@@ -359,7 +359,7 @@ ln_list *ln_list_from_array_size_t(size_t *array, size_t n)
     return res;
 }
 
-ln_list *ln_list_copy_size_t(ln_list *list)
+ln_list *ln_list_copy(ln_list *list)
 {
     ln_list *list_cpy;
     ln_list *l;
