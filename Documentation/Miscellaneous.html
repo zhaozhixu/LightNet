@@ -142,30 +142,32 @@ we add several extensions to the <a href="http://json.org/">official JSON format
    line except that the ending qoutes can have a comma following them.</li>
 </ol>
 <p>E.g:</p>
-<pre class="codehilite"><code class="language-js">{
-    &quot;some_array&quot;: [
-        {&quot;element1&quot;: 1},
-        {&quot;element2&quot;: 2},
-    ],
-    // some very useful comments
-    &quot;some_string&quot;: '''
-    No worries about &quot;strings&quot; and
-newlines here!
-''',
-}</code></pre>
+<div class="codehilite"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;some_array&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;element1&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;element2&quot;</span><span class="o">:</span> <span class="mi">2</span><span class="p">},</span>
+    <span class="p">],</span>
+    <span class="c1">// some very useful comments</span>
+    <span class="s2">&quot;some_string&quot;</span><span class="o">:</span> <span class="s1">&#39;&#39;&#39;</span>
+<span class="s1">    No worries about &quot;strings&quot; and</span>
+<span class="s1">newlines here!</span>
+<span class="s1">&#39;&#39;&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
 
 
 <p>JSON files using above extensions can be easily transformed into official JSON 
 files with <code>lightnet/tools/easyjson.pl</code>. For example, the above code
 would be transformed into the following JSON:</p>
-<pre class="codehilite"><code class="language-js">{
-    &quot;some_array&quot;: [
-        {&quot;element1&quot;: 1},
-        {&quot;element2&quot;: 2}
-    ],
+<div class="codehilite"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;some_array&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span><span class="s2">&quot;element1&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="p">{</span><span class="s2">&quot;element2&quot;</span><span class="o">:</span> <span class="mi">2</span><span class="p">}</span>
+    <span class="p">],</span>
 
-    &quot;some_string&quot;: &quot;    No worries about \&quot;strings\&quot; and\nnewlines here!&quot;
-}</code></pre>
+    <span class="s2">&quot;some_string&quot;</span><span class="o">:</span> <span class="s2">&quot;    No worries about \&quot;strings\&quot; and\nnewlines here!&quot;</span>
+<span class="p">}</span>
+</pre></div>
 
 
 <h2 id="tools">Tools<a class="headerlink" href="#tools" title="Permanent link">&para;</a></h2>
@@ -215,7 +217,7 @@ numbers to one text file in hexadecimal string format.</p>
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"previous": 80, "search": 83, "help": 191, "next": 78};
+                shortcuts = {"next": 78, "help": 191, "previous": 80, "search": 83};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../search/main.js" defer></script>
