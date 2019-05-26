@@ -33,3 +33,7 @@ markdown_extensions:
 
 extra_css:
   - css/codehilite.css
+
+extra_javascript:
+  - js/baidu_analyse.js
+
