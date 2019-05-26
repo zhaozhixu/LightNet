@@ -23,7 +23,7 @@ build LightNet.
     Use the following commands to install the packages for building documents:
     
         apt-get install python3-pip
-        pip3 install mkdocs
+        pip3 install mkdocs markdown==3.1.1
 
 * (Optional) Packages for building python packages
 

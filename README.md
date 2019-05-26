@@ -19,7 +19,8 @@ Most required packages can be installed using the following commands
     apt-get install build-essential perl git pkg-config check
     cpan install JSON Sort::strverscmp
 
-This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight), a lightweight tensor operation library. Install it according to 
+This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight),
+a lightweight tensor operation library. Install it according to 
 [its repository](https://github.com/zhaozhixu/TensorLight) before continuing to
 build LightNet.
 
@@ -28,26 +29,38 @@ build LightNet.
     Use the following commands to install the packages for building documents:
     
         apt-get install python3-pip
-        pip3 install mkdocs
+        pip3 install mkdocs markdown==3.1.1
+
+* (Optional) Packages for building python packages
+
+    Use the following commands to install the packages for building python packages 
+    (python3 for example):
+    
+        apt-get install python3-setuptools
 
 * (Optional) CUDA dependency
 
-    If you want to build with CUDA support, you also have to install CUDA 8.0
-    (or later) according to its website [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html).
+    You also have to install CUDA 8.0 (or later) according to its website
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
+    if you want to build with CUDA support.
     Remember to put `nvcc` (usually in `/usr/local/cuda/bin`) in environment
     variable `PATH`.
 
 * (Optional) cuDNN dependency
 
-    If you want to build with cuDNN support, you also have to install CUDA 8.0 
-    (or later) and cuDNN 7.0 (or later) libraries, according to their websites
-    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html).
+    You also have to install CUDA 8.0 (or later) and cuDNN 7.0 (or later)
+    libraries, according to their websites
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and 
+    [cuDNN](https://docs.nvidia.com/deeplearning/sdk/cudnn-install/index.html) 
+    if you want to build with cuDNN support.
 
 * (Optional) TensorRT dependency
 
-    If you want to build with TensorRT support, you also have to install CUDA
-    8.0 (or later) and TensorRT 3.0 (or later) libraries, according to their
-    websites [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html).
+    You also have to install CUDA 8.0 (or later) and TensorRT 3.0 (or later) 
+    libraries, according to their websites
+    [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and 
+    [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
+    if you want to build with TensorRT support.
 
 ### Building and Installation
 
@@ -67,9 +80,9 @@ build LightNet.
     There are options to custom your building and installation process.
     You can append them after `./configure`. For example, use
     
-        ./configure --prefix=DIR
+        ./configure --install-dir=DIR
         
-    to set the installation directory to DIR (default is `/usr/local`). Use
+    to set the installation directory (default is `/usr/local`). Use
     
         ./configure --with-cuda=yes
         
@@ -89,7 +102,23 @@ build LightNet.
     the installation directory.
 
 ## Usage
-After compilation, use `lightnet -h` to learn the usage for this program, as 
+
+After compilation, the following components will be installed:
+
+- lightnet: LightNet command tool
+- liblightnet.so: LightNet runtime library
+- ir2json.pl: LightNet intermediate language (IL) interpreter
+- pylightnet (optional): LightNet python wrapper package
+
+LightNet provides 3 interfaces which can be used by developers and users:
+
+- [Command line](Getting-Started.md#Command-line)
+- [C API](Getting-Started.md#C-API)
+- [Python API](Getting-Started.md#Python-API)
+
+### Command line
+
+From the command line, type `lightnet -h` can display the program usage, as 
 follows.
 
 ```
@@ -104,6 +133,7 @@ Options:
                          standard output; if FILE is !, do not print;
                          (default: out.json)
   -t, --target=TARGET    specify target platform (default: cpu)
+  -f, --datafile=FILE    specify tensor data file
   -c, --compile          compile only; do not run
   -r, --run              run only; do not compile; SOURCE should have been
                          memory-planned
@@ -114,3 +144,7 @@ Options:
   -debug                 display debug messages (only works with LN_DEBUG
                          defined when compiling)
 ```
+
+### C API
+
+### Python API
