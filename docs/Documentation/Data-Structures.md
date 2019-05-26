@@ -279,5 +279,116 @@ the [HashMap](http://hg.openjdk.java.net/jdk7/jdk7/jdk/file/9b8c96f96a0f/src/sha
 
 ## Graph
 
+LightNet use `ln_graph` to represent computing graphs. `ln_graph` uses ajiacency
+list method to implement directed graphs, which uses a linked list to store the
+graph nodes; every node has its in-degree, out-degree,  a list of its previous
+edges and nodes, and a list of its next edges and nodes.
 
+    :::c
+    struct ln_graph_node {
+        void        *data;
+        ln_list     *out_edge_nodes;  	/* data type is ln_graph_edge_node */
+        ln_list     *in_edge_nodes;
+        ln_cmp_func  node_data_cmp;
+        size_t       indegree;
+        size_t       outdegree;
+    };
+    typedef struct ln_graph_node ln_graph_node;
 
+    struct ln_graph_edge_node {         /* store the ajiacency edge and node */
+        void           *edge_data;
+        ln_graph_node  *node;
+        ln_cmp_func     edge_data_cmp;
+    };
+    typedef struct ln_graph_edge_node ln_graph_edge_node;
+    
+    struct ln_graph {
+        size_t       size;
+        ln_list     *nodes;         	/* data type is ln_graph_node */
+        ln_cmp_func  node_data_cmp;
+        ln_cmp_func  edge_data_cmp;
+    };
+    typedef struct ln_graph ln_graph;
+
+`ln_graph` supports the following operations:
+
+- **`ln_graph_node *ln_graph_node_create(void *data, ln_cmp_func node_data_cmp)`**
+
+    Create a graph node with node data and the comparison function of node data.
+
+- **`void ln_graph_node_free(ln_graph_node *node)`**
+
+    Free a graph node.
+
+- **`ln_graph_edge_node *ln_graph_edge_node_create(void *edge_data, ln_graph_node *node, ln_cmp_func edge_data_cmp)`**
+
+    Create a graph edge node with edge data, the graph node, and the comparison
+    function of edge data.
+
+- **`void ln_graph_edge_node_free(ln_graph_edge_node *edge_node)`**
+
+    Free a graph edge node.
+
+- **`ln_graph *ln_graph_create(ln_cmp_func node_cmp, ln_cmp_func edge_cmp)`**
+
+    Create an empty graph with the comparison functions of node data and edge
+    data.
+
+- **`void ln_graph_free(ln_graph *graph)`**
+
+    Free a graph.
+
+- **`ln_graph_node *ln_graph_add(ln_graph *graph, void *data)`**
+
+    Create and add a node to the graph with `data` as node data. Return the 
+    created node.
+
+- **`ln_graph_node *ln_graph_find(ln_graph *graph, void *data)`**
+
+    Find the first graph node that has the same data as `data`. Return the found
+    node if the node is found, else return `NULL`.
+
+- **`void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data)`**
+
+    Link the first node that has the same data as `data1` to the first node 
+    that has the same data as `data2`, with a newly created edge of `edge_data`.
+
+- **`void ln_graph_link_node(ln_graph *graph, ln_graph_node *node1, ln_graph_node *node2, void *edge_data)`**
+
+    Link `node1` to `node2` with a newly created edge of `edge_data`.
+
+- **`void *ln_graph_unlink(ln_graph *graph, void *data1, void *data2, void *edge_data)`**
+
+    Unlink the first node that has the same data as `data1` and the first node 
+    that has the same data as `data2`, with a edge of `edge_data`. If 
+    `edge_data == NULL`, only compare `data1` and `data2`.
+
+- **`void *ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2, void *edge_data)`**
+
+    Unlink `node1` and `node2` with a edge of `edge_data`. If
+    `edge_data == NULL`, only compare `data1` and `data2`.
+
+- **`ln_graph *ln_graph_copy(ln_graph *graph)`**
+
+    Copy a graph.
+
+- **`int ln_graph_num_outlier(ln_graph *graph)`**
+
+    Return the number of nodes that don't link with any other nodes.
+
+- **`int ln_graph_topsort(ln_graph *graph, ln_list **layers)`**
+
+    Run topological sort on the graph. Sorted nodes are returned in `layers`,
+    which is a pointer to a list of layers. All nodes in the same layer has the
+    topological order. 
+    Return -1 if the graph has a cycle, else return the number of layers.
+    
+- **`void ln_graph_free_topsortlist(ln_list *layers)`**
+
+    Free the layers return by `ln_graph_topsort`.
+
+- **`void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_node, ln_fprint_func print_edge)`**
+
+    Print the graph to stream `fp`. Graph node data are printed by `print_node`.
+    Graph edge data are printed by `print_edge`.
+    

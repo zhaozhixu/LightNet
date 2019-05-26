@@ -44,7 +44,7 @@ typedef struct ln_graph_edge_node ln_graph_edge_node;
 
 struct ln_graph {
     size_t       size;
-    ln_list     *nodes;	/* data type is ln_graph_node */
+    ln_list     *nodes;         	/* data type is ln_graph_node */
     ln_cmp_func  node_data_cmp;
     ln_cmp_func  edge_data_cmp;
 };
