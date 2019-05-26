@@ -121,14 +121,17 @@
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#data-structures">Data Structures</a></li>
             <li><a href="#linked-list">Linked List</a></li>
+            <li><a href="#queue">Queue</a></li>
+            <li><a href="#hash-table">Hash Table</a></li>
+            <li><a href="#graph">Graph</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
 <h1 id="data-structures">Data Structures<a class="headerlink" href="#data-structures" title="Permanent link">&para;</a></h1>
 <h2 id="linked-list">Linked List<a class="headerlink" href="#linked-list" title="Permanent link">&para;</a></h2>
-<p>LightNet uses linked lists to manage a sequence of data structures,
-represented by <code>ln_list</code>, which is a simple singlely linked list.</p>
+<p>LightNet uses <code>ln_list</code> to manage a sequence of data structures, which is a 
+singlely linked list.</p>
 <div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_list</span> <span class="p">{</span>
     <span class="kt">void</span>            <span class="o">*</span><span class="n">data</span><span class="p">;</span>
     <span class="k">struct</span> <span class="n">ln_list</span>  <span class="o">*</span><span class="n">next</span><span class="p">;</span>
@@ -137,128 +140,262 @@ represented by <code>ln_list</code>, which is a simple singlely linked list.</p>
 </pre></div>
 
 
-<p><code>ln_list</code> doesn't have an empty header node, every node keeps real data.
-It has no "create" functions. Append an element to a <code>NULL</code> list to
-create a new list. Remember to always use the returned pointer as the newest
-list pointer, because the first node may have changed during updating (append,
-prepend, remove, insert, etc.).</p>
+<p><code>ln_list</code> doesn't have an empty header node; every node keeps real data.
+It has no "create" functions. To create a new list, append an element to
+a <code>NULL</code> list. Remember to always use the returned pointer as the newest
+list pointer, because the first node may have changed during list alternation
+(append, prepend, remove, insert, etc.).</p>
 <div class="codehilite"><pre><span></span><span class="n">ln_list</span> <span class="o">*</span><span class="n">list</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
 <span class="n">list</span> <span class="o">=</span> <span class="n">ln_list_append</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">first_data</span><span class="p">);</span>
+</pre></div>
+
+
+<p>To traverse the list in order, use a <code>for</code> loop and a temporary variable to 
+hold every element of the list, for example:</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* list is a ln_list of element type ln_op */</span>
+<span class="n">ln_list</span> <span class="o">*</span><span class="n">l</span><span class="p">;</span>
+<span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="n">list</span><span class="p">;</span> <span class="n">l</span><span class="p">;</span> <span class="n">l</span> <span class="o">=</span> <span class="n">l</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">op</span> <span class="o">=</span> <span class="n">l</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">;</span>
+    <span class="cm">/* operations on op */</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p><code>ln_list</code> provides a macro for the convinence of traversing the list in order.
+However, no list alternation shall be done when using this macro:</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* list is a ln_list of element type ln_op */</span>
+<span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">;</span>
+<span class="n">LN_LIST_FOREACH</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* op now hold one element of list */</span>
+<span class="p">}</span>
 </pre></div>
 
 
 <p><code>ln_list</code> supports the following operations:</p>
 <ul>
 <li>
-<p><code>ln_list *ln_list_prepend(ln_list *list, void *data)</code></p>
+<p><strong><code>ln_list *ln_list_prepend(ln_list *list, void *data)</code></strong></p>
 <p>Prepend an element at the beginning of the list.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_append(ln_list *list, void *data)</code></p>
+<p><strong><code>ln_list *ln_list_append(ln_list *list, void *data)</code></strong></p>
 <p>Append an element at the end of the list.</p>
 </li>
 <li>
-<p><code>void ln_list_free(ln_list *list)</code></p>
+<p><strong><code>void ln_list_free(ln_list *list)</code></strong></p>
 <p>Free all nodes in the list.</p>
 </li>
 <li>
-<p><code>void ln_list_free_deep(ln_list *list, void (*free_func)(void *))</code></p>
+<p><strong><code>void ln_list_free_deep(ln_list *list, void (*free_func)(void *))</code></strong></p>
 <p>Free all nodes int the list as well as their elements, which are freed by
 <code>free_func</code>.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_nth(ln_list *list, int n)</code></p>
-<p>Return the nth node in a list.</p>
+<p><strong><code>ln_list *ln_list_nth(ln_list *list, int n)</code></strong></p>
+<p>Return the nth node in the list.</p>
 </li>
 <li>
-<p><code>void *ln_list_nth_data(ln_list *list, int n)</code></p>
-<p>Return the nth element in a list.</p>
+<p><strong><code>void *ln_list_nth_data(ln_list *list, int n)</code></strong></p>
+<p>Return the nth element in the list.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_remove(ln_list *list, void *data)</code></p>
-<p>Remove the first node that has <code>data</code> as its element in a list. <code>data</code> is 
+<p><strong><code>ln_list *ln_list_remove(ln_list *list, void *data)</code></strong></p>
+<p>Remove the first node that has <code>data</code> as its element in the list. <code>data</code> is 
 compared directly by the pointer value.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_remove_nth(ln_list *list, int n)</code></p>
+<p><strong><code>ln_list *ln_list_remove_nth(ln_list *list, int n)</code></strong></p>
 <p>Remove the nth node.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_remove_nth_deep(ln_list *list, int n, void (*free_func)(void *))</code></p>
+<p><strong><code>ln_list *ln_list_remove_nth_deep(ln_list *list, int n, void (*free_func)(void *))</code></strong></p>
 <p>Remove the nth node as well as its element, which is freed by <code>free_func</code>.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></p>
+<p><strong><code>ln_list *ln_list_remove_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></strong></p>
 <p>Remove the first node whose element can be compared with <code>data</code> by <code>cmp</code>
 returning 0.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_remove_custom_deep(ln_list *list, void *data, ln_cmp_func cmp, void (*free_func)(void *))</code></p>
+<p><strong><code>ln_list *ln_list_remove_custom_deep(ln_list *list, void *data, ln_cmp_func cmp, void (*free_func)(void *))</code></strong></p>
 <p>Remove the first node as well as its element which can be compared 
 with <code>data</code> by <code>cmp</code> returning 0. The element is freed by <code>free_func</code>.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_remove_all_custom_deep(ln_list *list, void *data, ln_cmp_func cmp, void (*free_func)(void *))</code></p>
+<p><strong><code>ln_list *ln_list_remove_all_custom_deep(ln_list *list, void *data, ln_cmp_func cmp, void (*free_func)(void *))</code></strong></p>
 <p>Remove all the nodes as well as their elements which can be compared 
 with <code>data</code> by <code>cmp</code> returning 0. The elements are freed by <code>free_func</code>.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *node)</code></p>
-<p>Insert an element <code>data</code> before <code>node</code> in a list.</p>
+<p><strong><code>ln_list *ln_list_insert_before(ln_list *list, void *data, ln_list *node)</code></strong></p>
+<p>Insert an element <code>data</code> before <code>node</code> in the list.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_insert_nth(ln_list *list, void *data, int n)</code></p>
-<p>Insert an element <code>data</code> at the nth position in a list.</p>
+<p><strong><code>ln_list *ln_list_insert_nth(ln_list *list, void *data, int n)</code></strong></p>
+<p>Insert an element <code>data</code> at the nth position in the list.</p>
 </li>
 <li>
-<p><code>void *ln_list_find(ln_list *list, void *data)</code></p>
-<p>Find an element <code>data</code> in a list. <code>data</code> is compared directly by its 
+<p><strong><code>void *ln_list_find(ln_list *list, void *data)</code></strong></p>
+<p>Find an element <code>data</code> in the list. <code>data</code> is compared directly by its 
 pointer value. Return the element if it's found, else return <code>NULL</code>.</p>
 </li>
 <li>
-<p><code>void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></p>
-<p>Find an element in a list, which can be compared with <code>data</code> by <code>cmp</code>
+<p><strong><code>void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></strong></p>
+<p>Find an element in the list, which can be compared with <code>data</code> by <code>cmp</code>
 returning 0. Return the element if it's found, else return <code>NULL</code>.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></p>
+<p><strong><code>ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></strong></p>
 <p>Find all elements that can be compared with <code>data</code> by <code>cmp</code> returning 0.
 Return them in a new list.</p>
 </li>
 <li>
-<p><code>int ln_list_position(ln_list *list, ln_list *node)</code></p>
-<p>Return the position index of <code>node</code> in a list.</p>
+<p><strong><code>int ln_list_position(ln_list *list, ln_list *node)</code></strong></p>
+<p>Return the position index of <code>node</code> in the list.</p>
 </li>
 <li>
-<p><code>int ln_list_index(ln_list *list, void *data)</code></p>
-<p>Return the position index of the first occurence of <code>data</code> in a list.
+<p><strong><code>int ln_list_index(ln_list *list, void *data)</code></strong></p>
+<p>Return the position index of the first occurence of <code>data</code> in the list.
 <code>data</code> is compared directly by its pointer value.</p>
 </li>
 <li>
-<p><code>int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></p>
+<p><strong><code>int ln_list_index_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></strong></p>
 <p>Return the position index of the first node whose element can be compared
 with <code>data</code> by <code>cmp</code> returning 0.</p>
 </li>
 <li>
-<p><code>int ln_list_length(ln_list *list)</code></p>
-<p>Return the length of a list.</p>
+<p><strong><code>int ln_list_length(ln_list *list)</code></strong></p>
+<p>Return the length of the list.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_reverse(ln_list *list)</code></p>
-<p>Reverse the nodes in a list.</p>
+<p><strong><code>ln_list *ln_list_reverse(ln_list *list)</code></strong></p>
+<p>Reverse the nodes in the list.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_from_array_size_t(size_t *array, size_t n)</code></p>
-<p>Create a list from an array with length <code>n</code>, whose elements are of type
+<p><strong><code>ln_list *ln_list_from_array_size_t(size_t *array, size_t n)</code></strong></p>
+<p>Create the list from an array with length <code>n</code>, whose elements are of type
 <code>size_t</code>. The elements if the list have the same pointer values as the 
 array's elements' values.</p>
 </li>
 <li>
-<p><code>ln_list *ln_list_copy(ln_list *list)</code></p>
+<p><strong><code>ln_list *ln_list_copy(ln_list *list)</code></strong></p>
 <p>Create a new list, whose elements' values are the same as <code>list</code>'s 
 elements' values.</p>
 </li>
-</ul></div>
+</ul>
+<h2 id="queue">Queue<a class="headerlink" href="#queue" title="Permanent link">&para;</a></h2>
+<p><code>ln_queue</code> is a simple single-in single-out linked list, using two list nodes
+for its head and tail.</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_queue</span> <span class="p">{</span>
+    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">head</span><span class="p">;</span>
+    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">tail</span><span class="p">;</span>
+    <span class="kt">size_t</span>    <span class="n">size</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_queue</span> <span class="n">ln_queue</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>ln_queue</code> supports the following operations:</p>
+<ul>
+<li>
+<p><strong><code>ln_queue *ln_queue_create(void)</code></strong></p>
+<p>Create an empty queue.</p>
+</li>
+<li>
+<p><strong><code>ln_queue *ln_queue_enqueue(ln_queue *queue, void *data)</code></strong></p>
+<p>Add an element to the head of the queue. Create a new queue if 
+<code>queue == NULL</code>.</p>
+</li>
+<li>
+<p><strong><code>void *ln_queue_dequeue(ln_queue *queue)</code></strong></p>
+<p>Remove and return the element at the tail of the queue.</p>
+</li>
+<li>
+<p><strong><code>void ln_queue_free(ln_queue *queue)</code></strong></p>
+<p>Free the queue.</p>
+</li>
+</ul>
+<h2 id="hash-table">Hash Table<a class="headerlink" href="#hash-table" title="Permanent link">&para;</a></h2>
+<p>LightNet uses <code>ln_hash</code> to construct key-value pairs that can be used for quick
+lookups. <code>ln_hash</code> is an opaque structure in other modules. It uses separate
+chaining method to store the key-value pairs, and its implementation references
+the <a href="http://hg.openjdk.java.net/jdk7/jdk7/jdk/file/9b8c96f96a0f/src/share/classes/java/util/HashMap.java">HashMap</a> in OpenJDK 7.</p>
+<p><code>ln_hash</code> supports the following operations:</p>
+<ul>
+<li>
+<p><strong><code>ln_hash *ln_hash_create_full(ln_hash_func hash_func, ln_cmp_func cmp_func, ln_free_func free_k_func, ln_free_func free_v_func, int init_capacity, float load_factor)</code></strong></p>
+<p>Create a hash table with full arguments.</p>
+<p><code>hash_func</code> is the hash function of the key's data type.</p>
+<p><code>cmp_func</code> is the comparison function of the key's data type.</p>
+<p><code>free_k_func</code> is the free function of the key's data type. If it's <code>NULL</code>,
+<code>ln_hash</code> will not free the key when it is removed.</p>
+<p><code>free_v_func</code> is the free function of the value's data type. If it's <code>NULL</code>,
+<code>ln_hash</code> will not free the value when it is removed.</p>
+<p><code>init_capacity</code> is the initial capacity of the table.</p>
+<p><code>load_factor</code> is the load factor of the table. When the ratio of the number
+of elements to the capacity exceeds this factor, the table will expand its
+capacity.</p>
+</li>
+<li>
+<p><strong><code>ln_hash *ln_hash_create(ln_hash_func hash_func, ln_cmp_func cmp_func, ln_free_func free_k_func, ln_free_func free_v_func)</code></strong></p>
+<p>Create a hash table with some default arguments.</p>
+<p><code>hash_func</code> is the hash function of the key's data type.</p>
+<p><code>cmp_func</code> is the comparison function of the key's data type.</p>
+<p><code>free_k_func</code> is the free function of the key's data type. If it's <code>NULL</code>,
+<code>ln_hash</code> will not free the key when it is removed.</p>
+<p><code>free_v_func</code> is the free function of the value's data type. If it's <code>NULL</code>,
+<code>ln_hash</code> will not free the value when it is removed.</p>
+</li>
+<li>
+<p><strong><code>void ln_hash_free(ln_hash *hash)</code></strong></p>
+<p>Free a hash table. Also free the keys and/or values if either of the free
+functions is provided when creating this table.</p>
+</li>
+<li>
+<p><strong><code>void ln_hash_init(ln_hash *hash, ln_hash_init_entry *init_array)</code></strong></p>
+<p>Initialize an empty hash table with the key-value pairs in <code>init_array</code>. 
+The elements of <code>init_array</code> are defined as:</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_hash_init_entry</span> <span class="p">{</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_hash_init_entry</span> <span class="n">ln_hash_init_entry</span><span class="p">;</span>
+</pre></div>
+
+
+<p>This array should be ended with a <code>{NULL, NULL}</code> entry.</p>
+</li>
+<li>
+<p><strong><code>int ln_hash_insert(ln_hash *hash, const void *key, void *value)</code></strong></p>
+<p>Insert a key-value pair to the hash table. Return 0 if the key already
+exists and the old value is replaced by <code>value</code> (it will be freed if its
+free function is provided when creating the table), else return 1.</p>
+</li>
+<li>
+<p><strong><code>void *ln_hash_find(ln_hash *hash, const void *key)</code></strong></p>
+<p>Find a value in the hash table with <code>key</code>. If it is found, return the value,
+else return <code>NULL</code>. In case of existing legal <code>NULL</code> values, use 
+<code>ln_hash_find_extended</code>.</p>
+</li>
+<li>
+<p><strong><code>int ln_hash_find_extended(ln_hash *hash, const void *key, void **found_key, void **found_value)</code></strong></p>
+<p>Find a value in the hash table with <code>key</code>. If it is found, return 1, else
+return 0. The found key and value will be stored in <code>found_key</code> and 
+<code>found_value</code> respectively. If either of <code>found_key</code> or <code>found_value</code> is
+<code>NULL</code>, the found key or value will be ignored.</p>
+</li>
+<li>
+<p><strong><code>int ln_hash_remove(ln_hash *hash, const void *key)</code></strong></p>
+<p>Remove a key-value pair in the hash table. The key and/or value will also be
+freed if either of the free functions is provided when creating the table.</p>
+</li>
+<li>
+<p><strong><code>int ln_hash_size(ln_hash *hash)</code></strong></p>
+<p>Return the number of key-value pairs in the hash table.</p>
+</li>
+</ul>
+<h2 id="graph">Graph<a class="headerlink" href="#graph" title="Permanent link">&para;</a></h2></div>
         </div>
 
         <footer class="col-md-12">
@@ -267,7 +404,7 @@ elements' values.</p>
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"next": 78, "help": 191, "previous": 80, "search": 83};
+                shortcuts = {"search": 83, "next": 78, "previous": 80, "help": 191};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../search/main.js" defer></script>
