@@ -27,11 +27,13 @@
 #include "ln_list.h"
 #include "ln_hash.h"
 
-/* NOTE: keep this sync with mtype_names and mtype_infos in ln_mem.c */
+/* NOTE: keep this sync with mtype_infos in ln_mem.c */
 enum ln_mem_type {
     LN_MEM_NONE = 0,
     LN_MEM_CPU,
+#ifdef LN_CUDA
     LN_MEM_CUDA,
+#endif
     LN_MEM_TYPE_SIZE
 };
 typedef enum ln_mem_type ln_mem_type;
@@ -39,11 +41,12 @@ typedef enum ln_mem_type ln_mem_type;
 typedef struct ln_mem_pool ln_mem_pool;
 
 struct ln_mem_info {
-    void  *(*alloc_func)(size_t n);
-    void   (*free_func)(void *p);
-    void  *(*memset_func)(void *s, int c, size_t n);
-    size_t   max_size;
-    size_t   align_size;
+    const char  *name;
+    void      *(*alloc_func)(size_t n);
+    void       (*free_func)(void *p);
+    void      *(*memset_func)(void *s, int c, size_t n);
+    size_t       max_size;
+    size_t       align_size;
 };
 typedef struct ln_mem_info ln_mem_info;
 
@@ -53,7 +56,7 @@ LN_CPPSTART
 
 const char *ln_mem_type_name(ln_mem_type mtype);
 const ln_mem_info ln_mem_type_info(ln_mem_type mtype);
-ln_copy_func ln_mem_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype);
+ln_copy_func ln_mem_type_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype);
 
 ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size);
 void ln_mem_pool_free(ln_mem_pool *mem_pool);

@@ -45,24 +45,18 @@ struct ln_mem_pool {
     ln_list *mem_blocks;
 };
 
-static const char *mtype_names[] = {
-    "LN_MEM_NONE",
-    "LN_MEM_CPU",
-    "LN_MEM_CUDA"
-};
-
 #define DEFAULT_MAX_SIZE 17179869184 /* 16GB */
 #define DEFAULT_ALIGN_SIZE 1
 
 static const ln_mem_info ln_mem_infos[] = {
-    {NULL, NULL, 0, 0},
-    {ln_alloc, ln_free, memset, DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
+    {"LN_MEM_NONE", NULL, NULL, NULL, 0, 0},
+    {"LN_MEM_CPU", ln_alloc, ln_free, memset,
+     DEFAULT_MAX_SIZE, DEFAULT_ALIGN_SIZE},
 #ifdef LN_CUDA
-    /* 32-byte L2 cache line in compute capability >= 3.0*/
-    {ln_alloc_cuda, ln_free_cuda, ln_memset_cuda, DEFAULT_MAX_SIZE, 32},
-#else
-    {NULL, NULL, 0, 0},
-#endif  /* LN_CUDA */
+    {"LN_MEM_CUDA", ln_alloc_cuda, ln_free_cuda, ln_memset_cuda,
+     DEFAULT_MAX_SIZE, 32}, /* 32-byte L2 cache in compute capability >= 3.0*/
+#endif
+    {NULL, NULL, NULL, NULL, 0, 0},
 };
 
 #define ln_check_mem_type(mtype)                        \
@@ -70,8 +64,7 @@ static const ln_mem_info ln_mem_infos[] = {
 
 const char *ln_mem_type_name(ln_mem_type mtype)
 {
-    ln_check_mem_type(mtype);
-    return mtype_names[mtype];
+    return ln_mem_type_info(mtype).name;
 }
 
 const ln_mem_info ln_mem_type_info(ln_mem_type mtype)
@@ -91,7 +84,8 @@ const ln_mem_info ln_mem_type_info(ln_mem_type mtype)
                                     ln_mem_type_name(src_mtype),        \
                                     ln_mem_type_name(dst_mtype))
 
-ln_copy_func ln_mem_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype)
+/* TODO: re-implement it with a 2d-array */
+ln_copy_func ln_mem_type_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype)
 {
     ln_copy_func copy = NULL;
 

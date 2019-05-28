@@ -392,3 +392,94 @@ edges and nodes, and a list of its next edges and nodes.
     Print the graph to stream `fp`. Graph node data are printed by `print_node`.
     Graph edge data are printed by `print_edge`.
     
+## Memory Model
+
+Every computing device in heterogeneous platforms may have its own type of
+memory. LightNet uses an enumeration type `ln_mem_type` to describe them.
+Every `ln_mem_type` should have an instance of `ln_mem_info` in `ln_mem.c`.
+
+    :::c
+    enum ln_mem_type {
+        LN_MEM_NONE = 0,
+        LN_MEM_CPU,
+    #ifdef LN_CUDA
+        LN_MEM_CUDA,
+    #endif
+    /* ... may be other mem types here */
+        LN_MEM_TYPE_SIZE
+    };
+    typedef enum ln_mem_type ln_mem_type;
+
+    struct ln_mem_info {
+        const char  *name;
+        void      *(*alloc_func)(size_t n);
+        void       (*free_func)(void *p);
+        void      *(*memset_func)(void *s, int c, size_t n);
+        size_t       max_size;
+        size_t       align_size;
+    };
+    typedef struct ln_mem_info ln_mem_info;
+
+Every `ln_mem_type` has its own information, in which `alloc_func`, 
+`free_func`, `memset_func` are its memory operations, as `malloc`, `free`,
+`memset` in the standard C library. `max_size` is the maximum bytes the memory
+type can store. `align_size` is the alignment bytes the memory type requires.
+
+`ln_mem_type` supports the following operations:
+
+- **`const char *ln_mem_type_name(ln_mem_type mtype)`**
+
+    Return the name of `mtype`.
+
+- **`const ln_mem_info ln_mem_type_info(ln_mem_type mtype)`**
+
+    Return the `ln_mem_info` of `mtype`.
+
+- **`ln_copy_func ln_mem_type_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype)`**
+
+    Return the copy function from `src_mtype` to `dst_mtype`, as `memcpy` in the
+    standard C library.
+
+Besides, LightNet uses virtual memory pools to make overall arrangements for
+memory allocations and releases. This step pre-plans the memory offsets of 
+tensors, which can be converted to real memory addresses in run time.
+`ln_mem_pool` is the virtual memory pool structure.
+
+`ln_mem_pool` supports the following operations:
+
+- **`ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)`**
+  
+    Create a virtual memory pool.
+
+- **`void ln_mem_pool_free(ln_mem_pool *mem_pool)`**
+
+    Free a virtual memory pool.
+
+- **`size_t ln_mem_pool_alloc(ln_mem_pool *mem_pool, size_t size)`**
+
+    Return the allocated memory offset (starting from 0) from the memory pool.
+
+- **`void ln_mem_pool_dealloc(ln_mem_pool *mem_pool, size_t addr)`**
+
+    Deallocate a memory offset.
+
+- **`int ln_mem_pool_exist(ln_mem_pool *mem_pool, size_t addr)`**
+
+    Test if a memory offset is allocated before.
+
+- **`void ln_mem_pool_dump(ln_mem_pool *mem_pool, FILE *fp)`**
+
+    Dump the memory layout of the memory pool.
+
+- **`ln_hash *ln_mem_pool_table_create(void)`**
+
+    Create a hash table of all memory pools. 
+    The table takes `ln_mem_type` as keys and `ln_mem_pool` as values.
+
+- **`void ln_mem_pool_table_free(ln_hash *mpt)`**
+
+    Free the memory pool hash table returned by `ln_mem_pool_table_create`.
+
+## Tensors
+
+
