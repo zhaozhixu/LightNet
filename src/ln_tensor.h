@@ -28,13 +28,13 @@
 #include "ln_mem.h"
 
 /* tensor entry used in tensor table */
-/* NOTE: ALWAYS access tensor entry via its name in tensor_table, since the
-   entry may be not the same during passes. It is owned by the tensor_table. */
+/* NOTE: ALWAYS access tensor entry via its name in tensor table, since the
+   entry may be not the same during passes. It is owned by the tensor table. */
 struct ln_tensor_entry {
     char        *name;
     tl_tensor   *tensor;
-    char        *owner;         /* owner tensor name of the tensor data */
-    char        *creater;       /* name of the creater op */
+    char        *owner;         /* owner tensor's name of the tensor's data */
+    char        *creater;       /* operator name who creates the tensor */
     size_t       offset;
     int          isstatic;
     ln_mem_type  mtype;
