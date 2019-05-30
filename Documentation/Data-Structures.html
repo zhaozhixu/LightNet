@@ -124,6 +124,8 @@
             <li><a href="#queue">Queue</a></li>
             <li><a href="#hash-table">Hash Table</a></li>
             <li><a href="#graph">Graph</a></li>
+            <li><a href="#memory-model">Memory Model</a></li>
+            <li><a href="#tensor">Tensor</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
@@ -509,7 +511,192 @@ Return -1 if the graph has a cycle, else return the number of layers.</p>
 <p>Print the graph to stream <code>fp</code>. Graph node data are printed by <code>print_node</code>.
 Graph edge data are printed by <code>print_edge</code>.</p>
 </li>
-</ul></div>
+</ul>
+<h2 id="memory-model">Memory Model<a class="headerlink" href="#memory-model" title="Permanent link">&para;</a></h2>
+<p>Every computing device in heterogeneous platforms may have its own type of
+memory. LightNet uses an enumeration type <code>ln_mem_type</code> to describe them.
+Every <code>ln_mem_type</code> should have an instance of <code>ln_mem_info</code> in <code>ln_mem.c</code>.</p>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">ln_mem_type</span> <span class="p">{</span>
+    <span class="n">LN_MEM_NONE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">LN_MEM_CPU</span><span class="p">,</span>
+<span class="cp">#ifdef LN_CUDA</span>
+    <span class="n">LN_MEM_CUDA</span><span class="p">,</span>
+<span class="cp">#endif</span>
+<span class="cm">/* ... may be other mem types here */</span>
+    <span class="n">LN_MEM_TYPE_SIZE</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">enum</span> <span class="n">ln_mem_type</span> <span class="n">ln_mem_type</span><span class="p">;</span>
+
+<span class="k">struct</span> <span class="n">ln_mem_info</span> <span class="p">{</span>
+    <span class="k">const</span> <span class="kt">char</span>  <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+    <span class="kt">void</span>      <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">alloc_func</span><span class="p">)(</span><span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>
+    <span class="kt">void</span>       <span class="p">(</span><span class="o">*</span><span class="n">free_func</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
+    <span class="kt">void</span>      <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">memset_func</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">s</span><span class="p">,</span> <span class="kt">int</span> <span class="n">c</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>
+    <span class="kt">size_t</span>       <span class="n">max_size</span><span class="p">;</span>
+    <span class="kt">size_t</span>       <span class="n">align_size</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_mem_info</span> <span class="n">ln_mem_info</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Every <code>ln_mem_type</code> has its own information, in which <code>alloc_func</code>, 
+<code>free_func</code>, <code>memset_func</code> are its memory operations, as <code>malloc</code>, <code>free</code>,
+<code>memset</code> in the standard C library. <code>max_size</code> is the maximum bytes the memory
+type can store. <code>align_size</code> is the alignment bytes the memory type requires.</p>
+<p><code>ln_mem_type</code> supports the following operations:</p>
+<ul>
+<li>
+<p><strong><code>const char *ln_mem_type_name(ln_mem_type mtype)</code></strong></p>
+<p>Return the name of <code>mtype</code>.</p>
+</li>
+<li>
+<p><strong><code>const ln_mem_info ln_mem_type_info(ln_mem_type mtype)</code></strong></p>
+<p>Return the <code>ln_mem_info</code> of <code>mtype</code>.</p>
+</li>
+<li>
+<p><strong><code>ln_copy_func ln_mem_type_copy_func(ln_mem_type dst_mtype, ln_mem_type src_mtype)</code></strong></p>
+<p>Return the copy function from <code>src_mtype</code> to <code>dst_mtype</code>, as <code>memcpy</code> in the
+standard C library.</p>
+</li>
+</ul>
+<p>Besides, LightNet uses virtual memory pools to make overall arrangements for
+memory allocations and releases. This step pre-plans the memory offsets of 
+tensors, which can be converted to real memory addresses in run time.
+<code>ln_mem_pool</code> is the virtual memory pool structure.</p>
+<p><code>ln_mem_pool</code> supports the following operations:</p>
+<ul>
+<li>
+<p><strong><code>ln_mem_pool *ln_mem_pool_create(size_t size, size_t align_size)</code></strong></p>
+<p>Create a virtual memory pool.</p>
+</li>
+<li>
+<p><strong><code>void ln_mem_pool_free(ln_mem_pool *mem_pool)</code></strong></p>
+<p>Free a virtual memory pool.</p>
+</li>
+<li>
+<p><strong><code>size_t ln_mem_pool_alloc(ln_mem_pool *mem_pool, size_t size)</code></strong></p>
+<p>Return the allocated memory offset (starting from 0) from the memory pool.</p>
+</li>
+<li>
+<p><strong><code>void ln_mem_pool_dealloc(ln_mem_pool *mem_pool, size_t addr)</code></strong></p>
+<p>Deallocate a memory offset.</p>
+</li>
+<li>
+<p><strong><code>int ln_mem_pool_exist(ln_mem_pool *mem_pool, size_t addr)</code></strong></p>
+<p>Test if a memory offset is allocated before.</p>
+</li>
+<li>
+<p><strong><code>void ln_mem_pool_dump(ln_mem_pool *mem_pool, FILE *fp)</code></strong></p>
+<p>Dump the memory layout of the memory pool.</p>
+</li>
+<li>
+<p><strong><code>ln_hash *ln_mem_pool_table_create(void)</code></strong></p>
+<p>Create a hash table of all memory pools. 
+The table takes <code>ln_mem_type</code> as keys and <code>ln_mem_pool</code> as values.</p>
+</li>
+<li>
+<p><strong><code>void ln_mem_pool_table_free(ln_hash *mpt)</code></strong></p>
+<p>Free the memory pool hash table returned by <code>ln_mem_pool_table_create</code>.</p>
+</li>
+</ul>
+<h2 id="tensor">Tensor<a class="headerlink" href="#tensor" title="Permanent link">&para;</a></h2>
+<p>LightNet uses <code>ln_tensor</code> as the basic data storage structure.
+<code>ln_tensor</code> further uses <a href="https://github.com/zhaozhixu/TensorLight">TensorLight</a>
+as its basic tensor operation library, which is seperated from LightNet on
+purpose so that it can be used widely beyond LightNet.</p>
+<p>TensorLight implements many universal tensor operations. There are some simple
+operations such as slice, transpose, concatation, relu, as well as some 
+complicated operations such as bounding boxes' coordinate transformation,
+YOLO's object detection. Developers are welcomed to add their own useful
+operations to TensorLight, which can be used not only in LightNet, but also 
+in other projects.</p>
+<p>In both projects, a tensor refers to a <code>tl_tensor</code> structure, which has the
+tensor's meta infomation and its data pointer.</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tl_tensor</span> <span class="p">{</span>
+    <span class="n">tl_dtype</span>          <span class="n">dtype</span><span class="p">;</span>          <span class="cm">/* data type */</span>
+    <span class="kt">int</span>               <span class="n">len</span><span class="p">;</span>            <span class="cm">/* number of elements */</span>
+    <span class="kt">int</span>               <span class="n">ndim</span><span class="p">;</span>           <span class="cm">/* number of dimensions */</span>
+    <span class="kt">int</span>              <span class="o">*</span><span class="n">dims</span><span class="p">;</span>           <span class="cm">/* array of dimensions */</span>
+    <span class="kt">void</span>             <span class="o">*</span><span class="n">data</span><span class="p">;</span>           <span class="cm">/* data pointer */</span>
+    <span class="k">struct</span> <span class="n">tl_tensor</span> <span class="o">*</span><span class="n">owner</span><span class="p">;</span>          <span class="cm">/* data owner, NULL if it&#39;s itself */</span>
+    <span class="kt">void</span>             <span class="o">*</span><span class="n">backend_data</span><span class="p">;</span>   <span class="cm">/* for other backend dependent data */</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">tl_tensor</span> <span class="n">tl_tensor</span><span class="p">;</span>
+</pre></div>
+
+
+<p>A tensor's data type is represented by a enumeration type <code>tl_dtype</code>. It 
+supports many common data types such as double, float, 32/16/8 bit 
+signed/unsigned integers, and bool.</p>
+<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">tl_dtype</span> <span class="p">{</span>
+    <span class="n">TL_DTYPE_INVALID</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">TL_DOUBLE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">TL_FLOAT</span><span class="p">,</span>
+    <span class="n">TL_INT32</span><span class="p">,</span>
+    <span class="n">TL_INT16</span><span class="p">,</span>
+    <span class="n">TL_INT8</span><span class="p">,</span>
+    <span class="n">TL_UINT32</span><span class="p">,</span>
+    <span class="n">TL_UINT16</span><span class="p">,</span>
+    <span class="n">TL_UINT8</span><span class="p">,</span>
+    <span class="n">TL_BOOL</span><span class="p">,</span>
+    <span class="n">TL_DTYPE_SIZE</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">enum</span> <span class="n">tl_dtype</span> <span class="n">tl_dtype</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>tl_tensor</code> supports many tensor operations, see <a href="https://github.com/zhaozhixu/TensorLight">TensorLight</a> for more details.</p>
+<p>In LightNet, all tensors in a NN model are managed by a tensor table. The tensor
+table is a hash table, with tensors' names as its keys and tensor table entries
+as its values. The tensor table entry structure is defined as follows.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/* NOTE: ALWAYS access tensor entry via its name in tensor table, since the</span>
+<span class="cm">   entry may be not the same during passes. It is owned by the tensor table. */</span>
+<span class="k">struct</span> <span class="n">ln_tensor_entry</span> <span class="p">{</span>
+    <span class="kt">char</span>        <span class="o">*</span><span class="n">name</span><span class="p">;</span>          <span class="cm">/* tensor name */</span>
+    <span class="n">tl_tensor</span>   <span class="o">*</span><span class="n">tensor</span><span class="p">;</span>        <span class="cm">/* pointer to the underlying tl_tensor */</span>
+    <span class="kt">char</span>        <span class="o">*</span><span class="n">owner</span><span class="p">;</span>         <span class="cm">/* owner tensor&#39;s name of the tensor&#39;s data */</span>
+    <span class="kt">char</span>        <span class="o">*</span><span class="n">creater</span><span class="p">;</span>       <span class="cm">/* operator name who creates the tensor */</span>
+    <span class="kt">size_t</span>       <span class="n">offset</span><span class="p">;</span>        <span class="cm">/* offset address of the tensor&#39;s data */</span>
+    <span class="kt">int</span>          <span class="n">isstatic</span><span class="p">;</span>      <span class="cm">/* the tensor is static or not */</span>
+    <span class="n">ln_mem_type</span>  <span class="n">mtype</span><span class="p">;</span>         <span class="cm">/* memory type */</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_tensor_entry</span> <span class="n">ln_tensor_entry</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Every tensor must be created by an operator, and <code>creater</code> records that
+operator's name. Considering the computing efficiency, some tensors may share
+the same underlying data pointer, in which case <code>owner</code> records the name of the
+tensor who actually owns the data. <code>offset</code> is the relative address assigned to
+the tensor in memory planning process, and it is initially 0, which is invalid 
+at run time. Some tensors' memory may not be freed after allocation, in which
+case <code>isstatic</code> should be labeled as 1 to indicate that it's static. Finally,
+<code>mtype</code> is the memory type of the tensor's data.</p>
+<p><code>ln_tensor_entry</code> supports the following operations:</p>
+<ul>
+<li><strong><code>ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)</code></strong></li>
+<li><strong><code>void ln_tensor_entry_free(ln_tensor_entry *entry)</code></strong></li>
+<li><strong><code>void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)</code></strong></li>
+<li><strong><code>void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *direct_owner)</code></strong></li>
+<li><strong><code>void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)</code></strong></li>
+</ul>
+<p>Besides tensor table entry, this mudule also defines a tensor list entry
+structure <code>ln_tensor_list_entry</code>.</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_tensor_list_entry</span> <span class="p">{</span>
+    <span class="kt">char</span>            <span class="o">*</span><span class="n">name</span><span class="p">;</span>
+    <span class="kt">char</span>            <span class="o">*</span><span class="n">arg_name</span><span class="p">;</span>
+    <span class="kt">size_t</span>           <span class="n">offset</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_tensor_list_entry</span> <span class="n">ln_tensor_list_entry</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>ln_tensor_list_entry</code> is used in an operator's input/output tensor list. <code>name</code>
+and <code>offset</code> are the same as those in the tensor's table entry. <code>name</code> is used
+to find the tensor table entry from the operator. <code>offset</code> is used to store
+the memory-planned address in the optimized output operator stream. <code>arg_name</code>
+is the argument name of the tensor in the operator, such as "stride" in an 
+"conv2d" operator.</p></div>
         </div>
 
         <footer class="col-md-12">
@@ -518,7 +705,7 @@ Graph edge data are printed by <code>print_edge</code>.</p>
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"next": 78, "previous": 80, "search": 83, "help": 191};
+                shortcuts = {"help": 191, "search": 83, "next": 78, "previous": 80};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../js/baidu_analyse.js" defer></script>
