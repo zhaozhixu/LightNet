@@ -566,6 +566,10 @@ case `isstatic` should be labeled as 1 to indicate that it's static. Finally,
 - **`void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *direct_owner)`**
 - **`void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)`**
 
+When removing a tensor or inserting a different tensor with the same name 
+as another tensor, the tensor table will free the old table entry and its 
+`tensor` field, but not free `tensor->data`. So we should always insert tensors 
+with `NULL` data.
 
 Besides tensor table entry, this mudule also defines a tensor list entry
 structure `ln_tensor_list_entry`.
@@ -584,6 +588,4 @@ to find the tensor table entry from the operator. `offset` is used to store
 the memory-planned address in the optimized output operator stream. `arg_name`
 is the argument name of the tensor in the operator, such as "stride" in an 
 "conv2d" operator.
-
-
 

@@ -78,9 +78,9 @@ void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
 void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater);
 
 /*
- * When removing-tensor or inserting-different-tensor-with-same-name
- * or freeing-table happens, tensor_table will free the table entry and
- * the tensor, but not free the tensor->data.
+ * When removing tensor or inserting different tensor with same name
+ * or freeing table, tensor_table will free the table entry and
+ * the tensor, but not free tensor->data.
  * We should always insert tensors with NULL data.
  */
 ln_hash *ln_tensor_table_create(void);
