@@ -153,9 +153,53 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
         }
         if (++count > MAX_PEEPHOLE_PASSES) {
             ln_msg_emit(LN_MSG_INTER_WARN,
-                          "peephole passes exceeds limit of %d",
-                          MAX_PEEPHOLE_PASSES);
+                        "peephole passes exceeds limit of %d",
+                        MAX_PEEPHOLE_PASSES);
         }
+    }
+}
+
+void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs)
+{
+    ln_list *old_ops = NULL;
+    ln_list *new_ops = NULL;
+    ln_subgraph_func sg;
+    int i;
+
+    for (i = 0; (sg = sg_funcs[i]); i++) {
+        new_ops = sg(ctx->dfg, &old_ops);
+        if (!old_ops)
+            continue;
+        ln_context_subgraph(ctx, old_ops, new_ops);
+        ln_context_check(ctx);
+        ln_list_free(old_ops);
+        ln_list_free(new_ops);
+        old_ops = NULL;
+        new_ops = NULL;
+    }
+}
+
+void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs)
+{
+    ln_schedule_func sd;
+    ln_list *ops;
+    ln_op *op;
+    int i, n;
+
+    for (i = 0; (sd = sd_funcs[i]); i++) {
+        ops = sd(ctx->dfg);
+        n = 0;
+        LN_LIST_FOREACH(op, ops) {
+            if (!ln_hash_find(ctx->dfg->node_table, op->op_arg->name))
+                ln_msg_error("scheduled op %s not found in DFG",
+                             op->op_arg->name);
+            n++;
+        }
+        if (n != ln_hash_size(ctx->dfg->node_table))
+            ln_msg_error("the length of scheduled ops (%d) is not equal to the size of DFG (%d)", n, ln_hash_size(ctx->dfg->node_table));
+
+        ln_list_free(ctx->ops);
+        ctx->ops = ops;
     }
 }
 

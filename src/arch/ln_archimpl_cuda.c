@@ -195,6 +195,20 @@ ln_combiner_func cb_funcs_cuda[] = {
     NULL
 };
 
+/* end of declare cuda subgraphers */
+
+ln_subgraph_func sg_funcs_cuda[] = {
+/* end of cuda subgraphers */
+    NULL
+};
+
+/* end of declare cuda schedulers */
+
+ln_schedule_func sd_funcs_cuda[] = {
+/* end of cuda schedulers */
+    NULL
+};
+
 extern void ln_expander_init_expander_cuda(void **priv_p);
 /* end of declare cuda init funcs */
 
@@ -219,5 +233,7 @@ ln_arch ln_archimpl_cuda = {
     .reg_ops = ops_cuda,
     .ep_funcs = ep_funcs_cuda,
     .cb_funcs = cb_funcs_cuda,
+    .sg_funcs = sg_funcs_cuda,
+    .sd_funcs = sd_funcs_cuda,
     .arch_name = "cuda",
 };

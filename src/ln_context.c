@@ -128,6 +128,35 @@ void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)
     ln_context_replace_ops(ctx, position, 0, list);
 }
 
+void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops)
+{
+    ln_op *op;
+    ln_list *layers = NULL;
+    ln_list *layer;
+    ln_list *ops = NULL;
+
+    LN_LIST_FOREACH(op, old_ops) {
+        cleanup_op(ctx, op);
+    }
+
+    LN_LIST_FOREACH(op, new_ops) {
+        init_op(ctx, op);
+    }
+
+    if (ln_graph_topsort(ctx->dfg->graph, &layers) < 0)
+        ln_msg_error("DFG has a circle during graph substitution");
+
+    LN_LIST_FOREACH(layer, layers) {
+        LN_LIST_FOREACH(op, layer) {
+            ops = ln_list_append(ops, op);
+        }
+    }
+    ln_graph_free_topsortlist(layers);
+
+    ln_list_free(ctx->ops);
+    ctx->ops = ops;
+}
+
 int ln_context_check(const ln_context *ctx)
 {
     return ln_dfg_check(ctx->dfg);
@@ -206,6 +235,8 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_pass_expander(ctx, arch->ep_funcs);
     ln_pass_preprocess(ctx);
     ln_pass_combiner(ctx, 2, arch->cb_funcs);
+    ln_pass_subgraph(ctx, arch->sg_funcs);
+    ln_pass_schedule(ctx, arch->sd_funcs);
 
     /* make ops consistent */
     ln_op_list_do_post_run(ctx->ops);

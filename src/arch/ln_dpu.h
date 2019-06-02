@@ -20,57 +20,23 @@
  * SOFTWARE.
  */
 
-#include "ln_arch.h"
-#include "ln_cudnn.h"
+#ifndef _LN_DPU_H_
+#define _LN_DPU_H_
+#ifdef LN_DPU
 
-extern ln_op ln_opimpl_relu_cudnn;
-/* end of declare cudnn ops */
+#include <stdlib.h>
 
-static ln_op *ops_cudnn[] = {
-    &ln_opimpl_relu_cudnn,
-/* end of init cudnn ops */
-    NULL
-};
+#ifdef __cplusplus
+LN_CPPSTART
+#endif
 
-void init_cudnn(void **priv_p)
-{
-    *priv_p = ln_cudnn_context_create();
-}
+void *ln_alloc_dpu(size_t size);
+void *ln_memset_dpu(void *dst, int c, size_t n);
+void ln_free_dpu(void *p);
 
-void cleanup_cudnn(void **priv_p)
-{
-    ln_cudnn_context_free(*priv_p);
-}
+#ifdef __cplusplus
+LN_CPPEND
+#endif
 
-ln_expander_func ep_funcs_cudnn[] = {
-    NULL
-};
-
-ln_combiner_func cb_funcs_cudnn[] = {
-    NULL
-};
-
-/* end of declare cudnn subgraphers */
-
-ln_subgraph_func sg_funcs_cudnn[] = {
-/* end of cudnn subgraphers */
-    NULL
-};
-
-/* end of declare cudnn schedulers */
-
-ln_schedule_func sd_funcs_cudnn[] = {
-/* end of cudnn schedulers */
-    NULL
-};
-
-ln_arch ln_archimpl_cudnn = {
-    .init_func = init_cudnn,
-    .cleanup_func = cleanup_cudnn,
-    .reg_ops = ops_cudnn,
-    .ep_funcs = ep_funcs_cudnn,
-    .cb_funcs = cb_funcs_cudnn,
-    .sg_funcs = sg_funcs_cudnn,
-    .sd_funcs = sd_funcs_cudnn,
-    .arch_name = "cudnn",
-};
+#endif  /* LN_DPU */
+#endif  /* _LN_DPU_H_ */

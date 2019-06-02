@@ -24,6 +24,7 @@
 #include "ln_mem.h"
 #include "ln_msg.h"
 #include "ln_cuda.h"
+#include "ln_dpu.h"
 
 typedef enum block_flag block_flag;
 enum block_flag {
@@ -55,6 +56,10 @@ static const ln_mem_info ln_mem_infos[] = {
 #ifdef LN_CUDA
     {"LN_MEM_CUDA", ln_alloc_cuda, ln_free_cuda, ln_memset_cuda,
      DEFAULT_MAX_SIZE, 32}, /* 32-byte L2 cache in compute capability >= 3.0*/
+#endif
+#ifdef LN_DPU
+    {"LN_MEM_DPU", ln_alloc_dpu, ln_free_dpu, ln_memset_dpu,
+     524288, 1}, /* 512x64x16 bytes in MRA and MRB */
 #endif
     {NULL, NULL, NULL, NULL, 0, 0},
 };

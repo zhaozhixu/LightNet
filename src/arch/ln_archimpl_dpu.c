@@ -21,56 +21,63 @@
  */
 
 #include "ln_arch.h"
-#include "ln_cudnn.h"
 
-extern ln_op ln_opimpl_relu_cudnn;
-/* end of declare cudnn ops */
+/* end of declare dpu ops */
 
-static ln_op *ops_cudnn[] = {
-    &ln_opimpl_relu_cudnn,
-/* end of init cudnn ops */
+static ln_op *ops_dpu[] = {
+/* end of init dpu ops */
     NULL
 };
 
-void init_cudnn(void **priv_p)
+/* end of declare dpu expanders */
+
+ln_expander_func ep_funcs_dpu[] = {
+/* end of dpu expanders */
+    NULL
+};
+
+/* end of declare dpu combiners */
+
+ln_combiner_func cb_funcs_dpu[] = {
+/* end of dpu combiners */
+    NULL
+};
+
+/* end of declare dpu subgraphers */
+
+ln_subgraph_func sg_funcs_dpu[] = {
+/* end of dpu subgraphers */
+    NULL
+};
+
+/* end of declare dpu schedulers */
+
+ln_schedule_func sd_funcs_dpu[] = {
+/* end of dpu schedulers */
+    NULL
+};
+
+/* end of declare dpu init funcs */
+
+static void init_dpu(void **priv_p)
 {
-    *priv_p = ln_cudnn_context_create();
+/* end of exec dpu init funcs */
 }
 
-void cleanup_cudnn(void **priv_p)
+/* end of declare dpu cleanup funcs */
+
+static void cleanup_dpu(void **priv_p)
 {
-    ln_cudnn_context_free(*priv_p);
+/* end of exec dpu cleanup funcs */
 }
 
-ln_expander_func ep_funcs_cudnn[] = {
-    NULL
-};
-
-ln_combiner_func cb_funcs_cudnn[] = {
-    NULL
-};
-
-/* end of declare cudnn subgraphers */
-
-ln_subgraph_func sg_funcs_cudnn[] = {
-/* end of cudnn subgraphers */
-    NULL
-};
-
-/* end of declare cudnn schedulers */
-
-ln_schedule_func sd_funcs_cudnn[] = {
-/* end of cudnn schedulers */
-    NULL
-};
-
-ln_arch ln_archimpl_cudnn = {
-    .init_func = init_cudnn,
-    .cleanup_func = cleanup_cudnn,
-    .reg_ops = ops_cudnn,
-    .ep_funcs = ep_funcs_cudnn,
-    .cb_funcs = cb_funcs_cudnn,
-    .sg_funcs = sg_funcs_cudnn,
-    .sd_funcs = sd_funcs_cudnn,
-    .arch_name = "cudnn",
+ln_arch ln_archimpl_dpu = {
+    .init_func = init_dpu,
+    .cleanup_func = cleanup_dpu,
+    .reg_ops = ops_dpu,
+    .ep_funcs = ep_funcs_dpu,
+    .cb_funcs = cb_funcs_dpu,
+    .sg_funcs = sg_funcs_dpu,
+    .sd_funcs = sd_funcs_dpu,
+    .arch_name = "dpu",
 };

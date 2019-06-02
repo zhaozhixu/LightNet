@@ -37,6 +37,10 @@ extern ln_arch ln_archimpl_cudnn;
 extern ln_arch ln_archimpl_tensorrt;
 #endif
 
+#ifdef LN_DPU
+extern ln_arch ln_archimpl_dpu;
+#endif
+
 static ln_arch *archs[] = {
     &ln_archimpl_none,
     &ln_archimpl_cpu,
@@ -48,6 +52,9 @@ static ln_arch *archs[] = {
 #endif
 #ifdef LN_TENSORRT
     &ln_archimpl_tensorrt,
+#endif
+#ifdef LN_DPU
+    &ln_archimpl_dpu,
 #endif
     NULL
 };

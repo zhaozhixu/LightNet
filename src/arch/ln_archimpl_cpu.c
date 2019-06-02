@@ -103,6 +103,20 @@ ln_combiner_func cb_funcs_cpu[] = {
     NULL
 };
 
+/* end of declare cpu subgraphers */
+
+ln_subgraph_func sg_funcs_cpu[] = {
+/* end of cpu subgraphers */
+    NULL
+};
+
+/* end of declare cpu schedulers */
+
+ln_schedule_func sd_funcs_cpu[] = {
+/* end of cpu schedulers */
+    NULL
+};
+
 extern void ln_expander_init_expander_cpu(void **priv_p);
 /* end of declare cpu init funcs */
 
@@ -127,5 +141,7 @@ ln_arch ln_archimpl_cpu = {
     .reg_ops = ops_cpu,
     .ep_funcs = ep_funcs_cpu,
     .cb_funcs = cb_funcs_cpu,
+    .sg_funcs = sg_funcs_cpu,
+    .sd_funcs = sd_funcs_cpu,
     .arch_name = "cpu",
 };

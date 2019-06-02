@@ -54,6 +54,20 @@ ln_combiner_func cb_funcs_tensorrt[] = {
     NULL
 };
 
+/* end of declare tensorrt subgraphers */
+
+ln_subgraph_func sg_funcs_tensorrt[] = {
+/* end of tensorrt subgraphers */
+    NULL
+};
+
+/* end of declare tensorrt schedulers */
+
+ln_schedule_func sd_funcs_tensorrt[] = {
+/* end of tensorrt schedulers */
+    NULL
+};
+
 extern void ln_expander_init_expander_tensorrt(void **priv_p);
 /* end of declare tensorrt init funcs */
 
@@ -408,5 +422,7 @@ ln_arch ln_archimpl_tensorrt = {
     .reg_ops = ops_tensorrt,
     .ep_funcs = ep_funcs_tensorrt,
     .cb_funcs = cb_funcs_tensorrt,
+    .sg_funcs = sg_funcs_tensorrt,
+    .sd_funcs = sd_funcs_tensorrt,
     .arch_name = "tensorrt",
 };

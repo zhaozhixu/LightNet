@@ -56,6 +56,11 @@ TENSORRT_INSTALL_DIR ?= /usr
 INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
 LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer -lnvinfer_plugin
 endif
+ifeq ($(WITH_DPU), yes)
+CFLAGS += -DLN_DPU
+CXXFLAGS += -DLN_DPU
+CUFLAGS += -DLN_DPU
+endif
 endif
 
 CFLAGS += $(INCPATHS)
