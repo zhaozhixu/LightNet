@@ -30,7 +30,8 @@ typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg,
                                       int *match);
 typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
                                       const ln_dfg *dfg, int *match);
-typedef ln_list *(*ln_subgraph_func) (const ln_dfg *dfg, ln_list **old_ops);
+typedef ln_list *(*ln_subgraph_func) (const ln_list *ops, const ln_dfg *dfg,
+                                      ln_list **old_ops);
 typedef ln_list *(*ln_schedule_func) (const ln_dfg *dfg);
 
 struct ln_arch {

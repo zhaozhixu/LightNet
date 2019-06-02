@@ -71,6 +71,37 @@ static void cleanup_dpu(void **priv_p)
 /* end of exec dpu cleanup funcs */
 }
 
+ln_list *ln_subgrapher_dpu(const ln_list *ops, const ln_dfg *dfg,
+                           ln_list **old_ops)
+{
+    ln_list *new_ops = NULL;
+    ln_tensor_list_entry *tle;
+    ln_op *op;
+
+    /* find op in pattern svmr->concat->slice->ldmr->conv2d in `ops` using `dfg`
+       and put them in `old_ops`, such as: */
+    LN_LIST_FOREACH(op, ops) {
+        if (/* found an op! */) {
+            *old_ops = ln_list_prepend(*old_ops, op);
+        }
+    }
+
+    /* use `ln_op *ln_op_copy(const ln_op *op)` to copy old conv2ds,
+       free their old input tensor names and assign new names: */
+    LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
+        ln_free(tle->name);
+        /* new tensor names are previous conv2ds' output tensor names */
+        tle->name = ln_strdup("new tensor name");
+    }
+
+    return new_ops;
+}
+
+ln_list *ln_scheduler_dpu(const ln_dfg *dfg)
+{
+
+}
+
 ln_arch ln_archimpl_dpu = {
     .init_func = init_dpu,
     .cleanup_func = cleanup_dpu,
