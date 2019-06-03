@@ -37,6 +37,7 @@ START_TEST(test_ln_stack_push_pop)
 
      s = ln_stack_create();
 
+     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
      ln_stack_push(s, (void *)1);
      ln_stack_push(s, (void *)2);
      ln_stack_push(s, (void *)3);
@@ -44,6 +45,17 @@ START_TEST(test_ln_stack_push_pop)
      ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
      ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
      ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
+     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+
+     ln_stack_push(s, (void *)1);
+     ln_stack_push(s, (void *)2);
+     ln_stack_push(s, (void *)3);
+
+     ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
+     ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
+     ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
+     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
      ck_assert_ptr_eq(ln_stack_pop(s), NULL);
 
      ln_stack_free(s);
