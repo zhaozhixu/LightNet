@@ -20,30 +20,52 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_QUEUE_H_
-#define _LN_QUEUE_H_
+#include "ln_stack.h"
 
-#include <stdlib.h>
-#include "ln_list.h"
+ln_stack *ln_stack_create(void)
+{
+    ln_stack *s;
 
-struct ln_queue {
-    ln_list  *head;
-    ln_list  *tail;
-    size_t    size;
-};
-typedef struct ln_queue ln_queue;
+    s = (ln_stack *)ln_alloc(sizeof(ln_stack));
+    s->top = NULL;
+    s->size = 0;
 
-#ifdef __cplusplus
-LN_CPPSTART
-#endif
+    return s;
+}
 
-ln_queue *ln_queue_create(void);
-void ln_queue_free(ln_queue *queue);
-ln_queue *ln_queue_enqueue(ln_queue *queue, void *data);
-void *ln_queue_dequeue(ln_queue *queue);
+void ln_stack_free(ln_stack *stack)
+{
+    ln_list_free(stack->top);
+    ln_free(stack);
+}
 
-#ifdef __cplusplus
-LN_CPPEND
-#endif
+/* return the stack with a new element (a new stack if stack == NULL) */
+ln_stack *ln_stack_push(ln_stack *stack, void *data)
+{
+    ln_stack *s;
 
-#endif	/* _LN_QUEUE_H_ */
+    if (!stack) {
+        s = ln_stack_create();
+        s->top = ln_list_append(NULL, data);
+        s->size = 1;
+        return s;
+    }
+
+    s = stack;
+    s->top = ln_list_prepend(s->top, data);
+    s->size++;
+
+    return s;
+}
+
+void *ln_stack_pop(ln_stack *stack)
+{
+    void *data;
+
+    data = ln_list_nth_data(stack->top, 0);
+    stack->top = ln_list_remove_nth(stack->top, 0);
+    if (stack->size > 0)
+        stack->size--;
+
+    return data;
+}

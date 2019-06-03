@@ -81,7 +81,7 @@ ln_list *ln_subgrapher_dpu(const ln_list *ops, const ln_dfg *dfg,
     /* find op in pattern svmr->concat->slice->ldmr->conv2d in `ops` using `dfg`
        and put them in `old_ops`, such as: */
     LN_LIST_FOREACH(op, ops) {
-        if (/* found an op! */) {
+        if (1/* found an op! */) {
             *old_ops = ln_list_prepend(*old_ops, op);
         }
     }

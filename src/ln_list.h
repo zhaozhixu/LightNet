@@ -33,7 +33,7 @@ typedef struct ln_list ln_list;
 
 /* NOTE: no inserting\removing when using this macro */
 #define LN_LIST_FOREACH(my_data, list)                                  \
-    for (ln_list *_l = (ln_list *)(list); _l && (((my_data) = _l->data) ? 1:1); \
+    for (ln_list *_l = (ln_list *)(list); _l && (((my_data) = _l->data)?1:1); \
          _l = _l->next)
 
 #ifdef __cplusplus

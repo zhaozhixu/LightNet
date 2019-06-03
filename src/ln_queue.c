@@ -21,7 +21,6 @@
  */
 
 #include "ln_queue.h"
-#include "ln_util.h"
 
 ln_queue *ln_queue_create(void)
 {
@@ -33,6 +32,12 @@ ln_queue *ln_queue_create(void)
     q->size = 0;
 
     return q;
+}
+
+void ln_queue_free(ln_queue *queue)
+{
+    ln_list_free(queue->head);
+    ln_free(queue);
 }
 
 /* return the queue with a new element (a new queue if queue == NULL) */
@@ -71,10 +76,4 @@ void *ln_queue_dequeue(ln_queue *queue)
         queue->size--;
 
     return data;
-}
-
-void ln_queue_free(ln_queue *queue)
-{
-    ln_list_free(queue->head);
-    ln_free(queue);
 }

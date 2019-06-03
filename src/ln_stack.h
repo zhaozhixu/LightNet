@@ -20,30 +20,29 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_QUEUE_H_
-#define _LN_QUEUE_H_
+#ifndef _LN_STACK_H_
+#define _LN_STACK_H_
 
 #include <stdlib.h>
 #include "ln_list.h"
 
-struct ln_queue {
-    ln_list  *head;
-    ln_list  *tail;
+struct ln_stack {
+    ln_list  *top;
     size_t    size;
 };
-typedef struct ln_queue ln_queue;
+typedef struct ln_stack ln_stack;
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
-ln_queue *ln_queue_create(void);
-void ln_queue_free(ln_queue *queue);
-ln_queue *ln_queue_enqueue(ln_queue *queue, void *data);
-void *ln_queue_dequeue(ln_queue *queue);
+ln_stack *ln_stack_create(void);
+void ln_stack_free(ln_stack *stack);
+ln_stack *ln_stack_push(ln_stack *stack, void *data);
+void *ln_stack_pop(ln_stack *stack);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif	/* _LN_QUEUE_H_ */
+#endif  /* _LN_STACK_H_ */

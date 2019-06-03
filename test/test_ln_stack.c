@@ -20,30 +20,51 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_QUEUE_H_
-#define _LN_QUEUE_H_
+#include "test_lightnet.h"
+#include "../src/ln_stack.h"
 
-#include <stdlib.h>
-#include "ln_list.h"
+static void checked_setup(void)
+{
+}
 
-struct ln_queue {
-    ln_list  *head;
-    ln_list  *tail;
-    size_t    size;
-};
-typedef struct ln_queue ln_queue;
+static void checked_teardown(void)
+{
+}
 
-#ifdef __cplusplus
-LN_CPPSTART
-#endif
+START_TEST(test_ln_stack_push_pop)
+{
+     ln_stack *s;
 
-ln_queue *ln_queue_create(void);
-void ln_queue_free(ln_queue *queue);
-ln_queue *ln_queue_enqueue(ln_queue *queue, void *data);
-void *ln_queue_dequeue(ln_queue *queue);
+     s = ln_stack_create();
 
-#ifdef __cplusplus
-LN_CPPEND
-#endif
+     ln_stack_push(s, (void *)1);
+     ln_stack_push(s, (void *)2);
+     ln_stack_push(s, (void *)3);
 
-#endif	/* _LN_QUEUE_H_ */
+     ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
+     ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
+     ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
+     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+
+     ln_stack_free(s);
+}
+END_TEST
+
+/* end of tests */
+
+Suite *make_stack_suite(void)
+{
+     Suite *s;
+     TCase *tc_stack;
+
+     s = suite_create("stack");
+     tc_stack = tcase_create("stack");
+     tcase_add_checked_fixture(tc_stack, checked_setup, checked_teardown);
+
+     tcase_add_test(tc_stack, test_ln_stack_push_pop);
+     /* end of adding tests */
+
+     suite_add_tcase(s, tc_stack);
+
+     return s;
+}

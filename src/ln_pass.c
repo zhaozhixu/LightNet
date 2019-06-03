@@ -167,7 +167,7 @@ void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs)
     int i;
 
     for (i = 0; (sg = sg_funcs[i]); i++) {
-        new_ops = sg(ctx->dfg, &old_ops);
+        new_ops = sg(ctx->ops, ctx->dfg, &old_ops);
         if (!old_ops)
             continue;
         ln_context_subgraph(ctx, old_ops, new_ops);
