@@ -24,15 +24,17 @@
 #include "../src/ln_graph.h"
 
 static int *data;
-static size_t data_len;
+static size_t data_len1;
+static size_t data_len2;
 static ln_graph *graph;
 
 static void checked_setup(void)
 {
      int i;
-     data_len = 5;
-     data = ln_alloc(sizeof(int) * data_len);
-     for (i = 0; i < data_len; i++) {
+     data_len1 = 5;
+     data_len2 = 6;
+     data = ln_alloc(sizeof(int) * data_len2);
+     for (i = 0; i < data_len2; i++) {
           data[i] = i;
      }
 
@@ -78,7 +80,7 @@ START_TEST(test_graph_add)
      ln_list *l;
      int i;
 
-     for (i = 0; i < data_len; i++) {
+     for (i = 0; i < data_len1; i++) {
           n = ln_graph_add(graph, &data[i]);
           ck_assert_int_eq(*(int *)n->data, data[i]);
           ck_assert_int_eq(graph->size, i+1);
@@ -94,20 +96,20 @@ START_TEST(test_graph_find)
      ln_graph_node *n;
      int i, num;
 
-     n_array = (ln_graph_node **)ln_alloc(sizeof(ln_graph_node *)*data_len);
-     for (i = 0; i < data_len; i++) {
+     n_array = (ln_graph_node **)ln_alloc(sizeof(ln_graph_node *)*data_len1);
+     for (i = 0; i < data_len1; i++) {
           n_array[i] = ln_graph_add(graph, &data[i]);
           ck_assert_ptr_eq(ln_graph_find(graph, &data[i]), n_array[i]);
      }
-     for (i = 0; i < data_len; i++) {
+     for (i = 0; i < data_len1; i++) {
           n = ln_graph_add(graph, &data[i]);
           ck_assert_ptr_ne(ln_graph_find(graph, &data[i]), n);
      }
-     for (i = 0; i < data_len; i++)
+     for (i = 0; i < data_len1; i++)
           ck_assert_ptr_eq(ln_graph_find(graph, &data[i]), n_array[i]);
      ln_free(n_array);
 
-     num = data_len;
+     num = data_len1;
      ck_assert_ptr_eq(ln_graph_find(graph, &num), NULL);
 
      num = -1;
@@ -119,7 +121,7 @@ START_TEST(test_graph_link_unlink)
 {
      int i;
 
-     for (i = 0; i < data_len; i++)
+     for (i = 0; i < data_len1; i++)
           ln_graph_add(graph, &data[i]);
      ln_graph_link(graph, &data[0], &data[1], &data[1]);
      ln_graph_link(graph, &data[0], &data[2], &data[2]);
@@ -189,7 +191,7 @@ START_TEST(test_graph_copy)
      ln_graph *g;
      ln_list *l;
 
-     for (i = 0; i < data_len; i++)
+     for (i = 0; i < data_len1; i++)
           ln_graph_add(graph, &data[i]);
      ln_graph_link(graph, &data[0], &data[1], &data[1]);
      ln_graph_link(graph, &data[0], &data[2], &data[2]);
@@ -242,7 +244,7 @@ START_TEST(test_graph_num_outlier)
 {
      int i;
 
-     for (i = 0; i < data_len; i++)
+     for (i = 0; i < data_len1; i++)
           ln_graph_add(graph, &data[i]);
      ln_graph_link(graph, &data[0], &data[2], &data[1]);
      ln_graph_link(graph, &data[0], &data[3], &data[3]);
@@ -263,7 +265,7 @@ START_TEST(test_graph_topsort)
      int i;
      int res_num;
 
-     for (i = 0; i < data_len; i++)
+     for (i = 0; i < data_len1; i++)
           ln_graph_add(graph, &data[i]);
      ln_graph_link(graph, &data[0], &data[1], &data[1]);
      ln_graph_link(graph, &data[0], &data[2], &data[2]);
@@ -305,6 +307,37 @@ START_TEST(test_graph_topsort)
      ln_graph_free_topsortlist(res);
 }
 END_TEST
+
+START_TEST(test_ln_graph_dft_after_prev)
+{
+     ln_list *res;
+     ln_list *l;
+     int *res_true;
+     int res_num;
+     int i;
+
+     for (i = 0; i < data_len2; i++)
+          ln_graph_add(graph, &data[i]);
+     ln_graph_link(graph, &data[0], &data[1], &data[1]);
+     ln_graph_link(graph, &data[0], &data[2], &data[2]);
+     ln_graph_link(graph, &data[0], &data[3], &data[3]);
+     ln_graph_link(graph, &data[2], &data[4], &data[4]);
+     ln_graph_link(graph, &data[3], &data[4], &data[3]);
+
+     res_num = ln_graph_dft_after_prev(graph, &res);
+     ck_assert_int_eq(res_num, 6);
+
+     res_true = (int []){5, 0, 3, 2, 4, 1};
+     for (l = res, i = 0; l; l = l->next, i++) {
+          ck_assert_int_eq(*(int *)l->data, res_true[i]);
+     }
+
+     ln_graph_link(graph, &data[3], &data[5], &data[2]);
+     ln_graph_link(graph, &data[5], &data[0], &data[2]);
+     res_num = ln_graph_dft_after_prev(graph, &res);
+     ck_assert_int_eq(res_num, -1);
+}
+END_TEST
 /* end of tests */
 
 Suite *make_graph_suite(void)
@@ -324,6 +357,7 @@ Suite *make_graph_suite(void)
      tcase_add_test(tc_graph, test_graph_copy);
      tcase_add_test(tc_graph, test_graph_num_outlier);
      tcase_add_test(tc_graph, test_graph_topsort);
+     tcase_add_test(tc_graph, test_ln_graph_dft_after_prev);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_graph);

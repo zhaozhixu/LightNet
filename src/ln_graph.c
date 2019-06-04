@@ -337,7 +337,7 @@ static int can_traverse_node(ln_graph_node *node, ln_hash *visited)
 
 /* Depth-First Traversal from a node who has no input edge. Traverse every node
    after all its previous nodes have been tranversed. Return the length of
-   `res`, or -1 if graph has a cycle,*/
+   `res`, or -1 if graph is empty or has a cycle,*/
 int ln_graph_dft_after_prev(ln_graph *graph, ln_list **res)
 {
     ln_hash *visited;
@@ -345,7 +345,9 @@ int ln_graph_dft_after_prev(ln_graph *graph, ln_list **res)
     ln_stack *stack;
     ln_graph_node *node;
     ln_graph_edge_node *en;
+    int len;
 
+    len = 0;
     res_list = NULL;
     stack = ln_stack_create();
     visited = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, NULL);
@@ -353,22 +355,33 @@ int ln_graph_dft_after_prev(ln_graph *graph, ln_list **res)
         if (node->indegree == 0)
             ln_stack_push(stack, node);
     }
+    if (stack->size == 0)
+        goto err;
 
     while (stack->size != 0) {
         node = ln_stack_pop(stack);
         ln_hash_insert(visited, node, (void *)1);
         res_list = ln_list_append(res_list, node->data);
+        len++;
         LN_LIST_FOREACH(en, node->out_edge_nodes) {
+            if (ln_hash_find(visited, en->node))
+                goto err;
             if (can_traverse_node(en->node, visited))
                 ln_stack_push(stack, en->node);
         }
     }
     *res = res_list;
+    goto end;
 
+err: /* graph is empty or has a circle */
+    len = -1;
+    ln_list_free(res_list);
+
+end:
     ln_stack_free(stack);
     ln_hash_free(visited);
 
-    return 0;
+    return len;
 }
 
 void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_node,
