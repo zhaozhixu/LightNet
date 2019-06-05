@@ -48,16 +48,18 @@ struct ln_op_arg {
 typedef struct ln_op_arg ln_op_arg;
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg);
+typedef size_t (*ln_op_offset_func) (ln_op_arg *op_arg, ln_tensor_entry *te);
 
 /* The operator used in IR. */
 /* NOTE: It is owned by a op_table. Remove it from a DFG and do post_run()
    before remove it from the op_table. */
 struct ln_op {
-    ln_op_arg   *op_arg;
-    ln_op_func   pre_run;
-    ln_op_func   static_run;
-    ln_op_func   run;
-    ln_op_func   post_run;
+    ln_op_arg          *op_arg;
+    ln_op_func          pre_run;
+    ln_op_func          static_run;
+    ln_op_func          run;
+    ln_op_func          post_run;
+    ln_op_offset_func   calc_offset;
 };
 typedef struct ln_op ln_op;
 

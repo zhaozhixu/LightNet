@@ -335,8 +335,8 @@ static int can_traverse_node(ln_graph_node *node, ln_hash *visited)
     return 1;
 }
 
-/* Depth-First Traversal from a node who has no input edge. Traverse every node
-   after all its previous nodes have been tranversed. Return the length of
+/* Depth-First Traversal from a node who has no input edge. Visit every node
+   after all its previous nodes have been visited. Return the length of
    `res`, or -1 if graph is empty or has a cycle,*/
 int ln_graph_dft_after_prev(ln_graph *graph, ln_list **res)
 {

@@ -69,6 +69,7 @@ ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name,
     op->static_run = op_proto->static_run;
     op->run = op_proto->run;
     op->post_run = op_proto->post_run;
+    op->calc_offset = op_proto->calc_offset;
 
     return op;
 }

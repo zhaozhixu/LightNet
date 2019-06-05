@@ -208,5 +208,6 @@ ln_op ln_opimpl_avgpool2d = {
     .pre_run = avgpool2d_pre_run,
     .static_run = NULL,
     .run = NULL,
-    .post_run = avgpool2d_post_run
+    .post_run = avgpool2d_post_run,
+    .calc_offset = NULL,
 };

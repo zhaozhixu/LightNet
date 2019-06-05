@@ -41,6 +41,7 @@ ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
 ''',
+            "calc_offset": "return src_entry->offset;"
         },
         {
             "optype": "rearange_cpu",

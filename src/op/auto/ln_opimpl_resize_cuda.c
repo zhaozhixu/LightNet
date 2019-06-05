@@ -185,5 +185,6 @@ ln_op ln_opimpl_resize_cuda = {
     .pre_run = resize_cuda_pre_run,
     .static_run = NULL,
     .run = resize_cuda_run,
-    .post_run = resize_cuda_post_run
+    .post_run = resize_cuda_post_run,
+    .calc_offset = NULL,
 };

@@ -139,5 +139,6 @@ ln_op ln_opimpl_tensorrt = {
     .pre_run = tensorrt_pre_run,
     .static_run = tensorrt_static_run,
     .run = tensorrt_run,
-    .post_run = tensorrt_post_run
+    .post_run = tensorrt_post_run,
+    .calc_offset = NULL,
 };

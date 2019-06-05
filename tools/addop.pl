@@ -101,6 +101,7 @@ sub gen_code {
     push @blocks, &gen_static_run($op) if exists $op->{static_run};
     push @blocks, &gen_run($op) if exists $op->{run};
     push @blocks, &gen_post_run($op);
+    push @blocks, &gen_calc_offset($op) if exists $op->{calc_offset};
     push @blocks, &gen_op_arg($op);
     push @blocks, &gen_op_impl($op);
 
@@ -822,6 +823,27 @@ sub add_dynamic_decs_from_priv {
     # }
 }
 
+sub gen_calc_offset {
+    my $op = shift;
+
+    my @states = ();
+    push @states, "struct priv_s *priv = op_arg->priv;";
+    &add_dynamic_decs_from_priv($op, $op->{calc_offset}, \@states);
+    &make_defs_neat(\@states);
+    push @states, "";
+    &add_custom_block($op->{calc_offset}, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
+    my $states_str = join "\n", @states;
+
+    my $calc_offset_tpl = <<EOF;
+/* This function is used to manually set the tensor's offset address. */
+static size_t $op->{optype}_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
+{
+${states_str}
+}
+EOF
+}
+
 sub gen_static_run {
     my $op = shift;
 
@@ -959,6 +981,7 @@ EOF
 
 sub gen_op_impl {
     my $op = shift;
+    my $calc_offset_func = exists $op->{calc_offset} ? "$op->{optype}_calc_offset" : "NULL";
     my $static_run_func = exists $op->{static_run} ? "$op->{optype}_static_run" : "NULL";
     my $run_func = exists $op->{run} ? "$op->{optype}_run" : "NULL";
 
@@ -969,7 +992,8 @@ ln_op ln_opimpl_$op->{optype} = {
     .pre_run = $op->{optype}_pre_run,
     .static_run = ${static_run_func},
     .run = ${run_func},
-    .post_run = $op->{optype}_post_run
+    .post_run = $op->{optype}_post_run,
+    .calc_offset = ${calc_offset_func},
 };
 EOF
 }

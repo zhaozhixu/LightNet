@@ -219,5 +219,6 @@ ln_op ln_opimpl_maxpool2d_cuda = {
     .pre_run = maxpool2d_cuda_pre_run,
     .static_run = NULL,
     .run = maxpool2d_cuda_run,
-    .post_run = maxpool2d_cuda_post_run
+    .post_run = maxpool2d_cuda_post_run,
+    .calc_offset = NULL,
 };

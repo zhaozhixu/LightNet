@@ -29,6 +29,7 @@ static ln_op *ops_dpu[] = {
     NULL
 };
 
+ln_list *ln_expander_dpu(const ln_op *self, const ln_dfg *dfg, int *match);
 /* end of declare dpu expanders */
 
 ln_expander_func ep_funcs_dpu[] = {
@@ -43,6 +44,8 @@ ln_combiner_func cb_funcs_dpu[] = {
     NULL
 };
 
+ln_list *ln_subgrapher_dpu(const ln_list *ops, const ln_dfg *dfg,
+                           ln_list **old_ops);
 /* end of declare dpu subgraphers */
 
 ln_subgraph_func sg_funcs_dpu[] = {
@@ -50,6 +53,7 @@ ln_subgraph_func sg_funcs_dpu[] = {
     NULL
 };
 
+ln_list *ln_scheduler_dpu(const ln_dfg *dfg);
 /* end of declare dpu schedulers */
 
 ln_schedule_func sd_funcs_dpu[] = {
@@ -71,35 +75,63 @@ static void cleanup_dpu(void **priv_p)
 /* end of exec dpu cleanup funcs */
 }
 
-ln_list *ln_subgrapher_dpu(const ln_list *ops, const ln_dfg *dfg,
-                           ln_list **old_ops)
+ln_list *ln_expander_dpu(const ln_op *self, const ln_dfg *dfg, int *match)
 {
-    ln_list *new_ops = NULL;
-    ln_tensor_list_entry *tle;
-    ln_op *op;
-
-    /* find op in pattern svmr->concat->slice->ldmr->conv2d in `ops` using `dfg`
-       and put them in `old_ops`, such as: */
-    LN_LIST_FOREACH(op, ops) {
-        if (1/* found an op! */) {
-            *old_ops = ln_list_prepend(*old_ops, op);
-        }
-    }
-
-    /* use `ln_op *ln_op_copy(const ln_op *op)` to copy old conv2ds,
-       free their old input tensor names and assign new names: */
-    LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
-        ln_free(tle->name);
-        /* new tensor names are previous conv2ds' output tensor names */
-        tle->name = ln_strdup("new tensor name");
-    }
-
-    return new_ops;
 }
+
+/* static int check_prevs(const ln_dfg *dfg, const ln_op *op, const char *optype) */
+/* { */
+/*     ln_tensor_list_entry *tle; */
+/*     ln_op *prev_op; */
+
+/*     LN_LIST_FOREACH(tle, op->op_arg->tensors_in) { */
+/*         prev_op = ln_dfg_prev(dfg, op, tle->name); */
+/*         if (!ln_streq(prev_op->op_arg->optype, optype)) */
+/*             return 0; */
+/*     } */
+/*     return 1; */
+/* } */
+
+/* ln_list *ln_subgrapher_dpu(const ln_list *ops, const ln_dfg *dfg, */
+/*                            ln_list **old_ops) */
+/* { */
+/*     ln_list *new_ops = NULL; */
+/*     ln_tensor_list_entry *tle; */
+/*     ln_op *op; */
+
+/*     /\* find op in pattern svmr->concat->slice->ldmr->conv2d in `ops` using `dfg` */
+/*        and put them in `old_ops`, such as: *\/ */
+/*     LN_LIST_FOREACH(op, ops) { */
+/*         if (!ln_streq(op->op_arg->optype, "concat")) */
+/*             continue; */
+/*         LN_LIST_FOREACH(tle, op->op_arg->tensors_in) { */
+/*             prev_op = ln_dfg_prev(dfg, op, tle->name); */
+/*             if (!ln_streq(op->)) */
+/*         } */
+/*         if (1/\* found an op! *\/) { */
+/*             *old_ops = ln_list_prepend(*old_ops, op); */
+/*         } */
+/*     } */
+
+/*     /\* use `ln_op *ln_op_copy(const ln_op *op)` to copy old conv2ds, */
+/*        free their old input tensor names and assign new names: *\/ */
+/*     LN_LIST_FOREACH(tle, op->op_arg->tensors_in) { */
+/*         ln_free(tle->name); */
+/*         /\* new tensor names are previous conv2ds' output tensor names *\/ */
+/*         tle->name = ln_strdup("new tensor name"); */
+/*     } */
+
+/*     return new_ops; */
+/* } */
 
 ln_list *ln_scheduler_dpu(const ln_dfg *dfg)
 {
+    ln_list *ops = NULL;
 
+    if (ln_graph_dft_after_prev(dfg->graph, &ops) < 0)
+        ln_msg_error("graph has a circle when doing Depth-First Traversal");
+
+    return ops;
 }
 
 ln_arch ln_archimpl_dpu = {
