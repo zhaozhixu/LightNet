@@ -1,4 +1,4 @@
-# Overview
+# Introduction
 
 LightNet is a light-weight neural network inference optimizer for different
 software/hardware backends.
