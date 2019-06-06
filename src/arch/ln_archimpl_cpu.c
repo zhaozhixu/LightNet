@@ -51,6 +51,10 @@ extern ln_op ln_opimpl_transpose_cpu;
 extern ln_op ln_opimpl_upsample_cpu;
 extern ln_op ln_opimpl_zeros_cpu;
 extern ln_op ln_opimpl_resize_cpu;
+extern ln_op ln_opimpl_gather_cpu;
+extern ln_op ln_opimpl_gather_nocopy_cpu;
+extern ln_op ln_opimpl_scatter_cpu;
+extern ln_op ln_opimpl_scatter_nocopy_cpu;
 /* end of declare cpu ops */
 
 static ln_op *ops_cpu[] = {
@@ -83,6 +87,10 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_upsample_cpu,
     &ln_opimpl_zeros_cpu,
     &ln_opimpl_resize_cpu,
+    &ln_opimpl_gather_cpu,
+    &ln_opimpl_gather_nocopy_cpu,
+    &ln_opimpl_scatter_cpu,
+    &ln_opimpl_scatter_nocopy_cpu,
 /* end of init cpu ops */
     NULL
 };

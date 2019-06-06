@@ -50,6 +50,10 @@ extern ln_op ln_opimpl_lrelu_cuda;
 extern ln_op ln_opimpl_detect_yolov3_cuda;
 extern ln_op ln_opimpl_avgpool2d_cuda;
 extern ln_op ln_opimpl_resize_cuda;
+extern ln_op ln_opimpl_gather_cuda;
+extern ln_op ln_opimpl_gather_nocopy_cuda;
+extern ln_op ln_opimpl_scatter_cuda;
+extern ln_op ln_opimpl_scatter_nocopy_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -81,6 +85,10 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_detect_yolov3_cuda,
     &ln_opimpl_avgpool2d_cuda,
     &ln_opimpl_resize_cuda,
+    &ln_opimpl_gather_cuda,
+    &ln_opimpl_gather_nocopy_cuda,
+    &ln_opimpl_scatter_cuda,
+    &ln_opimpl_scatter_nocopy_cuda,
 /* end of init cuda ops */
     NULL
 };

@@ -22,9 +22,13 @@
 
 #include "ln_arch.h"
 
+extern ln_op ln_opimpl_gather_nocopy_dpu;
+extern ln_op ln_opimpl_scatter_nocopy_dpu;
 /* end of declare dpu ops */
 
 static ln_op *ops_dpu[] = {
+    &ln_opimpl_gather_nocopy_dpu,
+    &ln_opimpl_scatter_nocopy_dpu,
 /* end of init dpu ops */
     NULL
 };

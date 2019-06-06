@@ -50,6 +50,8 @@ extern ln_op ln_opimpl_lrelu;
 extern ln_op ln_opimpl_detect_yolov3;
 extern ln_op ln_opimpl_avgpool2d;
 extern ln_op ln_opimpl_resize;
+extern ln_op ln_opimpl_gather;
+extern ln_op ln_opimpl_scatter;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -82,6 +84,8 @@ static ln_op *ops_none[] = {
     &ln_opimpl_detect_yolov3,
     &ln_opimpl_avgpool2d,
     &ln_opimpl_resize,
+    &ln_opimpl_gather,
+    &ln_opimpl_scatter,
 /* end of init none ops */
     NULL
 };
