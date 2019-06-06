@@ -21,12 +21,12 @@ by LightNet.
 
 LightNet for now mainly focuses on the high-level optimization of a NN model, 
 which can be completed with substitutions of the operators in a computing 
-graph. Those optimizations are processed by the "peephole optimizers" of the
-corresponding backend, according to the optimization capabilities provided
-by the backend platforms. After the high-level optimizations, LightNet will
-plan the relative memory address used by each tensor, which can be converted to
-real memory address at runtime, at the same time keep the total memory usage as
-low as possible.
+graph. Those optimizations are processed by the peephole optimizers and graph
+substituters of the corresponding backend, according to the optimization 
+capabilities provided by the backend platforms. After the high-level
+optimizations, LightNet will plan the relative memory address used by each 
+tensor, which can be converted to real memory address at runtime, at the same
+time keep the total memory usage as low as possible.
 
 ![Overview of LightNet](../img/overview.png)
 
