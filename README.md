@@ -3,9 +3,9 @@ backends. The first version is still under development.
 
 ## Overview
 
-[LightNet](https://zhaozhixu.github.io/LightNet) is a lightweight neural 
-network optimizer framework for different software/hardware backends.
-For the full documentation, see [LightNet](https://zhaozhixu.github.io/LightNet).
+LightNet is a lightweight neural network optimizer framework for different 
+software/hardware backends.
+See [LightNet](https://zhaozhixu.github.io/LightNet), for its full documentation.
 
 ## Installation
 
