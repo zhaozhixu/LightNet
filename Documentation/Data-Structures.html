@@ -55,7 +55,7 @@
                                 <ul class="dropdown-menu">
                                     
 <li >
-    <a href="Overview.html">Overview</a>
+    <a href="Introduction.html">Introduction</a>
 </li>
                                     
 <li >
@@ -680,6 +680,10 @@ case <code>isstatic</code> should be labeled as 1 to indicate that it's static. 
 <li><strong><code>void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *direct_owner)</code></strong></li>
 <li><strong><code>void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)</code></strong></li>
 </ul>
+<p>When removing a tensor or inserting a different tensor with the same name 
+as another tensor, the tensor table will free the old table entry and its 
+<code>tensor</code> field, but not free <code>tensor-&gt;data</code>. So we should always insert tensors 
+with <code>NULL</code> data.</p>
 <p>Besides tensor table entry, this mudule also defines a tensor list entry
 structure <code>ln_tensor_list_entry</code>.</p>
 <div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_tensor_list_entry</span> <span class="p">{</span>
@@ -705,7 +709,7 @@ is the argument name of the tensor in the operator, such as "stride" in an
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"next": 78, "previous": 80, "help": 191, "search": 83};
+                shortcuts = {"previous": 80, "search": 83, "help": 191, "next": 78};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../js/baidu_analyse.js" defer></script>
