@@ -173,6 +173,17 @@ static void rearange_cpu_post_run(ln_op_arg *op_arg)
     ln_free(priv);
 }
 
+/* This function is used to manually set the tensor's offset address. */
+static size_t rearange_cpu_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
+{
+    struct priv_s   *priv = op_arg->priv;
+    ln_tensor_entry *src_entry = priv->src_entry;
+
+    {
+        return src_entry->offset;
+    }
+}
+
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -213,5 +224,5 @@ ln_op ln_opimpl_rearange_cpu = {
     .static_run = NULL,
     .run = rearange_cpu_run,
     .post_run = rearange_cpu_post_run,
-    .calc_offset = NULL,
+    .calc_offset = rearange_cpu_calc_offset,
 };

@@ -114,18 +114,6 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg)
     op_arg->priv = priv;
 }
 
-/* This function runs only once per instance right after memory allocation. */
-static void reshape_cuda_static_run(ln_op_arg *op_arg)
-{
-    struct priv_s *priv = op_arg->priv;
-    tl_tensor     *src = priv->src_entry->tensor;
-    tl_tensor     *dst = priv->dst_entry->tensor;
-
-    {
-        dst->data = src->data;
-    }
-}
-
 /* This function should free all the memory allocated by other *_run()s. */
 static void reshape_cuda_post_run(ln_op_arg *op_arg)
 {
@@ -133,6 +121,17 @@ static void reshape_cuda_post_run(ln_op_arg *op_arg)
 
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
     ln_free(priv);
+}
+
+/* This function is used to manually set the tensor's offset address. */
+static size_t reshape_cuda_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
+{
+    struct priv_s   *priv = op_arg->priv;
+    ln_tensor_entry *src_entry = priv->src_entry;
+
+    {
+        return src_entry->offset;
+    }
 }
 
 static const char *in_arg_names[] = {
@@ -168,8 +167,8 @@ static ln_op_arg op_arg_reshape_cuda = {
 ln_op ln_opimpl_reshape_cuda = {
     .op_arg = &op_arg_reshape_cuda,
     .pre_run = reshape_cuda_pre_run,
-    .static_run = reshape_cuda_static_run,
+    .static_run = NULL,
     .run = NULL,
     .post_run = reshape_cuda_post_run,
-    .calc_offset = NULL,
+    .calc_offset = reshape_cuda_calc_offset,
 };

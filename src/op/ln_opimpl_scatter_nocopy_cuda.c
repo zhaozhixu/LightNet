@@ -101,6 +101,24 @@ static void scatter_nocopy_cuda_post_run(ln_op_arg *op_arg)
     ln_free(op_arg->priv);
 }
 
+static size_t scatter_nocopy_cuda_calc_offset(ln_op_arg *op_arg,
+                                              ln_tensor_entry *te)
+{
+    struct priv_s *priv = op_arg->priv;
+    ln_tensor_entry *src_entry = priv->src_entry;
+    ln_tensor_entry *entry;
+    size_t offset = src_entry->offset;
+    size_t size;
+
+    LN_LIST_FOREACH(entry, priv->dst_entries) {
+        if (ln_streq(entry->name, te->name))
+            return offset;
+        size = tl_tensor_size(entry->tensor);
+        offset += size;
+    }
+    return 0;
+}
+
 static const char *in_arg_names[] = {
     "src",
     NULL
@@ -134,5 +152,5 @@ ln_op ln_opimpl_scatter_nocopy_cuda = {
     .static_run = NULL,
     .run = NULL,
     .post_run = scatter_nocopy_cuda_post_run,
-    .calc_offset = NULL,
+    .calc_offset = scatter_nocopy_cuda_calc_offset,
 };

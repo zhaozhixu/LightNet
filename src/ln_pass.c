@@ -271,6 +271,55 @@ static void dealloc_offset(ln_tensor_entry *te, ln_hash *mem_pools)
     ln_mem_pool_dealloc(mp, te->offset);
 }
 
+static ln_op *find_obliged_op(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
+                              const char *owner)
+{
+    ln_tensor_list_entry *tle;
+    ln_list *next_ops;
+    ln_op *next_op;
+
+    LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
+        if (ln_streq(tle->name, owner))
+            return op;
+    }
+
+    if (!(next_ops = ln_dfg_nexts(dfg, op, te->name)))
+        ln_msg_inter_error("can't find the successors of op '%s' when finding the obliged op for setting the shared offset of tensor '%s'",
+                           op->op_arg->name, te->name);
+
+    LN_LIST_FOREACH(next_op, next_ops) {
+        LN_LIST_FOREACH(tle, next_op->op_arg->tensors_out) {
+            if (ln_streq(tle->name, owner)) {
+                ln_list_free(next_ops);
+                return next_op;
+            }
+        }
+    }
+
+    ln_list_free(next_ops);
+    ln_msg_inter_error("can't find the obliged op for setting the shared offset of tensor '%s' of op '%s'", te->name, op->op_arg->name);
+    return NULL;
+}
+
+static void set_shared_offset(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
+                              const char *owner)
+{
+    ln_op *obliged_op;
+    size_t offset;
+
+    obliged_op = find_obliged_op(dfg, op, te, owner);
+    if (obliged_op->calc_offset) {
+        offset = obliged_op->calc_offset(obliged_op->op_arg, te);
+        if (offset == 0)
+            ln_msg_inter_error("can't set the shared offset of tensor '%s' of op '%s' with obliged op '%s'", te->name, op->op_arg->name,
+                               obliged_op->op_arg->name);
+        set_offset(te, offset);
+    }
+    else {
+        ln_msg_inter_error("obliged op for setting the shared offset of tensor '%s' of op '%s' doesn't have the 'calc_offset' function", te->name, op->op_arg->name);
+    }
+}
+
 void ln_pass_mem_plan(ln_context *ctx)
 {
     ln_op *op;
@@ -330,10 +379,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                     total_sums[owner_te->mtype] +=
                         tl_tensor_size(owner_te->tensor);
                 }
-                if (op->calc_offset)
-                    set_offset(te, op->calc_offset(op->op_arg, te));
-                else
-                    set_offset(te, owner_te->offset);
+                set_shared_offset(ctx->dfg, op, te, te->owner);
                 continue;
             }
             if (te->isstatic)

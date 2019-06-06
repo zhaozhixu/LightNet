@@ -271,6 +271,7 @@ ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)
     return res ? res->node->data : NULL;
 }
 
+/* res needs to be freed by caller */
 ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname)
 {
     ln_graph_node *node;

@@ -84,7 +84,8 @@ ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
 ''',
-            "run": "tl_tensor_rearange(dst, start, stop, step);"
+            "run": "tl_tensor_rearange(dst, start, stop, step);",
+            "calc_offset": "return src_entry->offset;"
         },
         {
             "optype": "rearange_cuda",
@@ -127,7 +128,8 @@ ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
 ''',
-            "run": "tl_tensor_rearange_cuda(dst, start, stop, step);"
+            "run": "tl_tensor_rearange_cuda(dst, start, stop, step);",
+            "calc_offset": "return src_entry->offset;"
         }
     ]
 }

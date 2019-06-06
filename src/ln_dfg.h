@@ -48,6 +48,7 @@ void ln_dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname);
 void ln_dfg_add(ln_dfg *dfg, ln_op *op);
 void ln_dfg_remove(ln_dfg *dfg, ln_op *op);
 ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname);
+/* the returned list needs to be freed by the caller */
 ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname);
 ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname);
 int ln_dfg_check(const ln_dfg *dfg);
