@@ -1,10 +1,11 @@
-A light weight neural network frontend framework for different software/hardware
+A light weight neural network optimizer framework for different software/hardware
 backends. The first version is still under development.
 
 ## Overview
 
 [LightNet](https://zhaozhixu.github.io/LightNet) is a lightweight neural 
-network compiler framework for different software/hardware backends.
+network optimizer framework for different software/hardware backends.
+For the full documentation, see [LightNet](https://zhaozhixu.github.io/LightNet).
 
 ## Installation
 
@@ -112,9 +113,13 @@ After compilation, the following components will be installed:
 
 LightNet provides 3 interfaces which can be used by developers and users:
 
-- [Command line](Getting-Started.md#Command-line)
-- [C API](Getting-Started.md#C-API)
-- [Python API](Getting-Started.md#Python-API)
+- Command line
+- C API
+- Python API
+
+<!-- - [Command line](Getting-Started.md#Command-line) -->
+<!-- - [C API](Getting-Started.md#C-API) -->
+<!-- - [Python API](Getting-Started.md#Python-API) -->
 
 ### Command line
 
@@ -145,6 +150,6 @@ Options:
                          defined when compiling)
 ```
 
-### C API
+<!-- ### C API -->
 
-### Python API
+<!-- ### Python API -->
