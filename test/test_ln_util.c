@@ -40,6 +40,19 @@ START_TEST(test_ln_strcat_delim_alloc)
      ln_free(str);
 }
 END_TEST
+
+START_TEST(test_ln_next_multiple_power2)
+{
+     ck_assert_int_eq(8, ln_next_multiple_power2(7, 8));
+     ck_assert_int_eq(40, ln_next_multiple_power2(39, 8));
+     ck_assert_int_eq(-40, ln_next_multiple_power2(-41, 8));
+     ck_assert_int_eq(0, ln_next_multiple_power2(-2, 8));
+     ck_assert_int_eq(-8, ln_next_multiple_power2(-8, 8));
+     ck_assert_int_eq(0, ln_next_multiple_power2(0, 8));
+     ck_assert_int_eq(8, ln_next_multiple_power2(8, 8));
+     ck_assert_int_eq(8, ln_next_multiple_power2(2, 8));
+}
+END_TEST
 /* end of tests */
 
 Suite *make_util_suite(void)
@@ -52,6 +65,7 @@ Suite *make_util_suite(void)
      tcase_add_checked_fixture(tc_util, checked_setup, checked_teardown);
 
      tcase_add_test(tc_util, test_ln_strcat_delim_alloc);
+     tcase_add_test(tc_util, test_ln_next_multiple_power2);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_util);

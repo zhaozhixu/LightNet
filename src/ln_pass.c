@@ -314,8 +314,7 @@ static void set_shared_offset(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
             ln_msg_inter_error("can't set the shared offset of tensor '%s' of op '%s' with obliged op '%s'", te->name, op->op_arg->name,
                                obliged_op->op_arg->name);
         set_offset(te, offset);
-    }
-    else {
+    } else {
         ln_msg_inter_error("obliged op for setting the shared offset of tensor '%s' of op '%s' doesn't have the 'calc_offset' function", te->name, op->op_arg->name);
     }
 }

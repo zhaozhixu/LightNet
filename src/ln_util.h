@@ -86,6 +86,7 @@ int ln_str_cmp(const void *p1, const void *p2);
 double ln_clock(void);
 void ln_img_submean(const unsigned char *data, const float *mean, float *out,
                     int H, int W, int C);
+int ln_next_multiple_power2(int n, int power2);
 
 void ln_err_msg(const char *fmt, ...);
 void ln_err_cont(int error, const char *fmt, ...);

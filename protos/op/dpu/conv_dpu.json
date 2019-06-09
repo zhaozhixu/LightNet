@@ -1,0 +1,100 @@
+{
+    "ops":[
+        {
+            "optype": "conv1x1_dpu",
+            "author": "Ma Siyuan, Zhao Zhixu",
+            "arch": "dpu",
+            "tensors_in": [
+                // [width, input_channel]
+                {"arg_name": "src", "mtype": "LN_MEM_DPU", "ndim": 2},
+                // [output_channel, input_channel/group, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_DPU", "ndim": 4},
+                {"arg_name": "bias", "mtype": "LN_MEM_DPU", "ndim": 1,
+                "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+}
+'''
+                }
+            ],
+            "tensors_out": [
+                // [width, output_channel]
+                {"arg_name": "dst", "mtype": "LN_MEM_DPU",
+                "ndim": "2", "dtype": "src->dtype",
+                "custom":'''
+dst_dims = (int[]){ln_compute_output_dim(src->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
+''',
+                }
+            ],
+            "params": [
+                // stride in width direction
+                {"arg_name": "stride", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1},
+                // [left, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 0},
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(weight->dims[1]*group == src->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'src' (%s)'s dims[1]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src->ndim, src->dims));
+}
+'''
+                 }
+            ]
+        },
+        {
+            "optype": "conv3x3_dpu",
+            "author": "Ma Siyuan, Zhao Zhixu",
+            "arch": "dpu",
+            "tensors_in": [
+                // [width, input_channel]
+                {"arg_name": "src1", "mtype": "LN_MEM_DPU", "ndim": 2},
+                {"arg_name": "src2", "mtype": "LN_MEM_DPU", "ndim": 2},
+                {"arg_name": "src3", "mtype": "LN_MEM_DPU", "ndim": 2},
+                // [output_channel, input_channel/group, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_DPU", "ndim": 4},
+                {"arg_name": "bias", "mtype": "LN_MEM_DPU", "ndim": 1,
+                "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+}
+'''
+                }
+            ],
+            "tensors_out": [
+                // [width, output_channel]
+                {"arg_name": "dst", "mtype": "LN_MEM_DPU",
+                "ndim": "2", "dtype": "src1->dtype",
+                "custom":'''
+dst_dims = (int[]){ln_compute_output_dim(src1->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
+''',
+                }
+            ],
+            "params": [
+                // stride in width direction
+                {"arg_name": "stride", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1},
+                // [left, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 0},
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(weight->dims[1]*group == src1->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'src1' (%s)'s dims[1]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src1->ndim, src1->dims));
+}
+'''
+                 }
+            ]
+        }
+    ]
+}

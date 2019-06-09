@@ -24,11 +24,19 @@
 
 extern ln_op ln_opimpl_gather_nocopy_dpu;
 extern ln_op ln_opimpl_scatter_nocopy_dpu;
+extern ln_op ln_opimpl_svmr_dpu;
+extern ln_op ln_opimpl_ldmr_dpu;
+extern ln_op ln_opimpl_conv1x1_dpu;
+extern ln_op ln_opimpl_conv3x3_dpu;
 /* end of declare dpu ops */
 
 static ln_op *ops_dpu[] = {
     &ln_opimpl_gather_nocopy_dpu,
     &ln_opimpl_scatter_nocopy_dpu,
+    &ln_opimpl_svmr_dpu,
+    &ln_opimpl_ldmr_dpu,
+    &ln_opimpl_conv1x1_dpu,
+    &ln_opimpl_conv3x3_dpu,
 /* end of init dpu ops */
     NULL
 };
@@ -79,8 +87,45 @@ static void cleanup_dpu(void **priv_p)
 /* end of exec dpu cleanup funcs */
 }
 
+static ln_op *create_new_op(const char *optype, ln_hash *tensor_table)
+{
+    ln_op *op_proto;
+
+    op_proto = ln_hash_find(LN_ARCH.op_proto_table, optype);
+    if (!op_proto)
+        ln_msg_inter_error("can't find op proto '%s'", optype);
+
+    return ln_op_create_with_names(op_proto, tensor_table);
+}
+
+static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg)
+{
+    int last_index;
+    ln_op *transpose;
+    ln_op *reshape;
+    ln_op *scatter;
+    ln_op *gather;
+    ln_op *ldmr;
+    ln_op *svmr;
+    ln_op *conv_dpu;
+    ln_list *new_ops = NULL;
+
+    transpose = create_new_op("transpose_cpu", self->op_arg->tensor_table);
+    reshape = create_new_op("reshape_cpu", self->op_arg->tensor_table);
+    scatter = create_new_op("scatter", self->op_arg->tensor_table);
+}
+
 ln_list *ln_expander_dpu(const ln_op *self, const ln_dfg *dfg, int *match)
 {
+    ln_list *new_ops = NULL;
+
+    *match = 0;
+    if (ln_streq(self->op_arg->optype, "conv2d")) {
+        *match = 1;
+        new_ops = ep_conv2d(self, dfg);
+    }
+
+    return new_ops;
 }
 
 /* static int check_prevs(const ln_dfg *dfg, const ln_op *op, const char *optype) */

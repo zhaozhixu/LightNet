@@ -87,7 +87,7 @@ sub gen_code {
     &err_exit("'${optype}' needs an `arch`") unless exists $op->{arch};
     my $arch = $op->{arch};
     if ($arch ne "none" and $arch ne "cpu" and $arch ne "cuda" and
-        $arch ne "cudnn" and $arch ne "tensorrt") {
+        $arch ne "cudnn" and $arch ne "tensorrt" and $arch ne "dpu") {
         &err_exit("'${optype}' has unsupported `arch` '${arch}'");
     }
     if ($arch ne "none" and not $optype =~ /\w+_$arch$/) {
@@ -443,11 +443,12 @@ sub gen_pre_run_checks {
             }
         }
         if (exists $tensor->{check}) {
-            if ($tensor->{check} =~ /,/) {
-                push @states, "ln_opck_satisfy_msg($tensor->{check});";
-            } else {
-                push @states, "ln_opck_satisfy($tensor->{check});";
-            }
+            push @states, &gen_check($tensor->{check});
+            # if ($tensor->{check} =~ /,/) {
+            #     push @states, "ln_opck_satisfy_msg($tensor->{check});";
+            # } else {
+            #     push @states, "ln_opck_satisfy($tensor->{check});";
+            # }
         }
         if (exists $tensor->{checks}) {
             my $checks = $tensor->{checks};
@@ -640,6 +641,15 @@ sub gen_pre_run_checks {
 
     &indent_lines($INDENT_OFFSET, \@states);
     join "\n", @states;
+}
+
+sub gen_check {
+    my $check = shift;
+    if ($check =~ /,\s*".*"\s*$/) {
+        return "ln_opck_satisfy_msg(${check});";
+    } else {
+        return "ln_opck_satisfy(${check});";
+    }
 }
 
 sub gen_output_tensor_def {

@@ -354,6 +354,14 @@ void ln_img_submean(const unsigned char *data, const float *mean, float *out,
     }
 }
 
+/* Return the next multiple of power of 2 greater than `n`.
+   Return unexpected result if `power2` is not a power of 2. */
+int ln_next_multiple_power2(int n, int power2)
+{
+    return (n + 7) & -8;
+    /* return n + (-n & 7); */
+}
+
 static void err_doit(int errnoflag, int error, const char *fmt, va_list ap)
 {
     char buf[LN_MAXLINE];
