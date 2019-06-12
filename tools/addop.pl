@@ -1012,10 +1012,12 @@ sub add_custom_block {
     my $custom_str = shift;
     my $states = shift;
     my @customs = split "\n", $custom_str;
-    &indent_lines($INDENT_OFFSET, \@customs);
-    push @$states, "{";
+    # &indent_lines($INDENT_OFFSET, \@customs);
+    # push @$states, "{";
+    push @$states, "/* begin custom code */";
     push @$states, @customs;
-    push @$states, "}";
+    push @$states, "/* end custom code */";
+    # push @$states, "}";
 }
 
 sub make_defs_neat {

@@ -199,6 +199,20 @@ static void check_conv(char *opname, ln_op_arg *op_arg)
     check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
 }
 
+static void check_deconv(char *opname, ln_op_arg *op_arg)
+{
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "weight", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "bias", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "group", LN_PARAM_NUMBER, 0, op_arg);
+    check_param(opname, "output_c", LN_PARAM_NUMBER, 0, op_arg);
+    check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
+    check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
+    check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
+    check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
+}
+
 static void check_activation(char *opname, ln_op_arg *op_arg)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
@@ -328,6 +342,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
         ln_opck_param_type(pe, LN_PARAM_STRING);
         if (ln_streq(pe->value_string, "conv"))
             check_conv(pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "deconv"))
+            check_deconv(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             check_activation(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "lrelu"))
@@ -487,6 +503,70 @@ static void add_conv(INetworkDefinition *network,
     conv->setPadding(DimsHW(padding[0], padding[1]));
     conv->setDilation(DimsHW(dilation[0], dilation[1]));
     tensors[dst] = conv->getOutput(0);
+}
+
+static void add_deconv(INetworkDefinition *network,
+                       std::map<std::string, ITensor*> &tensors,
+                       std::map<std::string, Weights> &weights,
+                       char *opname, ln_op_arg *op_arg)
+{
+    char *src;
+    char *weight;
+    char *bias;
+    char *dst;
+    int group;
+    int output_c;
+    int *size;
+    int *stride;
+    int *padding;
+    ln_param_entry *pe;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "weight");
+    assert(pe);
+    weight = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "bias");
+    assert(pe);
+    bias = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "group");
+    assert(pe);
+    group = pe->value_int;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "output_c");
+    assert(pe);
+    output_c = pe->value_int;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "size");
+    assert(pe);
+    size = pe->value_array_int;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "stride");
+    assert(pe);
+    stride = pe->value_array_int;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "padding");
+    assert(pe);
+    padding = pe->value_array_int;
+
+    IDeconvolutionLayer *deconv;
+    deconv = network->addDeconvolution(*tensors[src], output_c,
+                                       DimsHW(size[0], size[1]),
+                                       weights[weight],
+                                       weights[bias]);
+    assert(deconv);
+    deconv->setNbGroups(group);
+    deconv->setStride(DimsHW(stride[0], stride[1]));
+    deconv->setPadding(DimsHW(padding[0], padding[1]));
+    tensors[dst] = deconv->getOutput(0);
 }
 
 static void add_activation(INetworkDefinition *network,
@@ -782,6 +862,8 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
             continue;
         if (ln_streq(pe->value_string, "conv"))
             add_conv(network, tensors, weights, pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "deconv"))
+            add_deconv(network, tensors, weights, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             add_activation(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "lrelu"))

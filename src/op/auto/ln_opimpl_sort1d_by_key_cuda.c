@@ -176,6 +176,16 @@ static void sort1d_by_key_cuda_post_run(ln_op_arg *op_arg)
     ln_free(priv);
 }
 
+/* This function is used to manually set the tensor's offset address. */
+static size_t sort1d_by_key_cuda_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
+{
+    struct priv_s *priv = op_arg->priv;
+
+    {
+        return ln_tensor_table_find(op_arg->tensor_table, te->owner)->offset;
+    }
+}
+
 static const char *in_arg_names[] = {
     "src_key",
     "src_val",
@@ -214,5 +224,5 @@ ln_op ln_opimpl_sort1d_by_key_cuda = {
     .static_run = NULL,
     .run = sort1d_by_key_cuda_run,
     .post_run = sort1d_by_key_cuda_post_run,
-    .calc_offset = NULL,
+    .calc_offset = sort1d_by_key_cuda_calc_offset,
 };

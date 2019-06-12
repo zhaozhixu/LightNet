@@ -53,6 +53,66 @@ START_TEST(test_ln_next_multiple_power2)
      ck_assert_int_eq(8, ln_next_multiple_power2(2, 8));
 }
 END_TEST
+
+START_TEST(test_ln_autopadding_conv)
+{
+     int padding[4];
+     int *size;
+     int *stride;
+     int *dims;
+     int ndim = 2;
+
+     size = ck_array(int, 1, 1);
+     stride = ck_array(int, 1, 1);
+     dims = ck_array(int, 4, 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "VALID");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_UPPER");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_LOWER");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+
+     size = ck_array(int, 2, 2);
+     stride = ck_array(int, 1, 1);
+     dims = ck_array(int, 4, 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "VALID");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_UPPER");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 1, 1), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_LOWER");
+     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 0, 0), 4);
+
+     size = ck_array(int, 3, 3);
+     stride = ck_array(int, 1, 1);
+     dims = ck_array(int, 8, 8);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "VALID");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_UPPER");
+     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 1, 1), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_LOWER");
+     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 1, 1), 4);
+
+     size = ck_array(int, 3, 3);
+     stride = ck_array(int, 2, 2);
+     dims = ck_array(int, 8, 8);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "VALID");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_UPPER");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 1, 1), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_LOWER");
+     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 0, 0), 4);
+
+     size = ck_array(int, 3, 3);
+     stride = ck_array(int, 2, 2);
+     dims = ck_array(int, 9, 9);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "VALID");
+     ck_assert_array_int_eq(padding, ck_array(int, 0, 0, 0, 0), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_UPPER");
+     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 1, 1), 4);
+     ln_autopadding_conv(padding, dims, size, stride, ndim, "SAME_LOWER");
+     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 1, 1), 4);
+}
+END_TEST
 /* end of tests */
 
 Suite *make_util_suite(void)
@@ -66,6 +126,7 @@ Suite *make_util_suite(void)
 
      tcase_add_test(tc_util, test_ln_strcat_delim_alloc);
      tcase_add_test(tc_util, test_ln_next_multiple_power2);
+     tcase_add_test(tc_util, test_ln_autopadding_conv);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_util);

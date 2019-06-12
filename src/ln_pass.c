@@ -271,15 +271,14 @@ static void dealloc_offset(ln_tensor_entry *te, ln_hash *mem_pools)
     ln_mem_pool_dealloc(mp, te->offset);
 }
 
-static ln_op *find_obliged_op(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
-                              const char *owner)
+static ln_op *find_obliged_op(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te)
 {
     ln_tensor_list_entry *tle;
     ln_list *next_ops;
     ln_op *next_op;
 
     LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
-        if (ln_streq(tle->name, owner))
+        if (ln_streq(tle->name, te->owner))
             return op;
     }
 
@@ -289,7 +288,7 @@ static ln_op *find_obliged_op(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
 
     LN_LIST_FOREACH(next_op, next_ops) {
         LN_LIST_FOREACH(tle, next_op->op_arg->tensors_out) {
-            if (ln_streq(tle->name, owner)) {
+            if (ln_streq(tle->name, te->owner)) {
                 ln_list_free(next_ops);
                 return next_op;
             }
@@ -301,13 +300,12 @@ static ln_op *find_obliged_op(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
     return NULL;
 }
 
-static void set_shared_offset(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
-                              const char *owner)
+static void set_shared_offset(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te)
 {
     ln_op *obliged_op;
     size_t offset;
 
-    obliged_op = find_obliged_op(dfg, op, te, owner);
+    obliged_op = find_obliged_op(dfg, op, te);
     if (obliged_op->calc_offset) {
         offset = obliged_op->calc_offset(obliged_op->op_arg, te);
         if (offset == 0)
@@ -317,6 +315,16 @@ static void set_shared_offset(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te,
     } else {
         ln_msg_inter_error("obliged op for setting the shared offset of tensor '%s' of op '%s' doesn't have the 'calc_offset' function", te->name, op->op_arg->name);
     }
+}
+
+static ln_tensor_entry *find_root_owner(const char *owner, ln_hash *tensor_table)
+{
+    ln_tensor_entry *te;
+
+    te = ln_tensor_table_find(tensor_table, owner);
+    while (te->owner)
+        te = ln_tensor_table_find(tensor_table, te->owner);
+    return te;
 }
 
 void ln_pass_mem_plan(ln_context *ctx)
@@ -340,8 +348,9 @@ void ln_pass_mem_plan(ln_context *ctx)
             if (te->mtype == LN_MEM_NONE)
                 ln_msg_inter_error("tensor '%s' has an unresolved memory type %s", te->name, ln_mem_type_name(te->mtype));
             if (te->owner) {
-                if (!ln_hash_find_extended(use_counts, te->owner, NULL, NULL))
-                    use_count_zero(use_counts, te->owner);
+                te = find_root_owner(te->owner, arg->tensor_table);
+                if (!ln_hash_find_extended(use_counts, te->name, NULL, NULL))
+                    use_count_zero(use_counts, te->name);
                 continue;
             }
             if (te->isstatic) {
@@ -356,7 +365,8 @@ void ln_pass_mem_plan(ln_context *ctx)
         LN_LIST_FOREACH(tle, arg->tensors_in) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             if (te->owner) {
-                use_count_inc(use_counts, te->owner);
+                te = find_root_owner(te->owner, arg->tensor_table);
+                use_count_inc(use_counts, te->name);
                 continue;
             }
             /* if (te->isstatic) */
@@ -374,11 +384,14 @@ void ln_pass_mem_plan(ln_context *ctx)
                 owner_te = ln_tensor_table_find(arg->tensor_table, te->owner);
                 assert(owner_te);
                 if (owner_te->offset == 0) {
+                    /* NOTE: it appears that owner_te->owner should always be
+                       NULL here in *current* design */
+                    assert(!owner_te->owner);
                     alloc_set_offset(owner_te, mem_pools, ctx);
                     total_sums[owner_te->mtype] +=
                         tl_tensor_size(owner_te->tensor);
                 }
-                set_shared_offset(ctx->dfg, op, te, te->owner);
+                set_shared_offset(ctx->dfg, op, te);
                 continue;
             }
             if (te->isstatic)
@@ -396,8 +409,8 @@ void ln_pass_mem_plan(ln_context *ctx)
         LN_LIST_FOREACH(tle, arg->tensors_in) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             if (te->owner) {
-                if (use_count_dec(use_counts, te->owner) == 0) {
-                    te = ln_tensor_table_find(arg->tensor_table, te->owner);
+                te = find_root_owner(te->owner, arg->tensor_table);
+                if (use_count_dec(use_counts, te->name) == 0) {
                     if (te->isstatic)
                         continue;
                     dealloc_offset(te, mem_pools);

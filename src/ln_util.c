@@ -225,16 +225,23 @@ int ln_digit_num(ssize_t num)
     return n;
 }
 
-int ln_compute_output_dim(int input_dim, int size, int stride, int padding)
+int ln_output_dim_conv(int input_dim, int size, int stride, int padding)
 {
     return ((input_dim + padding) - size) / stride + 1;
 }
 
-int *ln_autopading(int *padding, const int *input_shape, const int *size,
-                   const int *stride, int ndim, const char *mode)
+int ln_output_dim_deconv(int input_dim, int size, int stride, int padding,
+                         int output_padding, int dilation)
+{
+    return stride * (input_dim - 1) + output_padding +
+        ((size - 1) * dilation + 1) - padding;
+}
+
+int *ln_autopadding_conv(int *padding, const int *input_dims, const int *size,
+                         const int *stride, int ndim, const char *mode)
 {
     if (ln_streq(mode, "VALID")) {
-        for (int i = 0; i < ndim; i++)
+        for (int i = 0; i < ndim * 2; i++)
             padding[i] = 0;
         return padding;
     }
@@ -242,32 +249,53 @@ int *ln_autopading(int *padding, const int *input_shape, const int *size,
     int output_shape[TL_MAXDIM];
     int pad_shape[TL_MAXDIM];
     for (int i = 0; i < ndim; i++) {
-        output_shape[i] = (int)ceil((double)input_shape[i] / (double)stride[i]);
+        output_shape[i] = (int)ceil((double)input_dims[i] / (double)stride[i]);
         pad_shape[i] = (output_shape[i] - 1) * stride[i] + size[i]
-            - input_shape[i];
+            - input_dims[i];
     }
-    if (ln_streq(mode, "SAME_UPPER")) {
-        for (int i = 0; i < ndim; i++) {
-            if (pad_shape[i] % 2) {
-                padding[i] = 0;
-                padding[i+ndim] = pad_shape[i];
-            } else {
-                padding[i] = pad_shape[i] / 2;
-                padding[i+ndim] = pad_shape[i] / 2;
-            }
+
+    for (int i = 0; i < ndim; i++) {
+        if (ln_streq(mode, "SAME_UPPER")) {
+            padding[i] = pad_shape[i] / 2;
+            padding[i+ndim] = pad_shape[i] - padding[i];
+        } else if (ln_streq(mode, "SAME_LOWER")) {
+            padding[i+ndim] = pad_shape[i] / 2;
+            padding[i] = pad_shape[i] - padding[i+ndim];
+        } else {
+            assert(0 && "unsupported padding mode");
         }
-    } else if (ln_streq(mode, "SAME_LOWER")) {
-        for (int i = 0; i < ndim; i++) {
-            if (pad_shape[i] % 2) {
-                padding[i] = pad_shape[i];
-                padding[i+ndim] = 0;
-            } else {
-                padding[i] = pad_shape[i] / 2;
-                padding[i+ndim] = pad_shape[i] / 2;
-            }
+    }
+
+    return padding;
+}
+
+int *ln_autopadding_deconv(int *padding, const int *input_dims,
+                           const int *output_dims, const int *size,
+                           const int *stride, const int *output_padding,
+                           const int *dilations, int ndim, const char *mode)
+{
+    if (ln_streq(mode, "VALID")) {
+        for (int i = 0; i < ndim; i++)
+            padding[i] = 0;
+        return padding;
+    }
+
+    int pad_shape[TL_MAXDIM];
+    for (int i = 0; i < ndim; i++) {
+        pad_shape[i] = stride[i] * (input_dims[i] - 1) + output_padding[i] +
+            ((size[i] - 1) * dilations[i] + 1) - output_dims[i];
+    }
+
+    for (int i = 0; i < ndim; i++) {
+        if (ln_streq(mode, "SAME_UPPER")) {
+            padding[i] = pad_shape[i] / 2;
+            padding[i+ndim] = pad_shape[i] - padding[i];
+        } else if (ln_streq(mode, "SAME_LOWER")) {
+            padding[i+ndim] = pad_shape[i] / 2;
+            padding[i] = pad_shape[i] - padding[i+ndim];
+        } else {
+            assert(0 && "unsupported padding mode");
         }
-    } else {
-        assert(0 && "unsupported padding mode");
     }
 
     return padding;

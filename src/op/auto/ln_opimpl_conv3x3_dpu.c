@@ -186,7 +186,7 @@ static void conv3x3_dpu_pre_run(ln_op_arg *op_arg)
     dst_ndim = 2;
     dst_dtype = src1->dtype;
     {
-        dst_dims = (int[]){ln_compute_output_dim(src1->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
+        dst_dims = (int[]){ln_output_dim_conv(src1->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
     }
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);

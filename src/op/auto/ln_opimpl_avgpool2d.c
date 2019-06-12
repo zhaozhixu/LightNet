@@ -120,7 +120,7 @@ static void avgpool2d_pre_run(ln_op_arg *op_arg)
     {
         if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
             ln_streq(autopad, "SAME_LOWER")) {
-            ln_autopading(padding, src->dims, size, stride, 2, autopad);
+            ln_autopadding_conv(padding, src->dims, size, stride, 2, autopad);
         } else if (ln_streq(autopad, "NOTSET")){
         } else {
             ln_msg_warn("unsupported 'autopad' %s", autopad);
@@ -134,8 +134,8 @@ static void avgpool2d_pre_run(ln_op_arg *op_arg)
         dst_dims = ln_alloc(sizeof(int)*4);
         dst_dims[0] = src->dims[0];
         dst_dims[1] = src->dims[1];
-        dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
-        dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+        dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
+        dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
     }
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);

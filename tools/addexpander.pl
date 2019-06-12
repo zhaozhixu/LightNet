@@ -1242,10 +1242,10 @@ sub array_slice {
     my @indexes = split /\s*,\s*/, $index_str;
 
     my ($type, $code, $len);
-    $len = @indexes;
     if (@indexes == 1) {
         ($type, $code) = ($element_type, "${initial_code}[$indexes[0]]");
     } else {
+        $len = @indexes;
         $type = "$element_type *";
         my @array;
         foreach (@indexes) {

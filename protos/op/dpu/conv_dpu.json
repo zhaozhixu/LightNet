@@ -24,7 +24,7 @@
                 {"arg_name": "dst", "mtype": "LN_MEM_DPU",
                 "ndim": "2", "dtype": "src->dtype",
                 "custom":'''
-dst_dims = (int[]){ln_compute_output_dim(src->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
+dst_dims = (int[]){ln_output_dim_conv(src->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
 ''',
                 }
             ],
@@ -73,7 +73,7 @@ dst_dims = (int[]){ln_compute_output_dim(src->dims[0], 1, stride, padding[0] + p
                 {"arg_name": "dst", "mtype": "LN_MEM_DPU",
                 "ndim": "2", "dtype": "src1->dtype",
                 "custom":'''
-dst_dims = (int[]){ln_compute_output_dim(src1->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
+dst_dims = (int[]){ln_output_dim_conv(src1->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
 ''',
                 }
             ],
