@@ -25,7 +25,7 @@
 
 #include "ln_hash.h"
 
-#define LN_MAX_NAME_LEN 64      /* including the terminating null byte ('\0') */
+#define LN_MAX_NAME_LEN 256      /* including the terminating null byte ('\0') */
 #define LN_MAX_NAME_IDX (UINT32_MAX)
 #define LN_MAX_NAME_IDX_LEN 10  /* 2^32 =  4294967296, 10 chars*/
 #define LN_MAX_NAME_SUBFIX (LN_MAX_NAME_IDX_LEN)
