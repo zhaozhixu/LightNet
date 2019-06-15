@@ -87,6 +87,28 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
         next_op = ln_dfg_next(dfg, self, te->name);
+        if (!next_op || !ln_streq(next_op->op_arg->optype, "deconv2d")) {
+            ret = 0;
+        } else {
+            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+            if (!tle_next)
+                ret = 0;
+            else if (!ln_streq(tle_next->arg_name, "src"))
+                ret = 0;
+            else
+                ret = 1;
+        }
+        ret;
+    })
+    ) ||
+        (({
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_op = ln_dfg_next(dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "relu")) {
             ret = 0;
         } else {

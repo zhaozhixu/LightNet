@@ -11,7 +11,7 @@
            dst=out_name | group=_group, size=[_size, _size],            \
            stride=[_stride, _stride],                                   \
            padding=[_padding, _padding, _padding, _padding],            \
-           autopad="NOTSET",                                        \
+           autopad="SAME_UPPER",                                        \
            dilation=[_dilation, _dilation])
 
 #define conv_1xn(in_name, out_name, in_c, out_c,                        \
@@ -25,7 +25,7 @@
            dst=out_name | group=1, size=[1, _size],                     \
            stride=[1, 1],                                               \
            padding=[_padding, _padding, _padding, _padding],            \
-           autopad="NOTSET",                                        \
+           autopad="SAME_UPPER",                                        \
            dilation=[_dilation, _dilation])
 
 #define conv_nx1(in_name, out_name, in_c, out_c,                        \
@@ -39,13 +39,13 @@
            dst=out_name | group=1, size=[_size, 1],                     \
            stride=[1, 1],                                               \
            padding=[_padding, _padding, _padding, _padding],            \
-           autopad="NOTSET",                                        \
+           autopad="SAME_UPPER",                                        \
            dilation=[_dilation, _dilation])
 
 #define downsampler(in, out, in_c, out_c)                               \
     maxpool2d(src=in | dst=out##_pool | size=[2, 2], stride=[2, 2],     \
-              padding=[0, 0, 0, 0], autopad="NOTSET");              \
-    conv(in, out##_conv, in_c, ${eval out_c-in_c}, 1, 3, 2, 1, 1);      \
+              padding=[0, 0, 0, 0], autopad="SAME_UPPER");              \
+    conv(in, out##_conv, in_c, ${eval out_c-in_c}, 1, 3, 2, 0, 1);      \
     concat(src1=out##_pool, src2=out##_conv | dst=out##_concat | axis=1); \
     create(| dst=out##_bn_gamma | dtype=DTYPE, dims=[out_c], ran=[0, 0], \
            data=[0], from_file=false);                                  \
@@ -62,9 +62,9 @@
     relu(src=out##_bn | dst=out |);
 
 #define res_nonbt1d(in, out, c, _size)                                  \
-    conv_1xn(in, out##_1dconv1, c, c, _size, 1, 1);                     \
+    conv_1xn(in, out##_1dconv1, c, c, _size, 0, 1);                     \
     relu(src=out##_1dconv1 | dst=out##_relu1 |);                        \
-    conv_nx1(out##_relu1, out##_1dconv2, c, c, _size, 1, 1);            \
+    conv_nx1(out##_relu1, out##_1dconv2, c, c, _size, 0, 1);            \
     create(| dst=out##_1dconv2_bn_gamma | dtype=DTYPE, dims=[c],        \
            ran=[0, 0], data=[0], from_file=false);                      \
     create(| dst=out##_1dconv2_bn_beta | dtype=DTYPE, dims=[c],         \
@@ -97,9 +97,9 @@
     relu(src=out##_add | dst=out |);
 
 #define res_nonbt1d_dilate(in, out, c, _size, _dilation)                \
-    conv_1xn(in, out##_1dconv1, c, c, _size, 1, 1);                     \
+    conv_1xn(in, out##_1dconv1, c, c, _size, 0, 1);                     \
     relu(src=out##_1dconv1 | dst=out##_relu1 |);                        \
-    conv_nx1(out##_relu1, out##_1dconv2, c, c, _size, 1, 1);            \
+    conv_nx1(out##_relu1, out##_1dconv2, c, c, _size, 0, 1);            \
     create(| dst=out##_1dconv2_bn_gamma | dtype=DTYPE, dims=[c],        \
            ran=[0, 0], data=[0], from_file=false);                      \
     create(| dst=out##_1dconv2_bn_beta | dtype=DTYPE, dims=[c],         \
@@ -141,7 +141,7 @@
     deconv2d(src=in, weight=out##_weights, bias=out##_bias | dst=out##_deconv | \
              group=1, size=[_size, _size], stride=[_stride, _stride],   \
              output_dims=[1, out_c, out_h, out_w], padding=[0, 0, 0, 0], \
-             output_padding=[0, 0], dilation=[1, 1], autopad="NOTSET"); \
+             output_padding=[0, 0], dilation=[1, 1], autopad="SAME_UPPER"); \
     create(| dst=out##_bn_gamma | dtype=DTYPE, dims=[out_c],            \
            ran=[0, 0], data=[0], from_file=false);                      \
     create(| dst=out##_bn_beta | dtype=DTYPE, dims=[out_c],             \

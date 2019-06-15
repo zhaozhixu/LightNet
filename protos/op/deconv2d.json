@@ -80,7 +80,7 @@ for (int i = 0; i < 4; i++) {
 {
 char shape[LN_MAXLINE];
 if (ln_streq(autopad, "VALID") || (output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER")))) {
-    ln_autopadding_deconv(padding, &src->dims[2], output_dims, size, stride, output_padding, dilation, 2, autopad);
+    ln_autopadding_deconv(padding, &src->dims[2], &output_dims[2], size, stride, output_padding, dilation, 2, autopad);
 } else if (!output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER"))) {
     ln_opck_satisfy_msg("'autopad' cannot be '%s' when 'output_dims' (%s) is not valid", autopad, ln_sprint_shape(shape, 4, output_dims));
 } else if (ln_streq(autopad, "NOTSET")){

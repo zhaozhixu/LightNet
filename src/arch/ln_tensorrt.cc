@@ -210,7 +210,6 @@ static void check_deconv(char *opname, ln_op_arg *op_arg)
     check_param(opname, "size", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
     check_param(opname, "stride", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
     check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
-    check_param(opname, "dilation", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
 }
 
 static void check_activation(char *opname, ln_op_arg *op_arg)
@@ -734,6 +733,11 @@ static void add_elew(INetworkDefinition *network,
     elew_type = pe->value_string;
 
     IElementWiseLayer *elew;
+    char shape[LN_MAXLINE];
+    Dims dims = tensors[src1]->getDimensions();
+    printf("src1 %s: %s\n", src1, ln_sprint_shape(shape, dims.nbDims, dims.d));
+    dims = tensors[src2]->getDimensions();
+    printf("src2 %s: %s\n", src2, ln_sprint_shape(shape, dims.nbDims, dims.d));
     elew = network->addElementWise(*tensors[src1], *tensors[src2],
                                    (ElementWiseOperation)str_to_elew_type(elew_type));
     assert(elew);

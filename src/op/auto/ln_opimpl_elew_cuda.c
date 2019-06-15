@@ -133,9 +133,9 @@ static void elew_cuda_run(ln_op_arg *op_arg)
     tl_tensor     *dst = priv->dst_entry->tensor;
     int            elew_op = priv->elew_op_entry->value_int;
 
-    {
-        tl_tensor_elew_cuda(src1, src2, dst, elew_op);
-    }
+    /* begin custom code */
+    tl_tensor_elew_cuda(src1, src2, dst, elew_op);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

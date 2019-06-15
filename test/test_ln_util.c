@@ -113,6 +113,19 @@ START_TEST(test_ln_autopadding_conv)
      ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 1, 1), 4);
 }
 END_TEST
+
+START_TEST(test_ln_autopadding_deconv)
+{
+     /* int padding[4]; */
+     /* int *size; */
+     /* int *stride; */
+     /* int *in_dims; */
+     /* int *out_dims; */
+     /* int ndim = 2; */
+
+
+}
+END_TEST
 /* end of tests */
 
 Suite *make_util_suite(void)
@@ -127,6 +140,7 @@ Suite *make_util_suite(void)
      tcase_add_test(tc_util, test_ln_strcat_delim_alloc);
      tcase_add_test(tc_util, test_ln_next_multiple_power2);
      tcase_add_test(tc_util, test_ln_autopadding_conv);
+     tcase_add_test(tc_util, test_ln_autopadding_deconv);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_util);

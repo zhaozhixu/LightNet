@@ -14,6 +14,7 @@
                 {
                     "cond": [
                         "self.outs[dst]=>conv2d.ins[src]",
+                        "self.outs[dst]=>deconv2d.ins[src]",
                         "self.outs[dst]=>relu.ins[src]",
                         "self.outs[dst]=>maxpool2d.ins[src]",
                         "self.outs[dst]=>softmax.ins[src]",
