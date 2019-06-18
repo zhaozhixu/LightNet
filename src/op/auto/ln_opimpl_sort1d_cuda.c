@@ -116,9 +116,9 @@ static void sort1d_cuda_run(ln_op_arg *op_arg)
     tl_tensor     *src_key = priv->src_key_entry->tensor;
     int            dir = priv->dir_entry->value_int;
 
-    {
-        tl_tensor_sort1d_cuda(src_key, dir);
-    }
+    /* begin custom code */
+    tl_tensor_sort1d_cuda(src_key, dir);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -136,9 +136,9 @@ static size_t sort1d_cuda_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
     struct priv_s   *priv = op_arg->priv;
     ln_tensor_entry *src_key_entry = priv->src_key_entry;
 
-    {
-        return src_key_entry->offset;
-    }
+    /* begin custom code */
+    return src_key_entry->offset;
+    /* end custom code */
 }
 
 static const char *in_arg_names[] = {

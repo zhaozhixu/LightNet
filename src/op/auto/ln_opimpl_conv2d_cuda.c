@@ -36,9 +36,9 @@ struct priv_s {
     ln_param_entry  *group_entry;
     ln_param_entry  *size_entry;
     ln_param_entry  *stride_entry;
+    ln_param_entry  *dilation_entry;
     ln_param_entry  *padding_entry;
     ln_param_entry  *autopad_entry;
-    ln_param_entry  *dilation_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -69,12 +69,12 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     ln_param_entry       *size_entry;
     int                  *stride;
     ln_param_entry       *stride_entry;
+    int                  *dilation;
+    ln_param_entry       *dilation_entry;
     int                  *padding;
     ln_param_entry       *padding_entry;
     char                 *autopad;
     ln_param_entry       *autopad_entry;
-    int                  *dilation;
-    ln_param_entry       *dilation_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -113,13 +113,13 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     bias = bias;
     ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_CUDA);
     ln_opck_tensor_ndim(bias_entry, 1);
+    /* begin custom code */
     {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
-        }
+        char shape1[LN_MAXLINE];
+        char shape2[LN_MAXLINE];
+        ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
     }
+    /* end custom code */
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -139,13 +139,13 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     group = group_entry->value_int;
     ln_opck_param_int_ge(group_entry, 1);
     group = group;
+    /* begin custom code */
     {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(weight->dims[1]*group == src->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to the dims[1] of 'src' (%s)", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src->ndim, src->dims));
-        }
+        char shape1[LN_MAXLINE];
+        char shape2[LN_MAXLINE];
+        ln_opck_satisfy_msg(weight->dims[1]*group == src->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to the dims[1] of 'src' (%s)", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src->ndim, src->dims));
     }
+    /* end custom code */
 
     size_entry = ln_param_list_find(op_arg->params, "size");
     ln_opck_param_exist(size_entry, "size");
@@ -154,13 +154,13 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     size = size_entry->value_array_int;
     ln_opck_param_array_int_ge(size_entry, 1);
     size = size;
+    /* begin custom code */
     {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(size[0] == weight->dims[2] && size[1] == weight->dims[3], "'size' (%s) should be equal to the last two dimensions of 'weight' (%s)", ln_sprint_shape(shape1, size_entry->array_len, size), ln_sprint_shape(shape2, weight->ndim, weight->dims));
-        }
+        char shape1[LN_MAXLINE];
+        char shape2[LN_MAXLINE];
+        ln_opck_satisfy_msg(size[0] == weight->dims[2] && size[1] == weight->dims[3], "'size' (%s) should be equal to the last two dimensions of 'weight' (%s)", ln_sprint_shape(shape1, size_entry->array_len, size), ln_sprint_shape(shape2, weight->ndim, weight->dims));
     }
+    /* end custom code */
 
     stride_entry = ln_param_list_find(op_arg->params, "stride");
     ln_opck_param_exist(stride_entry, "stride");
@@ -169,6 +169,14 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     stride = stride_entry->value_array_int;
     ln_opck_param_array_int_ge(stride_entry, 1);
     stride = stride;
+
+    dilation_entry = ln_param_list_find(op_arg->params, "dilation");
+    ln_opck_param_exist(dilation_entry, "dilation");
+    ln_opck_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(dilation_entry, 2);
+    dilation = dilation_entry->value_array_int;
+    ln_opck_param_array_int_ge(dilation_entry, 1);
+    dilation = dilation;
 
     padding_entry = ln_param_list_find(op_arg->params, "padding");
     ln_opck_param_exist(padding_entry, "padding");
@@ -183,43 +191,39 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     ln_opck_param_type(autopad_entry, LN_PARAM_STRING);
     autopad = autopad_entry->value_string;
     autopad = autopad;
+    /* begin custom code */
     {
-        if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
-            ln_streq(autopad, "SAME_LOWER")) {
-            ln_autopadding_conv(padding, &src->dims[2], size, stride, 2, autopad);
-        } else if (ln_streq(autopad, "NOTSET")){
-        } else {
-            ln_msg_warn("unsupported 'autopad' %s", autopad);
-        }
+    if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
+        ln_streq(autopad, "SAME_LOWER")) {
+        ln_autopadding_conv(padding, &src->dims[2], size, stride, dilation, 2, autopad);
+    } else if (ln_streq(autopad, "NOTSET")){
+    } else {
+        ln_msg_warn("unsupported 'autopad' %s", autopad);
     }
-
-    dilation_entry = ln_param_list_find(op_arg->params, "dilation");
-    ln_opck_param_exist(dilation_entry, "dilation");
-    ln_opck_param_type(dilation_entry, LN_PARAM_ARRAY_NUMBER);
-    ln_opck_param_array_len_eq(dilation_entry, 2);
-    dilation = dilation_entry->value_array_int;
-    ln_opck_param_array_int_ge(dilation_entry, 1);
-    dilation = dilation;
+    }
+    /* end custom code */
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
     dst_dtype = src->dtype;
+    /* begin custom code */
     {
-        dst_dims = ln_alloc(sizeof(int)*4);
-        dst_dims[0] = src->dims[0];
-        dst_dims[1] = weight->dims[0];
-        dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
-        dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+    dst_dims = ln_alloc(sizeof(int)*4);
+    dst_dims[0] = src->dims[0];
+    dst_dims[1] = weight->dims[0];
+    dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2], dilation[0]);
+    dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3], dilation[1]);
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -230,9 +234,9 @@ static void conv2d_cuda_pre_run(ln_op_arg *op_arg)
     priv->group_entry = group_entry;
     priv->size_entry = size_entry;
     priv->stride_entry = stride_entry;
+    priv->dilation_entry = dilation_entry;
     priv->padding_entry = padding_entry;
     priv->autopad_entry = autopad_entry;
-    priv->dilation_entry = dilation_entry;
     op_arg->priv = priv;
 }
 
@@ -241,8 +245,8 @@ static void conv2d_cuda_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
-    {
-    }
+    /* begin custom code */
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -270,9 +274,9 @@ static const char *param_arg_names[] = {
     "group",
     "size",
     "stride",
+    "dilation",
     "padding",
     "autopad",
-    "dilation",
     NULL
 };
 
@@ -281,8 +285,8 @@ static const ln_param_type param_ptypes[] = {
     LN_PARAM_ARRAY_NUMBER,
     LN_PARAM_ARRAY_NUMBER,
     LN_PARAM_ARRAY_NUMBER,
-    LN_PARAM_STRING,
     LN_PARAM_ARRAY_NUMBER,
+    LN_PARAM_STRING,
 };
 
 /* specify other ln_op_arg fields */

@@ -225,9 +225,10 @@ int ln_digit_num(ssize_t num)
     return n;
 }
 
-int ln_output_dim_conv(int input_dim, int size, int stride, int padding)
+int ln_output_dim_conv(int input_dim, int size, int stride, int padding,
+                       int dilation)
 {
-    return ((input_dim + padding) - size) / stride + 1;
+    return ((input_dim + padding) - ((size - 1) * dilation + 1)) / stride + 1;
 }
 
 int ln_output_dim_deconv(int input_dim, int size, int stride, int padding,
@@ -238,7 +239,8 @@ int ln_output_dim_deconv(int input_dim, int size, int stride, int padding,
 }
 
 int *ln_autopadding_conv(int *padding, const int *input_dims, const int *size,
-                         const int *stride, int ndim, const char *mode)
+                         const int *stride, const int *dilations, int ndim,
+                         const char *mode)
 {
     if (ln_streq(mode, "VALID")) {
         for (int i = 0; i < ndim * 2; i++)
@@ -250,8 +252,8 @@ int *ln_autopadding_conv(int *padding, const int *input_dims, const int *size,
     int pad_shape[TL_MAXDIM];
     for (int i = 0; i < ndim; i++) {
         output_shape[i] = (int)ceil((double)input_dims[i] / (double)stride[i]);
-        pad_shape[i] = (output_shape[i] - 1) * stride[i] + size[i]
-            - input_dims[i];
+        pad_shape[i] = (output_shape[i] - 1) * stride[i] +
+            ((size[i] - 1) * dilations[i] + 1) - input_dims[i];
     }
 
     for (int i = 0; i < ndim; i++) {

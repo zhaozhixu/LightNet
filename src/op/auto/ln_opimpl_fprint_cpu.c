@@ -99,17 +99,17 @@ static void fprint_cpu_run(ln_op_arg *op_arg)
     char            *msg = priv->msg_entry->value_string;
     char            *file = priv->file_entry->value_string;
 
-    {
-        FILE *fp;
-        if (!(fp = fopen(file, "w"))) {
-            ln_msg_warn_sys("%s(%s): cannot open file %s; skip printing tensor %s",
-                            op_arg->name, op_arg->optype, file, src_entry->name);
-            return;
-        }
-        fprintf(fp, "%s\n", msg);
-        tl_tensor_fprint(fp, src, NULL);
-        fclose(fp);
+    /* begin custom code */
+    FILE *fp;
+    if (!(fp = fopen(file, "w"))) {
+        ln_msg_warn_sys("%s(%s): cannot open file %s; skip printing tensor %s",
+                        op_arg->name, op_arg->optype, file, src_entry->name);
+        return;
     }
+    fprintf(fp, "%s\n", msg);
+    tl_tensor_fprint(fp, src, NULL);
+    fclose(fp);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

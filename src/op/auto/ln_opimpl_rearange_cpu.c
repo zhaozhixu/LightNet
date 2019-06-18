@@ -104,31 +104,35 @@ static void rearange_cpu_pre_run(ln_op_arg *op_arg)
     step = step_entry->value_double;
     step = step;
 
+    /* begin custom code */
     {
-        double max, min, len;
-        len = ceil((stop - start) / step);
-        max = tl_dtype_max_double(src->dtype);
-        min = tl_dtype_min_double(src->dtype);
-        ln_opck_satisfy_msg(src->len == (int)len, "'src->len' should be equal with ceil((stop - start) / step) = %d", (int)len);
-        ln_opck_param_double_ge(start_entry, min);
-        ln_opck_param_double_le(start_entry, max);
-        ln_opck_param_double_ge(stop_entry, min);
-        ln_opck_param_double_le(stop_entry, max);
-        ln_opck_param_double_ge(step_entry, min);
-        ln_opck_param_double_le(step_entry, max);
-        ln_opck_param_double_ne(step_entry, 0);
-        ln_opck_param_double_gt(stop_entry, start_entry->value_double);
-        /* TODO: expand to all possibilities */
+    double max, min, len;
+    len = ceil((stop - start) / step);
+    max = tl_dtype_max_double(src->dtype);
+    min = tl_dtype_min_double(src->dtype);
+    ln_opck_satisfy_msg(src->len == (int)len, "'src->len' should be equal with ceil((stop - start) / step) = %d", (int)len);
+    ln_opck_param_double_ge(start_entry, min);
+    ln_opck_param_double_le(start_entry, max);
+    ln_opck_param_double_ge(stop_entry, min);
+    ln_opck_param_double_le(stop_entry, max);
+    ln_opck_param_double_ge(step_entry, min);
+    ln_opck_param_double_le(step_entry, max);
+    ln_opck_param_double_ne(step_entry, 0);
+    ln_opck_param_double_gt(stop_entry, start_entry->value_double);
+    /* TODO: expand to all possibilities */
     }
+    /* end custom code */
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = 1;
     dst_dtype = src->dtype;
+    /* begin custom code */
     {
-        double len = ceil((stop - start) / step);
-        dst_dims = ln_alloc(sizeof(int));
-        dst_dims[0] = (int)len;
+    double len = ceil((stop - start) / step);
+    dst_dims = ln_alloc(sizeof(int));
+    dst_dims[0] = (int)len;
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
@@ -136,9 +140,9 @@ static void rearange_cpu_pre_run(ln_op_arg *op_arg)
     ln_tensor_entry_set_owner(dst_entry, op_arg->tensor_table, src_name);
     dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -159,9 +163,9 @@ static void rearange_cpu_run(ln_op_arg *op_arg)
     double         stop = priv->stop_entry->value_double;
     double         step = priv->step_entry->value_double;
 
-    {
-        tl_tensor_rearange(dst, start, stop, step);
-    }
+    /* begin custom code */
+    tl_tensor_rearange(dst, start, stop, step);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -179,9 +183,9 @@ static size_t rearange_cpu_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
     struct priv_s   *priv = op_arg->priv;
     ln_tensor_entry *src_entry = priv->src_entry;
 
-    {
-        return src_entry->offset;
-    }
+    /* begin custom code */
+    return src_entry->offset;
+    /* end custom code */
 }
 
 static const char *in_arg_names[] = {

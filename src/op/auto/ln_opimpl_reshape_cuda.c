@@ -86,13 +86,13 @@ static void reshape_cuda_pre_run(ln_op_arg *op_arg)
     dims = dims_entry->value_array_int;
     ln_opck_param_array_int_ge(dims_entry, 1);
     dims = dims;
+    /* begin custom code */
     {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
-        }
+        char shape1[LN_MAXLINE];
+        char shape2[LN_MAXLINE];
+        ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "`src` (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
     }
+    /* end custom code */
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = dims_entry->array_len;
@@ -129,9 +129,9 @@ static size_t reshape_cuda_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
     struct priv_s   *priv = op_arg->priv;
     ln_tensor_entry *src_entry = priv->src_entry;
 
-    {
-        return src_entry->offset;
-    }
+    /* begin custom code */
+    return src_entry->offset;
+    /* end custom code */
 }
 
 static const char *in_arg_names[] = {

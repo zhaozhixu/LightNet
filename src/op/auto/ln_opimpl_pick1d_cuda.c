@@ -117,19 +117,21 @@ static void pick1d_cuda_pre_run(ln_op_arg *op_arg)
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = 1;
     dst_dtype = src->dtype;
+    /* begin custom code */
     {
-        dst_dims = ln_alloc(sizeof(int) * 1);
-        dst_dims[0] = len * stride;
+    dst_dims = ln_alloc(sizeof(int) * 1);
+    dst_dims[0] = len * stride;
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -151,9 +153,9 @@ static void pick1d_cuda_run(ln_op_arg *op_arg)
     int            len = priv->len_entry->value_int;
     int            stride = priv->stride_entry->value_int;
 
-    {
-        tl_tensor_pick1d_cuda(src, src_index, dst, stride, len);
-    }
+    /* begin custom code */
+    tl_tensor_pick1d_cuda(src, src_index, dst, stride, len);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

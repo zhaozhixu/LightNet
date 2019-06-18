@@ -133,13 +133,13 @@ static void conv3x3_dpu_pre_run(ln_op_arg *op_arg)
     bias = bias;
     ln_opck_tensor_mtype_eq(bias_entry, LN_MEM_DPU);
     ln_opck_tensor_ndim(bias_entry, 1);
+    /* begin custom code */
     {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
-        }
+        char shape1[LN_MAXLINE];
+        char shape2[LN_MAXLINE];
+        ln_opck_satisfy_msg(bias->dims[0] == weight->dims[0], "'bias' (%s) should have the size of dims[0] of 'weight' (%s)", ln_sprint_shape(shape1, bias->ndim, bias->dims), ln_sprint_shape(shape2, weight->ndim, weight->dims));
     }
+    /* end custom code */
 
     tensors_out_n = ln_tensor_list_length(op_arg->tensors_out);
     ln_opck_tensors_out_len_eq(tensors_out_n, 1);
@@ -174,20 +174,22 @@ static void conv3x3_dpu_pre_run(ln_op_arg *op_arg)
     group = group_entry->value_int;
     ln_opck_param_int_ge(group_entry, 1);
     group = group;
+    /* begin custom code */
     {
-        {
-            char shape1[LN_MAXLINE];
-            char shape2[LN_MAXLINE];
-            ln_opck_satisfy_msg(weight->dims[1]*group == src1->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'src1' (%s)'s dims[1]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src1->ndim, src1->dims));
-        }
+        char shape1[LN_MAXLINE];
+        char shape2[LN_MAXLINE];
+        ln_opck_satisfy_msg(weight->dims[1]*group == src1->dims[1], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'src1' (%s)'s dims[1]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, src1->ndim, src1->dims));
     }
+    /* end custom code */
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = 2;
     dst_dtype = src1->dtype;
+    /* begin custom code */
     {
-        dst_dims = (int[]){ln_output_dim_conv(src1->dims[0], 1, stride, padding[0] + padding[1]), weight->dims[0]};
+    dst_dims = (int[]){ln_output_dim_conv(src1->dims[0], 1, stride, padding[0] + padding[1], 1), weight->dims[0], 1};
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;

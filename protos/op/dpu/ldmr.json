@@ -13,7 +13,9 @@
                  "ndim": "src->ndim", "dtype": "src->dtype",
                  // channel changed to a multiple of 8
                  "custom": '''
+{
 dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
+}
 '''
                 }
             ],
@@ -32,7 +34,9 @@ dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
                  "ndim": "src->ndim", "dtype": "src->dtype",
                  // channel changed to a multiple of 8
                  "custom": '''
+{
 dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
+}
 '''
                 }
             ],

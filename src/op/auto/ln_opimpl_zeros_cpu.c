@@ -108,9 +108,9 @@ static void zeros_cpu_run(ln_op_arg *op_arg)
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *dst = priv->dst_entry->tensor;
 
-    {
-        memset(dst->data, 0, tl_tensor_size(dst));
-    }
+    /* begin custom code */
+    memset(dst->data, 0, tl_tensor_size(dst));
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

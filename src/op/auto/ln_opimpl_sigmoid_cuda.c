@@ -100,8 +100,8 @@ static void sigmoid_cuda_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
-    {
-    }
+    /* begin custom code */
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

@@ -79,9 +79,11 @@ static void ldmr_pre_run(ln_op_arg *op_arg)
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
     dst_dtype = src->dtype;
+    /* begin custom code */
     {
-        dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
+    dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;

@@ -502,6 +502,11 @@ static void add_conv(INetworkDefinition *network,
     conv->setPadding(DimsHW(padding[0], padding[1]));
     conv->setDilation(DimsHW(dilation[0], dilation[1]));
     tensors[dst] = conv->getOutput(0);
+    char shape[LN_MAXLINE];
+    Dims dims = tensors[src]->getDimensions();
+    printf("src %s: %s\n", src, ln_sprint_shape(shape, dims.nbDims, dims.d));
+    dims = tensors[dst]->getDimensions();
+    printf("dst %s: %s\n", dst, ln_sprint_shape(shape, dims.nbDims, dims.d));
 }
 
 static void add_deconv(INetworkDefinition *network,

@@ -87,10 +87,10 @@ static void print_cpu_run(ln_op_arg *op_arg)
     tl_tensor     *src = priv->src_entry->tensor;
     char          *msg = priv->msg_entry->value_string;
 
-    {
-        printf("%s\n", msg);
-        tl_tensor_print(src, NULL);
-    }
+    /* begin custom code */
+    printf("%s\n", msg);
+    tl_tensor_print(src, NULL);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

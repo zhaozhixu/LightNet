@@ -100,29 +100,31 @@ static void arange_pre_run(ln_op_arg *op_arg)
     step = step_entry->value_double;
     step = step;
 
+    /* begin custom code */
     {
-        double max, min;
-        max = tl_dtype_max_double(dtype);
-        min = tl_dtype_min_double(dtype);
-        ln_opck_param_double_ge(start_entry, min);
-        ln_opck_param_double_le(start_entry, max);
-        ln_opck_param_double_ge(stop_entry, min);
-        ln_opck_param_double_le(stop_entry, max);
-        ln_opck_param_double_ge(step_entry, min);
-        ln_opck_param_double_le(step_entry, max);
-        ln_opck_param_double_ne(step_entry, 0);
-        ln_opck_param_double_gt(stop_entry, start_entry->value_double);
-        /* TODO: expand to all possibilities */
+    double max, min;
+    max = tl_dtype_max_double(dtype);
+    min = tl_dtype_min_double(dtype);
+    ln_opck_param_double_ge(start_entry, min);
+    ln_opck_param_double_le(start_entry, max);
+    ln_opck_param_double_ge(stop_entry, min);
+    ln_opck_param_double_le(stop_entry, max);
+    ln_opck_param_double_ge(step_entry, min);
+    ln_opck_param_double_le(step_entry, max);
+    ln_opck_param_double_ne(step_entry, 0);
+    ln_opck_param_double_gt(stop_entry, start_entry->value_double);
+    /* TODO: expand to all possibilities */
     }
+    /* end custom code */
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = 1;
     dst_dtype = dtype;
-    {
-        double len = ceil((stop - start) / step);
-        dst_dims = ln_alloc(sizeof(int));
-        dst_dims[0] = (int)len;
-    }
+    /* begin custom code */
+    double len = ceil((stop - start) / step);
+    dst_dims = ln_alloc(sizeof(int));
+    dst_dims[0] = (int)len;
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
@@ -130,9 +132,9 @@ static void arange_pre_run(ln_op_arg *op_arg)
     dst_entry->isstatic = 1;
     dst_entry->mtype = LN_MEM_NONE;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));

@@ -113,9 +113,9 @@ static void lrelu_cuda_run(ln_op_arg *op_arg)
     tl_tensor     *dst = priv->dst_entry->tensor;
     float          negslope = priv->negslope_entry->value_float;
 
-    {
-        tl_tensor_lrelu_cuda(src, dst, negslope);
-    }
+    /* begin custom code */
+    tl_tensor_lrelu_cuda(src, dst, negslope);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

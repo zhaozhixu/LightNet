@@ -73,11 +73,13 @@ int ln_streq(const char *s1, const char *s2);
 int ln_streqn(const char *s1, const char *s2, size_t n);
 int ln_is_prefix_plus_number(const char *str, const char *prefix);
 int ln_digit_num(ssize_t num);
-int ln_output_dim_conv(int input_dim, int size, int stride, int padding);
+int ln_output_dim_conv(int input_dim, int size, int stride, int padding,
+                       int dilation);
 int ln_output_dim_deconv(int input_dim, int size, int stride, int padding,
                          int output_padding, int dilation);
 int *ln_autopadding_conv(int *padding, const int *input_dims, const int *size,
-                         const int *stride, int ndim, const char *mode);
+                         const int *stride, const int *dilations, int ndim,
+                         const char *mode);
 int *ln_autopadding_deconv(int *padding, const int *input_dims,
                            const int *output_dims, const int *size,
                            const int *stride, const int *output_padding,

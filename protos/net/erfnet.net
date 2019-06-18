@@ -96,10 +96,10 @@
     elew(src1=out##_bn2, src2=in | dst=out##_add | elew_op=TL_SUM);     \
     relu(src=out##_add | dst=out |);
 
-#define res_nonbt1d_dilate(in, out, c, _size, _dilation)                \
-    conv_1xn(in, out##_1dconv1, c, c, _size, 1, 1);                     \
+#define res_nonbt1d_dilate(in, out, c, _size, _dilation, pad1, pad2, pad3, pad4)\
+    conv_1xn(in, out##_1dconv1, c, c, _size, pad1, 1);                  \
     relu(src=out##_1dconv1 | dst=out##_relu1 |);                        \
-    conv_nx1(out##_relu1, out##_1dconv2, c, c, _size, 1, 1);            \
+    conv_nx1(out##_relu1, out##_1dconv2, c, c, _size, pad2, 1);         \
     create(| dst=out##_1dconv2_bn_gamma | dtype=DTYPE, dims=[c],        \
            ran=[0, 0], data=[0], from_file=false);                      \
     create(| dst=out##_1dconv2_bn_beta | dtype=DTYPE, dims=[c],         \
@@ -113,9 +113,9 @@
               var=out##_1dconv2_bn_moving_variance | dst=out##_bn1 |    \
               epsilon=1e-5);                                            \
     relu(src=out##_bn1 | dst=out##_relu2 |);                            \
-    conv_1xn(out##_relu2, out##_dilate_1dconv3, c, c, _size, 0, _dilation); \
+    conv_1xn(out##_relu2, out##_dilate_1dconv3, c, c, _size, pad3, _dilation); \
     relu(src=out##_dilate_1dconv3 | dst=out##_relu3 |);                 \
-    conv_nx1(out##_relu3, out##_dilate_1dconv4, c, c, _size, 0, _dilation); \
+    conv_nx1(out##_relu3, out##_dilate_1dconv4, c, c, _size, pad4, _dilation); \
     create(| dst=out##_dilate_1dconv4_bn_gamma | dtype=DTYPE, dims=[c], \
            ran=[0, 0], data=[0], from_file=false);                      \
     create(| dst=out##_dilate_1dconv4_bn_beta | dtype=DTYPE, dims=[c],  \
@@ -169,14 +169,14 @@ res_nonbt1d(l4_nonbt1d, l5_nonbt1d, 64, 3);
 res_nonbt1d(l5_nonbt1d, l6_nonbt1d, 64, 3);
 res_nonbt1d(l6_nonbt1d, l7_nonbt1d, 64, 3);
 downsampler(l7_nonbt1d, l8_downsampler, 64, 128);
-res_nonbt1d_dilate(l8_downsampler, l9_nonbt1d, 128, 3, 2);
-res_nonbt1d_dilate(l9_nonbt1d, l10_nonbt1d, 128, 3, 4);
-res_nonbt1d_dilate(l10_nonbt1d, l11_nonbt1d, 128, 3, 8);
-res_nonbt1d_dilate(l11_nonbt1d, l12_nonbt1d, 128, 3, 16);
-res_nonbt1d_dilate(l12_nonbt1d, l13_nonbt1d, 128, 3, 2);
-res_nonbt1d_dilate(l13_nonbt1d, l14_nonbt1d, 128, 3, 4);
-res_nonbt1d_dilate(l14_nonbt1d, l15_nonbt1d, 128, 3, 8);
-res_nonbt1d_dilate(l15_nonbt1d, l16_nonbt1d, 128, 3, 16);
+res_nonbt1d_dilate(l8_downsampler, l9_nonbt1d, 128, 3, 2, 1, 1, 1, 0);
+res_nonbt1d_dilate(l9_nonbt1d, l10_nonbt1d, 128, 3, 4, 2, 1, 1, 1);
+res_nonbt1d_dilate(l10_nonbt1d, l11_nonbt1d, 128, 3, 8, 3, 2, 2, 2);
+res_nonbt1d_dilate(l11_nonbt1d, l12_nonbt1d, 128, 3, 16, 0, 0, 0, 0);
+res_nonbt1d_dilate(l12_nonbt1d, l13_nonbt1d, 128, 3, 2, 1, 1, 0, 0);
+res_nonbt1d_dilate(l13_nonbt1d, l14_nonbt1d, 128, 3, 4, 1, 1, 0, 0);
+res_nonbt1d_dilate(l14_nonbt1d, l15_nonbt1d, 128, 3, 8, 1, 1, 0, 0);
+res_nonbt1d_dilate(l15_nonbt1d, l16_nonbt1d, 128, 3, 16, 1, 1, 0, 0);
 deconv_bn(l16_nonbt1d, l17_deconv, 128, 64, ${eval INPUT_H*2**-2},
           ${eval INPUT_W*2**-2}, 2, 2);
 relu(src=l17_deconv | dst=l17_deconv_relu |);

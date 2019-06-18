@@ -12,8 +12,10 @@
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "ndim": "src1->ndim", "dtype": "src1->dtype",
                  "custom": '''
+{
 dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);
 dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -30,12 +32,14 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
                 }
             ],
             "custom": '''
+{
 for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
     ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
+}
 }
 '''
         },
@@ -51,8 +55,10 @@ for (int i = 0; i < src1->ndim; i++) {
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "ndim": "src1->ndim", "dtype": "src1->dtype",
                  "custom": '''
+{
 dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);
 dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
+}
 ''',
 
                  "cleanup": "ln_free(dst_dims);"}
@@ -70,12 +76,14 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
                 }
             ],
             "custom": '''
+{
 for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
     ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
+}
 }
 ''',
             "run": ""
@@ -92,8 +100,10 @@ for (int i = 0; i < src1->ndim; i++) {
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "ndim": "src1->ndim", "dtype": "src1->dtype",
                  "custom": '''
+{
 dst_dims = ln_clone(src1->dims, sizeof(int)*src1->ndim);
 dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
+}
 ''',
 
                  "cleanup": "ln_free(dst_dims);"}
@@ -111,12 +121,14 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
                 }
             ],
             "custom": '''
+{
 for (int i = 0; i < src1->ndim; i++) {
     if (i == axis)
         continue;
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
     ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
+}
 }
 ''',
             "run": ""

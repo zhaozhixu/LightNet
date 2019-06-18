@@ -109,9 +109,9 @@ static void zeros_cuda_run(ln_op_arg *op_arg)
     struct priv_s *priv = op_arg->priv;
     tl_tensor     *dst = priv->dst_entry->tensor;
 
-    {
-        ln_memset_cuda(dst->data, 0, tl_tensor_size(dst));
-    }
+    /* begin custom code */
+    ln_memset_cuda(dst->data, 0, tl_tensor_size(dst));
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

@@ -228,20 +228,20 @@ static void bn2scale_wts_cpu_static_run(ln_op_arg *op_arg)
     tl_tensor     *dst_power = priv->dst_power_entry->tensor;
     float          epsilon = priv->epsilon_entry->value_float;
 
-    {
-        float *dst_scale_data = dst_scale->data;
-        float *dst_shift_data = dst_shift->data;
-        float *dst_power_data = dst_power->data;
-        float *src_mean_data = src_mean->data;
-        float *src_var_data = src_var->data;
-        float *src_scale_data = src_scale->data;
-        float *src_offset_data = src_offset->data;
-        for (int i = 0; i < dst_scale->len; i++) {
-            dst_scale_data[i] = src_scale_data[i] / (src_var_data[i] + epsilon);
-            dst_shift_data[i] = src_offset_data[i] - src_mean_data[i] * src_scale_data[i] / (src_var_data[i] + epsilon);
-            dst_power_data[i] = 1;
-        }
+    /* begin custom code */
+    float *dst_scale_data = dst_scale->data;
+    float *dst_shift_data = dst_shift->data;
+    float *dst_power_data = dst_power->data;
+    float *src_mean_data = src_mean->data;
+    float *src_var_data = src_var->data;
+    float *src_scale_data = src_scale->data;
+    float *src_offset_data = src_offset->data;
+    for (int i = 0; i < dst_scale->len; i++) {
+        dst_scale_data[i] = src_scale_data[i] / (src_var_data[i] + epsilon);
+        dst_shift_data[i] = src_offset_data[i] - src_mean_data[i] * src_scale_data[i] / (src_var_data[i] + epsilon);
+        dst_power_data[i] = 1;
     }
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

@@ -175,84 +175,94 @@ static void detect_yolov3_cuda_pre_run(ln_op_arg *op_arg)
     /* define output tensor shape, tensor data should be NULL */
     box_centers_ndim = 5;
     box_centers_dtype = feature->dtype;
+    /* begin custom code */
     {
-        int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
-        box_centers_dims = ln_clone(dims, sizeof(int)*5);
+    int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+    box_centers_dims = ln_clone(dims, sizeof(int)*5);
     }
+    /* end custom code */
     box_centers = tl_tensor_create(NULL, box_centers_ndim, box_centers_dims, box_centers_dtype);
     box_centers_entry = ln_tensor_entry_create(box_centers_name, box_centers);
     box_centers_entry->offset = box_centers_list_entry->offset;
     ln_tensor_entry_set_creater(box_centers_entry, op_arg->name);
     box_centers_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, box_centers_entry);
-    {
-        ln_free(box_centers_dims);
-    }
+    /* begin custom code */
+    ln_free(box_centers_dims);
+    /* end custom code */
 
     box_sizes_ndim = 5;
     box_sizes_dtype = feature->dtype;
+    /* begin custom code */
     {
-        int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
-        box_sizes_dims = ln_clone(dims, sizeof(int)*5);
+    int dims[] = {1, anchors->dims[0], 2, feature->dims[2], feature->dims[3]};
+    box_sizes_dims = ln_clone(dims, sizeof(int)*5);
     }
+    /* end custom code */
     box_sizes = tl_tensor_create(NULL, box_sizes_ndim, box_sizes_dims, box_sizes_dtype);
     box_sizes_entry = ln_tensor_entry_create(box_sizes_name, box_sizes);
     box_sizes_entry->offset = box_sizes_list_entry->offset;
     ln_tensor_entry_set_creater(box_sizes_entry, op_arg->name);
     box_sizes_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, box_sizes_entry);
-    {
-        ln_free(box_sizes_dims);
-    }
+    /* begin custom code */
+    ln_free(box_sizes_dims);
+    /* end custom code */
 
     boxes_ndim = 5;
     boxes_dtype = feature->dtype;
+    /* begin custom code */
     {
-        int dims[] = {1, anchors->dims[0], 4, feature->dims[2], feature->dims[3]};
-        boxes_dims = ln_clone(dims, sizeof(int)*5);
+    int dims[] = {1, anchors->dims[0], 4, feature->dims[2], feature->dims[3]};
+    boxes_dims = ln_clone(dims, sizeof(int)*5);
     }
+    /* end custom code */
     boxes = tl_tensor_create(NULL, boxes_ndim, boxes_dims, boxes_dtype);
     boxes_entry = ln_tensor_entry_create(boxes_name, boxes);
     boxes_entry->offset = boxes_list_entry->offset;
     ln_tensor_entry_set_creater(boxes_entry, op_arg->name);
     boxes_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, boxes_entry);
-    {
-        ln_free(boxes_dims);
-    }
+    /* begin custom code */
+    ln_free(boxes_dims);
+    /* end custom code */
 
     confs_ndim = 5;
     confs_dtype = feature->dtype;
+    /* begin custom code */
     {
-        int dims[] = {1, anchors->dims[0], 1, feature->dims[2], feature->dims[3]};
-        confs_dims = ln_clone(dims, sizeof(int)*5);
+    int dims[] = {1, anchors->dims[0], 1, feature->dims[2], feature->dims[3]};
+    confs_dims = ln_clone(dims, sizeof(int)*5);
     }
+    /* end custom code */
     confs = tl_tensor_create(NULL, confs_ndim, confs_dims, confs_dtype);
     confs_entry = ln_tensor_entry_create(confs_name, confs);
     confs_entry->offset = confs_list_entry->offset;
     ln_tensor_entry_set_creater(confs_entry, op_arg->name);
     confs_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, confs_entry);
-    {
-        ln_free(confs_dims);
-    }
+    /* begin custom code */
+    ln_free(confs_dims);
+    /* end custom code */
 
     probs_ndim = 5;
     probs_dtype = feature->dtype;
+    /* begin custom code */
     {
-        int dims[] = {1, anchors->dims[0], feature->dims[1]/anchors->dims[0]-5,
-                     feature->dims[2], feature->dims[3]};
-        probs_dims = ln_clone(dims, sizeof(int)*5);
+    int dims[] = {1, anchors->dims[0], feature->dims[1]/anchors->dims[0]-5,
+                 feature->dims[2], feature->dims[3]};
+    probs_dims = ln_clone(dims, sizeof(int)*5);
     }
+    /* end custom code */
     probs = tl_tensor_create(NULL, probs_ndim, probs_dims, probs_dtype);
     probs_entry = ln_tensor_entry_create(probs_name, probs);
     probs_entry->offset = probs_list_entry->offset;
     ln_tensor_entry_set_creater(probs_entry, op_arg->name);
     probs_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, probs_entry);
-    {
-        ln_free(probs_dims);
-    }
+    /* begin custom code */
+    ln_free(probs_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -282,9 +292,9 @@ static void detect_yolov3_cuda_run(ln_op_arg *op_arg)
     int            img_width = priv->img_width_entry->value_int;
     int            img_height = priv->img_height_entry->value_int;
 
-    {
-        tl_tensor_detect_yolov3_cuda(feature, anchors, box_centers, box_sizes, boxes, confs, probs, img_height, img_width);
-    }
+    /* begin custom code */
+    tl_tensor_detect_yolov3_cuda(feature, anchors, box_centers, box_sizes, boxes, confs, probs, img_height, img_width);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

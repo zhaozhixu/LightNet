@@ -157,8 +157,8 @@ static void sort1d_by_key_cpu_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
-    {
-    }
+    /* begin custom code */
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -176,9 +176,9 @@ static size_t sort1d_by_key_cpu_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *
 {
     struct priv_s *priv = op_arg->priv;
 
-    {
-        return ln_tensor_table_find(op_arg->tensor_table, te->owner)->offset;
-    }
+    /* begin custom code */
+    return ln_tensor_table_find(op_arg->tensor_table, te->owner)->offset;
+    /* end custom code */
 }
 
 static const char *in_arg_names[] = {

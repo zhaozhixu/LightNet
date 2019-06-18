@@ -106,18 +106,18 @@ static void relu_cudnn_static_run(ln_op_arg *op_arg)
     tl_tensor     *src = priv->src_entry->tensor;
     tl_tensor     *dst = priv->dst_entry->tensor;
 
-    {
-        ln_arch *arch = ln_hash_find(LN_ARCH.arch_table, "cudnn");
-        assert(arch);
-        priv->cudnn_context = arch->context;
-        priv->src_desc = ln_cudnn_tensor_nchw_init(src);
-        priv->dst_desc = ln_cudnn_tensor_nchw_init(dst);
-        LN_CUDNN_CK(cudnnCreateActivationDescriptor(&priv->activation_desc));
-        LN_CUDNN_CK(cudnnSetActivationDescriptor(priv->activation_desc,
-                                                 CUDNN_ACTIVATION_RELU,
-                                                 CUDNN_NOT_PROPAGATE_NAN,
-                                                 0));
-    }
+    /* begin custom code */
+    ln_arch *arch = ln_hash_find(LN_ARCH.arch_table, "cudnn");
+    assert(arch);
+    priv->cudnn_context = arch->context;
+    priv->src_desc = ln_cudnn_tensor_nchw_init(src);
+    priv->dst_desc = ln_cudnn_tensor_nchw_init(dst);
+    LN_CUDNN_CK(cudnnCreateActivationDescriptor(&priv->activation_desc));
+    LN_CUDNN_CK(cudnnSetActivationDescriptor(priv->activation_desc,
+                                             CUDNN_ACTIVATION_RELU,
+                                             CUDNN_NOT_PROPAGATE_NAN,
+                                             0));
+    /* end custom code */
 }
 
 /* This function should only do the calculations. */
@@ -127,12 +127,12 @@ static void relu_cudnn_run(ln_op_arg *op_arg)
     tl_tensor     *src = priv->src_entry->tensor;
     tl_tensor     *dst = priv->dst_entry->tensor;
 
-    {
-        LN_CUDNN_CK(cudnnActivationForward(priv->cudnn_context->cudnn_handle,
-                                           priv->activation_desc, NULL,
-                                           priv->src_desc, src->data, NULL,
-                                           priv->dst_desc, dst->data));
-    }
+    /* begin custom code */
+    LN_CUDNN_CK(cudnnActivationForward(priv->cudnn_context->cudnn_handle,
+                                       priv->activation_desc, NULL,
+                                       priv->src_desc, src->data, NULL,
+                                       priv->dst_desc, dst->data));
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -140,11 +140,11 @@ static void relu_cudnn_post_run(ln_op_arg *op_arg)
 {
     struct priv_s *priv = op_arg->priv;
 
-    {
-        ln_cudnn_tensor_cleanup(priv->src_desc);
-        ln_cudnn_tensor_cleanup(priv->dst_desc);
-        LN_CUDNN_CK(cudnnDestroyActivationDescriptor(priv->activation_desc));
-    }
+    /* begin custom code */
+    ln_cudnn_tensor_cleanup(priv->src_desc);
+    ln_cudnn_tensor_cleanup(priv->dst_desc);
+    LN_CUDNN_CK(cudnnDestroyActivationDescriptor(priv->activation_desc));
+    /* end custom code */
     ln_tensor_table_remove(op_arg->tensor_table, priv->dst_entry->name);
     ln_free(priv);
 }

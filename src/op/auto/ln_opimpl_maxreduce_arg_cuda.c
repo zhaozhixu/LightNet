@@ -104,35 +104,35 @@ static void maxreduce_arg_cuda_pre_run(ln_op_arg *op_arg)
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
     dst_dtype = src->dtype;
-    {
-        dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);
-        dst_dims[axis] = 1;
-    }
+    /* begin custom code */
+    dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);
+    dst_dims[axis] = 1;
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     arg_ndim = src->ndim;
     arg_dtype = TL_INT32;
-    {
-        arg_dims = ln_clone(src->dims, sizeof(int)*src->ndim);
-        arg_dims[axis] = 1;
-    }
+    /* begin custom code */
+    arg_dims = ln_clone(src->dims, sizeof(int)*src->ndim);
+    arg_dims[axis] = 1;
+    /* end custom code */
     arg = tl_tensor_create(NULL, arg_ndim, arg_dims, arg_dtype);
     arg_entry = ln_tensor_entry_create(arg_name, arg);
     arg_entry->offset = arg_list_entry->offset;
     ln_tensor_entry_set_creater(arg_entry, op_arg->name);
     arg_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, arg_entry);
-    {
-        ln_free(arg_dims);
-    }
+    /* begin custom code */
+    ln_free(arg_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -152,9 +152,9 @@ static void maxreduce_arg_cuda_run(ln_op_arg *op_arg)
     tl_tensor     *arg = priv->arg_entry->tensor;
     int            axis = priv->axis_entry->value_int;
 
-    {
-        tl_tensor_maxreduce_cuda(src, dst, arg, axis);
-    }
+    /* begin custom code */
+    tl_tensor_maxreduce_cuda(src, dst, arg, axis);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

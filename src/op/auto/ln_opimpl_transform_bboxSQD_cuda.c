@@ -193,9 +193,9 @@ static void transform_bboxSQD_cuda_run(ln_op_arg *op_arg)
     int            x_shift = priv->x_shift_entry->value_int;
     int            y_shift = priv->y_shift_entry->value_int;
 
-    {
-        tl_tensor_transform_bboxSQD_cuda(src_delta, src_anchor, dst, width, height, img_width, img_height, x_shift, y_shift);
-    }
+    /* begin custom code */
+    tl_tensor_transform_bboxSQD_cuda(src_delta, src_anchor, dst, width, height, img_width, img_height, x_shift, y_shift);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
