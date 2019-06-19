@@ -34,6 +34,9 @@ enum ln_mem_type {
 #ifdef LN_CUDA
     LN_MEM_CUDA,
 #endif
+#ifdef LN_DPU
+    LN_MEM_DPU,
+#endif
     LN_MEM_TYPE_SIZE
 };
 typedef enum ln_mem_type ln_mem_type;

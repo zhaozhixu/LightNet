@@ -101,20 +101,22 @@ static void resize_cpu_pre_run(ln_op_arg *op_arg)
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
     dst_dtype = src->dtype;
+    /* begin custom code */
     {
-        dst_dims = ln_alloc(sizeof(int)*dst_ndim);
-        for (int i = 0; i < dst_ndim; i++)
-            dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
+    dst_dims = ln_alloc(sizeof(int)*dst_ndim);
+    for (int i = 0; i < dst_ndim; i++)
+        dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CPU;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -133,9 +135,9 @@ static void resize_cpu_run(ln_op_arg *op_arg)
     tl_tensor     *dst = priv->dst_entry->tensor;
     int            mode = priv->mode_entry->value_int;
 
-    {
-        tl_tensor_resize(src, dst, dst->dims, mode);
-    }
+    /* begin custom code */
+    tl_tensor_resize(src, dst, dst->dims, mode);
+    /* end custom code */
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -184,5 +186,6 @@ ln_op ln_opimpl_resize_cpu = {
     .pre_run = resize_cpu_pre_run,
     .static_run = NULL,
     .run = resize_cpu_run,
-    .post_run = resize_cpu_post_run
+    .post_run = resize_cpu_post_run,
+    .calc_offset = NULL,
 };

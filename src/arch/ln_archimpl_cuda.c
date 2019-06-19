@@ -50,6 +50,11 @@ extern ln_op ln_opimpl_lrelu_cuda;
 extern ln_op ln_opimpl_detect_yolov3_cuda;
 extern ln_op ln_opimpl_avgpool2d_cuda;
 extern ln_op ln_opimpl_resize_cuda;
+extern ln_op ln_opimpl_gather_cuda;
+extern ln_op ln_opimpl_gather_nocopy_cuda;
+extern ln_op ln_opimpl_scatter_cuda;
+extern ln_op ln_opimpl_scatter_nocopy_cuda;
+extern ln_op ln_opimpl_deconv2d_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -81,6 +86,11 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_detect_yolov3_cuda,
     &ln_opimpl_avgpool2d_cuda,
     &ln_opimpl_resize_cuda,
+    &ln_opimpl_gather_cuda,
+    &ln_opimpl_gather_nocopy_cuda,
+    &ln_opimpl_scatter_cuda,
+    &ln_opimpl_scatter_nocopy_cuda,
+    &ln_opimpl_deconv2d_cuda,
 /* end of init cuda ops */
     NULL
 };
@@ -195,6 +205,20 @@ ln_combiner_func cb_funcs_cuda[] = {
     NULL
 };
 
+/* end of declare cuda subgraphers */
+
+ln_subgraph_func sg_funcs_cuda[] = {
+/* end of cuda subgraphers */
+    NULL
+};
+
+/* end of declare cuda schedulers */
+
+ln_schedule_func sd_funcs_cuda[] = {
+/* end of cuda schedulers */
+    NULL
+};
+
 extern void ln_expander_init_expander_cuda(void **priv_p);
 /* end of declare cuda init funcs */
 
@@ -219,5 +243,7 @@ ln_arch ln_archimpl_cuda = {
     .reg_ops = ops_cuda,
     .ep_funcs = ep_funcs_cuda,
     .cb_funcs = cb_funcs_cuda,
+    .sg_funcs = sg_funcs_cuda,
+    .sd_funcs = sd_funcs_cuda,
     .arch_name = "cuda",
 };

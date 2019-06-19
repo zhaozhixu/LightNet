@@ -65,6 +65,9 @@ endif
 ifeq ($(WITH_TENSORRT), yes)
 CONFIG_DEFINES += "LN_TENSORRT"
 endif
+ifeq ($(WITH_DPU), yes)
+CONFIG_DEFINES += "LN_DPU"
+endif
 
 ifeq ($(WITH_PYTHON), yes)
 PYTHON_TARGET = py$(TARGET)

@@ -30,6 +30,9 @@ typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg,
                                       int *match);
 typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
                                       const ln_dfg *dfg, int *match);
+typedef ln_list *(*ln_subgraph_func) (const ln_list *ops, const ln_dfg *dfg,
+                                      ln_list **old_ops);
+typedef ln_list *(*ln_schedule_func) (const ln_dfg *dfg);
 
 struct ln_arch {
     void              (*init_func)(void **priv_p); /* pointer to priv */
@@ -38,6 +41,8 @@ struct ln_arch {
     ln_op             **reg_ops;       /* NULL terminated */
     ln_expander_func   *ep_funcs;      /* NULL terminated */
     ln_combiner_func   *cb_funcs;      /* NULL terminated */
+    ln_subgraph_func   *sg_funcs;      /* NULL terminated */
+    ln_schedule_func   *sd_funcs;      /* NULL terminated */
     char               *arch_name;
 };
 typedef struct ln_arch ln_arch;

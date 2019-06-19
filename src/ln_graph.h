@@ -68,7 +68,7 @@ ln_graph_node *ln_graph_find(ln_graph *graph, void *data);
 void ln_graph_link(ln_graph *graph, void *data1, void *data2, void *edge_data);
 void ln_graph_link_node(ln_graph *graph, ln_graph_node *node1,
                         ln_graph_node *node2, void *edge_data);
-/* if edge_data == NULL, only compare data1 and data2 */
+/* if `edge_data` == NULL, only compare `data1` and `data2` */
 void *ln_graph_unlink(ln_graph *graph, void *data1, void *data2,
                       void *edge_data);
 void *ln_graph_unlink_node(ln_graph_node *node1, ln_graph_node *node2,
@@ -77,9 +77,13 @@ ln_graph *ln_graph_copy(ln_graph *graph);
 int ln_graph_num_outlier(ln_graph *graph);
 void ln_graph_free_topsortlist(ln_list *layers);
 /* return the number of layers of sorted data, -1 if graph has a cycle,
-   layers of sorted data is returned in layers  */
+   layers of sorted data is returned in `layers`  */
 int ln_graph_topsort(ln_graph *graph, ln_list **layers);
-/* print_edge can be NULL */
+/* Depth-First Traversal from a node who has no input edge. Traverse every node
+   after all its previous nodes have been tranversed. Return the length of
+   `res`, or -1 if graph has a cycle,*/
+int ln_graph_dft_after_prev(ln_graph *graph, ln_list **res);
+/* `print_edge` can be NULL */
 void ln_graph_fprint(FILE *fp, ln_graph *graph, ln_fprint_func print_node,
                      ln_fprint_func print_edge);
 

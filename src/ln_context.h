@@ -52,6 +52,7 @@ void ln_context_replace_ops(ln_context *ctx, ln_list **position,
                             size_t len, ln_list *new_ops);
 void ln_context_remove_op(ln_context *ctx, ln_list **positio);
 void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op);
+void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops);
 int ln_context_check(const ln_context *ctx);
 void ln_context_alloc_mem(ln_context *ctx);
 void ln_context_dealloc_mem(ln_context *ctx);

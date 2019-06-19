@@ -1,0 +1,46 @@
+{
+    "ops":[
+        {
+            "optype": "ldmr",
+            "author": "Ma Siyuan",
+            "arch": "none",
+            "tensors_in":[
+                // [width, channel]
+                {"arg_name": "src", "mtype": "LN_MEM_NONE", "ndim": 2}
+            ],
+            "tensors_out":[
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 // channel changed to a multiple of 8
+                 "custom": '''
+{
+dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
+}
+'''
+                }
+            ],
+            "params":[]
+        },
+        {
+            "optype": "ldmr_dpu",
+            "author": "Zhao Zhixu",
+            "arch": "dpu",
+            "tensors_in":[
+                // [width, channel]
+                {"arg_name": "src", "mtype": "LN_MEM_CPU", "ndim": 2}
+            ],
+            "tensors_out":[
+                {"arg_name": "dst", "mtype": "LN_MEM_DPU",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 // channel changed to a multiple of 8
+                 "custom": '''
+{
+dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
+}
+'''
+                }
+            ],
+            "params":[]
+        }
+    ]
+}

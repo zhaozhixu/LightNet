@@ -50,11 +50,27 @@ ln_combiner_func cb_funcs_cudnn[] = {
     NULL
 };
 
+/* end of declare cudnn subgraphers */
+
+ln_subgraph_func sg_funcs_cudnn[] = {
+/* end of cudnn subgraphers */
+    NULL
+};
+
+/* end of declare cudnn schedulers */
+
+ln_schedule_func sd_funcs_cudnn[] = {
+/* end of cudnn schedulers */
+    NULL
+};
+
 ln_arch ln_archimpl_cudnn = {
     .init_func = init_cudnn,
     .cleanup_func = cleanup_cudnn,
     .reg_ops = ops_cudnn,
     .ep_funcs = ep_funcs_cudnn,
     .cb_funcs = cb_funcs_cudnn,
+    .sg_funcs = sg_funcs_cudnn,
+    .sd_funcs = sd_funcs_cudnn,
     .arch_name = "cudnn",
 };

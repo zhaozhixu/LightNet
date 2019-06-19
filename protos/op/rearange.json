@@ -11,9 +11,11 @@
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE", "owner": "src_name",
                  "dtype": "src->dtype", "ndim": 1,
                  "custom": '''
+{
 double len = ceil((stop - start) / step);
 dst_dims = ln_alloc(sizeof(int));
 dst_dims[0] = (int)len;
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -26,6 +28,7 @@ dst_dims[0] = (int)len;
                  "realtype": "double"},
             ],
             "custom": '''
+{
 double max, min, len;
 len = ceil((stop - start) / step);
 max = tl_dtype_max_double(src->dtype);
@@ -40,7 +43,9 @@ ln_opck_param_double_le(step_entry, max);
 ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
+}
 ''',
+            "calc_offset": "return src_entry->offset;"
         },
         {
             "optype": "rearange_cpu",
@@ -53,9 +58,11 @@ ln_opck_param_double_gt(stop_entry, start_entry->value_double);
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU", "owner": "src_name",
                  "dtype": "src->dtype", "ndim": 1,
                  "custom": '''
+{
 double len = ceil((stop - start) / step);
 dst_dims = ln_alloc(sizeof(int));
 dst_dims[0] = (int)len;
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -68,6 +75,7 @@ dst_dims[0] = (int)len;
                  "realtype": "double"},
             ],
             "custom": '''
+{
 double max, min, len;
 len = ceil((stop - start) / step);
 max = tl_dtype_max_double(src->dtype);
@@ -82,8 +90,10 @@ ln_opck_param_double_le(step_entry, max);
 ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
+}
 ''',
-            "run": "tl_tensor_rearange(dst, start, stop, step);"
+            "run": "tl_tensor_rearange(dst, start, stop, step);",
+            "calc_offset": "return src_entry->offset;"
         },
         {
             "optype": "rearange_cuda",
@@ -96,9 +106,11 @@ ln_opck_param_double_gt(stop_entry, start_entry->value_double);
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA", "owner": "src_name",
                  "dtype": "src->dtype", "ndim": 1,
                  "custom": '''
+{
 double len = ceil((stop - start) / step);
 dst_dims = ln_alloc(sizeof(int));
 dst_dims[0] = (int)len;
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -111,6 +123,7 @@ dst_dims[0] = (int)len;
                  "realtype": "double"},
             ],
             "custom": '''
+{
 double max, min, len;
 len = ceil((stop - start) / step);
 max = tl_dtype_max_double(src->dtype);
@@ -125,8 +138,10 @@ ln_opck_param_double_le(step_entry, max);
 ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
+}
 ''',
-            "run": "tl_tensor_rearange_cuda(dst, start, stop, step);"
+            "run": "tl_tensor_rearange_cuda(dst, start, stop, step);",
+            "calc_offset": "return src_entry->offset;"
         }
     ]
 }

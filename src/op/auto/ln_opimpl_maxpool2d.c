@@ -117,35 +117,39 @@ static void maxpool2d_pre_run(ln_op_arg *op_arg)
     ln_opck_param_type(autopad_entry, LN_PARAM_STRING);
     autopad = autopad_entry->value_string;
     autopad = autopad;
+    /* begin custom code */
     {
-        if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
-            ln_streq(autopad, "SAME_LOWER")) {
-            ln_autopading(padding, src->dims, size, stride, 2, autopad);
-        } else if (ln_streq(autopad, "NOTSET")){
-        } else {
-            ln_msg_warn("unsupported 'autopad' %s", autopad);
-        }
+    if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
+        ln_streq(autopad, "SAME_LOWER")) {
+        ln_autopadding_conv(padding, src->dims, size, stride, (int[]){1, 1}, 2, autopad);
+    } else if (ln_streq(autopad, "NOTSET")){
+    } else {
+        ln_msg_warn("unsupported 'autopad' %s", autopad);
     }
+    }
+    /* end custom code */
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
     dst_dtype = src->dtype;
+    /* begin custom code */
     {
-        dst_dims = ln_alloc(sizeof(int)*4);
-        dst_dims[0] = src->dims[0];
-        dst_dims[1] = src->dims[1];
-        dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
-        dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+    dst_dims = ln_alloc(sizeof(int)*4);
+    dst_dims[0] = src->dims[0];
+    dst_dims[1] = src->dims[1];
+    dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2], 1);
+    dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3], 1);
     }
+    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_NONE;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    {
-        ln_free(dst_dims);
-    }
+    /* begin custom code */
+    ln_free(dst_dims);
+    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
@@ -208,5 +212,6 @@ ln_op ln_opimpl_maxpool2d = {
     .pre_run = maxpool2d_pre_run,
     .static_run = NULL,
     .run = NULL,
-    .post_run = maxpool2d_post_run
+    .post_run = maxpool2d_post_run,
+    .calc_offset = NULL,
 };

@@ -1,0 +1,38 @@
+{
+    "ops":[
+        {
+            "optype": "svmr",
+            "author": "Ma Siyuan",
+            "arch": "none",
+            "tensors_in":[
+                // [width, channel], channel should be a multiple of 8
+                {"arg_name": "src", "mtype": "LN_MEM_NONE", "ndim": 2,
+                 "check": "src->dims[1] == ln_next_multiple_power2(src->dims[1], 8), \"src->dims[1] should be a multiple of 8\""}
+            ],
+            "tensors_out":[
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "dims": "src->dims"
+                }
+            ],
+            "params":[]
+        },
+        {
+            "optype": "svmr_dpu",
+            "author": "Zhao Zhixu",
+            "arch": "dpu",
+            "tensors_in":[
+                // [width, channel], channel should be a multiple of 8
+                {"arg_name": "src", "mtype": "LN_MEM_DPU", "ndim": 2,
+                 "check": "src->dims[1] == ln_next_multiple_power2(src->dims[1], 8), \"src->dims[1] should be a multiple of 8\""}
+            ],
+            "tensors_out":[
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "dims": "src->dims"
+                }
+            ],
+            "params":[]
+        }
+    ]
+}

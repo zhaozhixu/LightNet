@@ -28,6 +28,7 @@ dst_dims[0] = (int)len;
                  "realtype": "double"},
             ],
             "custom": '''
+{
 double max, min;
 max = tl_dtype_max_double(dtype);
 min = tl_dtype_min_double(dtype);
@@ -40,6 +41,7 @@ ln_opck_param_double_le(step_entry, max);
 ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
+}
 '''
         },
         {
@@ -52,9 +54,11 @@ ln_opck_param_double_gt(stop_entry, start_entry->value_double);
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU", "static": true,
                  "dtype": "dtype", "ndim": 1,
                  "custom": '''
+{
 double len = ceil((stop - start) / step);
 dst_dims = ln_alloc(sizeof(int));
 dst_dims[0] = (int)len;
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -70,6 +74,7 @@ dst_dims[0] = (int)len;
                  "realtype": "double"},
             ],
             "custom": '''
+{
 double max, min;
 max = tl_dtype_max_double(dtype);
 min = tl_dtype_min_double(dtype);
@@ -82,6 +87,7 @@ ln_opck_param_double_le(step_entry, max);
 ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
+}
 ''',
             "static_run": '''
 double elem;
@@ -102,9 +108,12 @@ for (int i = 0; i < dst->len; i++) {
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA", "static": true,
                  "dtype": "dtype", "ndim": 1,
                  "custom": '''
+{
 double len = ceil((stop - start) / step);
 dst_dims = ln_alloc(sizeof(int));
 dst_dims[0] = (int)len;
+}
+
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -120,6 +129,7 @@ dst_dims[0] = (int)len;
                  "realtype": "double"},
             ],
             "custom": '''
+{
 double max, min;
 max = tl_dtype_max_double(dtype);
 min = tl_dtype_min_double(dtype);
@@ -132,6 +142,7 @@ ln_opck_param_double_le(step_entry, max);
 ln_opck_param_double_ne(step_entry, 0);
 ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
+}
 ''',
             "static_run": '''
 double elem;

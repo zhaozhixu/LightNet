@@ -199,14 +199,16 @@ static void tensor_entry_free_tensor_too_wrapper(void *p)
 void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
                                char *direct_owner)
 {
-    ln_tensor_entry *te;
+    /* ln_tensor_entry *te; */
 
-    assert(entry->name != direct_owner);
+    if (ln_streq(entry->name, direct_owner))
+        ln_msg_inter_error("tensor (%s)'s owner can't be itself", entry->name);
 
-    te = ln_tensor_table_find(tensor_table, direct_owner);
-    while (te->owner)
-        te = ln_tensor_table_find(tensor_table, te->owner);
-    entry->owner = ln_strdup(te->name);
+    /* te = ln_tensor_table_find(tensor_table, direct_owner); */
+    /* while (te->owner) */
+    /*     te = ln_tensor_table_find(tensor_table, te->owner); */
+    /* entry->owner = ln_strdup(te->name); */
+    entry->owner = ln_strdup(direct_owner);
 }
 
 void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)

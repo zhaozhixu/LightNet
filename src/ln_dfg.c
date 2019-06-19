@@ -135,8 +135,7 @@ void ln_dfg_free(ln_dfg *dfg)
     ln_free(dfg);
 }
 
-/* use with ln_dfg_add() */
-static void dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
+void ln_dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
@@ -157,8 +156,7 @@ static void dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
     ln_graph_link_node(dfg->graph, node1, node2, tname_copy);
 }
 
-/* use with ln_dfg_remove() */
-static void dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
+void ln_dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)
 {
     ln_graph_node *node1;
     ln_graph_node *node2;
@@ -201,7 +199,7 @@ void ln_dfg_add(ln_dfg *dfg, ln_op *op)
             add_dangling(&dfg->dangling_ins, te->name, node);
             continue;
         }
-        dfg_link(dfg, node->data, op, te->name);
+        ln_dfg_link(dfg, node->data, op, te->name);
         remove_dangling(&dfg->dangling_outs, te->name, node);
     }
 
@@ -211,7 +209,7 @@ void ln_dfg_add(ln_dfg *dfg, ln_op *op)
         refered = 0;
         LN_LIST_FOREACH(en, dfg->dangling_ins) {
             if (ln_streq(en->edge_data, te->name)) {
-                dfg_link(dfg, op, en->node->data, te->name);
+                ln_dfg_link(dfg, op, en->node->data, te->name);
                 refered = 1;
             }
         }
@@ -240,7 +238,7 @@ void ln_dfg_remove(ln_dfg *dfg, ln_op *op)
         l = l->next;
         if (!ln_list_find_custom(dfg->dangling_outs, en, en_cmp_edge))
             add_dangling(&dfg->dangling_outs, en->edge_data, en->node);
-        dfg_unlink(dfg, en->node->data, op, en->edge_data);
+        ln_dfg_unlink(dfg, en->node->data, op, en->edge_data);
     }
     LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
         remove_dangling(&dfg->dangling_ins, tle->name, node);
@@ -250,7 +248,7 @@ void ln_dfg_remove(ln_dfg *dfg, ln_op *op)
         en = l->data;
         l = l->next;
         add_dangling(&dfg->dangling_ins, en->edge_data, en->node);
-        dfg_unlink(dfg, op, en->node->data, en->edge_data);
+        ln_dfg_unlink(dfg, op, en->node->data, en->edge_data);
     }
 
     LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
@@ -273,6 +271,7 @@ ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)
     return res ? res->node->data : NULL;
 }
 
+/* res needs to be freed by caller */
 ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname)
 {
     ln_graph_node *node;

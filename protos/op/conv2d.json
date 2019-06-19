@@ -23,11 +23,13 @@
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "ndim": "src->ndim", "dtype": "src->dtype",
                  "custom": '''
+{
 dst_dims = ln_alloc(sizeof(int)*4);
 dst_dims[0] = src->dims[0];
 dst_dims[1] = weight->dims[0];
-dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
-dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2], dilation[0]);
+dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3], dilation[1]);
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -56,23 +58,25 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
                 // [height, width]
                 {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 2, "ge": 1},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
                 // [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 4, "ge": 0},
                 {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
                  "custom": '''
+{
 if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
     ln_streq(autopad, "SAME_LOWER")) {
-    ln_autopading(padding, src->dims, size, stride, 2, autopad);
+    ln_autopadding_conv(padding, &src->dims[2], size, stride, dilation, 2, autopad);
 } else if (ln_streq(autopad, "NOTSET")){
 } else {
     ln_msg_warn("unsupported 'autopad' %s", autopad);
 }
+}
 '''
                 },
-                // [height, width]
-                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "ge": 1}
             ]
         },
         {
@@ -98,11 +102,13 @@ if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "ndim": "src->ndim", "dtype": "src->dtype",
                  "custom": '''
+{
 dst_dims = ln_alloc(sizeof(int)*4);
 dst_dims[0] = src->dims[0];
 dst_dims[1] = weight->dims[0];
-dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
-dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2], dilation[0]);
+dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3], dilation[1]);
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -131,23 +137,25 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
                 // [height, width]
                 {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 2, "ge": 1},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
                 // [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 4, "ge": 0},
                 {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
                  "custom": '''
+{
 if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
     ln_streq(autopad, "SAME_LOWER")) {
-    ln_autopading(padding, src->dims, size, stride, 2, autopad);
+    ln_autopadding_conv(padding, &src->dims[2], size, stride, dilation, 2, autopad);
 } else if (ln_streq(autopad, "NOTSET")){
 } else {
     ln_msg_warn("unsupported 'autopad' %s", autopad);
 }
+}
 '''
                 },
-                // [height, width]
-                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "ge": 1}
             ],
             "run": ""
         },
@@ -174,11 +182,13 @@ if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "ndim": "src->ndim", "dtype": "src->dtype",
                  "custom": '''
+{
 dst_dims = ln_alloc(sizeof(int)*4);
 dst_dims[0] = src->dims[0];
 dst_dims[1] = weight->dims[0];
-dst_dims[2] = ln_compute_output_dim(src->dims[2], size[0], stride[0], padding[0] + padding[2]);
-dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1] + padding[3]);
+dst_dims[2] = ln_output_dim_conv(src->dims[2], size[0], stride[0], padding[0] + padding[2], dilation[0]);
+dst_dims[3] = ln_output_dim_conv(src->dims[3], size[1], stride[1], padding[1] + padding[3], dilation[1]);
+}
 ''',
                  "cleanup": "ln_free(dst_dims);"}
             ],
@@ -207,23 +217,25 @@ dst_dims[3] = ln_compute_output_dim(src->dims[3], size[1], stride[1], padding[1]
                 // [height, width]
                 {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 2, "ge": 1},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
                 // [top, left, bottom, right]
                 {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
                  "realtype": "int", "len": 4, "ge": 0},
                 {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
                  "custom": '''
+{
 if (ln_streq(autopad, "VALID") || ln_streq(autopad, "SAME_UPPER") ||
     ln_streq(autopad, "SAME_LOWER")) {
-    ln_autopading(padding, src->dims, size, stride, 2, autopad);
+    ln_autopadding_conv(padding, &src->dims[2], size, stride, dilation, 2, autopad);
 } else if (ln_streq(autopad, "NOTSET")){
 } else {
     ln_msg_warn("unsupported 'autopad' %s", autopad);
 }
+}
 '''
                 },
-                // [height, width]
-                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "int", "len": 2, "ge": 1}
             ],
         "run": ""
         },

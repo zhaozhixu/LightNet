@@ -40,8 +40,9 @@ Suite *make_cuda_suite(void);
 #endif
 Suite *make_list_suite(void);
 Suite *make_queue_suite(void);
-Suite *make_graph_suite(void);
+Suite *make_stack_suite(void);
 Suite *make_hash_suite(void);
+Suite *make_graph_suite(void);
 Suite *make_msg_suite(void);
 Suite *make_param_suite(void);
 Suite *make_tensor_suite(void);

@@ -153,18 +153,62 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
         }
         if (++count > MAX_PEEPHOLE_PASSES) {
             ln_msg_emit(LN_MSG_INTER_WARN,
-                          "peephole passes exceeds limit of %d",
-                          MAX_PEEPHOLE_PASSES);
+                        "peephole passes exceeds limit of %d",
+                        MAX_PEEPHOLE_PASSES);
         }
     }
 }
 
-static inline void use_count_zero(ln_hash *use_counts, char *name)
+void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs)
+{
+    ln_list *old_ops = NULL;
+    ln_list *new_ops = NULL;
+    ln_subgraph_func sg;
+    int i;
+
+    for (i = 0; (sg = sg_funcs[i]); i++) {
+        new_ops = sg(ctx->ops, ctx->dfg, &old_ops);
+        if (!old_ops)
+            continue;
+        ln_context_subgraph(ctx, old_ops, new_ops);
+        ln_context_check(ctx);
+        ln_list_free(old_ops);
+        ln_list_free(new_ops);
+        old_ops = NULL;
+        new_ops = NULL;
+    }
+}
+
+void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs)
+{
+    ln_schedule_func sd;
+    ln_list *ops;
+    ln_op *op;
+    int i, n;
+
+    for (i = 0; (sd = sd_funcs[i]); i++) {
+        ops = sd(ctx->dfg);
+        n = 0;
+        LN_LIST_FOREACH(op, ops) {
+            if (!ln_hash_find(ctx->dfg->node_table, op->op_arg->name))
+                ln_msg_error("scheduled op %s not found in DFG",
+                             op->op_arg->name);
+            n++;
+        }
+        if (n != ln_hash_size(ctx->dfg->node_table))
+            ln_msg_error("the length of scheduled ops (%d) is not equal to the size of DFG (%d)", n, ln_hash_size(ctx->dfg->node_table));
+
+        ln_list_free(ctx->ops);
+        ctx->ops = ops;
+    }
+}
+
+static void use_count_zero(ln_hash *use_counts, char *name)
 {
     ln_hash_insert(use_counts, name, (void *)0);
 }
 
-static inline ssize_t use_count_inc(ln_hash *use_counts, char *name)
+static ssize_t use_count_inc(ln_hash *use_counts, char *name)
 {
     int found;
     ssize_t uc;
@@ -175,7 +219,7 @@ static inline ssize_t use_count_inc(ln_hash *use_counts, char *name)
     return uc;
 }
 
-static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
+static ssize_t use_count_dec(ln_hash *use_counts, char *name)
 {
     int found;
     ssize_t uc;
@@ -187,7 +231,7 @@ static inline ssize_t use_count_dec(ln_hash *use_counts, char *name)
     return uc;
 }
 
-static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
+static ssize_t use_count_of(ln_hash *use_counts, char *name)
 {
     int found;
     ssize_t uc;
@@ -195,6 +239,92 @@ static inline ssize_t use_count_of(ln_hash *use_counts, char *name)
     found = ln_hash_find_extended(use_counts, name, NULL, (void **)&uc);
     assert(found);
     return uc;
+}
+
+static void set_offset(ln_tensor_entry *te, size_t offset)
+{
+    te->offset = offset;
+    ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
+                 ln_mem_type_name(te->mtype), te->name,
+                 tl_tensor_size(te->tensor), te->offset);
+}
+
+static void alloc_set_offset(ln_tensor_entry *te, ln_hash *mem_pools,
+                             ln_context *ctx)
+{
+    ln_mem_pool *mp;
+    size_t water_level;
+
+    mp = ln_hash_find(mem_pools, (void *)te->mtype);
+    set_offset(te, ln_mem_pool_alloc(mp, tl_tensor_size(te->tensor)));
+    water_level = te->offset + tl_tensor_size(te->tensor);
+    ctx->mem_sizes[te->mtype] =
+        ctx->mem_sizes[te->mtype] > water_level ?
+        ctx->mem_sizes[te->mtype] : water_level;
+}
+
+static void dealloc_offset(ln_tensor_entry *te, ln_hash *mem_pools)
+{
+    ln_mem_pool *mp;
+
+    mp = ln_hash_find(mem_pools, (void *)te->mtype);
+    ln_mem_pool_dealloc(mp, te->offset);
+}
+
+static ln_op *find_obliged_op(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te)
+{
+    ln_tensor_list_entry *tle;
+    ln_list *next_ops;
+    ln_op *next_op;
+
+    LN_LIST_FOREACH(tle, op->op_arg->tensors_in) {
+        if (ln_streq(tle->name, te->owner))
+            return op;
+    }
+
+    if (!(next_ops = ln_dfg_nexts(dfg, op, te->name)))
+        ln_msg_inter_error("can't find the successors of op '%s' when finding the obliged op for setting the shared offset of tensor '%s'",
+                           op->op_arg->name, te->name);
+
+    LN_LIST_FOREACH(next_op, next_ops) {
+        LN_LIST_FOREACH(tle, next_op->op_arg->tensors_out) {
+            if (ln_streq(tle->name, te->owner)) {
+                ln_list_free(next_ops);
+                return next_op;
+            }
+        }
+    }
+
+    ln_list_free(next_ops);
+    ln_msg_inter_error("can't find the obliged op for setting the shared offset of tensor '%s' of op '%s'", te->name, op->op_arg->name);
+    return NULL;
+}
+
+static void set_shared_offset(ln_dfg *dfg, ln_op *op, ln_tensor_entry *te)
+{
+    ln_op *obliged_op;
+    size_t offset;
+
+    obliged_op = find_obliged_op(dfg, op, te);
+    if (obliged_op->calc_offset) {
+        offset = obliged_op->calc_offset(obliged_op->op_arg, te);
+        if (offset == 0)
+            ln_msg_inter_error("can't set the shared offset of tensor '%s' of op '%s' with obliged op '%s'", te->name, op->op_arg->name,
+                               obliged_op->op_arg->name);
+        set_offset(te, offset);
+    } else {
+        ln_msg_inter_error("obliged op for setting the shared offset of tensor '%s' of op '%s' doesn't have the 'calc_offset' function", te->name, op->op_arg->name);
+    }
+}
+
+static ln_tensor_entry *find_root_owner(const char *owner, ln_hash *tensor_table)
+{
+    ln_tensor_entry *te;
+
+    te = ln_tensor_table_find(tensor_table, owner);
+    while (te->owner)
+        te = ln_tensor_table_find(tensor_table, te->owner);
+    return te;
 }
 
 void ln_pass_mem_plan(ln_context *ctx)
@@ -206,10 +336,8 @@ void ln_pass_mem_plan(ln_context *ctx)
     ln_tensor_entry *owner_te;
     ln_tensor_list_entry *tle;
     ln_hash *mem_pools;
-    ln_mem_pool *mp;
     ln_list *unused_tles;
     size_t total_sums[LN_MEM_TYPE_SIZE] = {0};
-    size_t water_level;
 
     mem_pools = ln_mem_pool_table_create();
     use_counts = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
@@ -217,34 +345,28 @@ void ln_pass_mem_plan(ln_context *ctx)
         arg = op->op_arg;
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
             if (te->mtype == LN_MEM_NONE)
-                ln_msg_inter_error("tensor '%s' has an unresolved memory type %s",
-                                   te->name, ln_mem_type_name(te->mtype));
-            if (te->owner)
+                ln_msg_inter_error("tensor '%s' has an unresolved memory type %s", te->name, ln_mem_type_name(te->mtype));
+            if (te->owner) {
+                te = find_root_owner(te->owner, arg->tensor_table);
+                if (!ln_hash_find_extended(use_counts, te->name, NULL, NULL))
+                    use_count_zero(use_counts, te->name);
                 continue;
+            }
             if (te->isstatic) {
-                te->offset = ln_mem_pool_alloc(mp, tl_tensor_size(te->tensor));
-                water_level = te->offset + tl_tensor_size(te->tensor);
-                ctx->mem_sizes[te->mtype] =
-                    ctx->mem_sizes[te->mtype] > water_level ?
-                    ctx->mem_sizes[te->mtype] : water_level;
+                alloc_set_offset(te, mem_pools, ctx);
                 total_sums[te->mtype] += tl_tensor_size(te->tensor);
-                ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
-                               ln_mem_type_name(te->mtype), tle->name,
-                               tl_tensor_size(te->tensor), te->offset);
                 use_count_zero(use_counts, te->name);
                 continue;
             }
-            if (ln_hash_find_extended(use_counts, te->name, NULL, NULL))
-                use_count_inc(use_counts, te->name);
-            else
+            if (!ln_hash_find_extended(use_counts, te->name, NULL, NULL))
                 use_count_zero(use_counts, te->name);
         }
         LN_LIST_FOREACH(tle, arg->tensors_in) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
             if (te->owner) {
-                use_count_inc(use_counts, te->owner);
+                te = find_root_owner(te->owner, arg->tensor_table);
+                use_count_inc(use_counts, te->name);
                 continue;
             }
             /* if (te->isstatic) */
@@ -258,49 +380,40 @@ void ln_pass_mem_plan(ln_context *ctx)
         unused_tles = NULL;
         LN_LIST_FOREACH(tle, arg->tensors_out) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
             if (te->owner) {
                 owner_te = ln_tensor_table_find(arg->tensor_table, te->owner);
                 assert(owner_te);
-                te->offset = owner_te->offset;
-                ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
-                               ln_mem_type_name(te->mtype), tle->name,
-                               tl_tensor_size(te->tensor), te->offset);
+                if (owner_te->offset == 0) {
+                    /* NOTE: it appears that owner_te->owner should always be
+                       NULL here in *current* design */
+                    assert(!owner_te->owner);
+                    alloc_set_offset(owner_te, mem_pools, ctx);
+                    total_sums[owner_te->mtype] +=
+                        tl_tensor_size(owner_te->tensor);
+                }
+                set_shared_offset(ctx->dfg, op, te);
                 continue;
             }
             if (te->isstatic)
                 continue;
-            if (ln_mem_pool_exist(mp, te->offset)) {
-                use_count_dec(use_counts, te->name);
-            } else {
-                te->offset = ln_mem_pool_alloc(mp, tl_tensor_size(te->tensor));
-                water_level = te->offset + tl_tensor_size(te->tensor);
-                ctx->mem_sizes[te->mtype] =
-                    ctx->mem_sizes[te->mtype] > water_level ?
-                    ctx->mem_sizes[te->mtype] : water_level;
-                total_sums[te->mtype] += tl_tensor_size(te->tensor);
-                ln_msg_debug("plan memory %s: %s %lu bytes at offset %p",
-                               ln_mem_type_name(te->mtype), tle->name,
-                               tl_tensor_size(te->tensor), te->offset);
-            }
+            alloc_set_offset(te, mem_pools, ctx);
+            total_sums[te->mtype] += tl_tensor_size(te->tensor);
             if (use_count_of(use_counts, te->name) == 0)
                 unused_tles = ln_list_prepend(unused_tles, tle);
         }
         LN_LIST_FOREACH(tle, unused_tles) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
-            ln_mem_pool_dealloc(mp, te->offset);
+            dealloc_offset(te, mem_pools);
         }
         ln_list_free(unused_tles);
         LN_LIST_FOREACH(tle, arg->tensors_in) {
             te = ln_tensor_table_find(arg->tensor_table, tle->name);
-            mp = ln_hash_find(mem_pools, (void *)te->mtype);
             if (te->owner) {
-                if (use_count_dec(use_counts, te->owner) == 0) {
-                    te = ln_tensor_table_find(arg->tensor_table, te->owner);
+                te = find_root_owner(te->owner, arg->tensor_table);
+                if (use_count_dec(use_counts, te->name) == 0) {
                     if (te->isstatic)
                         continue;
-                    ln_mem_pool_dealloc(mp, te->offset);
+                    dealloc_offset(te, mem_pools);
                 }
                 continue;
             }
@@ -309,7 +422,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                 continue;
             }
             if (use_count_dec(use_counts, te->name) == 0) {
-                ln_mem_pool_dealloc(mp, te->offset);
+                dealloc_offset(te, mem_pools);
             }
         }
     }
@@ -318,9 +431,9 @@ void ln_pass_mem_plan(ln_context *ctx)
 #ifdef LN_DEBUG
     for (int i = LN_MEM_NONE+1; i < LN_MEM_TYPE_SIZE; i++) {
         ln_msg_debug("planned usage of memory %s: %lu bytes",
-                       ln_mem_type_name(i), ctx->mem_sizes[i]);
+                     ln_mem_type_name(i), ctx->mem_sizes[i]);
         ln_msg_debug("counted usage of memory %s: %lu bytes",
-                       ln_mem_type_name(i), total_sums[i]);
+                     ln_mem_type_name(i), total_sums[i]);
     }
 #endif  /* LN_DEBUG */
 

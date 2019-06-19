@@ -49,7 +49,8 @@
 '''
                 }
             ],
-            "static_run": "dst->data = src->data;"
+ //           "static_run": "dst->data = src->data;",
+            "calc_offset": "return src_entry->offset;"
         },
         {
             "optype": "reshape_cuda",
@@ -75,7 +76,8 @@
 '''
                 }
             ],
-            "static_run": "dst->data = src->data;"
+   //         "static_run": "dst->data = src->data;",
+            "calc_offset": "return src_entry->offset;"
         }
     ]
 }

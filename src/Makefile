@@ -29,10 +29,11 @@ SRC += $(wildcard arch/auto/*.c)
 SRC += $(wildcard arch/auto/*.cc)
 SRC += $(wildcard arch/auto/*.cu)
 
-NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu %tensorrt.c %tensorrt.cc,$(SRC))
+NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu %tensorrt.c %tensorrt.cc %dpu.c %dpu.cc,$(SRC))
 CUDA_SRC = $(filter %cuda.c %cuda.cu,$(SRC))
 CUDNN_SRC = $(filter %cudnn.c %cudnn.cu,$(SRC))
 TENSORRT_SRC = $(filter %tensorrt.c %tensorrt.cc,$(SRC))
+DPU_SRC = $(filter %dpu.c %dpu.cc,$(SRC))
 
 OBJDIR = obj
 OBJS   = $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(NORMAL_SRC)))
@@ -48,6 +49,10 @@ endif
 ifeq ($(WITH_TENSORRT), yes)
 OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(TENSORRT_SRC)))
 OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(TENSORRT_SRC)))
+endif
+ifeq ($(WITH_DPU), yes)
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(DPU_SRC)))
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(DPU_SRC)))
 endif
 endif
 

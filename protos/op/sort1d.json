@@ -37,7 +37,8 @@
                  "from_func": "tl_sort_dir_from_str", "realtype": "int",
                  "check": "dir != -1, \"'dir' should be a supported tl_sort_dir\""}
             ],
-            "run": ""
+            "run": "",
+            "calc_offset": "return src_key_entry->offset;"
         },
         {
             "optype": "sort1d_cuda",
@@ -57,7 +58,8 @@
                  "from_func": "tl_sort_dir_from_str", "realtype": "int",
                  "check": "dir != -1, \"'dir' should be a supported tl_sort_dir\""}
             ],
-            "run": "tl_tensor_sort1d_cuda(src_key, dir);"
+            "run": "tl_tensor_sort1d_cuda(src_key, dir);",
+            "calc_offset": "return src_key_entry->offset;"
         }
     ]
 }

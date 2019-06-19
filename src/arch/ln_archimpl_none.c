@@ -50,6 +50,11 @@ extern ln_op ln_opimpl_lrelu;
 extern ln_op ln_opimpl_detect_yolov3;
 extern ln_op ln_opimpl_avgpool2d;
 extern ln_op ln_opimpl_resize;
+extern ln_op ln_opimpl_gather;
+extern ln_op ln_opimpl_scatter;
+extern ln_op ln_opimpl_svmr;
+extern ln_op ln_opimpl_ldmr;
+extern ln_op ln_opimpl_deconv2d;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -82,6 +87,11 @@ static ln_op *ops_none[] = {
     &ln_opimpl_detect_yolov3,
     &ln_opimpl_avgpool2d,
     &ln_opimpl_resize,
+    &ln_opimpl_gather,
+    &ln_opimpl_scatter,
+    &ln_opimpl_svmr,
+    &ln_opimpl_ldmr,
+    &ln_opimpl_deconv2d,
 /* end of init none ops */
     NULL
 };
@@ -94,11 +104,27 @@ ln_combiner_func cb_funcs_none[] = {
     NULL
 };
 
+/* end of declare none subgraphers */
+
+ln_subgraph_func sg_funcs_none[] = {
+/* end of none subgraphers */
+    NULL
+};
+
+/* end of declare none schedulers */
+
+ln_schedule_func sd_funcs_none[] = {
+/* end of none schedulers */
+    NULL
+};
+
 ln_arch ln_archimpl_none = {
     .init_func = NULL,
     .cleanup_func = NULL,
     .reg_ops = ops_none,
     .ep_funcs = ep_funcs_none,
     .cb_funcs = cb_funcs_none,
+    .sg_funcs = sg_funcs_none,
+    .sd_funcs = sd_funcs_none,
     .arch_name = "none",
 };

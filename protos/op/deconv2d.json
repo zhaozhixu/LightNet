@@ -1,0 +1,282 @@
+{
+    "ops": [
+        {
+            "optype": "deconv2d",
+            "author": "Zhao Zhixu",
+            "arch": "none",
+            "tensors_in": [
+                // [batch, channel, height, width]
+                {"arg_name": "src", "mtype": "LN_MEM_NONE", "ndim": 4},
+                // [input_channel, output_channel/group, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_NONE", "ndim": 4},
+                {"arg_name": "bias", "mtype": "LN_MEM_NONE", "ndim": 1}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_NONE",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": '''
+{
+dst_dims = (int[]){src->dims[0], weight->dims[1]*group,
+            ln_output_dim_deconv(src->dims[2], size[0], stride[0], padding[0] + padding[2], output_padding[0], dilation[0]),
+            ln_output_dim_deconv(src->dims[3], size[1], stride[1], padding[1] + padding[3], output_padding[1], dilation[1])};
+char shape1[LN_MAXLINE];
+char shape2[LN_MAXLINE];
+if (output_dims_valid) {
+    for (int i = 0; i < src->ndim; i++) {
+        if (dst_dims[i] != output_dims[i])
+            ln_msg_inter_error("op '%s'(deconv2d) has unmatched 'output_dims'(%s) and 'dst->dims'(%s)", op_arg->name, ln_sprint_shape(shape1, src->ndim, output_dims), ln_sprint_shape(shape2, src->ndim, dst_dims));
+    }
+}
+}
+'''
+                }
+            ],
+            "params": [
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(weight->dims[1]*group == bias->dims[0], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'bias' (%s)'s dims[0]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, bias->ndim, bias->dims));
+}
+'''
+                 },
+                // [height, width]
+                {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(size[0] == weight->dims[2] && size[1] == weight->dims[3], "'size' (%s) should be equal to the last two dimensions of 'weight' (%s)", ln_sprint_shape(shape1, size_entry->array_len, size), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+}
+'''
+                 },
+                // [height, width]
+                {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                // [batch, channel, height, width]
+                {"arg_name": "output_dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [top, left, bottom, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [height, width]
+                {"arg_name": "output_padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 0},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
+                 "custom": '''
+int output_dims_valid = 1;
+for (int i = 0; i < 4; i++) {
+    if (output_dims[i] <= 0) {
+        output_dims_valid = 0;
+        break;
+    }
+}
+{
+char shape[LN_MAXLINE];
+if (ln_streq(autopad, "VALID") || (output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER")))) {
+    ln_autopadding_deconv(padding, &src->dims[2], &output_dims[2], size, stride, output_padding, dilation, 2, autopad);
+} else if (!output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER"))) {
+    ln_opck_satisfy_msg("'autopad' cannot be '%s' when 'output_dims' (%s) is not valid", autopad, ln_sprint_shape(shape, 4, output_dims));
+} else if (ln_streq(autopad, "NOTSET")){
+} else {
+    ln_opck_satisfy_msg("unsupported 'autopad' %s", autopad);
+}
+}
+'''
+                },
+            ],
+        },
+        {
+            "optype": "deconv2d_cpu",
+            "author": "Zhao Zhixu",
+            "arch": "cpu",
+            "tensors_in": [
+                // [batch, channel, height, width]
+                {"arg_name": "src", "mtype": "LN_MEM_CPU", "ndim": 4},
+                // [input_channel, output_channel/group, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_CPU", "ndim": 4},
+                {"arg_name": "bias", "mtype": "LN_MEM_CPU", "ndim": 1}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CPU",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": '''
+{
+dst_dims = (int[]){src->dims[0], weight->dims[1]*group,
+            ln_output_dim_deconv(src->dims[2], size[0], stride[0], padding[0] + padding[2], output_padding[0], dilation[0]),
+            ln_output_dim_deconv(src->dims[3], size[1], stride[1], padding[1] + padding[3], output_padding[1], dilation[1])};
+char shape1[LN_MAXLINE];
+char shape2[LN_MAXLINE];
+if (output_dims_valid) {
+    for (int i = 0; i < src->ndim; i++) {
+        if (dst_dims[i] != output_dims[i])
+            ln_msg_inter_error("op '%s'(deconv2d) has unmatched 'output_dims'(%s) and 'dst->dims'(%s)", op_arg->name, ln_sprint_shape(shape1, src->ndim, output_dims), ln_sprint_shape(shape2, src->ndim, dst_dims));
+    }
+}
+}
+'''
+                }
+            ],
+            "params": [
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(weight->dims[1]*group == bias->dims[0], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'bias' (%s)'s dims[0]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, bias->ndim, bias->dims));
+}
+'''
+                 },
+                // [height, width]
+                {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(size[0] == weight->dims[2] && size[1] == weight->dims[3], "'size' (%s) should be equal to the last two dimensions of 'weight' (%s)", ln_sprint_shape(shape1, size_entry->array_len, size), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+}
+'''
+                 },
+                // [height, width]
+                {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                // [batch, channel, height, width]
+                {"arg_name": "output_dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [top, left, bottom, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [height, width]
+                {"arg_name": "output_padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 0},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
+                 "custom": '''
+int output_dims_valid = 1;
+for (int i = 0; i < 4; i++) {
+    if (output_dims[i] <= 0) {
+        output_dims_valid = 0;
+        break;
+    }
+}
+{
+char shape[LN_MAXLINE];
+if (ln_streq(autopad, "VALID") || (output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER")))) {
+    ln_autopadding_deconv(padding, &src->dims[2], output_dims, size, stride, output_padding, dilation, 2, autopad);
+} else if (!output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER"))) {
+    ln_opck_satisfy_msg("'autopad' cannot be '%s' when 'output_dims' (%s) is not valid", autopad, ln_sprint_shape(shape, 4, output_dims));
+} else if (ln_streq(autopad, "NOTSET")){
+} else {
+    ln_opck_satisfy_msg("unsupported 'autopad' %s", autopad);
+}
+}
+'''
+                },
+            ],
+            "run": ""
+        },
+        {
+            "optype": "deconv2d_cuda",
+            "author": "Zhao Zhixu",
+            "arch": "cuda",
+            "tensors_in": [
+                // [batch, channel, height, width]
+                {"arg_name": "src", "mtype": "LN_MEM_CUDA", "ndim": 4},
+                // [input_channel, output_channel/group, height, width]
+                {"arg_name": "weight", "mtype": "LN_MEM_CUDA", "ndim": 4},
+                {"arg_name": "bias", "mtype": "LN_MEM_CUDA", "ndim": 1}
+            ],
+            "tensors_out": [
+                {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
+                 "ndim": "src->ndim", "dtype": "src->dtype",
+                 "custom": '''
+{
+dst_dims = (int[]){src->dims[0], weight->dims[1]*group,
+            ln_output_dim_deconv(src->dims[2], size[0], stride[0], padding[0] + padding[2], output_padding[0], dilation[0]),
+            ln_output_dim_deconv(src->dims[3], size[1], stride[1], padding[1] + padding[3], output_padding[1], dilation[1])};
+char shape1[LN_MAXLINE];
+char shape2[LN_MAXLINE];
+if (output_dims_valid) {
+    for (int i = 0; i < src->ndim; i++) {
+        if (dst_dims[i] != output_dims[i])
+            ln_msg_inter_error("op '%s'(deconv2d) has unmatched 'output_dims'(%s) and 'dst->dims'(%s)", op_arg->name, ln_sprint_shape(shape1, src->ndim, output_dims), ln_sprint_shape(shape2, src->ndim, dst_dims));
+    }
+}
+}
+'''
+                }
+            ],
+            "params": [
+                {"arg_name": "group", "ptype": "LN_PARAM_NUMBER",
+                 "realtype": "int", "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(weight->dims[1]*group == bias->dims[0], "'weight' (%s)'s dims[1] multiplies group (%d) should be equal to 'bias' (%s)'s dims[0]", ln_sprint_shape(shape1, weight->ndim, weight->dims), group, ln_sprint_shape(shape2, bias->ndim, bias->dims));
+}
+'''
+                 },
+                // [height, width]
+                {"arg_name": "size", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1,
+                 "custom": '''
+{
+    char shape1[LN_MAXLINE];
+    char shape2[LN_MAXLINE];
+    ln_opck_satisfy_msg(size[0] == weight->dims[2] && size[1] == weight->dims[3], "'size' (%s) should be equal to the last two dimensions of 'weight' (%s)", ln_sprint_shape(shape1, size_entry->array_len, size), ln_sprint_shape(shape2, weight->ndim, weight->dims));
+}
+'''
+                 },
+                // [height, width]
+                {"arg_name": "stride", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                // [batch, channel, height, width]
+                {"arg_name": "output_dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [top, left, bottom, right]
+                {"arg_name": "padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 4, "ge": 0},
+                // [height, width]
+                {"arg_name": "output_padding", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 0},
+                // [height, width]
+                {"arg_name": "dilation", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "len": 2, "ge": 1},
+                {"arg_name": "autopad", "ptype": "LN_PARAM_STRING",
+                 "custom": '''
+int output_dims_valid = 1;
+for (int i = 0; i < 4; i++) {
+    if (output_dims[i] <= 0) {
+        output_dims_valid = 0;
+        break;
+    }
+}
+{
+char shape[LN_MAXLINE];
+if (ln_streq(autopad, "VALID") || (output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER")))) {
+    ln_autopadding_deconv(padding, &src->dims[2], output_dims, size, stride, output_padding, dilation, 2, autopad);
+} else if (!output_dims_valid && (ln_streq(autopad, "SAME_UPPER") || ln_streq(autopad, "SAME_LOWER"))) {
+    ln_opck_satisfy_msg("'autopad' cannot be '%s' when 'output_dims' (%s) is not valid", autopad, ln_sprint_shape(shape, 4, output_dims));
+} else if (ln_streq(autopad, "NOTSET")){
+} else {
+    ln_opck_satisfy_msg("unsupported 'autopad' %s", autopad);
+}
+}
+'''
+                },
+            ],
+            "run": ""
+        }
+    ]
+}

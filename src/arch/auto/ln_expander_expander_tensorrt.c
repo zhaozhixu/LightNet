@@ -87,6 +87,28 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
         next_op = ln_dfg_next(dfg, self, te->name);
+        if (!next_op || !ln_streq(next_op->op_arg->optype, "deconv2d")) {
+            ret = 0;
+        } else {
+            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+            if (!tle_next)
+                ret = 0;
+            else if (!ln_streq(tle_next->arg_name, "src"))
+                ret = 0;
+            else
+                ret = 1;
+        }
+        ret;
+    })
+    ) ||
+        (({
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_op = ln_dfg_next(dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "relu")) {
             ret = 0;
         } else {
@@ -306,16 +328,241 @@ static ln_list *ep_create_cuda(const ln_op *self, const ln_dfg *dfg, int *match)
 static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
 {
     /* auto variables */
-    int last_index;
+    int  last_index;
+    char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2])) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]))) {
-        ln_msg_inter_warn("ep_conv2d(): tensorrt doesn't support asymmetrical conv2d's 'padding', use conv2d_cuda instead");
+    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
+        ln_msg_inter_warn("ep_conv2d(): tensorrt doesn't support asymmetrical avgpool2d's 'padding', use conv2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "conv2d_cuda");
         *match = 1;
         return ln_list_append(NULL, new_op);
+    }
+
+    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
+        assert(op_proto);
+        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        new_ops = ln_list_append(new_ops, trt);
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "src");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "weight");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "weight")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "weight");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "bias")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_out, arg_name, "dst");
+            trt->op_arg->tensors_out = ln_tensor_list_append(trt->op_arg->tensors_out, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_shape") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_shape", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_shape");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->ndim, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dims);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_dtype") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_dtype", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_dtype");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dtype));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "padding");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "padding")->array_len, ln_param_list_find(self->op_arg->params, "padding")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "conv");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_weight") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_weight", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_weight");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "weight")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_bias") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_bias", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_bias");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "bias")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_size") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_size", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_size");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "size")->array_len, ln_param_list_find(self->op_arg->params, "size")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_stride") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_stride", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_stride");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "stride")->array_len, ln_param_list_find(self->op_arg->params, "stride")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_group") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_group", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_group");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_number(pe, (double)(ln_param_list_find(self->op_arg->params, "group")->value_int));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_output_c") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_output_c", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_output_c");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "weight")->tensor->dims[0]));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe,  2, (int[]){0,0});
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dilation") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dilation", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dilation");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "dilation")->array_len, ln_param_list_find(self->op_arg->params, "dilation")->value_array_int);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, "batch_size");
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->dims[0]));
+        }
+
+        *match = 1;
+        return new_ops;
     }
 
     else if (1) {
@@ -489,6 +736,425 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
             trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
             ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
             ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "dilation")->array_len, ln_param_list_find(self->op_arg->params, "dilation")->value_array_int);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, "batch_size");
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->dims[0]));
+        }
+
+        *match = 1;
+        return new_ops;
+    }
+}
+
+static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
+{
+    /* auto variables */
+    int  last_index;
+    char tmp_buf[LN_MAX_NAME_LEN];
+
+   /* replace self with new ops */
+    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
+        ln_msg_inter_warn("ep_deconv2d(): tensorrt doesn't support asymmetrical conv2d's 'padding', use deconv2d_cuda instead");
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "deconv2d_cuda");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+
+    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
+        assert(op_proto);
+        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        new_ops = ln_list_append(new_ops, trt);
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "src");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "weight");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "weight")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "weight");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "bias")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_out, arg_name, "dst");
+            trt->op_arg->tensors_out = ln_tensor_list_append(trt->op_arg->tensors_out, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_shape") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_shape", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_shape");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->ndim, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dims);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_dtype") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_dtype", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_dtype");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dtype));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "padding");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "padding")->array_len, ln_param_list_find(self->op_arg->params, "padding")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "deconv");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_weight") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_weight", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_weight");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "weight")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_bias") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_bias", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_bias");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "bias")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_size") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_size", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_size");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "size")->array_len, ln_param_list_find(self->op_arg->params, "size")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_stride") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_stride", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_stride");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "stride")->array_len, ln_param_list_find(self->op_arg->params, "stride")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_group") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_group", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_group");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_number(pe, (double)(ln_param_list_find(self->op_arg->params, "group")->value_int));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_output_c") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_output_c", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_output_c");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "weight")->tensor->dims[0]));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe,  2, (int[]){0,0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, "batch_size");
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->dims[0]));
+        }
+
+        *match = 1;
+        return new_ops;
+    }
+
+    else if (((ln_param_list_find(self->op_arg->params, "output_padding")->value_array_int[0] != 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "output_padding")->value_array_int[1] != 0))) {
+        ln_msg_inter_warn("ep_deconv2d(): tensorrt doesn't support deconv2d's none-zero 'output_padding' param, use deconv2d_cuda instead");
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "deconv2d_cuda");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+
+    else if (((ln_param_list_find(self->op_arg->params, "dilation")->value_array_int[0] != 1)) ||
+        ((ln_param_list_find(self->op_arg->params, "dilation")->value_array_int[1] != 1))) {
+        ln_msg_inter_warn("ep_deconv2d(): tensorrt doesn't support deconv2d's none-one 'dilation' param, use deconv2d_cuda instead");
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "deconv2d_cuda");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+
+    else if (1) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
+        assert(op_proto);
+        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        new_ops = ln_list_append(new_ops, trt);
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "src");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "weight");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "weight")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "weight");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "bias")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_out, arg_name, "dst");
+            trt->op_arg->tensors_out = ln_tensor_list_append(trt->op_arg->tensors_out, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_shape") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_shape", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_shape");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->ndim, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dims);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_dtype") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_dtype", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_dtype");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dtype));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "deconv");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_weight") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_weight", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_weight");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "weight")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_bias") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_bias", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_bias");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "bias")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_group") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_group", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_group");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_number(pe, (double)(ln_param_list_find(self->op_arg->params, "group")->value_int));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_output_c") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_output_c", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_output_c");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dims[1]));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_size") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_size", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_size");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "size")->array_len, ln_param_list_find(self->op_arg->params, "size")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_stride") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_stride", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_stride");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "stride")->array_len, ln_param_list_find(self->op_arg->params, "stride")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, 2, (int[]){ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0], ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]});
         }
 
         {
@@ -804,16 +1470,185 @@ static ln_list *ep_sigmoid(const ln_op *self, const ln_dfg *dfg, int *match)
 static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 {
     /* auto variables */
-    int last_index;
+    int  last_index;
+    char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2])) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]))) {
+    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
         ln_msg_inter_warn("ep_maxpool2d(): tensorrt doesn't support asymmetrical maxpool2d's 'padding', use maxpool2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "maxpool2d_cuda");
         *match = 1;
         return ln_list_append(NULL, new_op);
+    }
+
+    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
+        assert(op_proto);
+        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        new_ops = ln_list_append(new_ops, trt);
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "src");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_out, arg_name, "dst");
+            trt->op_arg->tensors_out = ln_tensor_list_append(trt->op_arg->tensors_out, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_shape") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_shape", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_shape");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->ndim, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dims);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_dtype") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_dtype", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_dtype");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dtype));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "padding");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "padding")->array_len, ln_param_list_find(self->op_arg->params, "padding")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "pooling");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_pooling_type") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_pooling_type", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_pooling_type");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "kMAX");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_size") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_size", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_size");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "size")->array_len, ln_param_list_find(self->op_arg->params, "size")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_stride") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_stride", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_stride");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "stride")->array_len, ln_param_list_find(self->op_arg->params, "stride")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe,  2, (int[]){0,0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, "batch_size");
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->dims[0]));
+        }
+
+        *match = 1;
+        return new_ops;
     }
 
     else if (1) {
@@ -946,16 +1781,185 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 {
     /* auto variables */
-    int last_index;
+    int  last_index;
+    char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2])) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]))) {
+    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
         ln_msg_inter_warn("ep_avgpool2d(): tensorrt doesn't support asymmetrical avgpool2d's 'padding', use avgpool2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "avgpool2d_cuda");
         *match = 1;
         return ln_list_append(NULL, new_op);
+    }
+
+    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
+        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
+        assert(op_proto);
+        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        new_ops = ln_list_append(new_ops, trt);
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_in, arg_name, "src");
+            trt->op_arg->tensors_in = ln_tensor_list_append(trt->op_arg->tensors_in, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_tensor_list_unique_arg_name(trt->op_arg->tensors_out, arg_name, "dst");
+            trt->op_arg->tensors_out = ln_tensor_list_append(trt->op_arg->tensors_out, arg_name, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_shape") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_shape", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_shape");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->ndim, ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dims);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("dst") + strlen("_dtype") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "dst", last_index, "_dtype", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "dst", last_index, "_dtype");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst")->tensor->dtype));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "padding");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "padding")->array_len, ln_param_list_find(self->op_arg->params, "padding")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            last_index = ln_param_list_unique_arg_name(trt->op_arg->params, arg_name, "op");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "pooling");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_src") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_src", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_src");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ({snprintf(tmp_buf, LN_MAX_NAME_LEN, "%s%s", ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name, "_padding"); tmp_buf;}));
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_dst") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_dst", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_dst");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_pooling_type") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_pooling_type", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_pooling_type");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_STRING);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_string(pe, "kAVERAGE");
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_size") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_size", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_size");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "size")->array_len, ln_param_list_find(self->op_arg->params, "size")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_stride") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_stride", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_stride");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe, ln_param_list_find(self->op_arg->params, "stride")->array_len, ln_param_list_find(self->op_arg->params, "stride")->value_array_int);
+        }
+
+        {
+            char arg_name[LN_MAX_NAME_LEN];
+            if (strlen("op") + strlen("_padding") + ln_digit_num(last_index) >= LN_MAX_NAME_LEN)
+                ln_msg_inter_error("name '%s%d%s' length exceeds LN_MAX_NAME_LEN = %d",
+                                   "op", last_index, "_padding", LN_MAX_NAME_LEN);
+            snprintf(arg_name, LN_MAX_NAME_LEN, "%s%d%s", "op", last_index, "_padding");
+            trt->op_arg->params = ln_param_list_append_empty(trt->op_arg->params, arg_name, LN_PARAM_ARRAY_NUMBER);
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, arg_name);
+            ln_param_set_satu_array_int(pe,  2, (int[]){0,0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, "batch_size");
+            ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->dims[0]));
+        }
+
+        *match = 1;
+        return new_ops;
     }
 
     else if (1) {
@@ -2071,6 +3075,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"create", ep_create},
     {"create_cuda", ep_create_cuda},
     {"conv2d", ep_conv2d},
+    {"deconv2d", ep_deconv2d},
     {"relu", ep_relu},
     {"lrelu", ep_lrelu},
     {"sigmoid", ep_sigmoid},

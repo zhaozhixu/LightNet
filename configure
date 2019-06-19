@@ -30,6 +30,7 @@ options:
   --cudnn-install-dir=DIR     cudn installation directory [/usr/local/cuda]
   --with-tensorrt=BOOL        set to yes if build with TensorRT [no]
   --tensorrt-install-dir=DIR  tensorrt installation directory [/usr]
+  --with-dpu=BOOL             set to yes if build with DPU [no]
   --with-python=BOOL          set to yes if build with Python [no]
   --python-prefix=DIR         python package installation directory;
                               set to your virtualenv directory if using
@@ -55,6 +56,7 @@ my %opts = (
             "CUDNN_INSTALL_DIR" => "/usr/local/cuda",
             "WITH_TENSORRT" => "no",
             "TENSORRT_INSTALL_DIR" => "/usr",
+            "WITH_DPU" => "no",
             "WITH_PYTHON" => "no",
             "PYTHON_PREFIX" => "/usr/local",
             "PYTHON_VERSION" => "3",
@@ -79,6 +81,7 @@ GetOptions(
            'cudnn-install-dir=s' => \$opts{CUDNN_INSTALL_DIR},
            'with-tensorrt=s' => \$opts{WITH_TENSORRT},
            'tensorrt-install-dir=s' => \$opts{TENSORRT_INSTALL_DIR},
+           'with-dpu=s' => \$opts{WITH_DPU},
            'with-python=s' => \$opts{WITH_PYTHON},
            'python-prefix=s' => \$opts{PYTHON_PREFIX},
            'python-version=s' => \$opts{PYTHON_VERSION},

@@ -38,9 +38,9 @@ LN_CPPSTART
 #endif
 
 ln_queue *ln_queue_create(void);
+void ln_queue_free(ln_queue *queue);
 ln_queue *ln_queue_enqueue(ln_queue *queue, void *data);
 void *ln_queue_dequeue(ln_queue *queue);
-void ln_queue_free(ln_queue *queue);
 
 #ifdef __cplusplus
 LN_CPPEND

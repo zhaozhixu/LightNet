@@ -382,6 +382,7 @@ EOF
     }
     &check_details($details);
     foreach my $detail (@$details) {
+        $detail = &do_con($detail, $auto_vars);
         $detail = &do_rh($detail, $defined_ops);
         # $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
         &err_exit("wrong syntax in detail '$detail'")
@@ -794,6 +795,25 @@ sub do_rh {
     $str;
 }
 
+sub do_con {
+    my $str = shift;
+    my $auto_vars = shift;
+
+    my $code;
+    while ($str =~ /\$\{con\s*\((.+)\)\s*\}/g) {
+        push @$auto_vars, "char tmp_buf[LN_MAX_NAME_LEN];"
+            unless grep "char tmp_buf[LN_MAX_NAME_LEN];" eq $_, @$auto_vars;
+        my @args = split /\s*,\s*/, $1;
+        my $n = @args;
+        my $s = '%s'x$n;
+        $code = "({snprintf(tmp_buf, LN_MAX_NAME_LEN, \"$s\", $1); tmp_buf;})";
+        my $pos_bak = pos($str);
+        substr($str, pos($str)-length($&), length($&)) = $code;
+        pos($str) = $pos_bak-length($&)+length($code);
+    }
+    $str;
+}
+
 sub expand_op_str {
     my $op_str = shift;
     my $defined_ops = shift;
@@ -820,8 +840,9 @@ sub expand_op_str {
             $type = "double";
         } elsif (defined $directive and $directive eq "type") {
             &err_exit("directive 'type' needs one argument: $op_str")
-                unless @directive_args == 1;
+                unless @directive_args >= 1;
             $type = $directive_args[0];
+            $len = $directive_args[1];
         } else {
             &warn_msg("undefined symbol '$op_str' and its type");
         }
@@ -1242,10 +1263,10 @@ sub array_slice {
     my @indexes = split /\s*,\s*/, $index_str;
 
     my ($type, $code, $len);
-    $len = @indexes;
     if (@indexes == 1) {
         ($type, $code) = ($element_type, "${initial_code}[$indexes[0]]");
     } else {
+        $len = @indexes;
         $type = "$element_type *";
         my @array;
         foreach (@indexes) {

@@ -48,16 +48,18 @@ struct ln_op_arg {
 typedef struct ln_op_arg ln_op_arg;
 
 typedef void (*ln_op_func) (ln_op_arg *op_arg);
+typedef size_t (*ln_op_offset_func) (ln_op_arg *op_arg, ln_tensor_entry *te);
 
 /* The operator used in IR. */
 /* NOTE: It is owned by a op_table. Remove it from a DFG and do post_run()
    before remove it from the op_table. */
 struct ln_op {
-    ln_op_arg   *op_arg;
-    ln_op_func   pre_run;
-    ln_op_func   static_run;
-    ln_op_func   run;
-    ln_op_func   post_run;
+    ln_op_arg          *op_arg;
+    ln_op_func          pre_run;
+    ln_op_func          static_run;
+    ln_op_func          run;
+    ln_op_func          post_run;
+    ln_op_offset_func   calc_offset;
 };
 typedef struct ln_op ln_op;
 
@@ -590,9 +592,11 @@ LN_CPPEND
 
 /* entry1 and entry2 should have been checked with ln_opck_tensor_defined */
 #define ln_opck_tensor_issameshape(entry1, entry2)                      \
-    ln_opck(LN_MSG_ERROR, tl_tensor_issameshape((entry1)->tensor, (entry2)->tensor), \
-            "%s: `%s`'s tensor `%s` and tensor `%s` should have the same shape", \
-            op_arg->optype, op_arg->name, (entry1)->name, (entry2)->name)
+    do {                                                                \
+        char _shape1[LN_MAXLINE];                                        \
+        char _shape2[LN_MAXLINE];                                       \
+        ln_opck(LN_MSG_ERROR, tl_tensor_issameshape((entry1)->tensor, (entry2)->tensor), "%s: `%s`'s tensor `%s`(%s) and tensor `%s`(%s) should have the same shape", op_arg->optype, op_arg->name, (entry1)->name, ln_sprint_shape(_shape1, (entry1)->tensor->ndim, (entry1)->tensor->dims), (entry2)->name, ln_sprint_shape(_shape2, (entry2)->tensor->ndim, (entry2)->tensor->dims)); \
+    } while (0)
 
 #define ln_opck_tensor_issametype(entry1, entry2)                       \
     ln_opck(LN_MSG_ERROR, (entry1)->tensor->dtype == (entry2)->tensor->dtype, \

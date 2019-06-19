@@ -14,6 +14,7 @@
                 {
                     "cond": [
                         "self.outs[dst]=>conv2d.ins[src]",
+                        "self.outs[dst]=>deconv2d.ins[src]",
                         "self.outs[dst]=>relu.ins[src]",
                         "self.outs[dst]=>maxpool2d.ins[src]",
                         "self.outs[dst]=>softmax.ins[src]",
@@ -46,11 +47,43 @@
             "rules":[
                 {
                     "cond": [
-                        "self.params[padding][0] != self.params[padding][2]",
-                        "self.params[padding][1] != self.params[padding][3]"
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") < 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") < 0"
                     ],
                     "replace": ["conv2d_cuda"],
-                    "warn": "tensorrt doesn't support asymmetrical conv2d's 'padding', use conv2d_cuda instead"
+                    "warn": "tensorrt doesn't support asymmetrical avgpool2d's 'padding', use conv2d_cuda instead"
+                },
+                {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0"
+                    ],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.ins[weight$@] = self.ins[weight]",
+                        "trt.ins[weight$@] = self.ins[bias]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+                        "trt.params[op$@] = \"padding\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_dst] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_padding] = self.params[padding]",
+
+                        "trt.params[op$@] = \"conv\"",
+                        "trt.params[op$^_src] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_weight] = self.ins[weight]",
+                        "trt.params[op$^_bias] = self.ins[bias]",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_group] = self.params[group]",
+                        "trt.params[op$^_output_c] = self.ins[weight].dims[0]",
+                        "trt.params[op$^_padding] = ${type(int *, 2) (int[]){0,0}}",
+                        "trt.params[op$^_dilation] = self.params[dilation]",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ]
                 },
                 {
                     "cond": [],
@@ -73,6 +106,89 @@
                         "trt.params[op$^_stride] = self.params[stride]",
                         "trt.params[op$^_padding] = self.params[padding][0, 2]",
                         "trt.params[op$^_dilation] = self.params[dilation]",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ],
+                }
+            ]
+        },
+        {
+            "optype": "deconv2d",
+            "rules":[
+                {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") < 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") < 0"
+                    ],
+                    "replace": ["deconv2d_cuda"],
+                    "warn": "tensorrt doesn't support asymmetrical conv2d's 'padding', use deconv2d_cuda instead"
+                },
+                {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0"
+                    ],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.ins[weight$@] = self.ins[weight]",
+                        "trt.ins[weight$@] = self.ins[bias]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+                        "trt.params[op$@] = \"padding\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_dst] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_padding] = self.params[padding]",
+
+                        "trt.params[op$@] = \"deconv\"",
+                        "trt.params[op$^_src] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_weight] = self.ins[weight]",
+                        "trt.params[op$^_bias] = self.ins[bias]",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_group] = self.params[group]",
+                        "trt.params[op$^_output_c] = self.ins[weight].dims[0]",
+                        "trt.params[op$^_padding] = ${type(int *, 2) (int[]){0,0}}",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ]
+                },
+                {
+                    "cond": [
+                        "self.params[output_padding][0] != 0",
+                        "self.params[output_padding][1] != 0",
+                    ],
+                    "replace": ["deconv2d_cuda"],
+                    "warn": "tensorrt doesn't support deconv2d's none-zero 'output_padding' param, use deconv2d_cuda instead"
+                },
+                {
+                    "cond": [
+                        "self.params[dilation][0] != 1",
+                        "self.params[dilation][1] != 1",
+                    ],
+                    "replace": ["deconv2d_cuda"],
+                    "warn": "tensorrt doesn't support deconv2d's none-one 'dilation' param, use deconv2d_cuda instead"
+                },
+                {
+                    "cond": [],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.ins[weight$@] = self.ins[weight]",
+                        "trt.ins[weight$@] = self.ins[bias]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+                        "trt.params[op$@] = \"deconv\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_weight] = self.ins[weight]",
+                        "trt.params[op$^_bias] = self.ins[bias]",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_group] = self.params[group]",
+                        "trt.params[op$^_output_c] = self.outs[dst].dims[1]",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_padding] = self.params[padding][0, 2]",
                         "trt.params[batch_size] = self.ins[src].dims[0]"
                     ],
                 }
@@ -143,11 +259,37 @@
             "rules":[
                 {
                     "cond": [
-                        "self.params[padding][0] != self.params[padding][2]",
-                        "self.params[padding][1] != self.params[padding][3]"
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") < 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") < 0"
                     ],
                     "replace": ["maxpool2d_cuda"],
                     "warn": "tensorrt doesn't support asymmetrical maxpool2d's 'padding', use maxpool2d_cuda instead"
+                },
+                {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0"
+                    ],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+                        "trt.params[op$@] = \"padding\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_dst] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_padding] = self.params[padding]",
+
+                        "trt.params[op$@] = \"pooling\"",
+                        "trt.params[op$^_src] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_pooling_type] = \"kMAX\"",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_padding] = ${type(int *, 2) (int[]){0,0}}",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ]
                 },
                 {
                     "cond": [],
@@ -174,11 +316,37 @@
             "rules":[
                 {
                     "cond": [
-                        "self.params[padding][0] != self.params[padding][2]",
-                        "self.params[padding][1] != self.params[padding][3]"
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") < 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") < 0"
                     ],
                     "replace": ["avgpool2d_cuda"],
                     "warn": "tensorrt doesn't support asymmetrical avgpool2d's 'padding', use avgpool2d_cuda instead"
+                },
+                {
+                    "cond": [
+                        "self.params[padding][0] != self.params[padding][2] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0",
+                        "self.params[padding][1] != self.params[padding][3] && ln_tensorrt_version_cmp(\"4.0.0\") >= 0"
+                    ],
+                    "replace": ["tensorrt trt"],
+                    "details": [
+                        "trt.ins[src$@] = self.ins[src]",
+                        "trt.outs[dst$@] = self.outs[dst]",
+                        "trt.params[dst$^_shape] = self.outs[dst].dims",
+                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+                        "trt.params[op$@] = \"padding\"",
+                        "trt.params[op$^_src] = self.ins[src]",
+                        "trt.params[op$^_dst] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_padding] = self.params[padding]",
+
+                        "trt.params[op$@] = \"pooling\"",
+                        "trt.params[op$^_src] = ${type(char *) ${con(${rh self.outs[dst]}, \"_padding\")}}",
+                        "trt.params[op$^_dst] = self.outs[dst]",
+                        "trt.params[op$^_pooling_type] = \"kAVERAGE\"",
+                        "trt.params[op$^_size] = self.params[size]",
+                        "trt.params[op$^_stride] = self.params[stride]",
+                        "trt.params[op$^_padding] = ${type(int *, 2) (int[]){0,0}}",
+                        "trt.params[batch_size] = self.ins[src].dims[0]"
+                    ]
                 },
                 {
                     "cond": [],

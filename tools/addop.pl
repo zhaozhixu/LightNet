@@ -87,7 +87,7 @@ sub gen_code {
     &err_exit("'${optype}' needs an `arch`") unless exists $op->{arch};
     my $arch = $op->{arch};
     if ($arch ne "none" and $arch ne "cpu" and $arch ne "cuda" and
-        $arch ne "cudnn" and $arch ne "tensorrt") {
+        $arch ne "cudnn" and $arch ne "tensorrt" and $arch ne "dpu") {
         &err_exit("'${optype}' has unsupported `arch` '${arch}'");
     }
     if ($arch ne "none" and not $optype =~ /\w+_$arch$/) {
@@ -101,6 +101,7 @@ sub gen_code {
     push @blocks, &gen_static_run($op) if exists $op->{static_run};
     push @blocks, &gen_run($op) if exists $op->{run};
     push @blocks, &gen_post_run($op);
+    push @blocks, &gen_calc_offset($op) if exists $op->{calc_offset};
     push @blocks, &gen_op_arg($op);
     push @blocks, &gen_op_impl($op);
 
@@ -442,11 +443,12 @@ sub gen_pre_run_checks {
             }
         }
         if (exists $tensor->{check}) {
-            if ($tensor->{check} =~ /,/) {
-                push @states, "ln_opck_satisfy_msg($tensor->{check});";
-            } else {
-                push @states, "ln_opck_satisfy($tensor->{check});";
-            }
+            push @states, &gen_check($tensor->{check});
+            # if ($tensor->{check} =~ /,/) {
+            #     push @states, "ln_opck_satisfy_msg($tensor->{check});";
+            # } else {
+            #     push @states, "ln_opck_satisfy($tensor->{check});";
+            # }
         }
         if (exists $tensor->{checks}) {
             my $checks = $tensor->{checks};
@@ -641,6 +643,15 @@ sub gen_pre_run_checks {
     join "\n", @states;
 }
 
+sub gen_check {
+    my $check = shift;
+    if ($check =~ /,\s*".*"\s*$/) {
+        return "ln_opck_satisfy_msg(${check});";
+    } else {
+        return "ln_opck_satisfy(${check});";
+    }
+}
+
 sub gen_output_tensor_def {
     my $op = shift;
     my $tensors_out = $op->{tensors_out};
@@ -822,6 +833,27 @@ sub add_dynamic_decs_from_priv {
     # }
 }
 
+sub gen_calc_offset {
+    my $op = shift;
+
+    my @states = ();
+    push @states, "struct priv_s *priv = op_arg->priv;";
+    &add_dynamic_decs_from_priv($op, $op->{calc_offset}, \@states);
+    &make_defs_neat(\@states);
+    push @states, "";
+    &add_custom_block($op->{calc_offset}, \@states);
+    &indent_lines($INDENT_OFFSET, \@states);
+    my $states_str = join "\n", @states;
+
+    my $calc_offset_tpl = <<EOF;
+/* This function is used to manually set the tensor's offset address. */
+static size_t $op->{optype}_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
+{
+${states_str}
+}
+EOF
+}
+
 sub gen_static_run {
     my $op = shift;
 
@@ -959,6 +991,7 @@ EOF
 
 sub gen_op_impl {
     my $op = shift;
+    my $calc_offset_func = exists $op->{calc_offset} ? "$op->{optype}_calc_offset" : "NULL";
     my $static_run_func = exists $op->{static_run} ? "$op->{optype}_static_run" : "NULL";
     my $run_func = exists $op->{run} ? "$op->{optype}_run" : "NULL";
 
@@ -969,7 +1002,8 @@ ln_op ln_opimpl_$op->{optype} = {
     .pre_run = $op->{optype}_pre_run,
     .static_run = ${static_run_func},
     .run = ${run_func},
-    .post_run = $op->{optype}_post_run
+    .post_run = $op->{optype}_post_run,
+    .calc_offset = ${calc_offset_func},
 };
 EOF
 }
@@ -978,10 +1012,12 @@ sub add_custom_block {
     my $custom_str = shift;
     my $states = shift;
     my @customs = split "\n", $custom_str;
-    &indent_lines($INDENT_OFFSET, \@customs);
-    push @$states, "{";
+    # &indent_lines($INDENT_OFFSET, \@customs);
+    # push @$states, "{";
+    push @$states, "/* begin custom code */";
     push @$states, @customs;
-    push @$states, "}";
+    push @$states, "/* end custom code */";
+    # push @$states, "}";
 }
 
 sub make_defs_neat {

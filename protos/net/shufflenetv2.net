@@ -74,15 +74,15 @@
 #define shufflev2_block(in_name, out_name, g, c, h, w,                  \
                         _size, _stride, _padding, _dilation)            \
     slice(src=in_name | dst=out_name##_slice1 |                         \
-          axis=1, start=0, len=${eval c/2});                            \
+          axis=1, start=0, len=${eval c/g});                            \
     slice(src=in_name | dst=out_name##_slice2 |                         \
-          axis=1, start=${eval c/2}, len=${eval c/2});                  \
+          axis=1, start=${eval c/g}, len=${eval c/g});                  \
     conv_bn_relu(out_name##_slice1, out_name##_conv1,                   \
-                 ${eval c/2}, ${eval c/2}, 1, 1, 1, 0, 1);              \
-    depthwise_conv_bn(out_name##_conv1, out_name##_conv2, ${eval c/2},  \
+                 ${eval c/g}, ${eval c/g}, 1, 1, 1, 0, 1);              \
+    depthwise_conv_bn(out_name##_conv1, out_name##_conv2, ${eval c/g},  \
                       _size, _stride, _padding, _dilation);             \
     conv_bn_relu(out_name##_conv2, out_name##_conv3,                    \
-                 ${eval c/2}, ${eval c/2}, 1, 1, 1, 0, 1);              \
+                 ${eval c/g}, ${eval c/g}, 1, 1, 1, 0, 1);              \
     concat(src1=out_name##_conv3, src2=out_name##_slice2 |              \
            dst=out_name##_concat | axis=1);                             \
     shuffle(out_name##_concat, out_name, g, c, h, w)
@@ -90,15 +90,15 @@
 #define shufflev2_downsample(in_name, out_name, g, in_c, out_c,         \
                              h, w, _size, _stride, _padding, _dilation) \
     conv_bn_relu(in_name, out_name##_conv1,                             \
-                 in_c, ${eval out_c/2}, 1, 1, 1, 0, 1);                 \
-    depthwise_conv_bn(out_name##_conv1, out_name##_conv2, ${eval out_c/2}, \
+                 in_c, ${eval out_c/g}, 1, 1, 1, 0, 1);                 \
+    depthwise_conv_bn(out_name##_conv1, out_name##_conv2, ${eval out_c/g}, \
                       _size, _stride, _padding, _dilation);             \
     conv_bn_relu(out_name##_conv2, out_name##_conv3,                    \
-                 ${eval out_c/2}, ${eval out_c/2}, 1, 1, 1, 0, 1);      \
+                 ${eval out_c/g}, ${eval out_c/g}, 1, 1, 1, 0, 1);      \
     depthwise_conv_bn(in_name, out_name##_conv4, in_c,                  \
                       _size, _stride, _padding, _dilation);             \
     conv_bn_relu(out_name##_conv4, out_name##_conv5,                    \
-                 in_c, ${eval out_c/2}, 1, 1, 1, 0, 1);                 \
+                 in_c, ${eval out_c/g}, 1, 1, 1, 0, 1);                 \
     concat(src1=out_name##_conv3, src2=out_name##_conv5 |               \
            dst=out_name##_concat | axis=1);                             \
     shuffle(out_name##_concat, out_name, g, out_c, h, w)
