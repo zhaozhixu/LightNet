@@ -212,6 +212,13 @@ static void check_deconv(char *opname, ln_op_arg *op_arg)
     check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 2, op_arg);
 }
 
+static void check_padding(char *opname, ln_op_arg *op_arg)
+{
+    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg);
+    check_param(opname, "padding", LN_PARAM_ARRAY_NUMBER, 4, op_arg);
+}
+
 static void check_activation(char *opname, ln_op_arg *op_arg)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
@@ -343,6 +350,8 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
             check_conv(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "deconv"))
             check_deconv(pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "padding"))
+            check_padding(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             check_activation(pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "lrelu"))
@@ -434,6 +443,34 @@ static std::map<std::string, Weights> create_weight_map(ln_op_arg *op_arg)
     return weights;
 }
 
+static void add_padding(INetworkDefinition *network,
+                        std::map<std::string, ITensor*> &tensors,
+                        char *opname, ln_op_arg *op_arg)
+{
+    char *src;
+    char *dst;
+    int *padding;
+    ln_param_entry *pe;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "src");
+    assert(pe);
+    src = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "dst");
+    assert(pe);
+    dst = pe->value_string;
+
+    pe = ln_param_list_find2(op_arg->params, opname, "padding");
+    assert(pe);
+    padding = pe->value_array_int;
+
+    IPaddingLayer *pad;
+    pad = network->addPadding(*tensors[src], DimsHW(padding[0], padding[1]),
+                              DimsHW(padding[2], padding[3]));
+    assert(pad);
+    tensors[dst] = pad->getOutput(0);
+}
+
 static void add_conv(INetworkDefinition *network,
                      std::map<std::string, ITensor*> &tensors,
                      std::map<std::string, Weights> &weights,
@@ -502,11 +539,6 @@ static void add_conv(INetworkDefinition *network,
     conv->setPadding(DimsHW(padding[0], padding[1]));
     conv->setDilation(DimsHW(dilation[0], dilation[1]));
     tensors[dst] = conv->getOutput(0);
-    char shape[LN_MAXLINE];
-    Dims dims = tensors[src]->getDimensions();
-    printf("src %s: %s\n", src, ln_sprint_shape(shape, dims.nbDims, dims.d));
-    dims = tensors[dst]->getDimensions();
-    printf("dst %s: %s\n", dst, ln_sprint_shape(shape, dims.nbDims, dims.d));
 }
 
 static void add_deconv(INetworkDefinition *network,
@@ -738,11 +770,6 @@ static void add_elew(INetworkDefinition *network,
     elew_type = pe->value_string;
 
     IElementWiseLayer *elew;
-    char shape[LN_MAXLINE];
-    Dims dims = tensors[src1]->getDimensions();
-    printf("src1 %s: %s\n", src1, ln_sprint_shape(shape, dims.nbDims, dims.d));
-    dims = tensors[src2]->getDimensions();
-    printf("src2 %s: %s\n", src2, ln_sprint_shape(shape, dims.nbDims, dims.d));
     elew = network->addElementWise(*tensors[src1], *tensors[src2],
                                    (ElementWiseOperation)str_to_elew_type(elew_type));
     assert(elew);
@@ -873,6 +900,8 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
             add_conv(network, tensors, weights, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "deconv"))
             add_deconv(network, tensors, weights, pe->arg_name, op_arg);
+        else if (ln_streq(pe->value_string, "padding"))
+            add_padding(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             add_activation(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "lrelu"))

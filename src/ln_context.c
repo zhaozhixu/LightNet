@@ -231,7 +231,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_arch *arch;
 
     ln_pass_preprocess(ctx);
-    ln_context_print(ctx, "out_debug.json");
+    /* ln_context_print(ctx, "out_debug.json"); */
     arch = ln_hash_find(LN_ARCH.arch_table, target);
     ln_pass_expander(ctx, arch->ep_funcs);
     ln_pass_preprocess(ctx);

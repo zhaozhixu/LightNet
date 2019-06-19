@@ -26,8 +26,9 @@ sub add_custom_block {
 sub make_defs_neat {
     my $defs = shift;
     my $max_offset = 0;
+    my $def_re = qr /( |\*)([a-zA-Z0-9_\[\]]+(;$| *=.+;$))/;
     foreach (@$defs) {
-        if (/( |\*)(\w+(;$| *=.+;$))/) {
+        if (/$def_re/) {
             my $offset = index($_, $2);
             $max_offset = $max_offset < $offset ? $offset : $max_offset;
         } else {
@@ -38,7 +39,7 @@ sub make_defs_neat {
         my $type = $1 if /^(struct +\w+|\w+)/;
         my $nstars = 0;
         $nstars = length $1 if /^$type *(\*+)/;
-        my $rest = $2 if /( |\*)(\w+(;$| *=.+;$))/;
+        my $rest = $2 if /$def_re/;
         $_ = sprintf("%-${max_offset}s", $type);
         my $re = " "x$nstars;
         my $stars = "*"x$nstars;
