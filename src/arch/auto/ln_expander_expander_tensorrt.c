@@ -332,8 +332,8 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
     char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
+    if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") < 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") < 0)) {
         ln_msg_inter_warn("ep_conv2d(): tensorrt doesn't support asymmetrical avgpool2d's 'padding', use conv2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "conv2d_cuda");
@@ -341,8 +341,8 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+    else if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") >= 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
 
@@ -755,8 +755,8 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
     char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
+    if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") < 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") < 0)) {
         ln_msg_inter_warn("ep_deconv2d(): tensorrt doesn't support asymmetrical conv2d's 'padding', use deconv2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "deconv2d_cuda");
@@ -764,8 +764,8 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+    else if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") >= 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
 
@@ -977,8 +977,8 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
         return new_ops;
     }
 
-    else if (((ln_param_list_find(self->op_arg->params, "output_padding")->value_array_int[0] != 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "output_padding")->value_array_int[1] != 0))) {
+    else if ((ln_param_list_find(self->op_arg->params, "output_padding")->value_array_int[0] != 0) ||
+        (ln_param_list_find(self->op_arg->params, "output_padding")->value_array_int[1] != 0)) {
         ln_msg_inter_warn("ep_deconv2d(): tensorrt doesn't support deconv2d's none-zero 'output_padding' param, use deconv2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "deconv2d_cuda");
@@ -986,8 +986,8 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_param_list_find(self->op_arg->params, "dilation")->value_array_int[0] != 1)) ||
-        ((ln_param_list_find(self->op_arg->params, "dilation")->value_array_int[1] != 1))) {
+    else if ((ln_param_list_find(self->op_arg->params, "dilation")->value_array_int[0] != 1) ||
+        (ln_param_list_find(self->op_arg->params, "dilation")->value_array_int[1] != 1)) {
         ln_msg_inter_warn("ep_deconv2d(): tensorrt doesn't support deconv2d's none-one 'dilation' param, use deconv2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "deconv2d_cuda");
@@ -1474,8 +1474,8 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
     char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
+    if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") < 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") < 0)) {
         ln_msg_inter_warn("ep_maxpool2d(): tensorrt doesn't support asymmetrical maxpool2d's 'padding', use maxpool2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "maxpool2d_cuda");
@@ -1483,8 +1483,8 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+    else if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") >= 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
 
@@ -1785,8 +1785,8 @@ static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
     char tmp_buf[LN_MAX_NAME_LEN];
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") < 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") < 0))) {
+    if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") < 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") < 0)) {
         ln_msg_inter_warn("ep_avgpool2d(): tensorrt doesn't support asymmetrical avgpool2d's 'padding', use avgpool2d_cuda instead");
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "avgpool2d_cuda");
@@ -1794,8 +1794,8 @@ static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2]) && (ln_tensorrt_version_cmp("4.0.0") >= 0)) ||
-        ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3]) && (ln_tensorrt_version_cmp("4.0.0") >= 0))) {
+    else if ((ln_param_list_find(self->op_arg->params, "padding")->value_array_int[0] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[2] && ln_tensorrt_version_cmp("4.0.0") >= 0) ||
+        (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
 
@@ -2095,16 +2095,16 @@ static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
     int last_index;
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "axis")->value_int == 0)) ||
-        ((ln_tensorrt_version_cmp("4.4.0") < 0) && (ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->ndim < 4) && (ln_param_list_find(self->op_arg->params, "axis")->value_int != 1)) ||
-        ((ln_tensorrt_version_cmp("4.4.0") < 0) && (ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->ndim >= 4) && (ln_param_list_find(self->op_arg->params, "axis")->value_int != ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->ndim) - 3)) {
+    if ((ln_param_list_find(self->op_arg->params, "axis")->value_int == 0) ||
+        (ln_tensorrt_version_cmp("4.4.0") < 0 && ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->ndim < 4 && ln_param_list_find(self->op_arg->params, "axis")->value_int != 1) ||
+        (ln_tensorrt_version_cmp("4.4.0") < 0 && ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->ndim >= 4 && ln_param_list_find(self->op_arg->params, "axis")->value_int != ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->tensor->ndim - 3)) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "softmax_cuda");
         *match = 1;
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_tensorrt_version_cmp("4.4.0") < 0))) {
+    else if ((ln_tensorrt_version_cmp("4.4.0") < 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
 
@@ -2286,16 +2286,16 @@ static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
     int last_index;
 
    /* replace self with new ops */
-    if (((ln_param_list_find(self->op_arg->params, "axis")->value_int == 0)) ||
-        ((ln_tensorrt_version_cmp("4.0.0") < 0) && (ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->ndim < 4) && (ln_param_list_find(self->op_arg->params, "axis")->value_int != 1)) ||
-        ((ln_tensorrt_version_cmp("4.0.0") < 0) && (ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->ndim >= 4) && (ln_param_list_find(self->op_arg->params, "axis")->value_int != ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->ndim) - 3)) {
+    if ((ln_param_list_find(self->op_arg->params, "axis")->value_int == 0) ||
+        (ln_tensorrt_version_cmp("4.0.0") < 0 && ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->ndim < 4 && ln_param_list_find(self->op_arg->params, "axis")->value_int != 1) ||
+        (ln_tensorrt_version_cmp("4.0.0") < 0 && ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->ndim >= 4 && ln_param_list_find(self->op_arg->params, "axis")->value_int != ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->ndim - 3)) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "concat_cuda");
         *match = 1;
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_tensorrt_version_cmp("4.0.0") < 0))) {
+    else if ((ln_tensorrt_version_cmp("4.0.0") < 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
 
@@ -2915,14 +2915,14 @@ static ln_list *ep_print(const ln_op *self, const ln_dfg *dfg, int *match)
 
 
    /* replace self with new ops */
-    if (((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CPU))) {
+    if ((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CPU)) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "print_cpu");
         *match = 1;
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CUDA))) {
+    else if ((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CUDA)) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "print_cuda");
         *match = 1;
@@ -2941,14 +2941,14 @@ static ln_list *ep_fprint(const ln_op *self, const ln_dfg *dfg, int *match)
 
 
    /* replace self with new ops */
-    if (((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CPU))) {
+    if ((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CPU)) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "fprint_cpu");
         *match = 1;
         return ln_list_append(NULL, new_op);
     }
 
-    else if (((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CUDA))) {
+    else if ((ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src")->mtype == LN_MEM_CUDA)) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "fprint_cuda");
         *match = 1;

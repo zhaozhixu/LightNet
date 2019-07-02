@@ -241,6 +241,7 @@ sub gen_cond {
     my $cond_code;
     my @conds_replaced;
     foreach my $cond (@$conds) {
+        my @sub_conds = split /&&|\|\|/, $cond;
         $cond = &do_rh($cond, $defined_ops);
         while ($cond =~ /($symbol_p)\s*(=>)\s*($symbol_p)?/g) {
             $cond_code = (&expand_op_str($&, $defined_ops))[1];
@@ -318,10 +319,12 @@ EOF
 EOF
                 }
                 when (/^(int|float|double|ln_bool|ln_mem_type)$/) {
-                    $code = "($lhs $op $rhs)";
+                    # $code = "($lhs $op $rhs)";
+                    $code = "$lhs $op $rhs";
                 }
                 default {
-                    $code = "($lhs $op $rhs)";
+                    # $code = "($lhs $op $rhs)";
+                    $code = "$lhs $op $rhs";
                     &warn_msg("'$type' uses default comparator '$code'");
                 }
             }
