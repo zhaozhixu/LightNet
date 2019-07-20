@@ -179,7 +179,7 @@ install:
 	$(call make-install)
 
 test: bin
-	$(AT)(cd $(TEST_DIR) && make)
+	$(AT)+(cd $(TEST_DIR) && make)
 
 bin: lib
 	$(call make-build-dir)
@@ -188,7 +188,7 @@ bin: lib
 lib:
 	$(call make-build-dir)
 	$(call pre-make-lib)
-	$(AT)(cd $(SRC_DIR) && make)
+	$(AT)+(cd $(SRC_DIR) && make)
 	$(call make-lib)
 
 doc:
