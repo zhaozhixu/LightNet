@@ -252,8 +252,8 @@ the [HashMap](http://hg.openjdk.java.net/jdk7/jdk7/jdk/file/9b8c96f96a0f/src/sha
 - **`int ln_hash_insert(ln_hash *hash, const void *key, void *value)`**
 
     Insert a key-value pair to the hash table. Return 0 if the key already
-    exists and the old value is replaced by `value` (it will be freed if its
-    free function is provided when creating the table), else return 1.
+    exists and the old value will be replaced by `value` (it will be freed if
+    its free function is provided when creating the table), else return 1.
 
 - **`void *ln_hash_find(ln_hash *hash, const void *key)`**
 
@@ -561,10 +561,67 @@ case `isstatic` should be labeled as 1 to indicate that it's static. Finally,
 `ln_tensor_entry` supports the following operations:
 
 - **`ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)`**
+
+    Create a tensor entry with `name` and the underlying `tensor`.
+    
 - **`void ln_tensor_entry_free(ln_tensor_entry *entry)`**
+
+    Free a tensor entry.
+
 - **`void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)`**
-- **`void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *direct_owner)`**
+
+    Free the tensor entry as well as the underlying `tensor`,
+    but not free the raw data pointer `tensor->data`.
+
+- **`void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *owner)`**
+
+    Set the owner tensor name to `owner` with which the tensor entry
+    shares its data.
+
 - **`void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)`**
+
+    Set the name of the creater operator of this tensor entry to `creater`.
+
+The tensor table supports the following operations:
+
+- **`ln_hash *ln_tensor_table_create(void);`**
+  
+    Create a tensor table.
+
+- **`int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry);`**
+
+    Insert a new tensor entry to the tensor table. The behaviour is consistent
+    with `ln_hash_insert()`.
+
+- **`int ln_tensor_table_remove(ln_hash *table, const char *name);`**
+
+    Remove a tensor entry `name` from the tensor table.
+
+- **`ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);`**
+
+    Find a tensor entry `name` in the tensor table.
+
+- **`void ln_tensor_table_free(ln_hash *table);`**
+
+    Free the tensor table as well as all its tensor entries.
+
+- **`void ln_tensor_table_set_data(ln_hash *table, const char *name, const void *data);`**
+
+    Copy `data` to the underlying memory region of tensor entry `name`.
+
+- **`void *ln_tensor_table_get_data(ln_hash *table, const char *name, void *data);`**
+
+    Copy the underlying memory region of tensor entry `name` to `data`.
+
+- **`size_t ln_tensor_table_data_size(ln_hash *table, const char *name);`**
+
+    Get the data size of the tensor entry `name` in bytes.
+
+- **`void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file);`**
+
+    Copy the weights from `file` to the tensor entries accordingly. `file`
+    should follow the weight format of TensorRT, which can be showned with
+    `tools/genwts.pl -h`.
 
 When removing a tensor or inserting a different tensor with the same name 
 as another tensor, the tensor table will free the old table entry and its 
@@ -589,3 +646,16 @@ the memory-planned address in the optimized output operator stream. `arg_name`
 is the argument name of the tensor in the operator, such as "stride" in an 
 "conv2d" operator.
 
+`ln_tensor_list_entry` and tensor list supports the following operations:
+
+- **`ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name, const char *name);`**
+- **`void ln_tensor_list_entry_free(ln_tensor_list_entry *entry);`**
+- **`ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name, const char *name);`**
+- **`void ln_tensor_list_free(ln_list *list);`**
+- **`ln_list *ln_tensor_list_copy(ln_list *list);`**
+- **`char *ln_tensor_list_find_name(ln_list *list, const char *arg_name);`**
+- **`ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list, const char *arg_name);`**
+- **`ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, const char *name);`**
+- **`ln_tensor_entry *ln_tensor_list_find_entry(ln_list *list, ln_hash *tensor_table, const char *arg_name);`**
+- **`int ln_tensor_list_length(ln_list *list);`**
+- **`int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix);`**

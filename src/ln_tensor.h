@@ -74,7 +74,7 @@ ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor);
 void ln_tensor_entry_free(ln_tensor_entry *entry);
 void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry);
 void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table,
-                               char *direct_owner);
+                               const char *owner);
 void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater);
 
 /*
