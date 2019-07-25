@@ -143,12 +143,12 @@ of backend platforms, and save the optimized models which can be directly run
 by LightNet.</p>
 <p>LightNet for now mainly focuses on the high-level optimization of a NN model, 
 which can be completed with substitutions of the operators in a computing 
-graph. Those optimizations are processed by the "peephole optimizers" of the
-corresponding backend, according to the optimization capabilities provided
-by the backend platforms. After the high-level optimizations, LightNet will
-plan the relative memory address used by each tensor, which can be converted to
-real memory address at runtime, at the same time keep the total memory usage as
-low as possible.</p>
+graph. Those optimizations are processed by the peephole optimizers and graph
+substituters of the corresponding backend, according to the optimization 
+capabilities provided by the backend platforms. After the high-level
+optimizations, LightNet will plan the relative memory address used by each 
+tensor, which can be converted to real memory address at runtime, at the same
+time keep the total memory usage as low as possible.</p>
 <p><img alt="Overview of LightNet" src="../img/overview.png" /></p>
 <p>LightNet essentially is an end-to-end NN optimizer framework that can be easily
 extended to support different model formats and backend computing platforms.
@@ -183,7 +183,7 @@ combined with other languages and deployed in various hardware platforms.</p></d
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"previous": 80, "search": 83, "help": 191, "next": 78};
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../js/baidu_analyse.js" defer></script>

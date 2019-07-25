@@ -133,9 +133,8 @@
 other distros as well. </p>
 <p>Most required packages can be installed using the following commands
 (<code>sudo</code> permission may be required):</p>
-<div class="codehilite"><pre><span></span>apt-get install build-essential perl git pkg-config check
-cpan install JSON Sort::strverscmp
-</pre></div>
+<pre class="codehilite"><code>apt-get install build-essential perl git pkg-config check
+cpan install JSON Sort::strverscmp</code></pre>
 
 
 <p>This project also depends on <a href="https://github.com/zhaozhixu/TensorLight">TensorLight</a>,
@@ -146,9 +145,8 @@ build LightNet.</p>
 <li>
 <p>(Optional) Packages for building documents</p>
 <p>Use the following commands to install the packages for building documents:</p>
-<div class="codehilite"><pre><span></span>apt-get install python3-pip
-pip3 install mkdocs markdown==3.1.1
-</pre></div>
+<pre class="codehilite"><code>apt-get install python3-pip
+pip3 install mkdocs markdown==3.1.1</code></pre>
 
 
 </li>
@@ -156,8 +154,7 @@ pip3 install mkdocs markdown==3.1.1
 <p>(Optional) Packages for building python packages</p>
 <p>Use the following commands to install the packages for building python packages 
 (python3 for example):</p>
-<div class="codehilite"><pre><span></span>apt-get install python3-setuptools
-</pre></div>
+<pre class="codehilite"><code>apt-get install python3-setuptools</code></pre>
 
 
 </li>
@@ -190,30 +187,26 @@ if you want to build with TensorRT support.</p>
 <ol>
 <li>
 <p>Clone this repository to your local directory.</p>
-<div class="codehilite"><pre><span></span>cd &lt;my_working_directory&gt;
+<pre class="codehilite"><code>cd &lt;my_working_directory&gt;
 git clone https://github.com/zhaozhixu/LightNet.git
-cd LightNet
-</pre></div>
+cd LightNet</code></pre>
 
 
 </li>
 <li>
 <p>Configure and build</p>
 <p>First, configure your installation using:</p>
-<div class="codehilite"><pre><span></span>chmod +x configure
-./configure
-</pre></div>
+<pre class="codehilite"><code>chmod +x configure
+./configure</code></pre>
 
 
 <p>There are options to custom your building and installation process.
 You can append them after <code>./configure</code>. For example, use</p>
-<div class="codehilite"><pre><span></span>./configure --install-dir=DIR
-</pre></div>
+<pre class="codehilite"><code>./configure --install-dir=DIR</code></pre>
 
 
 <p>to set the installation directory (default is <code>/usr/local</code>). Use</p>
-<div class="codehilite"><pre><span></span>./configure --with-cuda=yes
-</pre></div>
+<pre class="codehilite"><code>./configure --with-cuda=yes</code></pre>
 
 
 <p>if you want to build with CUDA support.</p>
@@ -247,7 +240,7 @@ the installation directory.</p>
 <h3 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h3>
 <p>From the command line, type <code>lightnet -h</code> can display the program usage, as 
 follows.</p>
-<div class="codehilite"><pre><span></span>Usage: lightnet [OPTION...] SOURCE
+<pre class="codehilite"><code>Usage: lightnet [OPTION...] SOURCE
 Apply compilation procedures to SOURCE according to the options.
 If SOURCE is -, read standard input.
 
@@ -267,8 +260,7 @@ Options:
   -Winter                display internal warnings (default)
   -Wno-inter             do not display internal warnings
   -debug                 display debug messages (only works with LN_DEBUG
-                         defined when compiling)
-</pre></div>
+                         defined when compiling)</code></pre>
 
 
 <h3 id="c-api">C API<a class="headerlink" href="#c-api" title="Permanent link">&para;</a></h3>
@@ -281,7 +273,7 @@ Options:
         </footer>
         <script>
             var base_url = ".",
-                shortcuts = {"previous": 80, "search": 83, "help": 191, "next": 78};
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
         <script src="js/base.js" defer></script>
         <script src="js/baidu_analyse.js" defer></script>

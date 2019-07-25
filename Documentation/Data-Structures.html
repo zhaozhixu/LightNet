@@ -134,12 +134,11 @@
 <h2 id="linked-list">Linked List<a class="headerlink" href="#linked-list" title="Permanent link">&para;</a></h2>
 <p>LightNet uses <code>ln_list</code> to manage a sequence of data structures, which is a 
 singlely linked list.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_list</span> <span class="p">{</span>
-    <span class="kt">void</span>            <span class="o">*</span><span class="n">data</span><span class="p">;</span>
-    <span class="k">struct</span> <span class="n">ln_list</span>  <span class="o">*</span><span class="n">next</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_list</span> <span class="n">ln_list</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">struct ln_list {
+    void            *data;
+    struct ln_list  *next;
+};
+typedef struct ln_list ln_list;</code></pre>
 
 
 <p><code>ln_list</code> doesn't have an empty header node; every node keeps real data.
@@ -147,31 +146,28 @@ It has no "create" functions. To create a new list, append an element to
 a <code>NULL</code> list. Remember to always use the returned pointer as the newest
 list pointer, because the first node may have changed during list alternation
 (append, prepend, remove, insert, etc.).</p>
-<div class="codehilite"><pre><span></span><span class="n">ln_list</span> <span class="o">*</span><span class="n">list</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
-<span class="n">list</span> <span class="o">=</span> <span class="n">ln_list_append</span><span class="p">(</span><span class="n">list</span><span class="p">,</span> <span class="n">first_data</span><span class="p">);</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">ln_list *list = NULL;
+list = ln_list_append(list, first_data);</code></pre>
 
 
 <p>To traverse the list in order, use a <code>for</code> loop and a temporary variable to 
 hold every element of the list, for example:</p>
-<div class="codehilite"><pre><span></span><span class="cm">/* list is a ln_list of element type ln_op */</span>
-<span class="n">ln_list</span> <span class="o">*</span><span class="n">l</span><span class="p">;</span>
-<span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">;</span>
-<span class="k">for</span> <span class="p">(</span><span class="n">l</span> <span class="o">=</span> <span class="n">list</span><span class="p">;</span> <span class="n">l</span><span class="p">;</span> <span class="n">l</span> <span class="o">=</span> <span class="n">l</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">op</span> <span class="o">=</span> <span class="n">l</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">;</span>
-    <span class="cm">/* operations on op */</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">/* list is a ln_list of element type ln_op */
+ln_list *l;
+ln_op *op;
+for (l = list; l; l = l-&gt;next) {
+    op = l-&gt;data;
+    /* operations on op */
+}</code></pre>
 
 
 <p><code>ln_list</code> provides a macro for the convinence of traversing the list in order.
 However, no list alternation shall be done when using this macro:</p>
-<div class="codehilite"><pre><span></span><span class="cm">/* list is a ln_list of element type ln_op */</span>
-<span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">;</span>
-<span class="n">LN_LIST_FOREACH</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
-    <span class="cm">/* op now hold one element of list */</span>
-<span class="p">}</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">/* list is a ln_list of element type ln_op */
+ln_op *op;
+LN_LIST_FOREACH(op, list) {
+    /* op now hold one element of list */
+}</code></pre>
 
 
 <p><code>ln_list</code> supports the following operations:</p>
@@ -289,13 +285,12 @@ elements' values.</p>
 <h2 id="queue">Queue<a class="headerlink" href="#queue" title="Permanent link">&para;</a></h2>
 <p><code>ln_queue</code> is a simple single-in single-out linked list, using two list nodes
 for its head and tail.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_queue</span> <span class="p">{</span>
-    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">head</span><span class="p">;</span>
-    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">tail</span><span class="p">;</span>
-    <span class="kt">size_t</span>    <span class="n">size</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_queue</span> <span class="n">ln_queue</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">struct ln_queue {
+    ln_list  *head;
+    ln_list  *tail;
+    size_t    size;
+};
+typedef struct ln_queue ln_queue;</code></pre>
 
 
 <p><code>ln_queue</code> supports the following operations:</p>
@@ -358,12 +353,11 @@ functions is provided when creating this table.</p>
 <p><strong><code>void ln_hash_init(ln_hash *hash, ln_hash_init_entry *init_array)</code></strong></p>
 <p>Initialize an empty hash table with the key-value pairs in <code>init_array</code>. 
 The elements of <code>init_array</code> are defined as:</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_hash_init_entry</span> <span class="p">{</span>
-    <span class="kt">void</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
-    <span class="kt">void</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_hash_init_entry</span> <span class="n">ln_hash_init_entry</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">struct ln_hash_init_entry {
+    void *key;
+    void *value;
+};
+typedef struct ln_hash_init_entry ln_hash_init_entry;</code></pre>
 
 
 <p>This array should be ended with a <code>{NULL, NULL}</code> entry.</p>
@@ -371,8 +365,8 @@ The elements of <code>init_array</code> are defined as:</p>
 <li>
 <p><strong><code>int ln_hash_insert(ln_hash *hash, const void *key, void *value)</code></strong></p>
 <p>Insert a key-value pair to the hash table. Return 0 if the key already
-exists and the old value is replaced by <code>value</code> (it will be freed if its
-free function is provided when creating the table), else return 1.</p>
+exists and the old value will be replaced by <code>value</code> (it will be freed if
+its free function is provided when creating the table), else return 1.</p>
 </li>
 <li>
 <p><strong><code>void *ln_hash_find(ln_hash *hash, const void *key)</code></strong></p>
@@ -402,31 +396,30 @@ freed if either of the free functions is provided when creating the table.</p>
 list method to implement directed graphs, which uses a linked list to store the
 graph nodes; every node has its in-degree, out-degree,  a list of its previous
 edges and nodes, and a list of its next edges and nodes.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_graph_node</span> <span class="p">{</span>
-    <span class="kt">void</span>        <span class="o">*</span><span class="n">data</span><span class="p">;</span>
-    <span class="n">ln_list</span>     <span class="o">*</span><span class="n">out_edge_nodes</span><span class="p">;</span>    <span class="cm">/* data type is ln_graph_edge_node */</span>
-    <span class="n">ln_list</span>     <span class="o">*</span><span class="n">in_edge_nodes</span><span class="p">;</span>
-    <span class="n">ln_cmp_func</span>  <span class="n">node_data_cmp</span><span class="p">;</span>
-    <span class="kt">size_t</span>       <span class="n">indegree</span><span class="p">;</span>
-    <span class="kt">size_t</span>       <span class="n">outdegree</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_graph_node</span> <span class="n">ln_graph_node</span><span class="p">;</span>
+<pre class="codehilite"><code class="language-c">struct ln_graph_node {
+    void        *data;
+    ln_list     *out_edge_nodes;    /* data type is ln_graph_edge_node */
+    ln_list     *in_edge_nodes;
+    ln_cmp_func  node_data_cmp;
+    size_t       indegree;
+    size_t       outdegree;
+};
+typedef struct ln_graph_node ln_graph_node;
 
-<span class="k">struct</span> <span class="n">ln_graph_edge_node</span> <span class="p">{</span>         <span class="cm">/* store the ajiacency edge and node */</span>
-    <span class="kt">void</span>           <span class="o">*</span><span class="n">edge_data</span><span class="p">;</span>
-    <span class="n">ln_graph_node</span>  <span class="o">*</span><span class="n">node</span><span class="p">;</span>
-    <span class="n">ln_cmp_func</span>     <span class="n">edge_data_cmp</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_graph_edge_node</span> <span class="n">ln_graph_edge_node</span><span class="p">;</span>
+struct ln_graph_edge_node {         /* store the ajiacency edge and node */
+    void           *edge_data;
+    ln_graph_node  *node;
+    ln_cmp_func     edge_data_cmp;
+};
+typedef struct ln_graph_edge_node ln_graph_edge_node;
 
-<span class="k">struct</span> <span class="n">ln_graph</span> <span class="p">{</span>
-    <span class="kt">size_t</span>       <span class="n">size</span><span class="p">;</span>
-    <span class="n">ln_list</span>     <span class="o">*</span><span class="n">nodes</span><span class="p">;</span>             <span class="cm">/* data type is ln_graph_node */</span>
-    <span class="n">ln_cmp_func</span>  <span class="n">node_data_cmp</span><span class="p">;</span>
-    <span class="n">ln_cmp_func</span>  <span class="n">edge_data_cmp</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_graph</span> <span class="n">ln_graph</span><span class="p">;</span>
-</pre></div>
+struct ln_graph {
+    size_t       size;
+    ln_list     *nodes;             /* data type is ln_graph_node */
+    ln_cmp_func  node_data_cmp;
+    ln_cmp_func  edge_data_cmp;
+};
+typedef struct ln_graph ln_graph;</code></pre>
 
 
 <p><code>ln_graph</code> supports the following operations:</p>
@@ -516,27 +509,26 @@ Graph edge data are printed by <code>print_edge</code>.</p>
 <p>Every computing device in heterogeneous platforms may have its own type of
 memory. LightNet uses an enumeration type <code>ln_mem_type</code> to describe them.
 Every <code>ln_mem_type</code> should have an instance of <code>ln_mem_info</code> in <code>ln_mem.c</code>.</p>
-<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">ln_mem_type</span> <span class="p">{</span>
-    <span class="n">LN_MEM_NONE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">LN_MEM_CPU</span><span class="p">,</span>
-<span class="cp">#ifdef LN_CUDA</span>
-    <span class="n">LN_MEM_CUDA</span><span class="p">,</span>
-<span class="cp">#endif</span>
-<span class="cm">/* ... may be other mem types here */</span>
-    <span class="n">LN_MEM_TYPE_SIZE</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">enum</span> <span class="n">ln_mem_type</span> <span class="n">ln_mem_type</span><span class="p">;</span>
+<pre class="codehilite"><code class="language-c">enum ln_mem_type {
+    LN_MEM_NONE = 0,
+    LN_MEM_CPU,
+#ifdef LN_CUDA
+    LN_MEM_CUDA,
+#endif
+/* ... may be other mem types here */
+    LN_MEM_TYPE_SIZE
+};
+typedef enum ln_mem_type ln_mem_type;
 
-<span class="k">struct</span> <span class="n">ln_mem_info</span> <span class="p">{</span>
-    <span class="k">const</span> <span class="kt">char</span>  <span class="o">*</span><span class="n">name</span><span class="p">;</span>
-    <span class="kt">void</span>      <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">alloc_func</span><span class="p">)(</span><span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>
-    <span class="kt">void</span>       <span class="p">(</span><span class="o">*</span><span class="n">free_func</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">p</span><span class="p">);</span>
-    <span class="kt">void</span>      <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">memset_func</span><span class="p">)(</span><span class="kt">void</span> <span class="o">*</span><span class="n">s</span><span class="p">,</span> <span class="kt">int</span> <span class="n">c</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">n</span><span class="p">);</span>
-    <span class="kt">size_t</span>       <span class="n">max_size</span><span class="p">;</span>
-    <span class="kt">size_t</span>       <span class="n">align_size</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_mem_info</span> <span class="n">ln_mem_info</span><span class="p">;</span>
-</pre></div>
+struct ln_mem_info {
+    const char  *name;
+    void      *(*alloc_func)(size_t n);
+    void       (*free_func)(void *p);
+    void      *(*memset_func)(void *s, int c, size_t n);
+    size_t       max_size;
+    size_t       align_size;
+};
+typedef struct ln_mem_info ln_mem_info;</code></pre>
 
 
 <p>Every <code>ln_mem_type</code> has its own information, in which <code>alloc_func</code>, 
@@ -612,56 +604,53 @@ operations to TensorLight, which can be used not only in LightNet, but also
 in other projects.</p>
 <p>In both projects, a tensor refers to a <code>tl_tensor</code> structure, which has the
 tensor's meta infomation and its data pointer.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">tl_tensor</span> <span class="p">{</span>
-    <span class="n">tl_dtype</span>          <span class="n">dtype</span><span class="p">;</span>          <span class="cm">/* data type */</span>
-    <span class="kt">int</span>               <span class="n">len</span><span class="p">;</span>            <span class="cm">/* number of elements */</span>
-    <span class="kt">int</span>               <span class="n">ndim</span><span class="p">;</span>           <span class="cm">/* number of dimensions */</span>
-    <span class="kt">int</span>              <span class="o">*</span><span class="n">dims</span><span class="p">;</span>           <span class="cm">/* array of dimensions */</span>
-    <span class="kt">void</span>             <span class="o">*</span><span class="n">data</span><span class="p">;</span>           <span class="cm">/* data pointer */</span>
-    <span class="k">struct</span> <span class="n">tl_tensor</span> <span class="o">*</span><span class="n">owner</span><span class="p">;</span>          <span class="cm">/* data owner, NULL if it&#39;s itself */</span>
-    <span class="kt">void</span>             <span class="o">*</span><span class="n">backend_data</span><span class="p">;</span>   <span class="cm">/* for other backend dependent data */</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">tl_tensor</span> <span class="n">tl_tensor</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">struct tl_tensor {
+    tl_dtype          dtype;          /* data type */
+    int               len;            /* number of elements */
+    int               ndim;           /* number of dimensions */
+    int              *dims;           /* array of dimensions */
+    void             *data;           /* data pointer */
+    struct tl_tensor *owner;          /* data owner, NULL if it's itself */
+    void             *backend_data;   /* for other backend dependent data */
+};
+typedef struct tl_tensor tl_tensor;</code></pre>
 
 
 <p>A tensor's data type is represented by a enumeration type <code>tl_dtype</code>. It 
 supports many common data types such as double, float, 32/16/8 bit 
 signed/unsigned integers, and bool.</p>
-<div class="codehilite"><pre><span></span><span class="k">enum</span> <span class="n">tl_dtype</span> <span class="p">{</span>
-    <span class="n">TL_DTYPE_INVALID</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">TL_DOUBLE</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-    <span class="n">TL_FLOAT</span><span class="p">,</span>
-    <span class="n">TL_INT32</span><span class="p">,</span>
-    <span class="n">TL_INT16</span><span class="p">,</span>
-    <span class="n">TL_INT8</span><span class="p">,</span>
-    <span class="n">TL_UINT32</span><span class="p">,</span>
-    <span class="n">TL_UINT16</span><span class="p">,</span>
-    <span class="n">TL_UINT8</span><span class="p">,</span>
-    <span class="n">TL_BOOL</span><span class="p">,</span>
-    <span class="n">TL_DTYPE_SIZE</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">enum</span> <span class="n">tl_dtype</span> <span class="n">tl_dtype</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">enum tl_dtype {
+    TL_DTYPE_INVALID = -1,
+    TL_DOUBLE = 0,
+    TL_FLOAT,
+    TL_INT32,
+    TL_INT16,
+    TL_INT8,
+    TL_UINT32,
+    TL_UINT16,
+    TL_UINT8,
+    TL_BOOL,
+    TL_DTYPE_SIZE
+};
+typedef enum tl_dtype tl_dtype;</code></pre>
 
 
 <p><code>tl_tensor</code> supports many tensor operations, see <a href="https://github.com/zhaozhixu/TensorLight">TensorLight</a> for more details.</p>
 <p>In LightNet, all tensors in a NN model are managed by a tensor table. The tensor
 table is a hash table, with tensors' names as its keys and tensor table entries
 as its values. The tensor table entry structure is defined as follows.</p>
-<div class="codehilite"><pre><span></span><span class="cm">/* NOTE: ALWAYS access tensor entry via its name in tensor table, since the</span>
-<span class="cm">   entry may be not the same during passes. It is owned by the tensor table. */</span>
-<span class="k">struct</span> <span class="n">ln_tensor_entry</span> <span class="p">{</span>
-    <span class="kt">char</span>        <span class="o">*</span><span class="n">name</span><span class="p">;</span>          <span class="cm">/* tensor name */</span>
-    <span class="n">tl_tensor</span>   <span class="o">*</span><span class="n">tensor</span><span class="p">;</span>        <span class="cm">/* pointer to the underlying tl_tensor */</span>
-    <span class="kt">char</span>        <span class="o">*</span><span class="n">owner</span><span class="p">;</span>         <span class="cm">/* owner tensor&#39;s name of the tensor&#39;s data */</span>
-    <span class="kt">char</span>        <span class="o">*</span><span class="n">creater</span><span class="p">;</span>       <span class="cm">/* operator name who creates the tensor */</span>
-    <span class="kt">size_t</span>       <span class="n">offset</span><span class="p">;</span>        <span class="cm">/* offset address of the tensor&#39;s data */</span>
-    <span class="kt">int</span>          <span class="n">isstatic</span><span class="p">;</span>      <span class="cm">/* the tensor is static or not */</span>
-    <span class="n">ln_mem_type</span>  <span class="n">mtype</span><span class="p">;</span>         <span class="cm">/* memory type */</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_tensor_entry</span> <span class="n">ln_tensor_entry</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">/* NOTE: ALWAYS access tensor entry via its name in tensor table, since the
+   entry may be not the same during passes. It is owned by the tensor table. */
+struct ln_tensor_entry {
+    char        *name;          /* tensor name */
+    tl_tensor   *tensor;        /* pointer to the underlying tl_tensor */
+    char        *owner;         /* owner tensor's name of the tensor's data */
+    char        *creater;       /* operator name who creates the tensor */
+    size_t       offset;        /* offset address of the tensor's data */
+    int          isstatic;      /* the tensor is static or not */
+    ln_mem_type  mtype;         /* memory type */
+};
+typedef struct ln_tensor_entry ln_tensor_entry;</code></pre>
 
 
 <p>Every tensor must be created by an operator, and <code>creater</code> records that
@@ -674,11 +663,70 @@ case <code>isstatic</code> should be labeled as 1 to indicate that it's static. 
 <code>mtype</code> is the memory type of the tensor's data.</p>
 <p><code>ln_tensor_entry</code> supports the following operations:</p>
 <ul>
-<li><strong><code>ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)</code></strong></li>
-<li><strong><code>void ln_tensor_entry_free(ln_tensor_entry *entry)</code></strong></li>
-<li><strong><code>void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)</code></strong></li>
-<li><strong><code>void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *direct_owner)</code></strong></li>
-<li><strong><code>void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)</code></strong></li>
+<li>
+<p><strong><code>ln_tensor_entry *ln_tensor_entry_create(const char *name, tl_tensor *tensor)</code></strong></p>
+<p>Create a tensor entry with <code>name</code> and the underlying <code>tensor</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_entry_free(ln_tensor_entry *entry)</code></strong></p>
+<p>Free a tensor entry.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)</code></strong></p>
+<p>Free the tensor entry as well as the underlying <code>tensor</code>,
+but not free the raw data pointer <code>tensor-&gt;data</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_entry_set_owner(ln_tensor_entry *entry, ln_hash *tensor_table, char *owner)</code></strong></p>
+<p>Set the owner tensor name to <code>owner</code> with which the tensor entry
+shares its data.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_entry_set_creater(ln_tensor_entry *entry, const char *creater)</code></strong></p>
+<p>Set the name of the creater operator of this tensor entry to <code>creater</code>.</p>
+</li>
+</ul>
+<p>The tensor table supports the following operations:</p>
+<ul>
+<li>
+<p><strong><code>ln_hash *ln_tensor_table_create(void);</code></strong></p>
+<p>Create a tensor table.</p>
+</li>
+<li>
+<p><strong><code>int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry);</code></strong></p>
+<p>Insert a new tensor entry to the tensor table. The behaviour is consistent
+with <code>ln_hash_insert()</code>.</p>
+</li>
+<li>
+<p><strong><code>int ln_tensor_table_remove(ln_hash *table, const char *name);</code></strong></p>
+<p>Remove a tensor entry <code>name</code> from the tensor table.</p>
+</li>
+<li>
+<p><strong><code>ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);</code></strong></p>
+<p>Find a tensor entry <code>name</code> in the tensor table.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_table_free(ln_hash *table);</code></strong></p>
+<p>Free the tensor table as well as all its tensor entries.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_table_set_data(ln_hash *table, const char *name, const void *data);</code></strong></p>
+<p>Copy <code>data</code> to the underlying memory region of tensor entry <code>name</code>.</p>
+</li>
+<li>
+<p><strong><code>void *ln_tensor_table_get_data(ln_hash *table, const char *name, void *data);</code></strong></p>
+<p>Copy the underlying memory region of tensor entry <code>name</code> to <code>data</code>.</p>
+</li>
+<li>
+<p><strong><code>size_t ln_tensor_table_data_size(ln_hash *table, const char *name);</code></strong></p>
+<p>Get the data size of the tensor entry <code>name</code> in bytes.</p>
+</li>
+<li>
+<p><strong><code>void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file);</code></strong></p>
+<p>Copy the weights from <code>file</code> to the tensor entries accordingly. <code>file</code>
+should follow the weight format of TensorRT, which can be showned with
+<code>tools/genwts.pl -h</code>.</p>
+</li>
 </ul>
 <p>When removing a tensor or inserting a different tensor with the same name 
 as another tensor, the tensor table will free the old table entry and its 
@@ -686,13 +734,12 @@ as another tensor, the tensor table will free the old table entry and its
 with <code>NULL</code> data.</p>
 <p>Besides tensor table entry, this mudule also defines a tensor list entry
 structure <code>ln_tensor_list_entry</code>.</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_tensor_list_entry</span> <span class="p">{</span>
-    <span class="kt">char</span>            <span class="o">*</span><span class="n">name</span><span class="p">;</span>
-    <span class="kt">char</span>            <span class="o">*</span><span class="n">arg_name</span><span class="p">;</span>
-    <span class="kt">size_t</span>           <span class="n">offset</span><span class="p">;</span>
-<span class="p">};</span>
-<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_tensor_list_entry</span> <span class="n">ln_tensor_list_entry</span><span class="p">;</span>
-</pre></div>
+<pre class="codehilite"><code class="language-c">struct ln_tensor_list_entry {
+    char            *name;
+    char            *arg_name;
+    size_t           offset;
+};
+typedef struct ln_tensor_list_entry ln_tensor_list_entry;</code></pre>
 
 
 <p><code>ln_tensor_list_entry</code> is used in an operator's input/output tensor list. <code>name</code>
@@ -700,7 +747,21 @@ and <code>offset</code> are the same as those in the tensor's table entry. <code
 to find the tensor table entry from the operator. <code>offset</code> is used to store
 the memory-planned address in the optimized output operator stream. <code>arg_name</code>
 is the argument name of the tensor in the operator, such as "stride" in an 
-"conv2d" operator.</p></div>
+"conv2d" operator.</p>
+<p><code>ln_tensor_list_entry</code> and tensor list supports the following operations:</p>
+<ul>
+<li><strong><code>ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name, const char *name);</code></strong></li>
+<li><strong><code>void ln_tensor_list_entry_free(ln_tensor_list_entry *entry);</code></strong></li>
+<li><strong><code>ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name, const char *name);</code></strong></li>
+<li><strong><code>void ln_tensor_list_free(ln_list *list);</code></strong></li>
+<li><strong><code>ln_list *ln_tensor_list_copy(ln_list *list);</code></strong></li>
+<li><strong><code>char *ln_tensor_list_find_name(ln_list *list, const char *arg_name);</code></strong></li>
+<li><strong><code>ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list, const char *arg_name);</code></strong></li>
+<li><strong><code>ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, const char *name);</code></strong></li>
+<li><strong><code>ln_tensor_entry *ln_tensor_list_find_entry(ln_list *list, ln_hash *tensor_table, const char *arg_name);</code></strong></li>
+<li><strong><code>int ln_tensor_list_length(ln_list *list);</code></strong></li>
+<li><strong><code>int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix);</code></strong></li>
+</ul></div>
         </div>
 
         <footer class="col-md-12">
@@ -709,7 +770,7 @@ is the argument name of the tensor in the operator, such as "stride" in an
         </footer>
         <script>
             var base_url = "..",
-                shortcuts = {"previous": 80, "search": 83, "help": 191, "next": 78};
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
         <script src="../js/base.js" defer></script>
         <script src="../js/baidu_analyse.js" defer></script>
