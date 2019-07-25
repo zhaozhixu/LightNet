@@ -275,9 +275,9 @@ int ln_graph_topsort(ln_graph *graph, ln_list **layers)
     ln_list *sub_list;
     ln_queue *queue;
     ln_graph *g;
-    ln_graph_node *node;
+    ln_graph_node *node, *node1, *node2;
     ln_graph_edge_node *edge_node;
-    void *data1, *data2;
+    void *data;
     int node_count;
     int res_size;
     int queue_size;
@@ -292,23 +292,22 @@ int ln_graph_topsort(ln_graph *graph, ln_list **layers)
     node_count = 0;
     res_size = 0;
     res_list = NULL;
-    sub_list = NULL;
     while (queue->size != 0) {
         queue_size = queue->size;
-        sub_list = NULL;
+	sub_list = NULL;
         while (queue_size-- != 0) {
-            node = ln_queue_dequeue(queue);
+            node1 = ln_queue_dequeue(queue);
             node_count++;
-            data1 = node->data;
-            sub_list = ln_list_append(sub_list, data1);
-            for (ln_list *l = node->out_edge_nodes; l;) {
+            data = node1->data;
+            sub_list = ln_list_append(sub_list, data);
+            for (ln_list *l = node1->out_edge_nodes; l;) {
                 edge_node = l->data;
-                data2 = edge_node->node->data;
+		node2 = edge_node->node;
                 /* this must be here, since unlink will remove l */
                 l = l->next;
-                ln_graph_unlink(g, data1, data2, edge_node->edge_data);
-                if (edge_node->node->indegree == 0)
-                    ln_queue_enqueue(queue, edge_node->node);
+		ln_graph_unlink_node(node1, node2, edge_node->edge_data);
+                if (node2->indegree == 0)
+                    ln_queue_enqueue(queue, node2);
             }
         }
         res_list = ln_list_append(res_list, sub_list);
