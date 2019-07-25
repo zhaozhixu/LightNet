@@ -69,7 +69,11 @@ int ln_is_device_mem(const void *ptr)
         return 0;
     }
     LN_CUDA_CK(status);
+#if CUDART_VERSION < 10000
     return attributes.memoryType == cudaMemoryTypeDevice;
+#else
+    return attributes.type == cudaMemoryTypeDevice;
+#endif
 }
 
 

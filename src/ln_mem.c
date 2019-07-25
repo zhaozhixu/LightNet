@@ -197,9 +197,9 @@ void ln_mem_pool_free(ln_mem_pool *mem_pool)
 static int best_fit(ln_mem_pool *mem_pool, size_t size)
 {
     int first_hole = 0;
-    size_t min_size;
+    size_t min_size = SIZE_MAX;
     size_t align_size = mem_pool->align_size;
-    int min_idx;
+    int min_idx = -1;
     ln_list *l;
     int i;
 

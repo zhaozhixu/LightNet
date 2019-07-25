@@ -84,15 +84,16 @@ void ln_op_free(ln_op *op)
 
 ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
 {
+    ln_op *op;
     ln_list *tensors_in = NULL;
     ln_list *tensors_out = NULL;
     ln_list *params = NULL;
     const char *arg_name;
-    char opname[LN_MAX_NAME_LEN];
+    char *opname;
     char tensor_name[LN_MAX_NAME_LEN];
     int i;
 
-    strncpy(opname, ln_name_unique(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
+    opname = ln_strdup(ln_name_unique(op_proto->op_arg->optype));
     for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++) {
         tensors_in = ln_tensor_list_append(tensors_in, arg_name, "");
     }
@@ -108,8 +109,10 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
                                             op_proto->op_arg->param_ptypes[i]);
     }
 
-    return ln_op_create_from_proto(op_proto, opname, tensors_in,
-                                   tensors_out, params, tensor_table);
+    op = ln_op_create_from_proto(op_proto, opname, tensors_in,
+                                 tensors_out, params, tensor_table);
+    ln_free(opname);
+    return op;
 }
 
 ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)

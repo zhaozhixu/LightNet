@@ -114,7 +114,7 @@ static char *create_arg_name_in_params(ln_list *params, const char *prefix)
     int max_idx = -1;
     char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX + 1;
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(pe, params) {
