@@ -63,6 +63,8 @@ LN_CPPSTART
 
 ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type);
 void ln_param_entry_free(ln_param_entry *entry);
+const char *ln_param_type_name(ln_param_type type);
+ln_param_entry *ln_param_entry_copy(const ln_param_entry *pe);
 
 void ln_param_vset(ln_param_entry *entry, va_list ap);
 void ln_param_set(ln_param_entry *entry, ...);
@@ -122,8 +124,6 @@ ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1,
                                     const char *arg_name2);
 int ln_param_list_length(ln_list *list);
 int ln_param_list_unique_arg_name(ln_list *list, char *buf, const char *prefix);
-const char *ln_param_type_name(ln_param_type type);
-ln_param_entry *ln_param_entry_copy(const ln_param_entry *pe);
 
 #ifdef __cplusplus
 LN_CPPEND

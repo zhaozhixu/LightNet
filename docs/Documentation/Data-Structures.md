@@ -441,8 +441,9 @@ type can store. `align_size` is the alignment bytes the memory type requires.
     standard C library.
 
 Besides, LightNet uses virtual memory pools to make overall arrangements for
-memory allocations and releases. This step pre-plans the memory offsets of 
-tensors, which can be converted to real memory addresses in run time.
+the memory allocations and releases of all kinds of memory types.
+This step pre-plans the memory offsets of tensors, which can be converted to 
+real memory addresses in run time.
 `ln_mem_pool` is the virtual memory pool structure.
 
 `ln_mem_pool` supports the following operations:
@@ -483,6 +484,8 @@ tensors, which can be converted to real memory addresses in run time.
 ## Tensor
 
 LightNet uses `ln_tensor` as the basic data storage structure.
+`ln_tensor` is used as operator's input and output, such as a
+convolution's input image, output feature map, and weights.
 `ln_tensor` further uses [TensorLight](https://github.com/zhaozhixu/TensorLight)
 as its basic tensor operation library, which is seperated from LightNet on
 purpose so that it can be used widely beyond LightNet.
@@ -584,20 +587,20 @@ case `isstatic` should be labeled as 1 to indicate that it's static. Finally,
 
 The tensor table supports the following operations:
 
-- **`ln_hash *ln_tensor_table_create(void);`**
+- **`ln_hash *ln_tensor_table_create(void)`**
   
     Create a tensor table.
 
-- **`int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry);`**
+- **`int ln_tensor_table_insert(ln_hash *table, ln_tensor_entry *entry)`**
 
     Insert a new tensor entry to the tensor table. The behaviour is consistent
     with `ln_hash_insert()`.
 
-- **`int ln_tensor_table_remove(ln_hash *table, const char *name);`**
+- **`int ln_tensor_table_remove(ln_hash *table, const char *name)`**
 
     Remove a tensor entry `name` from the tensor table.
 
-- **`ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name);`**
+- **`ln_tensor_entry *ln_tensor_table_find(ln_hash *table, const char *name)`**
 
     Find a tensor entry `name` in the tensor table.
 
@@ -605,19 +608,19 @@ The tensor table supports the following operations:
 
     Free the tensor table as well as all its tensor entries.
 
-- **`void ln_tensor_table_set_data(ln_hash *table, const char *name, const void *data);`**
+- **`void ln_tensor_table_set_data(ln_hash *table, const char *name, const void *data)`**
 
     Copy `data` to the underlying memory region of tensor entry `name`.
 
-- **`void *ln_tensor_table_get_data(ln_hash *table, const char *name, void *data);`**
+- **`void *ln_tensor_table_get_data(ln_hash *table, const char *name, void *data)`**
 
     Copy the underlying memory region of tensor entry `name` to `data`.
 
-- **`size_t ln_tensor_table_data_size(ln_hash *table, const char *name);`**
+- **`size_t ln_tensor_table_data_size(ln_hash *table, const char *name)`**
 
     Get the data size of the tensor entry `name` in bytes.
 
-- **`void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file);`**
+- **`void ln_tensor_table_load_trt_weight_file(ln_hash *table, const char *file)`**
 
     Copy the weights from `file` to the tensor entries accordingly. `file`
     should follow the weight format of TensorRT, which can be showned with
@@ -648,14 +651,350 @@ is the argument name of the tensor in the operator, such as "stride" in an
 
 `ln_tensor_list_entry` and tensor list supports the following operations:
 
-- **`ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name, const char *name);`**
-- **`void ln_tensor_list_entry_free(ln_tensor_list_entry *entry);`**
-- **`ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name, const char *name);`**
-- **`void ln_tensor_list_free(ln_list *list);`**
-- **`ln_list *ln_tensor_list_copy(ln_list *list);`**
-- **`char *ln_tensor_list_find_name(ln_list *list, const char *arg_name);`**
-- **`ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list, const char *arg_name);`**
-- **`ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, const char *name);`**
-- **`ln_tensor_entry *ln_tensor_list_find_entry(ln_list *list, ln_hash *tensor_table, const char *arg_name);`**
-- **`int ln_tensor_list_length(ln_list *list);`**
-- **`int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix);`**
+- **`ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name, const char *name)`**
+
+    Create a tensor list entry.
+
+- **`void ln_tensor_list_entry_free(ln_tensor_list_entry *entry)`**
+
+    Free a tensor list entry.
+
+- **`ln_list *ln_tensor_list_append(ln_list *list, const char *arg_name, const char *name)`**
+  
+  Append to a tensor list with an entry that has `arg_name` and `name`.
+
+- **`void ln_tensor_list_free(ln_list *list)`**
+
+    Free a tensor list as well as its entries.
+
+- **`ln_list *ln_tensor_list_copy(ln_list *list)`**
+
+    Copy a tensor list. Entries are newly created for the new list.
+
+- **`char *ln_tensor_list_find_name(ln_list *list, const char *arg_name)`**
+
+    Return the tensor list entry's name that has `arg_name` from the tensor list.
+
+- **`ln_tensor_list_entry *ln_tensor_list_find_by_arg_name(ln_list *list, const char *arg_name)`**
+
+    Find the tensor list entry that has `arg_name` from the tensor list.
+
+- **`ln_tensor_list_entry *ln_tensor_list_find_by_name(ln_list *list, const char *name)`**
+
+    Find the tensor list entry that has `name` from the tensor list.
+
+- **`ln_tensor_entry *ln_tensor_list_find_entry(ln_list *list, ln_hash *tensor_table, const char *arg_name)`**
+
+    Find the tensor entry from `tensor_table` that has the same name with the 
+    tensor list entry from `list` that has `arg_name` as its arg name.
+
+- **`int ln_tensor_list_length(ln_list *list)`**
+
+    Return the tensor list length.
+
+- **`int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)`**
+
+    Create an arg name that is unique in the tensor list.
+    The arg name is prefixed with `prefix` and subfixed with a serial number,
+    so that unique names will be created for a same prefix.
+    The arg name' length should be less than `LN_MAX_NAME_LEN`. If its length
+    exceeds that limit, an internal error will be emited and the program will 
+    abort. The arg name  will be printed in `buf`. The return value is the 
+    subfixed number.
+    
+## Parameter
+
+Like `ln_tensor_list_entry`, LightNet also uses `ln_param_entry` to represent 
+parameters used in an operator's parameter list. Different from `ln_tensor`,
+`ln_param_entry` is often used as the configuration for the operator, but
+not the input or output of the operator in the semantic meaning, such as the
+stride, padding or dilation configuration for a convolution operator.
+
+    :::c
+    enum ln_param_type {
+        /* NULL should always be the first type */
+        LN_PARAM_NULL = 0,
+        LN_PARAM_STRING,
+        LN_PARAM_NUMBER,
+        LN_PARAM_BOOL,
+        LN_PARAM_ARRAY_STRING,
+        LN_PARAM_ARRAY_NUMBER,
+        LN_PARAM_ARRAY_BOOL,
+        LN_PARAM_INVALID
+        /* INVALID should always be the last type */
+    };
+    typedef enum ln_param_type ln_param_type;
+
+    struct ln_param_entry {
+        char          *arg_name;           /* argument name in tensor list */
+        ln_param_type  type;               /* parameter type */
+        int            array_len;          /* array length if it's an array */
+        double         value_double;       /* double value, as belows... */
+        float          value_float;
+        int            value_int;
+        ln_bool        value_bool;
+        char          *value_string;
+        char         **value_array_string;
+        double        *value_array_double;
+        float         *value_array_float;
+        int           *value_array_int;
+        ln_bool       *value_array_bool;
+    };
+    typedef struct ln_param_entry ln_param_entry;
+
+The enum type `ln_param_type` represents the param value's data type.
+There are three special case here:
+
+1. If the param type is `LN_PARAM_NULL`, the param entry's `value_...` fields
+are ignored and the param value is treated as `null`, used to represent some
+special uncommon values. 
+2. If the param type is `LN_PARAM_NUMBER`, the param entry's `value_double`,
+`value_float`, `value_int` are set in the same time when setting the param's
+value with `ln_param_set_satu_...` functions, which means when the number is 
+beyond the data type's representable region, the maximum or minimum value will
+be set as the data type's value.
+3. If the param type is `LN_PARAM_ARRAY_NUMBER`, the param entry's 
+`value_array_double`, `value_array_float`, `value_array_int` are set in the same
+time when setting the param's value with `ln_param_set_satu_...` functions, 
+which means when an array's element is beyond the data type's representable 
+region, the maximum or minimum value will be set as the number array's element.
+
+`ln_param_entry` supports the following operations:
+
+- **`ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type)`**
+
+    Create a param entry.
+
+- **`void ln_param_entry_free(ln_param_entry *entry)`**
+
+    Free a param entry.
+    
+- **`const char *ln_param_type_name(ln_param_type type)`**
+
+    Return the param type's string representation.
+    
+- **`ln_param_entry *ln_param_entry_copy(const ln_param_entry *pe)`**
+
+    Copy the param entry.
+
+- **`void ln_param_vset(ln_param_entry *entry, va_list ap)`**
+
+    Used to write param setting functions with variable-length parameters.
+
+- **`void ln_param_set(ln_param_entry *entry, ...)`**
+
+    Set the param entry's value. The argument after `entry` will be interpreted
+    as the appropriate data type according to `entry->type`, and set as the 
+    entry value.
+
+- **`void ln_param_set_null(ln_param_entry *entry)`**
+
+    Set the param entry's type as `LN_PARAM_NULL`.
+
+- **`void ln_param_set_bool(ln_param_entry *entry, ln_bool bool_value)`**
+
+    Set the param entry's bool value.
+
+- **`void ln_param_set_string(ln_param_entry *entry, const char *string)`**
+
+    Set the param entry's string value.
+
+- **`void ln_param_set_satu_number(ln_param_entry *entry, double number)`**
+
+    Set the param entry's number value. The entry's `value_double`, 
+    `value_float`, `value_int` fields are set in the same time.
+    `value_float`, `value_int` are set in a saturation manner.
+
+- **`void ln_param_set_satu_array_number(ln_param_entry *entry, int array_len, const double *array_number)`**
+
+    Set the param entry's number array value. The entry's `value_array_double`, 
+    `value_array_float`, `value_array_int` fields are set in the same time.
+    `value_array_float`, `value_array_int` are set in a saturation manner.
+
+- **`void ln_param_set_satu_array_double(ln_param_entry *entry, int array_len, const double *array_number)`**
+
+    Set the param entry's number array value. The entry's `value_array_double`, 
+    `value_array_float`, `value_array_int` fields are set in the same time.
+    `value_array_float`, `value_array_int` are set in a saturation manner.
+
+- **`void ln_param_set_satu_array_float(ln_param_entry *entry, int array_len, const float *array_number)`**
+
+    Set the param entry's number array value. The entry's `value_array_double`, 
+    `value_array_float`, `value_array_int` fields are set in the same time.
+    `value_array_int` is set in a saturation manner.
+
+- **`void ln_param_set_satu_array_int(ln_param_entry *entry, int array_len, const int *array_number)`**
+
+    Set the param entry's number array value. The entry's `value_array_double`, 
+    `value_array_float`, `value_array_int` fields are set in the same time.
+
+- **`void ln_param_set_array_string(ln_param_entry *entry, int array_len, const char **array_string)`**
+
+    Set the param entry's string array value.
+
+- **`void ln_param_set_array_bool(ln_param_entry *entry, int array_len, const ln_bool *array_bool)`**
+
+    Set the param entry's bool array value.
+    
+The param list supports the following operations:
+
+- **`ln_list *ln_param_list_append_empty(ln_list *list, const char *arg_name, ln_param_type ptype)`**
+
+    Append an empty param entry to the param list. Entry values are initialized
+    to zeros.
+
+- **`ln_list *ln_param_list_append_string(ln_list *list, const char *arg_name, const char *string)`**
+
+    Append a string param entry to the param list.
+
+- **`ln_list *ln_param_list_append_number(ln_list *list, const char *arg_name, double number)`**
+
+    Append a number param entry to the param list. Numbers are set in a 
+    saturation manner.
+
+- **`ln_list *ln_param_list_append_double(ln_list *list, const char *arg_name, double number)`**
+
+    Append a double param entry to the param list. Numbers are set in a 
+    saturation manner.
+
+- **`ln_list *ln_param_list_append_float(ln_list *list, const char *arg_name, float number)`**
+
+    Append a float param entry to the param list. Numbers are set in a 
+    saturation manner.
+
+- **`ln_list *ln_param_list_append_int(ln_list *list, const char *arg_name, int number)`**
+
+    Append an int param entry to the param list.
+
+- **`ln_list *ln_param_list_append_bool(ln_list *list, const char *arg_name, ln_bool bool_value)`**
+
+    Append a bool param entry to the param list.
+
+- **`ln_list *ln_param_list_append_null(ln_list *list, const char *arg_name)`**
+
+    Append a null param entry to the param list.
+
+- **`ln_list *ln_param_list_append_array_string(ln_list *list, const char *arg_name, int array_len, const char **array_string)`**
+
+    Append a string array param entry to the param list.
+
+- **`ln_list *ln_param_list_append_array_number(ln_list *list, const char *arg_name, int array_len, const double *array_number)`**
+
+    Append a number array param entry to the param list. Numbers are set in a 
+    saturation manner.
+
+- **`ln_list *ln_param_list_append_array_double(ln_list *list, const char *arg_name, int array_len, const double *array_number)`**
+
+    Append a double array param entry to the param list. Numbers are set in a 
+    saturation manner.
+
+- **`ln_list *ln_param_list_append_array_float(ln_list *list, const char *arg_name, int array_len, const float *array_number)`**
+
+    Append a float array param entry to the param list. Numbers are set in a 
+    saturation manner.
+
+- **`ln_list *ln_param_list_append_array_int(ln_list *list, const char *arg_name, int array_len, const int *array_int)`**
+
+    Append an int array param entry to the param list.
+
+- **`ln_list *ln_param_list_append_array_bool(ln_list *list, const char *arg_name, int array_len, const ln_bool *array_bool)`**
+
+    Append a bool array param entry to the param list.
+
+- **`void ln_param_list_free(ln_list *list)`**
+
+    Free a param list, as well as the array values (if array values are set).
+
+- **`ln_list *ln_param_list_copy(ln_list *list)`**
+
+    Copy a param list.
+
+- **`ln_param_entry *ln_param_list_find(ln_list *list, const char *arg_name)`**
+
+    Find a param entry with its arg name.
+
+- **`ln_param_entry *ln_param_list_find2(ln_list *list, const char *arg_name1, const char *arg_name2)`**
+
+    Find a param entry with its arg name. The arg name is assembled as
+    `{arg_name1}_{arg_name2}`.
+
+- **`int ln_param_list_length(ln_list *list)`**
+
+    Return the param list's length.
+
+- **`int ln_param_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)`**
+
+    Create an arg name that is unique in the param list.
+    The arg name is prefixed with `prefix` and subfixed with a serial number,
+    so that unique names will be created for a same prefix.
+    The arg name' length should be less than `LN_MAX_NAME_LEN`. If its length
+    exceeds that limit, an internal error will be emited and the program will 
+    abort. The arg name  will be printed in `buf`. The return value is the 
+    subfixed number.
+
+## Operator
+
+LightNet use `ln_op` to represent an operator, which receives some input tensors
+and compute the output tensors according to its parameters.
+A `ln_op` has its own life cycle, as showned below.
+
+<img style="transform:scale(0.7)" src=../img/op_state.png>
+
+`ln_op` has 4 states in its lift cycle: **init**, **checked**, **ready**, **end**.
+After created, a `ln_op` is in the **init** state. It has to execute its `pre_run`
+function to check the validity of its input tensors and parameters, define 
+its output tensors' shape, data type and so on, register its output tensors in the
+tensor table, and then enter the **checked** state. 
+For most operators, **checked** state is equivalent to **ready** state,
+while there are some operators that need to execute its `static_run` function 
+first to initialize their private data. 
+In the **ready** state, an operator can execute its `run` function over and 
+over again to do its real computation work. 
+Or it can execute its `post_run` function to finalize its life cycle, 
+free all the private memory it allocated in its life cycle, unregister its
+output tensors from the tensor table, and enter the **end** state, where the
+LightNet context can safely remove this operator from the operator table and
+the data flow graph.
+
+`ln_op` has those 4 state-transfer functions in its C struct as function
+pointers, which has the same prototype `ln_op_func`:
+
+    :::c
+    typedef void (*ln_op_func) (ln_op_arg *op_arg);
+    typedef size_t (*ln_op_offset_func) (ln_op_arg *op_arg, ln_tensor_entry *te);
+    
+    struct ln_op {
+        ln_op_arg          *op_arg;
+        ln_op_func          pre_run;
+        ln_op_func          static_run;
+        ln_op_func          run;
+        ln_op_func          post_run;
+        ln_op_offset_func   calc_offset;
+    };
+    typedef struct ln_op ln_op;
+
+    
+Those functions all has a `ln_op_arg` as their argument, through which they can
+access and manipulate the operators' input tensors (`tensors_in`), output tensors
+(`tensors_out`)and parameters (`params`). Besides, `ln_op_arg` has a `priv` 
+field reserved for the operators' private data. Operators can define
+a private struct in their defination C file, stores its private data in it and
+assign `priv` with the private struct's pointer to pass it on and use it in
+different state-transfer functions.
+
+    :::c
+    struct ln_op_arg {
+        char                 *name;           /* operator name */
+        char                 *optype;         /* operator type */
+        char                 *arch;           /* backend architecture to run on */
+        ln_list              *tensors_in;     /* input tensors */
+        ln_list              *tensors_out;    /* output tensors */
+        ln_list              *params;         /* parameters */
+        ln_hash              *tensor_table;   /* tensor table of the context */
+        void                 *priv;           /* for other private data storage */
+        const char          **in_arg_names;   /* NULL terminated array, as belows */
+        const char          **out_arg_names;
+        const char          **param_arg_names;
+        const ln_param_type  *param_ptypes;
+    };
+    typedef struct ln_op_arg ln_op_arg;
