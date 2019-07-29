@@ -136,11 +136,12 @@ found a bug or have a feature request.</li>
 when you prepared to contribute. Before that, it is encouraged to open an 
 issue to discuss.</li>
 <li>When committing to the git repository make sure to include a meaningful 
-commit message. Commit messages should have the following format:<pre class="codehilite"><code>Short explanation of the commit
+commit message. Commit messages should have the following format:<div class="codehilite"><pre><span></span>Short explanation of the commit
 
-Longer explanation explaining exactly what's changed, whether any
+Longer explanation explaining exactly what&#39;s changed, whether any
 external or private interfaces changed, what bugs were fixed (with bug
-tracker reference if applicable) and so on. Be concise but not too brief.</code></pre>
+tracker reference if applicable) and so on. Be concise but not too brief.
+</pre></div>
 
 
 </li>
@@ -164,28 +165,29 @@ in an if-statement.</li>
 that only one branch of a conditional statement is a single statement.</li>
 </ol>
 <p>E.g.:</p>
-<pre class="codehilite"><code class="language-c">int function(int x)
-{
-    if (condition) {
-        do a;
-        do b;
-    }
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">function</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">condition</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">a</span><span class="p">;</span>
+        <span class="k">do</span> <span class="n">b</span><span class="p">;</span>
+    <span class="p">}</span>
 
-    if (condition)
-        do e;
+    <span class="k">if</span> <span class="p">(</span><span class="n">condition</span><span class="p">)</span>
+        <span class="k">do</span> <span class="n">e</span><span class="p">;</span>
 
-    if (condition) {
-        do f;
-        do g;
-    } else {
-        do h;
-    }
+    <span class="k">if</span> <span class="p">(</span><span class="n">condition</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">f</span><span class="p">;</span>
+        <span class="k">do</span> <span class="n">g</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">h</span><span class="p">;</span>
+    <span class="p">}</span>
 
-    do {
-        do c;
-        do d;
-    } while (condition);
-}</code></pre>
+    <span class="k">do</span> <span class="p">{</span>
+        <span class="k">do</span> <span class="n">c</span><span class="p">;</span>
+        <span class="k">do</span> <span class="n">d</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">condition</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
 
 
 </li>
