@@ -746,17 +746,17 @@ The enum type `ln_param_type` represents the param value's data type.
 There are three special case here:
 
 1. If the param type is `LN_PARAM_NULL`, the param entry's `value_...` fields
-are ignored and the param value is treated as `null`, used to represent some
+are ignored and the param value is treated as `null`, which could represent some
 special uncommon values. 
 2. If the param type is `LN_PARAM_NUMBER`, the param entry's `value_double`,
 `value_float`, `value_int` are set in the same time when setting the param's
-value with `ln_param_set_satu_...` functions, which means when the number is 
+value with `ln_param_set_satu_...` functions, and when the number is 
 beyond the data type's representable region, the maximum or minimum value will
 be set as the data type's value.
 3. If the param type is `LN_PARAM_ARRAY_NUMBER`, the param entry's 
 `value_array_double`, `value_array_float`, `value_array_int` are set in the same
 time when setting the param's value with `ln_param_set_satu_...` functions, 
-which means when an array's element is beyond the data type's representable 
+and when an array's element is beyond the data type's representable 
 region, the maximum or minimum value will be set as the number array's element.
 
 `ln_param_entry` supports the following operations:
@@ -973,10 +973,13 @@ pointers, which has the same prototype `ln_op_func`:
     };
     typedef struct ln_op ln_op;
 
-    
+Besides `ln_op_func`, there is another `ln_op_offset_func` used in some 
+operators that hace to determine their output tensors' data address offsets
+according to their input tensors.
+
 Those functions all has a `ln_op_arg` as their argument, through which they can
 access and manipulate the operators' input tensors (`tensors_in`), output tensors
-(`tensors_out`)and parameters (`params`). Besides, `ln_op_arg` has a `priv` 
+(`tensors_out`) and parameters (`params`). Besides, `ln_op_arg` has a `priv` 
 field reserved for the operators' private data. Operators can define
 a private struct in their defination C file, stores its private data in it and
 assign `priv` with the private struct's pointer to pass it on and use it in
@@ -998,3 +1001,252 @@ different state-transfer functions.
         const ln_param_type  *param_ptypes;
     };
     typedef struct ln_op_arg ln_op_arg;
+
+`ln_op` generally supports the following operations:
+
+- **`ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name, ln_list *tensors_in, ln_list *tensors_out, ln_list *params, ln_hash *tensor_table)`**
+
+    Create an operator from a "proto" operator `op_proto`. The newly created operator
+    will have the same function pointers (`pre_run`, `run`, etc) as `op_proto`, with
+    its own `name`, `tensors_in`, `tensors_out`, `params`, and a `tensor_table`
+    pointer of the context passed from the caller. `op_proto` generally are found
+    from the global hash table `LN_ARCH.op_proto_table` with its operator type as 
+    the key.
+
+- **`void ln_op_free(ln_op *op)`**
+
+    Free an operator.
+
+- **`void ln_op_free_lists_too(ln_op *op)`**
+
+    Free an operator, as well as its `tensors_in`, `tensors_out` and `params`.
+
+- **`ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)`**
+
+    Create an operator and its `tensors_in`, `tensors_out` and `params` as well,
+    with auto-generated unique operator name and output tensor names in the scope
+    of the context. Input tensor names are inited with empty string (""), and
+    parameters are inited with empty value (zeroed number or `NULL` string or
+    `NULL` array). 
+    The meta information of the operator used to create those 
+    stuff is found in `ln_op_arg`'s `in_arg_names`, `out_arg_names`, 
+    `param_arg_names`, `param_ptypes`, etc.
+    This function is mainly used in optimization pass where LightNet will 
+    generate optimized new operators to replace old ones.
+
+- **`ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)`**
+
+    Create an operator with auto-generated unique operator name in the scope of
+    the context.
+
+- **`ln_op *ln_op_copy(const ln_op *op)`**
+
+    Copy an operator.
+
+- **`ln_op *ln_op_copy_to_optype(ln_hash *op_proto_table, const ln_op *op, const char *new_optype)`**
+
+    Copy an operator's input/output tensors and parameters to a newly created
+    operator of a new operator type `new_optype`. Generally used in the simple 
+    replacement from one optype to another in optimization pass, such as
+    replacing `conv` with `conv_cuda`.
+
+- **`ln_tensor_entry *ln_op_find_tensor_entry(const ln_op *op, const char *arg_name)`**
+
+    Find an operator's input or output tensor entry with the entry's `arg_name`.
+
+- **`ln_tensor_list_entry *ln_op_find_tensor_list_entry(const ln_op *op, const char *arg_name)`**
+
+    Find an operator's input or output tensor list entry with the entry's `arg_name`.
+
+The are both an operator table and an operator list existing in a LightNet context.
+While the former has the ownership of all operators, the latter retains a linear
+form of the operators, which contains the execution order of the operators.
+
+The operator list supports the following operations:
+
+- **`ln_list *ln_op_list_create_from_array(ln_op **op_array)`**
+
+    Create an operator list from an `NULL` terminated operator array.
+
+- **`void ln_op_list_free(ln_list *op_list)`**
+
+    Free an operator list.
+
+- **`void ln_op_list_free_lists_too(ln_list *ops)`**
+
+    Free an operator list, as well as the operators' tensor lists and
+    parameter list.
+
+- **`ln_op *ln_op_list_find_by_optype(ln_list *ops, const char *optype)`**
+
+    Find the first operator from an operator list that has `optype` as its
+    operator type.
+
+- **`ln_op *ln_op_array_find_by_optype(ln_op *ops[], const char *optype)`**
+
+    Find the first operator from an `NULL` terminated operator array that
+    has `optype` as its operator type.
+
+- **`ln_op *ln_op_list_find_by_name(ln_list *ops, const char *name)`**
+
+    Find the first operator from an operator list that has `name` as its
+    operator name.
+
+- **`void ln_op_list_do_pre_run(ln_list *ops)`**
+
+    Execute the `pre_run` functions of the operators in `ops` in order.
+
+- **`void ln_op_list_do_static_run(ln_list *ops)`**
+
+    Execute the `static_run` functions of the operators in `ops` in order.
+
+- **`void ln_op_list_do_run(ln_list *ops)`**
+
+    Execute the `run` functions of the operators in `ops` in order.
+
+- **`void ln_op_list_do_post_run(ln_list *ops)`**
+
+    Execute the `post_run` functions of the operators in `ops` in order.
+
+- **`char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)`**
+
+    Create an unique operator name in the operator list `ops` with `prefix`.
+    Return the newly allocated name string.
+
+The operator table supports the following operations:
+
+- **`ln_hash *ln_op_table_create(void)`**
+
+    Create an empty operator table.
+
+- **`int ln_op_table_insert(ln_hash *table, ln_op *op)`**
+
+    Insert an operator to the table.
+
+- **`int ln_op_table_remove(ln_hash *table, const char *name)`**
+
+    Remove an operator from the table. The operator table will free the operator,
+    its tensor lists and parameter list when removing it from the table.
+
+- **`ln_op *ln_op_table_find(ln_hash *table, const char *name)`**
+
+    Find an operator from the table with its name.
+
+- **`void ln_op_table_free(ln_hash *table)`**
+
+    Free an operator table, as well as its operators.
+
+- **`void ln_op_table_vset_param(ln_hash *table, const char *opname, const char *pname, va_list ap)`**
+
+    Set an operator's parameter in the operator table.
+    Used in variable-length functions.
+
+- **`void ln_op_table_set_param(ln_hash *table, const char *opname, const char *pname, ...)`**
+
+    Set an operator's parameter with operator name `opname` in the operator table
+    and parameter argument name `pname` in the parameter list.
+    The function argument after `pname` should be a parameter value with an 
+    appropriate data type consistent with the according parameter.
+
+There are also a bunch of macros designated for the validity checking of tensors
+and parameters in `pre_run` function. 
+
+!!! warning
+
+    Those convinent macros should **only** used in a `pre_run` function since the
+    semantic context they required. 
+    Normally we shouldn't use those kind of error handling routines in
+    other state-transfer functions, where errors should be considered
+    as bugs.
+    If there is more error handling work, please write the code yourself
+    instead of using those macros.
+
+- **`ln_opck(level, condition, msg_fmt, varg...)`**
+
+    If `condition` not satisfied, emit message defined by printf-liked arguments 
+    `msg_fmt`and `varg...`, according to message level `level` (an enum defined in 
+    `ln_msg.h`).
+
+- **`ln_opck_satisfy_msg(condition, msg_fmt, varg...)`**
+
+    Emit error message if `condition` not satisfied and exit.
+
+- **`ln_opck_satisfy(condition)`**
+
+    Emit error message if `condition` not satisfied and exit.
+
+- **`ln_opck_param_exist(entry, arg_name)`**
+- **`ln_opck_param_type(entry, param_type)`**
+- **`ln_opck_param_int_eq(entry, expect)`**
+- **`ln_opck_param_int_gt(entry, expect)`**
+- **`ln_opck_param_int_ge(entry, expect)`**
+- **`ln_opck_param_int_lt(entry, expect)`**
+- **`ln_opck_param_int_le(entry, expect)`**
+- **`ln_opck_param_int_ne(entry, expect)`**
+- **`ln_opck_param_float_eq(entry, expect)`**
+- **`ln_opck_param_float_gt(entry, expect)`**
+- **`ln_opck_param_float_ge(entry, expect)`**
+- **`ln_opck_param_float_lt(entry, expect)`**
+- **`ln_opck_param_float_le(entry, expect)`**
+- **`ln_opck_param_float_ne(entry, expect)`**
+- **`ln_opck_param_double_eq(entry, expect)`**
+- **`ln_opck_param_double_gt(entry, expect)`**
+- **`ln_opck_param_double_ge(entry, expect)`**
+- **`ln_opck_param_double_lt(entry, expect)`**
+- **`ln_opck_param_double_le(entry, expect)`**
+- **`ln_opck_param_double_ne(entry, expect)`**
+- **`ln_opck_param_array_len_eq(entry, expect_len)`**
+- **`ln_opck_param_array_len_gt(entry, expect_len)`**
+- **`ln_opck_param_array_len_ge(entry, expect_len)`**
+- **`ln_opck_param_array_len_lt(entry, expect_len)`**
+- **`ln_opck_param_array_len_le(entry, expect_len)`**
+- **`ln_opck_param_array_int_eq(entry, expect)`**
+- **`ln_opck_param_array_int_gt(entry, expect)`**
+- **`ln_opck_param_array_int_ge(entry, expect)`**
+- **`ln_opck_param_array_int_lt(entry, expect)`**
+- **`ln_opck_param_array_int_le(entry, expect)`**
+- **`ln_opck_param_array_int_ne(entry, expect)`**
+- **`ln_opck_param_array_float_eq(entry, expect)`**
+- **`ln_opck_param_array_float_gt(entry, expect)`**
+- **`ln_opck_param_array_float_ge(entry, expect)`**
+- **`ln_opck_param_array_float_lt(entry, expect)`**
+- **`ln_opck_param_array_float_le(entry, expect)`**
+- **`ln_opck_param_array_float_ne(entry, expect)`**
+- **`ln_opck_param_array_double_eq(entry, expect)`**
+- **`ln_opck_param_array_double_gt(entry, expect)`**
+- **`ln_opck_param_array_double_ge(entry, expect)`**
+- **`ln_opck_param_array_double_lt(entry, expect)`**
+- **`ln_opck_param_array_double_le(entry, expect)`**
+- **`ln_opck_param_array_double_ne(entry, expect)`**
+- **`ln_opck_params_len_eq(list_len, expect_len)`**
+- **`ln_opck_params_len_gt(list_len, expect_len)`**
+- **`ln_opck_params_len_ge(list_len, expect_len)`**
+- **`ln_opck_params_len_lt(list_len, expect_len)`**
+- **`ln_opck_params_len_le(list_len, expect_len)`**
+- **`ln_opck_tensor_in_exist(tle, arg_name)`**
+- **`ln_opck_tensors_in_len_eq(list_len, expect_len)`**
+- **`ln_opck_tensors_in_len_gt(list_len, expect_len)`**
+- **`ln_opck_tensors_in_len_ge(list_len, expect_len)`**
+- **`ln_opck_tensors_in_len_lt(list_len, expect_len)`**
+- **`ln_opck_tensors_in_len_le(list_len, expect_len)`**
+- **`ln_opck_tensor_out_exist(tle, arg_name)`**
+- **`ln_opck_tensors_out_len_eq(list_len, expect_len)`**
+- **`ln_opck_tensors_out_len_gt(list_len, expect_len)`**
+- **`ln_opck_tensors_out_len_ge(list_len, expect_len)`**
+- **`ln_opck_tensors_out_len_lt(list_len, expect_len)`**
+- **`ln_opck_tensors_out_len_le(list_len, expect_len)`**
+- **`ln_opck_tensor_not_defined(entry, entry_name)`**
+- **`ln_opck_tensor_defined(entry, entry_name)`**
+- **`ln_opck_tensor_ndim(entry, expect_ndim)`**
+- **`ln_opck_tensor_len(entry, expect_len)`**
+- **`ln_opck_tensor_issameshape(entry1, entry2)`**
+- **`ln_opck_tensor_issametype(entry1, entry2)`**
+- **`ln_opck_tensor_isstatic(entry)`**
+- **`ln_opck_tensor_isnotstatic(entry)`**
+- **`ln_opck_tensor_mtype_eq(entry, mem_type)`**
+- **`ln_opck_tensor_dtype_eq(entry, data_type)`**
+
+    
+## Data Flow Graph
+
+

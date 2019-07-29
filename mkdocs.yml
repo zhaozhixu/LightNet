@@ -30,6 +30,7 @@ markdown_extensions:
   - codehilite:
       guess_lang: false
   - def_list
+  - admonition
 
 extra_css:
   - css/codehilite.css
