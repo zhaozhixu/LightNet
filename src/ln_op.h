@@ -147,7 +147,7 @@ LN_CPPEND
 
 /*
  * entry should have been checked with ln_opck_param_exist
- * type is an enum defined in ln_param.h
+ * param_type is an enum defined in ln_param.h
  */
 #define ln_opck_param_type(entry, param_type)                           \
     ln_opck(LN_MSG_ERROR, (entry)->type == (param_type),                \
@@ -501,10 +501,10 @@ LN_CPPEND
             "%s: `%s` needs <= %d params, but gets %d params",          \
             op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* tle should be returned by
+/* entry should be returned by
    ln_tensor_list_find_by_arg_name(op_arg->tensors_in, arg_name) */
-#define ln_opck_tensor_in_exist(tle, arg_name)          \
-    ln_opck(LN_MSG_ERROR, (tle),                        \
+#define ln_opck_tensor_in_exist(entry, arg_name)          \
+    ln_opck(LN_MSG_ERROR, (entry),                        \
             "%s: `%s` needs a `%s` input tensor",       \
             op_arg->optype, op_arg->name, (arg_name))
 
@@ -534,10 +534,10 @@ LN_CPPEND
             "%s: `%s` needs <= %d input tensors, but gets %d input tensors", \
             op_arg->optype, op_arg->name, (expect_len), (list_len))
 
-/* tle should be returned by
+/* entry should be returned by
    ln_tensor_list_find_by_arg_name(op_arg->tensors_out, arg_name) */
-#define ln_opck_tensor_out_exist(tle, arg_name)         \
-    ln_opck(LN_MSG_ERROR, (tle),                        \
+#define ln_opck_tensor_out_exist(entry, arg_name)         \
+    ln_opck(LN_MSG_ERROR, (entry),                        \
             "%s: `%s` needs a `%s` output tensor",      \
             op_arg->optype, op_arg->name, (arg_name))
 

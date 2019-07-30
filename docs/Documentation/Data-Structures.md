@@ -1153,8 +1153,8 @@ and parameters in `pre_run` function.
 
 !!! warning
 
-    Those convinent macros should **only** used in a `pre_run` function since the
-    semantic context they required. 
+    Those convinent macros should **only** used in a `pre_run` function 
+    because of the function arguments they required. 
     Normally we shouldn't use those kind of error handling routines in
     other state-transfer functions, where errors should be considered
     as bugs.
@@ -1176,7 +1176,21 @@ and parameters in `pre_run` function.
     Emit error message if `condition` not satisfied and exit.
 
 - **`ln_opck_param_exist(entry, arg_name)`**
+
+    Check if a param entry exists. `entry` should be returned by
+    `ln_param_list_find(op_arg->params, arg_name)`.
+
 - **`ln_opck_param_type(entry, param_type)`**
+
+    Check if a param entry's type is equal to `param_type`.
+    `param_type` is an enum `of ln_param_type` defined in `ln_param.h`.
+    `entry` should have been checked with `ln_opck_param_exist`.
+    
+The following macros check if a number param entry's value is equal to (`eq`), 
+greater than (`gt`), greater than or equal to (`ge`), less than (`lt`),
+less than or equal to (`le`), or not equal to (`ne`) the number `expect`.
+`entry` should have been checked with `ln_opck_param_exist`.
+
 - **`ln_opck_param_int_eq(entry, expect)`**
 - **`ln_opck_param_int_gt(entry, expect)`**
 - **`ln_opck_param_int_ge(entry, expect)`**
@@ -1195,11 +1209,25 @@ and parameters in `pre_run` function.
 - **`ln_opck_param_double_lt(entry, expect)`**
 - **`ln_opck_param_double_le(entry, expect)`**
 - **`ln_opck_param_double_ne(entry, expect)`**
+
+The following macros check if an array param entry's value's length is
+equal to (`eq`), greater than (`gt`), greater than or equal to (`ge`), 
+less than (`lt`), less than or equal to (`le`), or not equal to (`ne`)
+the length `expect_len`. 
+`entry` should have been checked with `ln_opck_param_exist`.
+
 - **`ln_opck_param_array_len_eq(entry, expect_len)`**
 - **`ln_opck_param_array_len_gt(entry, expect_len)`**
 - **`ln_opck_param_array_len_ge(entry, expect_len)`**
 - **`ln_opck_param_array_len_lt(entry, expect_len)`**
 - **`ln_opck_param_array_len_le(entry, expect_len)`**
+
+The following macros check if a number array param entry's values are all
+equal to (`eq`), greater than (`gt`), greater than or equal to (`ge`), 
+less than (`lt`), less than or equal to (`le`), or not equal to (`ne`) 
+the number `expect`.
+`entry` should have been checked with `ln_opck_param_exist`.
+
 - **`ln_opck_param_array_int_eq(entry, expect)`**
 - **`ln_opck_param_array_int_gt(entry, expect)`**
 - **`ln_opck_param_array_int_ge(entry, expect)`**
@@ -1218,34 +1246,113 @@ and parameters in `pre_run` function.
 - **`ln_opck_param_array_double_lt(entry, expect)`**
 - **`ln_opck_param_array_double_le(entry, expect)`**
 - **`ln_opck_param_array_double_ne(entry, expect)`**
+
+The following macros check if the length of the parameter list (`list_len`)
+is equal to (`eq`), greater than (`gt`), greater than or equal to (`ge`), 
+less than (`lt`), less than or equal to (`le`), or not equal to (`ne`) 
+the length `expect_len`.
+`list_len` should be returned by `ln_param_list_length(op_arg->params)`.
+
 - **`ln_opck_params_len_eq(list_len, expect_len)`**
 - **`ln_opck_params_len_gt(list_len, expect_len)`**
 - **`ln_opck_params_len_ge(list_len, expect_len)`**
 - **`ln_opck_params_len_lt(list_len, expect_len)`**
 - **`ln_opck_params_len_le(list_len, expect_len)`**
-- **`ln_opck_tensor_in_exist(tle, arg_name)`**
+
+- **`ln_opck_tensor_in_exist(entry, arg_name)`**
+
+    Check if an input tensor list entry exists. `entry` should be returned by
+    `ln_tensor_list_find_by_arg_name(op_arg->tensors_in, arg_name)`.
+
+The following macros check if the length of the input tensor list (`list_len`)
+is equal to (`eq`), greater than (`gt`), greater than or equal to (`ge`), 
+less than (`lt`), less than or equal to (`le`), or not equal to (`ne`) 
+the length `expect_len`.
+`list_len` should be returned by `ln_tensor_list_length(op_arg->tensors_in)`.
+
 - **`ln_opck_tensors_in_len_eq(list_len, expect_len)`**
 - **`ln_opck_tensors_in_len_gt(list_len, expect_len)`**
 - **`ln_opck_tensors_in_len_ge(list_len, expect_len)`**
 - **`ln_opck_tensors_in_len_lt(list_len, expect_len)`**
 - **`ln_opck_tensors_in_len_le(list_len, expect_len)`**
-- **`ln_opck_tensor_out_exist(tle, arg_name)`**
+
+- **`ln_opck_tensor_out_exist(entry, arg_name)`**
+
+    Check if an output tensor list entry exists. `entry` should be returned by
+    `ln_tensor_list_find_by_arg_name(op_arg->tensors_out, arg_name)`.
+    
+The following macros check if the length of the output tensor list (`list_len`)
+is equal to (`eq`), greater than (`gt`), greater than or equal to (`ge`), 
+less than (`lt`), less than or equal to (`le`), or not equal to (`ne`) 
+the length `expect_len`.
+`list_len` should be returned by `ln_tensor_list_length(op_arg->tensors_out)`.
+
 - **`ln_opck_tensors_out_len_eq(list_len, expect_len)`**
 - **`ln_opck_tensors_out_len_gt(list_len, expect_len)`**
 - **`ln_opck_tensors_out_len_ge(list_len, expect_len)`**
 - **`ln_opck_tensors_out_len_lt(list_len, expect_len)`**
 - **`ln_opck_tensors_out_len_le(list_len, expect_len)`**
+
 - **`ln_opck_tensor_not_defined(entry, entry_name)`**
+
+    Check if the tensor entry `entry` has *not* been defined by another
+    operator so far. "defined" means an operator has created the tensor
+    and inserted the tensor entry in the tensor table.
+    `entry` should be returned by
+    `ln_tensor_table_find(op_arg->tensor_table, entry_name)`, where `entry_name`
+    is the `ln_tensor_entry`'s name to be looked up.
+
 - **`ln_opck_tensor_defined(entry, entry_name)`**
+
+    Check if the tensor entry `entry` has been defined by another
+    operator so far.
+    `entry` should be returned by
+    `ln_tensor_table_find(op_arg->tensor_table, entry_name)`, where `entry_name`
+    is the `ln_tensor_entry`'s name to be looked up.
+
 - **`ln_opck_tensor_ndim(entry, expect_ndim)`**
+
+    Check if the tensor in `entry` has the number of dimensions equal to
+    `expect_ndim`.
+    `entry` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_len(entry, expect_len)`**
+
+    Check if the tensor in `entry` has the number of elements equal to
+    `expect_len`.
+    `entry` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_issameshape(entry1, entry2)`**
+
+    Check if the tensor in `entry1` has the same shape with the tensor in
+    `entry2`.
+    Both `entry1` and `entry2` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_issametype(entry1, entry2)`**
+
+    Check if the tensor in `entry1` has the same data type with the tensor in
+    `entry2`.
+    Both `entry1` and `entry2` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_isstatic(entry)`**
+
+    Check if the tensor in `entry` is static.
+    `entry` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_isnotstatic(entry)`**
+
+    Check if the tensor in `entry` is *not* static.
+    `entry` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_mtype_eq(entry, mem_type)`**
+
+    Check if the tensor in `entry` has the memory type equals to `mem_type`.
+    `entry` should have been checked with `ln_opck_tensor_defined`.
+
 - **`ln_opck_tensor_dtype_eq(entry, data_type)`**
 
+    Check if the tensor in `entry` has the data type equals to `data_type`.
+    `entry` should have been checked with `ln_opck_tensor_defined`.
     
 ## Data Flow Graph
 
