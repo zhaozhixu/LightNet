@@ -167,8 +167,7 @@ hold every element of the list, for example:</p>
 </pre></div>
 
 
-<p><code>ln_list</code> provides a macro for the convinence of traversing the list in order.
-However, no list alternation shall be done when using this macro:</p>
+<p><code>ln_list</code> provides a macro for the convinence of traversing the list in order.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* list is a ln_list of element type ln_op */</span>
 <span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">;</span>
 <span class="n">LN_LIST_FOREACH</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">list</span><span class="p">)</span> <span class="p">{</span>
@@ -177,6 +176,10 @@ However, no list alternation shall be done when using this macro:</p>
 </pre></div>
 
 
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>No list alternation shall be done when using <code>LN_LIST_FOREACH</code>.</p>
+</div>
 <p><code>ln_list</code> supports the following operations:</p>
 <ul>
 <li>
@@ -1479,7 +1482,101 @@ Both <code>entry1</code> and <code>entry2</code> should have been checked with <
 <code>entry</code> should have been checked with <code>ln_opck_tensor_defined</code>.</p>
 </li>
 </ul>
-<h2 id="data-flow-graph">Data Flow Graph<a class="headerlink" href="#data-flow-graph" title="Permanent link">&para;</a></h2></div>
+<h2 id="data-flow-graph">Data Flow Graph<a class="headerlink" href="#data-flow-graph" title="Permanent link">&para;</a></h2>
+<p>LightNet uses Data Flow Graph (<code>ln_dfg</code>) to represent data flows among operators,
+as known as computing graph.</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_dfg</span> <span class="p">{</span>
+    <span class="n">ln_graph</span> <span class="o">*</span><span class="n">graph</span><span class="p">;</span>
+    <span class="n">ln_hash</span>  <span class="o">*</span><span class="n">node_table</span><span class="p">;</span>
+    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">dangling_ins</span><span class="p">;</span>
+    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">dangling_outs</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_dfg</span> <span class="n">ln_dfg</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>ln_dfg</code> has a <code>graph</code> as its core data structure, with operators as nodes and
+tensor names as edges. Besides, it has a <code>node_table</code> to manage all the graph nodes
+in a hash table, keyed by operator names, a <code>dangling_outs</code> list to manage all 
+the reaching out dangling edge nodes, and a <code>dangling_ins</code> list to manage all 
+the reaching in dangling edge nodes.</p>
+<p><code>ln_dfg</code> supports the following operations:</p>
+<ul>
+<li>
+<p><strong><code>ln_dfg *ln_dfg_create(void)</code></strong></p>
+<p>Create an empty data flow graph.</p>
+</li>
+<li>
+<p><strong><code>void ln_dfg_free(ln_dfg *dfg)</code></strong></p>
+<p>Free a data flow graph, as well as its <code>graph</code>, <code>node_table</code>, <code>dangling_ins</code>, 
+<code>dangling_outs</code>.</p>
+</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The operator pointers held by graph nodes are owned by <code>op_table</code> of the 
+context. So freeing <code>graph</code> and <code>node_table</code> doesn't actually free the
+underlying operators. (TODO: May be the graph nodes holding operator names is 
+well enough?)</p>
+</div>
+<ul>
+<li>
+<p><strong><code>void ln_dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)</code></strong></p>
+<p>Link the node holding <code>op1</code> to the node holding <code>op2</code>, with tensor name <code>tname</code>
+as the edge.</p>
+</li>
+<li>
+<p><strong><code>void ln_dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)</code></strong></p>
+<p>Unlink the node holding <code>op1</code> to the node holding <code>op2</code>, with tensor name <code>tname</code>
+as the edge. If <code>tname</code> is not the output tensor of <code>op1</code> or not the input
+tensor of <code>op2</code>, this function does nothing.</p>
+</li>
+<li>
+<p><strong><code>void ln_dfg_add(ln_dfg *dfg, ln_op *op)</code></strong></p>
+<p>Add <code>op</code> to the <code>dfg</code>. The new node automatically gets linked with its output
+tensors to nodes that take them as input tensors (if any), and gets linked 
+with its input tensors from nodes that take them as output tensors (if any),
+and removes/adds related entries in the <code>dfg</code>'s <code>dangling_outs</code> and
+<code>dangling_ins</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_dfg_remove(ln_dfg *dfg, ln_op *op)</code></strong></p>
+<p>Remove <code>op</code> to the <code>dfg</code>. The node automatically gets unlinked with its output
+tensors to nodes that take them as input tensors (if any), and gets unlinked 
+with its input tensors from nodes that take them as output tensors (if any),
+and removes/adds related entries in the <code>dfg</code>'s <code>dangling_outs</code> and
+<code>dangling_ins</code>.</p>
+</li>
+<li>
+<p><strong><code>ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)</code></strong></p>
+<p>(Deprecated)
+Return the operator that has <code>tname</code> as its input tensor's name, which is also
+operator <code>op</code>'s output tensor.</p>
+</li>
+<li>
+<p><strong><code>ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname)</code></strong></p>
+<p>Return all operators that have <code>tname</code> as their input tensor's name, which is also
+operator <code>op</code>'s output tensor.</p>
+</li>
+<li>
+<p><strong><code>ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname)</code></strong></p>
+<p>Return the operator that has <code>tname</code> as its output tensor's name, which is also
+operator <code>op</code>'s input tensor.</p>
+</li>
+<li>
+<p><strong><code>int ln_dfg_check(const ln_dfg *dfg)</code></strong></p>
+<p>Check the correctness of a data flow graph <code>dfg</code>. It emits an internal error if
+any operator's input tensor is not given by another operator.</p>
+</li>
+<li>
+<p><strong><code>void ln_dfg_fprint(FILE *fp, const ln_dfg *dfg)</code></strong></p>
+<p>Print the <code>dfg</code> to file stream <code>fp</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_dfg_print(const ln_dfg *dfg)</code></strong></p>
+<p>Print the <code>dfg</code> to stdout.</p>
+</li>
+</ul></div>
         </div>
 
         <footer class="col-md-12">
