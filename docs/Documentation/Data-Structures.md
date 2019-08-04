@@ -35,7 +35,6 @@ hold every element of the list, for example:
     }
 
 `ln_list` provides a macro for the convinence of traversing the list in order.
-However, no list alternation shall be done when using this macro:
 
     :::c
     /* list is a ln_list of element type ln_op */
@@ -43,6 +42,9 @@ However, no list alternation shall be done when using this macro:
     LN_LIST_FOREACH(op, list) {
         /* op now hold one element of list */
     }
+
+!!!note
+    No list alternation shall be done when using `LN_LIST_FOREACH`.
 
 `ln_list` supports the following operations:
 
@@ -1356,4 +1358,93 @@ the length `expect_len`.
     
 ## Data Flow Graph
 
+LightNet uses Data Flow Graph (`ln_dfg`) to represent data flows among operators,
+as known as computing graph.
 
+    :::c
+    struct ln_dfg {
+        ln_graph *graph;
+        ln_hash  *node_table;
+        ln_list  *dangling_ins;
+        ln_list  *dangling_outs;
+    };
+    typedef struct ln_dfg ln_dfg;
+
+`ln_dfg` has a `graph` as its core data structure, with operators as nodes and
+tensor names as edges. Besides, it has a `node_table` to manage all the graph nodes
+in a hash table, keyed by operator names, a `dangling_outs` list to manage all 
+the reaching out dangling edge nodes, and a `dangling_ins` list to manage all 
+the reaching in dangling edge nodes.
+
+`ln_dfg` supports the following operations:
+
+- **`ln_dfg *ln_dfg_create(void)`**
+
+    Create an empty data flow graph.
+
+- **`void ln_dfg_free(ln_dfg *dfg)`**
+
+    Free a data flow graph, as well as its `graph`, `node_table`, `dangling_ins`, 
+    `dangling_outs`.
+    
+!!!note
+    The operator pointers held by graph nodes are owned by `op_table` of the 
+    context. So freeing `graph` and `node_table` doesn't actually free the
+    underlying operators. (TODO: May be the graph nodes holding operator names is 
+    well enough?)
+
+- **`void ln_dfg_link(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)`**
+
+    Link the node holding `op1` to the node holding `op2`, with tensor name `tname`
+    as the edge.
+
+- **`void ln_dfg_unlink(ln_dfg *dfg, ln_op *op1, ln_op *op2, const char *tname)`**
+
+    Unlink the node holding `op1` to the node holding `op2`, with tensor name `tname`
+    as the edge. If `tname` is not the output tensor of `op1` or not the input
+    tensor of `op2`, this function does nothing.
+
+- **`void ln_dfg_add(ln_dfg *dfg, ln_op *op)`**
+
+    Add `op` to the `dfg`. The new node automatically gets linked with its output
+    tensors to nodes that take them as input tensors (if any), and gets linked 
+    with its input tensors from nodes that take them as output tensors (if any),
+    and removes/adds related entries in the `dfg`'s `dangling_outs` and
+    `dangling_ins`.
+    
+- **`void ln_dfg_remove(ln_dfg *dfg, ln_op *op)`**
+
+    Remove `op` to the `dfg`. The node automatically gets unlinked with its output
+    tensors to nodes that take them as input tensors (if any), and gets unlinked 
+    with its input tensors from nodes that take them as output tensors (if any),
+    and removes/adds related entries in the `dfg`'s `dangling_outs` and
+    `dangling_ins`.
+
+- **`ln_op *ln_dfg_next(const ln_dfg *dfg, const ln_op *op, const char *tname)`**
+
+    (Deprecated)
+    Return the operator that has `tname` as its input tensor's name, which is also
+    operator `op`'s output tensor.
+
+- **`ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname)`**
+  
+    Return all operators that have `tname` as their input tensor's name, which is also
+    operator `op`'s output tensor.
+
+- **`ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname)`**
+
+    Return the operator that has `tname` as its output tensor's name, which is also
+    operator `op`'s input tensor.
+
+- **`int ln_dfg_check(const ln_dfg *dfg)`**
+
+    Check the correctness of a data flow graph `dfg`. It emits an internal error if
+    any operator's input tensor is not given by another operator.
+
+- **`void ln_dfg_fprint(FILE *fp, const ln_dfg *dfg)`**
+
+    Print the `dfg` to file stream `fp`.
+
+- **`void ln_dfg_print(const ln_dfg *dfg)`**
+
+    Print the `dfg` to stdout.
