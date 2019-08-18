@@ -51,6 +51,12 @@ typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 #define LN_TIMEIT_END(msg, varg...)                             \
     _t2 = ln_clock(); ln_msg_info(msg"%.6fs", ##varg, _t2 - _t1); }
 
+#define LN_MAX_NAME_LEN 512      /* including the terminating null byte ('\0') */
+#define LN_MAX_NAME_IDX (UINT32_MAX)
+#define LN_MAX_NAME_IDX_LEN 10  /* 2^32 =  4294967296, 10 chars*/
+#define LN_MAX_NAME_SUBFIX (LN_MAX_NAME_IDX_LEN)
+#define LN_MAX_NAME_PREFIX (LN_MAX_NAME_LEN - LN_MAX_NAME_SUBFIX - 1)
+
 #ifdef __cplusplus
 #define LN_CPPSTART extern "C" {
 #define LN_CPPEND }
@@ -61,6 +67,8 @@ char *ln_sprint_version(char *buf);
 void *ln_alloc(size_t size);
 void *ln_realloc(void *ptr, size_t size);
 char *ln_strdup(const char *s);
+char **ln_strarraydup(char *const *sa, int len);
+void ln_strarray_free(char **sa, int len);
 char *ln_path_alloc(size_t *sizep);
 void *ln_clone(const void *src, size_t size);
 void *ln_repeat(void *data, size_t size, int times);

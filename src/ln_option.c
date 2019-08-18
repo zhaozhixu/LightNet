@@ -73,6 +73,8 @@ ln_option *ln_option_create(int argc, char **argv)
     int optindex;
     ln_option *option = ln_alloc(sizeof(ln_option));
 
+    option->argv = ln_strarraydup(argv, argc);
+    option->argc = argc;
     option->source = NULL;
     option->outfile = NULL;
     option->target = NULL;
@@ -99,7 +101,8 @@ ln_option *ln_option_create(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    while ((opt = getopt_long_only(argc, argv, ":hvo:t:f:crwd",
+    optind = 1;
+    while ((opt = getopt_long_only(option->argc, option->argv, ":hvo:t:f:crwd",
                                    longopts, &optindex)) != -1) {
         switch (opt) {
         case 0:
@@ -142,20 +145,21 @@ ln_option *ln_option_create(int argc, char **argv)
             option->debug = 1;
             break;
         case ':':
-            ln_msg_error("option %s needs a value", argv[optind-1]);
+            ln_msg_error("option %s needs a value", option->argv[optind-1]);
             break;
         case '?':
-            ln_msg_error("unknown option %s", argv[optind-1]);
+            ln_msg_error("unknown option %s", option->argv[optind-1]);
             break;
         default:
-            ln_msg_inter_error("getopt() returned character code %d", opt);
+            ln_msg_inter_error("getopt_long_only() returned character code %d",
+                               opt);
             break;
         }
     }
-    if (optind >= argc)
+    if (optind >= option->argc)
         ln_msg_error("no input file");
     else
-        option->source = argv[optind++];
+        option->source = option->argv[optind++];
 
     if (!option->outfile)
         option->outfile = "out.json";
@@ -167,6 +171,7 @@ ln_option *ln_option_create(int argc, char **argv)
 
 void ln_option_free(ln_option *option)
 {
+    ln_strarray_free(option->argv, option->argc);
     ln_free(option);
 }
 

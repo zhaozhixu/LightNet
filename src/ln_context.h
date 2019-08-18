@@ -46,6 +46,19 @@ LN_CPPSTART
 
 ln_context *ln_context_create(void);
 void ln_context_free(ln_context *ctx);
+void ln_context_init(ln_context *ctx, const char *source);
+void ln_context_compile(ln_context *ctx, const char *target);
+void ln_context_print(const ln_context *ctx, const char *outfile);
+void ln_context_load(ln_context *ctx, const char *datafile);
+void ln_context_set_data(ln_context *ctx, const char *tname, const void *data);
+void *ln_context_get_data(ln_context *ctx, const char *tname, void *data);
+size_t ln_context_data_size(ln_context *ctx, const char *tname);
+void ln_context_set_param(ln_context *ctx, const char *opname,
+                          const char *pname, ...);
+void ln_context_run(const ln_context *ctx);
+void ln_context_unload(ln_context *ctx);
+void ln_context_cleanup(ln_context *ctx);
+
 void ln_context_init_ops(ln_context *ctx);
 void ln_context_cleanup_ops(ln_context *ctx);
 void ln_context_replace_ops(ln_context *ctx, ln_list **position,
@@ -56,19 +69,6 @@ void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops);
 int ln_context_check(const ln_context *ctx);
 void ln_context_alloc_mem(ln_context *ctx);
 void ln_context_dealloc_mem(ln_context *ctx);
-
-void ln_context_init(ln_context *ctx, const char *source);
-void ln_context_compile(ln_context *ctx, const char *target);
-void ln_context_print(const ln_context *ctx, const char *outfile);
-void ln_context_load(ln_context *ctx, const char *datafile);
-void ln_context_set_data(ln_context *ctx, const char *tname, const void *data);
-void *ln_context_get_data(ln_context *ctx, const char *tname, void *data);
-size_t ln_context_data_size(ln_context *ctx, const char *name);
-void ln_context_set_param(ln_context *ctx, const char *opname,
-                          const char *pname, ...);
-void ln_context_run(const ln_context *ctx);
-void ln_context_unload(ln_context *ctx);
-void ln_context_cleanup(ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPEND

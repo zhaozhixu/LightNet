@@ -30,7 +30,6 @@ int main(int argc, char **argv)
     option = ln_option_create(argc, argv);
     ln_msg_init(option);
     ln_arch_init();
-    ln_name_init();
     ctx = ln_context_create();
     ln_context_init(ctx, option->source);
 
@@ -50,7 +49,6 @@ int main(int argc, char **argv)
 
     ln_context_cleanup(ctx);
     ln_context_free(ctx);
-    ln_name_cleanup();
     ln_arch_cleanup();
     ln_msg_cleanup();
     ln_option_free(option);

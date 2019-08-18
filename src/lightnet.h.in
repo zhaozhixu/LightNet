@@ -26,7 +26,6 @@
 /* start of config */
 /* end of config */
 
-#include "ln_name.h"
 #include "ln_list.h"
 #include "ln_op.h"
 #include "ln_dfg.h"

@@ -24,15 +24,15 @@
 #define _LN_ARCH_H_
 
 #include "ln_op.h"
-#include "ln_dfg.h"
+#include "ln_context.h"
 
-typedef ln_list *(*ln_expander_func) (const ln_op *op, const ln_dfg *dfg,
+typedef ln_list *(*ln_expander_func) (const ln_context *ctx, const ln_op *op,
                                       int *match);
-typedef ln_list *(*ln_combiner_func) (const ln_list *ops, size_t size,
-                                      const ln_dfg *dfg, int *match);
-typedef ln_list *(*ln_subgraph_func) (const ln_list *ops, const ln_dfg *dfg,
-                                      ln_list **old_ops);
-typedef ln_list *(*ln_schedule_func) (const ln_dfg *dfg);
+typedef ln_list *(*ln_combiner_func) (const ln_context *ctx,
+                                      const ln_list *win_ops, size_t win_size,
+                                      int *match);
+typedef ln_list *(*ln_subgraph_func) (const ln_context *ctx, ln_list **old_ops);
+typedef ln_list *(*ln_schedule_func) (const ln_context *ctx);
 
 struct ln_arch {
     void              (*init_func)(void **priv_p); /* pointer to priv */

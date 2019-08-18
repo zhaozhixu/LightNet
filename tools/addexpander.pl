@@ -145,7 +145,6 @@ sub gen_head_block {
 #include <assert.h>
 
 #include "ln_arch.h"
-#include "ln_name.h"
 
 $head_code
 EOF
@@ -222,7 +221,7 @@ EOF
 
     push @$ep_funcs, "{\"$optype\", ep_$optype},";
     my $tpl = <<EOF;
-static ln_list *ep_$optype(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_$optype(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 $auto_vars_code
@@ -378,7 +377,7 @@ EOF
         my $create_op = <<EOF;
 op_proto = ln_hash_find(LN_ARCH.op_proto_table, "$type");
 assert(op_proto);
-ln_op *$name = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+ln_op *$name = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
 new_ops = ln_list_append(new_ops, $name);
 EOF
         push @blocks, $create_op;
@@ -681,7 +680,7 @@ void ln_expander_cleanup_$name(void **priv_p)
     ln_hash_free(ep_funcs_hash);
 }
 
-ln_list *ln_expander_$name(const ln_op *self, const ln_dfg *dfg, int *match)
+ln_list *ln_expander_$name(const ln_context *ctx, const ln_op *self, int *match)
 {
     ln_expander_func  ep_func;
     ln_list          *new_ops;
@@ -692,7 +691,7 @@ ln_list *ln_expander_$name(const ln_op *self, const ln_dfg *dfg, int *match)
                            self->op_arg->optype);
 
     ep_func = value;
-    new_ops = ep_func(self, dfg, match);
+    new_ops = ep_func(ctx, self, match);
 
     return new_ops;
 }
@@ -738,7 +737,7 @@ sub add_to_arch_file {
     my $arch = shift;
     my $name = shift;
 
-    my $declare = "extern ln_list *ln_expander_${name}(const ln_op *op, const ln_dfg *dfg, int *match);\n";
+    my $declare = "extern ln_list *ln_expander_${name}(const ln_context *ctx, const ln_op *op, int *match);\n";
     my $item = "    ln_expander_${name},\n";
     my $init_func = "extern void ln_expander_init_${name}(void **priv_p);\n";
     my $init_func_exec = "    ln_expander_init_${name}(priv_p);\n";
@@ -993,7 +992,7 @@ sub topo_cond {
     int ret;
 
     te = $entry;
-    next_op = ln_dfg_next(dfg, self, te->name);
+    next_op = ln_dfg_next(ctx->dfg, self, te->name);
     if (!next_op) {
         ret = 1;
     } else {
@@ -1029,7 +1028,7 @@ EOF
     int ret;
 
     te = $entry;
-    next_op = ln_dfg_next(dfg, self, te->name);
+    next_op = ln_dfg_next(ctx->dfg, self, te->name);
     if (!next_op || !ln_streq(next_op->op_arg->optype, "$optype")) {
         ret = 0;
     } else {

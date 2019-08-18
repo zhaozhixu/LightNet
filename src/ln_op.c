@@ -22,7 +22,6 @@
 
 #include <ctype.h>
 #include "ln_op.h"
-#include "ln_name.h"
 
 static ln_op_arg *ln_op_arg_create(const char *name, ln_list *tensors_in,
                                    ln_list *tensors_out, ln_list *params,
@@ -82,26 +81,27 @@ void ln_op_free(ln_op *op)
     ln_free(op);
 }
 
-ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
+ln_op *ln_op_create_with_names(const ln_op *op_proto, const ln_list *ops,
+                               ln_hash *tensor_table)
 {
     ln_op *op;
     ln_list *tensors_in = NULL;
     ln_list *tensors_out = NULL;
     ln_list *params = NULL;
     const char *arg_name;
-    char *opname;
+    char opname[LN_MAX_NAME_LEN];
     char tensor_name[LN_MAX_NAME_LEN];
     int i;
 
-    opname = ln_strdup(ln_name_unique(op_proto->op_arg->optype));
+    ln_op_list_unique_name(ops, opname, op_proto->op_arg->optype);
     for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++) {
         tensors_in = ln_tensor_list_append(tensors_in, arg_name, "");
     }
     for (i = 0; (arg_name = op_proto->op_arg->out_arg_names[i]); i++) {
-        if (strlen(opname) + strlen(arg_name) + 2 <= LN_MAX_NAME_LEN)
-            snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
-        else
-            strncpy(tensor_name, ln_name_unique(arg_name), LN_MAX_NAME_LEN);
+        if (strlen(opname) + strlen(arg_name) + 2 > LN_MAX_NAME_LEN)
+            ln_msg_inter_error("result '%s_%s' length exceeds LN_MAX_NAME_LEN",
+                               opname, arg_name);
+        snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", opname, arg_name);
         tensors_out = ln_tensor_list_append(tensors_out, arg_name, tensor_name);
     }
     for (i = 0; (arg_name = op_proto->op_arg->param_arg_names[i]); i++) {
@@ -111,11 +111,11 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)
 
     op = ln_op_create_from_proto(op_proto, opname, tensors_in,
                                  tensors_out, params, tensor_table);
-    ln_free(opname);
     return op;
 }
 
-ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)
+ln_op *ln_op_create_with_opname(const ln_op *op_proto, const ln_list *ops,
+                                ln_hash *tensor_table)
 {
     ln_list *tensors_in = NULL;
     ln_list *tensors_out = NULL;
@@ -124,7 +124,7 @@ ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)
     char opname[LN_MAX_NAME_LEN];
     int i;
 
-    strncpy(opname, ln_name_unique(op_proto->op_arg->optype), LN_MAX_NAME_LEN);
+    ln_op_list_unique_name(ops, opname, op_proto->op_arg->optype);
     for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++)
         ln_tensor_list_append(tensors_in, arg_name, "");
 
@@ -148,19 +148,20 @@ ln_op *ln_op_copy(const ln_op *op)
                                    op->op_arg->tensor_table);
 }
 
-ln_op *ln_op_copy_to_optype(ln_hash *op_proto_table, const ln_op *op,
+ln_op *ln_op_copy_to_optype(const ln_hash *op_proto_table, const ln_op *op,
                             const char *new_optype)
 {
     ln_op *new_op_proto;
     ln_op *new_op;
-    char opname[LN_MAX_NAME_LEN];
+    /* char opname[LN_MAX_NAME_LEN]; */
 
     new_op_proto = ln_hash_find(op_proto_table, new_optype);
     if (!new_op_proto)
         ln_msg_inter_error("optype %s not found", new_optype);
-    strncpy(opname, ln_name_unique(new_op_proto->op_arg->optype),
-            LN_MAX_NAME_LEN);
-    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name, /* FIXME: use opname */
+    /* strncpy(opname, ln_name_unique(new_op_proto->op_arg->optype, name_hash), */
+    /*         LN_MAX_NAME_LEN); */
+    /* FIXME: use opname? */
+    new_op = ln_op_create_from_proto(new_op_proto, op->op_arg->name,
                                      ln_tensor_list_copy(op->op_arg->tensors_in),
                                      ln_tensor_list_copy(op->op_arg->tensors_out),
                                      ln_param_list_copy(op->op_arg->params),
@@ -214,9 +215,33 @@ ln_list *ln_op_list_create_from_array(ln_op **op_array)
     return ops;
 }
 
-void ln_op_list_free(ln_list *op_list)
+void ln_op_list_free(ln_list *ops)
 {
-    ln_list_free(op_list);
+    ln_list_free(ops);
+}
+
+int ln_op_list_unique_name(const ln_list *ops, char *buf, const char *prefix)
+{
+    ln_op *op;
+    int max_idx = -1;
+    int idx;
+    size_t prefix_len = strlen(prefix);
+
+    if (prefix_len >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("prefix '%s' length exceeds LN_MAX_NAME_LEN", prefix);
+    LN_LIST_FOREACH(op, ops) {
+        if (!ln_is_prefix_plus_number(op->op_arg->name, prefix))
+            continue;
+        idx = atoi(&op->op_arg->name[prefix_len]);
+        max_idx = max_idx < idx ? idx : max_idx;
+    }
+    max_idx++;
+    if (ln_digit_num(max_idx) + prefix_len >= LN_MAX_NAME_LEN)
+        ln_msg_inter_error("result '%s%d' length exceeds LN_MAX_NAME_LEN",
+                           prefix, max_idx);
+    snprintf(buf, LN_MAX_NAME_LEN, "%s%d", prefix, max_idx);
+
+    return max_idx;
 }
 
 static void op_free_lists_too_wrapper(void *p)

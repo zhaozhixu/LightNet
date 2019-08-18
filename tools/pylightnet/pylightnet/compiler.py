@@ -3,7 +3,7 @@ import pylightnet as ln
 
 class compiler(object):
     def __init__(self, source, target, outfile='out.json', options=[]):
-        argv = ['', '-c', '-t', target, '-o', outfile, source] + options
+        argv = ['(compiler)', '-c', '-t', target, '-o', outfile, source] + options
         self.option = ln.option.create(ln.lib.str_array(argv))
         ln.msg.init(self.option)
         ln.arch.init()

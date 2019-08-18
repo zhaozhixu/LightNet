@@ -78,6 +78,30 @@ char *ln_strdup(const char *s)
     return new_s;
 }
 
+char **ln_strarraydup(char *const *sa, int len)
+{
+    char **new_sa;
+    int i;
+
+    assert(sa);
+    new_sa = ln_alloc(sizeof(char *) * len);
+    for (i = 0; i < len; i++)
+        new_sa[i] = ln_strdup(sa[i]);
+
+    return new_sa;
+}
+
+void ln_strarray_free(char **sa, int len)
+{
+    int i;
+
+    if (!sa)
+        return;
+    for (i = 0; i < len; i++)
+        ln_free(sa[i]);
+    ln_free(sa);
+}
+
 void *ln_clone(const void *src, size_t size)
 {
     assert(src);

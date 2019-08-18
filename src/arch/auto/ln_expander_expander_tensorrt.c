@@ -26,11 +26,10 @@
 #include <assert.h>
 
 #include "ln_arch.h"
-#include "ln_name.h"
 
 #include "ln_tensorrt.h"
 
-static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -42,7 +41,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op) {
             ret = 1;
         } else {
@@ -64,7 +63,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "conv2d")) {
             ret = 0;
         } else {
@@ -86,7 +85,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "deconv2d")) {
             ret = 0;
         } else {
@@ -108,7 +107,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "relu")) {
             ret = 0;
         } else {
@@ -130,7 +129,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "maxpool2d")) {
             ret = 0;
         } else {
@@ -152,7 +151,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "softmax")) {
             ret = 0;
         } else {
@@ -174,7 +173,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "sigmoid")) {
             ret = 0;
         } else {
@@ -196,7 +195,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "concat")) {
             ret = 0;
         } else {
@@ -218,7 +217,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "concat")) {
             ret = 0;
         } else {
@@ -240,7 +239,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "transform_bboxSQD")) {
             ret = 0;
         } else {
@@ -262,7 +261,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "transform_bboxSQD")) {
             ret = 0;
         } else {
@@ -284,7 +283,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
         int ret;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(dfg, self, te->name);
+        next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op || !ln_streq(next_op->op_arg->optype, "rearange")) {
             ret = 0;
         } else {
@@ -313,7 +312,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_create_cuda(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_create_cuda(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -325,7 +324,7 @@ static ln_list *ep_create_cuda(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_conv2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int  last_index;
@@ -348,7 +347,7 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -571,7 +570,7 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -748,7 +747,7 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_deconv2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int  last_index;
@@ -771,7 +770,7 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1001,7 +1000,7 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1167,7 +1166,7 @@ static ln_list *ep_deconv2d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_relu(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_relu(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -1179,7 +1178,7 @@ static ln_list *ep_relu(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1267,7 +1266,7 @@ static ln_list *ep_relu(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_lrelu(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_lrelu(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -1279,7 +1278,7 @@ static ln_list *ep_lrelu(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1367,7 +1366,7 @@ static ln_list *ep_lrelu(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_sigmoid(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_sigmoid(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -1379,7 +1378,7 @@ static ln_list *ep_sigmoid(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1467,7 +1466,7 @@ static ln_list *ep_sigmoid(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_maxpool2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int  last_index;
@@ -1490,7 +1489,7 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1657,7 +1656,7 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1778,7 +1777,7 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_avgpool2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int  last_index;
@@ -1801,7 +1800,7 @@ static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1968,7 +1967,7 @@ static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2089,7 +2088,7 @@ static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_softmax(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -2110,7 +2109,7 @@ static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2192,7 +2191,7 @@ static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2280,7 +2279,7 @@ static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_concat(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -2301,7 +2300,7 @@ static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2400,7 +2399,7 @@ static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2505,7 +2504,7 @@ static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_batchnorm(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_batchnorm(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -2517,12 +2516,12 @@ static ln_list *ep_batchnorm(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "bn2scale_wts_cpu");
         assert(op_proto);
-        ln_op *bwc = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *bwc = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, bwc);
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2694,7 +2693,7 @@ static ln_list *ep_batchnorm(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_elew(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_elew(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
     int last_index;
@@ -2706,7 +2705,7 @@ static ln_list *ep_elew(const ln_op *self, const ln_dfg *dfg, int *match)
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
-        ln_op *trt = ln_op_create_with_names(op_proto, self->op_arg->tensor_table);
+        ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2811,7 +2810,7 @@ static ln_list *ep_elew(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_maxreduce(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_maxreduce(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2825,7 +2824,7 @@ static ln_list *ep_maxreduce(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_maxreduce_arg(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_maxreduce_arg(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2839,7 +2838,7 @@ static ln_list *ep_maxreduce_arg(const ln_op *self, const ln_dfg *dfg, int *matc
     }
 }
 
-static ln_list *ep_slice(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_slice(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2853,7 +2852,7 @@ static ln_list *ep_slice(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_transpose(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_transpose(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2867,7 +2866,7 @@ static ln_list *ep_transpose(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_upsample(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_upsample(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2881,7 +2880,7 @@ static ln_list *ep_upsample(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_zeros(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_zeros(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2895,7 +2894,7 @@ static ln_list *ep_zeros(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_reshape(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_reshape(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2909,7 +2908,7 @@ static ln_list *ep_reshape(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_print(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_print(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2935,7 +2934,7 @@ static ln_list *ep_print(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_fprint(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_fprint(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2961,7 +2960,7 @@ static ln_list *ep_fprint(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_sort1d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_sort1d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2975,7 +2974,7 @@ static ln_list *ep_sort1d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_sort1d_by_key(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_sort1d_by_key(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -2989,7 +2988,7 @@ static ln_list *ep_sort1d_by_key(const ln_op *self, const ln_dfg *dfg, int *matc
     }
 }
 
-static ln_list *ep_arange(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_arange(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -3003,7 +3002,7 @@ static ln_list *ep_arange(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_rearange(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_rearange(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -3017,7 +3016,7 @@ static ln_list *ep_rearange(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_transform_bboxSQD(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_transform_bboxSQD(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -3031,7 +3030,7 @@ static ln_list *ep_transform_bboxSQD(const ln_op *self, const ln_dfg *dfg, int *
     }
 }
 
-static ln_list *ep_pick1d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_pick1d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -3045,7 +3044,7 @@ static ln_list *ep_pick1d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_detect_yolov3(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_detect_yolov3(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -3059,7 +3058,7 @@ static ln_list *ep_detect_yolov3(const ln_op *self, const ln_dfg *dfg, int *matc
     }
 }
 
-static ln_list *ep_tensorrt(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_tensorrt(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -3117,7 +3116,7 @@ void ln_expander_cleanup_expander_tensorrt(void **priv_p)
     ln_hash_free(ep_funcs_hash);
 }
 
-ln_list *ln_expander_expander_tensorrt(const ln_op *self, const ln_dfg *dfg, int *match)
+ln_list *ln_expander_expander_tensorrt(const ln_context *ctx, const ln_op *self, int *match)
 {
     ln_expander_func  ep_func;
     ln_list          *new_ops;
@@ -3128,7 +3127,7 @@ ln_list *ln_expander_expander_tensorrt(const ln_op *self, const ln_dfg *dfg, int
                            self->op_arg->optype);
 
     ep_func = value;
-    new_ops = ep_func(self, dfg, match);
+    new_ops = ep_func(ctx, self, match);
 
     return new_ops;
 }

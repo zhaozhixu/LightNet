@@ -23,7 +23,6 @@
 #include <ctype.h>
 
 #include "ln_arch.h"
-#include "ln_name.h"
 #include "ln_tensorrt.h"
 
 extern ln_op ln_opimpl_tensorrt;
@@ -35,7 +34,7 @@ static ln_op *ops_tensorrt[] = {
     NULL
 };
 
-extern ln_list *ln_expander_expander_tensorrt(const ln_op *op, const ln_dfg *dfg, int *match);
+extern ln_list *ln_expander_expander_tensorrt(const ln_context *ctx, const ln_op *op, int *match);
 /* end of declare tensorrt expanders */
 
 ln_expander_func ep_funcs_tensorrt[] = {
@@ -44,8 +43,9 @@ ln_expander_func ep_funcs_tensorrt[] = {
     NULL
 };
 
-static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
-                                 const ln_dfg *dfg, int *match);
+static ln_list *cb_func_tensorrt(const ln_context *ctx,
+                                 const ln_list *win_ops, size_t win_size,
+                                 int *match);
 /* end of declare tensorrt combiners */
 
 ln_combiner_func cb_funcs_tensorrt[] = {
@@ -379,8 +379,9 @@ static int is_win_match(const ln_list *win_ops, size_t win_size)
     return 0;
 }
 
-static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
-                                 const ln_dfg *dfg, int *match)
+static ln_list *cb_func_tensorrt(const ln_context *ctx,
+                                 const ln_list *win_ops, size_t win_size,
+                                 int *match)
 {
     ln_list *new_ops = NULL;
     ln_list *l;
@@ -408,7 +409,7 @@ static ln_list *cb_func_tensorrt(const ln_list *win_ops, size_t win_size,
             op = l->data;
             if (!ln_streq(op->op_arg->optype, "tensorrt"))
                 break;
-            add_trt_to_trt(trt_op, op, dfg);
+            add_trt_to_trt(trt_op, op, ctx->dfg);
         }
         new_ops = ln_list_append(new_ops, trt_op);
     }

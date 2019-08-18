@@ -24,7 +24,6 @@
 #include "ln_context.h"
 #include "ln_json.h"
 #include "ln_pass.h"
-#include "ln_name.h"
 
 ln_context *ln_context_create(void)
 {

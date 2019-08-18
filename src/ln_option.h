@@ -28,6 +28,8 @@ struct ln_option {
     const char  *outfile;
     const char  *target;
     const char  *datafile;
+    char       **argv;
+    int          argc;
     int          compile;
     int          run;
     int          Winter;

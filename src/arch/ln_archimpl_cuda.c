@@ -132,8 +132,9 @@ static inline int can_replace(const char *optype)
 }
 
 /* this is just for testing, should remove it */
-static ln_list *cb_func_single_replace(const ln_list *ops, size_t size,
-                                       const ln_dfg *dfg, int *match)
+static ln_list *cb_func_single_replace(const ln_context *ctx,
+                                       const ln_list *ops, size_t size,
+                                       int *match)
 {
     ln_op *op, *new_op, *op_proto;
     ln_op_arg *op_arg;
@@ -188,7 +189,7 @@ static ln_list *cb_func_single_replace(const ln_list *ops, size_t size,
     return new_ops;
 }
 
-extern ln_list *ln_expander_expander_cuda(const ln_op *op, const ln_dfg *dfg, int *match);
+extern ln_list *ln_expander_expander_cuda(const ln_context *ctx, const ln_op *op, int *match);
 /* end of declare cuda expanders */
 
 ln_expander_func ep_funcs_cuda[] = {

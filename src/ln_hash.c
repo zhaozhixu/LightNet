@@ -118,6 +118,8 @@ ln_hash *ln_hash_create(ln_hash_func hash_func, ln_cmp_func cmp_func,
 
 void ln_hash_free(ln_hash *hash)
 {
+    if (!hash)
+        return;
     for (int i = 0; i < hash->capacity; i++)
         hash_entry_list_free_kv_too(hash->table[i],
                                     hash->free_k_func, hash->free_v_func);
@@ -199,7 +201,7 @@ int ln_hash_insert(ln_hash *hash, const void *key, void *value)
     return 1;
 }
 
-void *ln_hash_find(ln_hash *hash, const void *key)
+void *ln_hash_find(const ln_hash *hash, const void *key)
 {
     int hash_value = hash->hash_func(key);
     int idx = index_of(hash_value, hash->capacity);
@@ -211,7 +213,7 @@ void *ln_hash_find(ln_hash *hash, const void *key)
 }
 
 /* in case of NULL value */
-int ln_hash_find_extended(ln_hash *hash, const void *key,
+int ln_hash_find_extended(const ln_hash *hash, const void *key,
                           void **found_key, void **found_value)
 {
     int hash_value = hash->hash_func(key);

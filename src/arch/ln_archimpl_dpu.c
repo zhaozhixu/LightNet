@@ -41,7 +41,7 @@ static ln_op *ops_dpu[] = {
     NULL
 };
 
-ln_list *ln_expander_dpu(const ln_op *self, const ln_dfg *dfg, int *match);
+ln_list *ln_expander_dpu(const ln_context *ctx, const ln_op *self, int *match);
 /* end of declare dpu expanders */
 
 ln_expander_func ep_funcs_dpu[] = {
@@ -87,7 +87,7 @@ static void cleanup_dpu(void **priv_p)
 /* end of exec dpu cleanup funcs */
 }
 
-static ln_op *create_new_op(const char *optype, ln_hash *tensor_table)
+static ln_op *create_new_op(const char *optype, const ln_context *ctx)
 {
     ln_op *op_proto;
 
@@ -95,10 +95,10 @@ static ln_op *create_new_op(const char *optype, ln_hash *tensor_table)
     if (!op_proto)
         ln_msg_inter_error("can't find op proto '%s'", optype);
 
-    return ln_op_create_with_names(op_proto, tensor_table);
+    return ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
 }
 
-static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg)
+static ln_list *ep_conv2d(const ln_op *self, const ln_context *ctx)
 {
     int last_index;
     ln_op *transpose;
@@ -110,19 +110,19 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg)
     ln_op *conv_dpu;
     ln_list *new_ops = NULL;
 
-    transpose = create_new_op("transpose_cpu", self->op_arg->tensor_table);
-    reshape = create_new_op("reshape_cpu", self->op_arg->tensor_table);
-    scatter = create_new_op("scatter", self->op_arg->tensor_table);
+    transpose = create_new_op("transpose_cpu", ctx);
+    reshape = create_new_op("reshape_cpu", ctx);
+    scatter = create_new_op("scatter", ctx);
 }
 
-ln_list *ln_expander_dpu(const ln_op *self, const ln_dfg *dfg, int *match)
+ln_list *ln_expander_dpu(const ln_context *ctx, const ln_op *self, int *match)
 {
     ln_list *new_ops = NULL;
 
     *match = 0;
     if (ln_streq(self->op_arg->optype, "conv2d")) {
         *match = 1;
-        new_ops = ep_conv2d(self, dfg);
+        new_ops = ep_conv2d(self, ctx);
     }
 
     return new_ops;

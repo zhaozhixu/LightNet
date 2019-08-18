@@ -28,7 +28,6 @@
 
 #include "ln_param.h"
 #include "ln_util.h"
-#include "ln_name.h"
 #include "ln_msg.h"
 
 ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type)

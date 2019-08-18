@@ -116,7 +116,7 @@ void ln_pass_expander(ln_context *ctx, const ln_expander_func *ep_funcs)
         op = (*lp)->data;
         for (i = 0; (ep_func = ep_funcs[i]); i++) {
             match = 0;
-            ep_ops = ep_func(op, ctx->dfg, &match);
+            ep_ops = ep_func(ctx, op, &match);
             if (!match)
                 continue;
             ln_context_replace_ops(ctx, lp, 1, ep_ops);
@@ -143,7 +143,7 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
                 break;
             for (i = 0; (cb = cb_funcs[i]); i++) {
                 match = 0;
-                win_out = cb(*lp, win_size, ctx->dfg, &match);
+                win_out = cb(ctx, *lp, win_size, &match);
                 if (!match)
                     continue;
                 stable = 0;
@@ -167,7 +167,7 @@ void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs)
     int i;
 
     for (i = 0; (sg = sg_funcs[i]); i++) {
-        new_ops = sg(ctx->ops, ctx->dfg, &old_ops);
+        new_ops = sg(ctx, &old_ops);
         if (!old_ops)
             continue;
         ln_context_subgraph(ctx, old_ops, new_ops);
@@ -187,7 +187,7 @@ void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs)
     int i, n;
 
     for (i = 0; (sd = sd_funcs[i]); i++) {
-        ops = sd(ctx->dfg);
+        ops = sd(ctx);
         n = 0;
         LN_LIST_FOREACH(op, ops) {
             if (!ln_hash_find(ctx->dfg->node_table, op->op_arg->name))

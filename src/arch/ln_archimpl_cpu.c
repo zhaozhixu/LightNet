@@ -97,7 +97,7 @@ static ln_op *ops_cpu[] = {
     NULL
 };
 
-extern ln_list *ln_expander_expander_cpu(const ln_op *op, const ln_dfg *dfg, int *match);
+extern ln_list *ln_expander_expander_cpu(const ln_context *ctx, const ln_op *op, int *match);
 /* end of declare cpu expanders */
 
 ln_expander_func ep_funcs_cpu[] = {

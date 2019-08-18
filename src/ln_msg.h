@@ -44,7 +44,7 @@ typedef enum ln_msg_level ln_msg_level;
 
 struct ln_msg {
     char            *err_str;
-    ln_msg_level   level;
+    ln_msg_level     level;
 };
 typedef struct ln_msg ln_msg;
 
@@ -65,25 +65,25 @@ typedef struct ln_msg ln_msg;
 #define ln_msg_error(fmt, varg...)              \
     ln_msg_emit(LN_MSG_ERROR, (fmt), ##varg)
 
-#define ln_msg_error_sys(fmt, varg...)          \
+#define ln_msg_error_sys(fmt, varg...)                  \
     ln_msg_emit(LN_MSG_ERROR_SYS, (fmt), ##varg)
 
-#define ln_msg_inter_error(fmt, varg...)        \
+#define ln_msg_inter_error(fmt, varg...)                \
     ln_msg_emit(LN_MSG_INTER_ERROR, (fmt), ##varg)
 
 #define ln_msg_inter_error_sys(fmt, varg...)            \
     ln_msg_emit(LN_MSG_INTER_ERROR_SYS, (fmt), ##varg)
 
-#define ln_msg_warn(fmt, varg...)            \
+#define ln_msg_warn(fmt, varg...)               \
     ln_msg_emit(LN_MSG_WARN, (fmt), ##varg)
 
-#define ln_msg_warn_sys(fmt, varg...)        \
+#define ln_msg_warn_sys(fmt, varg...)           \
     ln_msg_emit(LN_MSG_WARN_SYS, (fmt), ##varg)
 
-#define ln_msg_inter_warn(fmt, varg...)              \
+#define ln_msg_inter_warn(fmt, varg...)                 \
     ln_msg_emit(LN_MSG_INTER_WARN, (fmt), ##varg)
 
-#define ln_msg_inter_warn_sys(fmt, varg...)          \
+#define ln_msg_inter_warn_sys(fmt, varg...)             \
     ln_msg_emit(LN_MSG_INTER_WARN_SYS, (fmt), ##varg)
 
 #ifdef LN_DEBUG

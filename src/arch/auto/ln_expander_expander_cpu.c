@@ -26,11 +26,10 @@
 #include <assert.h>
 
 #include "ln_arch.h"
-#include "ln_name.h"
 
  
 
-static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -44,7 +43,7 @@ static ln_list *ep_create(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_conv2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -58,7 +57,7 @@ static ln_list *ep_conv2d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_maxpool2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -72,7 +71,7 @@ static ln_list *ep_maxpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_maxreduce(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_maxreduce(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -86,7 +85,7 @@ static ln_list *ep_maxreduce(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_relu(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_relu(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -100,7 +99,7 @@ static ln_list *ep_relu(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_reshape(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_reshape(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -114,7 +113,7 @@ static ln_list *ep_reshape(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_slice(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_slice(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -128,7 +127,7 @@ static ln_list *ep_slice(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_transpose(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_transpose(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -142,7 +141,7 @@ static ln_list *ep_transpose(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_zeros(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_zeros(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -156,7 +155,7 @@ static ln_list *ep_zeros(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_elew(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_elew(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -170,7 +169,7 @@ static ln_list *ep_elew(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_softmax(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -184,7 +183,7 @@ static ln_list *ep_softmax(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_concat(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -198,7 +197,7 @@ static ln_list *ep_concat(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_batchnorm(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_batchnorm(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -212,7 +211,7 @@ static ln_list *ep_batchnorm(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_upsample(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_upsample(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -226,7 +225,7 @@ static ln_list *ep_upsample(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_maxreduce_arg(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_maxreduce_arg(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -240,7 +239,7 @@ static ln_list *ep_maxreduce_arg(const ln_op *self, const ln_dfg *dfg, int *matc
     }
 }
 
-static ln_list *ep_print(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_print(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -254,7 +253,7 @@ static ln_list *ep_print(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_sigmoid(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_sigmoid(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -268,7 +267,7 @@ static ln_list *ep_sigmoid(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_sort1d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_sort1d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -282,7 +281,7 @@ static ln_list *ep_sort1d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_sort1d_by_key(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_sort1d_by_key(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -296,7 +295,7 @@ static ln_list *ep_sort1d_by_key(const ln_op *self, const ln_dfg *dfg, int *matc
     }
 }
 
-static ln_list *ep_arange(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_arange(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -310,7 +309,7 @@ static ln_list *ep_arange(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_transform_bboxSQD(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_transform_bboxSQD(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -324,7 +323,7 @@ static ln_list *ep_transform_bboxSQD(const ln_op *self, const ln_dfg *dfg, int *
     }
 }
 
-static ln_list *ep_rearange(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_rearange(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -338,7 +337,7 @@ static ln_list *ep_rearange(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_pick1d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_pick1d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -352,7 +351,7 @@ static ln_list *ep_pick1d(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_fprint(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_fprint(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -366,7 +365,7 @@ static ln_list *ep_fprint(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_lrelu(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_lrelu(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -380,7 +379,7 @@ static ln_list *ep_lrelu(const ln_op *self, const ln_dfg *dfg, int *match)
     }
 }
 
-static ln_list *ep_detect_yolov3(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_detect_yolov3(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -394,7 +393,7 @@ static ln_list *ep_detect_yolov3(const ln_op *self, const ln_dfg *dfg, int *matc
     }
 }
 
-static ln_list *ep_avgpool2d(const ln_op *self, const ln_dfg *dfg, int *match)
+static ln_list *ep_avgpool2d(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
 
@@ -451,7 +450,7 @@ void ln_expander_cleanup_expander_cpu(void **priv_p)
     ln_hash_free(ep_funcs_hash);
 }
 
-ln_list *ln_expander_expander_cpu(const ln_op *self, const ln_dfg *dfg, int *match)
+ln_list *ln_expander_expander_cpu(const ln_context *ctx, const ln_op *self, int *match)
 {
     ln_expander_func  ep_func;
     ln_list          *new_ops;
@@ -462,7 +461,7 @@ ln_list *ln_expander_expander_cpu(const ln_op *self, const ln_dfg *dfg, int *mat
                            self->op_arg->optype);
 
     ep_func = value;
-    new_ops = ep_func(self, dfg, match);
+    new_ops = ep_func(ctx, self, match);
 
     return new_ops;
 }

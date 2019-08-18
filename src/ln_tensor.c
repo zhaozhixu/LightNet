@@ -23,7 +23,6 @@
 #include "ln_tensor.h"
 #include "ln_util.h"
 #include "ln_msg.h"
-#include "ln_name.h"
 
 ln_tensor_list_entry *ln_tensor_list_entry_create(const char *arg_name,
                                                   const char *name)
