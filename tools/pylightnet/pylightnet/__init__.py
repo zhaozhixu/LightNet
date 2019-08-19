@@ -7,12 +7,12 @@ import lib
 import arch
 import context
 import msg
-import name
 import option
 import util
 import compiler
 import infer
 
 lib.init()
+arch.init()
 
 __version__ = lib.version()

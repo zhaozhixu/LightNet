@@ -6,16 +6,12 @@ class compiler(object):
         argv = ['(compiler)', '-c', '-t', target, '-o', outfile, source] + options
         self.option = ln.option.create(ln.lib.str_array(argv))
         ln.msg.init(self.option)
-        ln.arch.init()
-        ln.name.init()
         self.ctx = ln.context.create()
         ln.context.init(self.ctx, ln.option.get_source(self.option))
 
     def __del__(self):
         ln.context.cleanup(self.ctx)
         ln.context.free(self.ctx)
-        ln.name.cleanup()
-        ln.arch.cleanup()
         ln.msg.cleanup()
         ln.option.free(self.option)
 

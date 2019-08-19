@@ -7,8 +7,6 @@ def main(argv):
     ln.lib.init()
     option = ln.option.create(ln.lib.str_array(argv))
     ln.msg.init(option)
-    ln.arch.init()
-    ln.name.init()
     ctx = ln.context.create()
     ln.context.init(ctx, ln.option.get_source(option))
 
@@ -25,8 +23,6 @@ def main(argv):
 
     ln.context.cleanup(ctx)
     ln.context.free(ctx)
-    ln.name.cleanup()
-    ln.arch.cleanup()
     ln.msg.cleanup()
     ln.option.free(option)
 

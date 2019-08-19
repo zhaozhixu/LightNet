@@ -142,3 +142,23 @@ Options:
 ### C API
 
 ### Python API
+
+An example using the python api is in `example/detect.py` and demoed with
+`example/object-detect.py`.
+This example performs an object detection algorithm using 
+[TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html),
+with [ShuffleNetV2](https://arxiv.org/abs/1807.11164) as back-bone conv-net
+and [SqueezeDet](https://arxiv.org/abs/1612.01051)'s detection part as feature
+expression algorithm. 
+
+To play with this demo, LightNet should be configured with
+
+    --with-tensorrt=yes --with-python=yes
+
+After compilation and installation, enter the following
+command in the repository and you should get a dection window with bouding 
+boxes detecting the images in `example/data/images` dynamicly.
+
+    example/object-detect.py -d example/data/images
+
+![Demo](../img/demo.png)

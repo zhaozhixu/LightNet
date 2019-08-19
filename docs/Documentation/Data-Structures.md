@@ -257,13 +257,13 @@ the [HashMap](http://hg.openjdk.java.net/jdk7/jdk7/jdk/file/9b8c96f96a0f/src/sha
     exists and the old value will be replaced by `value` (it will be freed if
     its free function is provided when creating the table), else return 1.
 
-- **`void *ln_hash_find(ln_hash *hash, const void *key)`**
+- **`void *ln_hash_find(const ln_hash *hash, const void *key)`**
 
     Find a value in the hash table with `key`. If it is found, return the value,
     else return `NULL`. In case of existing legal `NULL` values, use 
     `ln_hash_find_extended`.
 
-- **`int ln_hash_find_extended(ln_hash *hash, const void *key, void **found_key, void **found_value)`**
+- **`int ln_hash_find_extended(const ln_hash *hash, const void *key, void **found_key, void **found_value)`**
 
     Find a value in the hash table with `key`. If it is found, return 1, else
     return 0. The found key and value will be stored in `found_key` and 
@@ -1023,11 +1023,12 @@ different state-transfer functions.
 
     Free an operator, as well as its `tensors_in`, `tensors_out` and `params`.
 
-- **`ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)`**
+- **`ln_op *ln_op_create_with_names(const ln_op *op_proto, const ln_list *ops, ln_hash *tensor_table)`**
 
-    Create an operator and its `tensors_in`, `tensors_out` and `params` as well,
+    Create an operator of the same optype as `op_proto` and create its `tensors_in`,
+    `tensors_out` and `params` as well,
     with auto-generated unique operator name and output tensor names in the scope
-    of the [context](#context). Input tensor names are inited with empty string (""), and
+    of `ops`. Input tensor names are inited with empty string (""), and
     parameters are inited with empty value (zeroed number or `NULL` string or
     `NULL` array). 
     The meta information of the operator used to create those 
@@ -1038,8 +1039,8 @@ different state-transfer functions.
 
 - **`ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)`**
 
-    Create an operator with auto-generated unique operator name in the scope of
-    the [context](#context).
+    Create an operator of the same optype as `op_proto` with auto-generated 
+    unique operator name in the scope of `ops`.
 
 - **`ln_op *ln_op_copy(const ln_op *op)`**
 
@@ -1070,7 +1071,7 @@ The operator list supports the following operations:
 
     Create an operator list from an `NULL` terminated operator array.
 
-- **`void ln_op_list_free(ln_list *op_list)`**
+- **`void ln_op_list_free(ln_list *ops)`**
 
     Free an operator list.
 
@@ -1110,10 +1111,12 @@ The operator list supports the following operations:
 
     Execute the `post_run` functions of the operators in `ops` in order.
 
-- **`char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)`**
+- **`int ln_op_list_unique_name(const ln_list *ops, char *buf, const char *prefix)`**
 
-    Create an unique operator name in the operator list `ops` with `prefix`.
-    Return the newly allocated name string.
+    Create and print an unique operator name in the scope of `ops`
+    with `prefix` in `buf`.
+    The created name is prefixed with `prefix` and subfixed with a serial number,
+    which is the return value.
 
 The operator table supports the following operations:
 

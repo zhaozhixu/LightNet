@@ -290,7 +290,9 @@ void ln_context_set_param(ln_context *ctx, const char *opname,
 
 void ln_context_run(const ln_context *ctx)
 {
+    /* LN_TIMEIT_START; */
     ln_op_list_do_run(ctx->ops);
+    /* LN_TIMEIT_END("time of ln_context_run(): "); */
 }
 
 void ln_context_unload(ln_context *ctx)

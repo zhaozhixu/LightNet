@@ -9,8 +9,6 @@ class infer(object):
             argv = ['(infer)', '-r', '-f', weight, source] + options
         self.option = ln.option.create(ln.lib.str_array(argv))
         ln.msg.init(self.option)
-        ln.arch.init()
-        ln.name.init()
         self.ctx = ln.context.create()
         ln.context.init(self.ctx, ln.option.get_source(self.option))
         ln.context.load(self.ctx, ln.option.get_datafile(self.option))
@@ -19,8 +17,6 @@ class infer(object):
         ln.context.unload(self.ctx)
         ln.context.cleanup(self.ctx)
         ln.context.free(self.ctx)
-        ln.name.cleanup()
-        ln.arch.cleanup()
         ln.msg.cleanup()
         ln.option.free(self.option)
 
