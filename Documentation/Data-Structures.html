@@ -129,6 +129,7 @@
             <li><a href="#parameter">Parameter</a></li>
             <li><a href="#operator">Operator</a></li>
             <li><a href="#data-flow-graph">Data Flow Graph</a></li>
+            <li><a href="#context">Context</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
@@ -381,13 +382,13 @@ exists and the old value will be replaced by <code>value</code> (it will be free
 its free function is provided when creating the table), else return 1.</p>
 </li>
 <li>
-<p><strong><code>void *ln_hash_find(ln_hash *hash, const void *key)</code></strong></p>
+<p><strong><code>void *ln_hash_find(const ln_hash *hash, const void *key)</code></strong></p>
 <p>Find a value in the hash table with <code>key</code>. If it is found, return the value,
 else return <code>NULL</code>. In case of existing legal <code>NULL</code> values, use 
 <code>ln_hash_find_extended</code>.</p>
 </li>
 <li>
-<p><strong><code>int ln_hash_find_extended(ln_hash *hash, const void *key, void **found_key, void **found_value)</code></strong></p>
+<p><strong><code>int ln_hash_find_extended(const ln_hash *hash, const void *key, void **found_key, void **found_value)</code></strong></p>
 <p>Find a value in the hash table with <code>key</code>. If it is found, return 1, else
 return 0. The found key and value will be stored in <code>found_key</code> and 
 <code>found_value</code> respectively. If either of <code>found_key</code> or <code>found_value</code> is
@@ -1074,7 +1075,7 @@ over again to do its real computation work.
 Or it can execute its <code>post_run</code> function to finalize its life cycle, 
 free all the private memory it allocated in its life cycle, unregister its
 output tensors from the tensor table, and enter the <strong>end</strong> state, where the
-LightNet context can safely remove this operator from the operator table and
+LightNet <a href="#context">context</a> can safely remove this operator from the operator table and
 the data flow graph.</p>
 <p><code>ln_op</code> has those 4 state-transfer functions in its C struct as function
 pointers, which has the same prototype <code>ln_op_func</code>:</p>
@@ -1126,9 +1127,9 @@ different state-transfer functions.</p>
 <li>
 <p><strong><code>ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name, ln_list *tensors_in, ln_list *tensors_out, ln_list *params, ln_hash *tensor_table)</code></strong></p>
 <p>Create an operator from a "proto" operator <code>op_proto</code>. The newly created operator
-will have the same function pointers (<code>pre_run</code>, <code>run</code>, etc) as <code>op_proto</code>, with
+will have the same function pointers (<code>pre_run</code>, <code>run</code>, etc) as <code>op_proto</code>, but with
 its own <code>name</code>, <code>tensors_in</code>, <code>tensors_out</code>, <code>params</code>, and a <code>tensor_table</code>
-pointer of the context passed from the caller. <code>op_proto</code> generally are found
+pointer of the <a href="#context">context</a> passed from the caller. <code>op_proto</code> generally are found
 from the global hash table <code>LN_ARCH.op_proto_table</code> with its operator type as 
 the key.</p>
 </li>
@@ -1141,10 +1142,11 @@ the key.</p>
 <p>Free an operator, as well as its <code>tensors_in</code>, <code>tensors_out</code> and <code>params</code>.</p>
 </li>
 <li>
-<p><strong><code>ln_op *ln_op_create_with_names(const ln_op *op_proto, ln_hash *tensor_table)</code></strong></p>
-<p>Create an operator and its <code>tensors_in</code>, <code>tensors_out</code> and <code>params</code> as well,
+<p><strong><code>ln_op *ln_op_create_with_names(const ln_op *op_proto, const ln_list *ops, ln_hash *tensor_table)</code></strong></p>
+<p>Create an operator of the same optype as <code>op_proto</code> and create its <code>tensors_in</code>,
+<code>tensors_out</code> and <code>params</code> as well,
 with auto-generated unique operator name and output tensor names in the scope
-of the context. Input tensor names are inited with empty string (""), and
+of <code>ops</code>. Input tensor names are inited with empty string (""), and
 parameters are inited with empty value (zeroed number or <code>NULL</code> string or
 <code>NULL</code> array). 
 The meta information of the operator used to create those 
@@ -1155,8 +1157,8 @@ generate optimized new operators to replace old ones.</p>
 </li>
 <li>
 <p><strong><code>ln_op *ln_op_create_with_opname(const ln_op *op_proto, ln_hash *tensor_table)</code></strong></p>
-<p>Create an operator with auto-generated unique operator name in the scope of
-the context.</p>
+<p>Create an operator of the same optype as <code>op_proto</code> with auto-generated 
+unique operator name in the scope of <code>ops</code>.</p>
 </li>
 <li>
 <p><strong><code>ln_op *ln_op_copy(const ln_op *op)</code></strong></p>
@@ -1178,7 +1180,7 @@ replacing <code>conv</code> with <code>conv_cuda</code>.</p>
 <p>Find an operator's input or output tensor list entry with the entry's <code>arg_name</code>.</p>
 </li>
 </ul>
-<p>The are both an operator table and an operator list existing in a LightNet context.
+<p>The are both an operator table and an operator list existing in a LightNet <a href="#context">context</a>.
 While the former has the ownership of all operators, the latter retains a linear
 form of the operators, which contains the execution order of the operators.</p>
 <p>The operator list supports the following operations:</p>
@@ -1188,7 +1190,7 @@ form of the operators, which contains the execution order of the operators.</p>
 <p>Create an operator list from an <code>NULL</code> terminated operator array.</p>
 </li>
 <li>
-<p><strong><code>void ln_op_list_free(ln_list *op_list)</code></strong></p>
+<p><strong><code>void ln_op_list_free(ln_list *ops)</code></strong></p>
 <p>Free an operator list.</p>
 </li>
 <li>
@@ -1228,9 +1230,11 @@ operator name.</p>
 <p>Execute the <code>post_run</code> functions of the operators in <code>ops</code> in order.</p>
 </li>
 <li>
-<p><strong><code>char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)</code></strong></p>
-<p>Create an unique operator name in the operator list <code>ops</code> with <code>prefix</code>.
-Return the newly allocated name string.</p>
+<p><strong><code>int ln_op_list_unique_name(const ln_list *ops, char *buf, const char *prefix)</code></strong></p>
+<p>Create and print an unique operator name in the scope of <code>ops</code>
+with <code>prefix</code> in <code>buf</code>.
+The created name is prefixed with <code>prefix</code> and subfixed with a serial number,
+which is the return value.</p>
 </li>
 </ul>
 <p>The operator table supports the following operations:</p>
@@ -1270,7 +1274,8 @@ appropriate data type consistent with the according parameter.</p>
 </li>
 </ul>
 <p>There are also a bunch of macros designated for the validity checking of tensors
-and parameters in <code>pre_run</code> function. </p>
+and parameters in <code>pre_run</code> function, which can generate unified formatted message
+when the check fails.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Those convinent macros should <strong>only</strong> used in a <code>pre_run</code> function 
@@ -1515,7 +1520,7 @@ the reaching in dangling edge nodes.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The operator pointers held by graph nodes are owned by <code>op_table</code> of the 
-context. So freeing <code>graph</code> and <code>node_table</code> doesn't actually free the
+<a href="#context">context</a>. So freeing <code>graph</code> and <code>node_table</code> doesn't actually free the
 underlying operators. (TODO: May be the graph nodes holding operator names is 
 well enough?)</p>
 </div>
@@ -1576,6 +1581,139 @@ any operator's input tensor is not given by another operator.</p>
 <p><strong><code>void ln_dfg_print(const ln_dfg *dfg)</code></strong></p>
 <p>Print the <code>dfg</code> to stdout.</p>
 </li>
+</ul>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>LightNet needs a data structure to manage all the resources dedicated to the
+optimization and execution for a specific neural network model, such as its
+tensor table, operator table and the data flow graph. <code>ln_context</code> is such a data structure.`</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_context</span> <span class="p">{</span>
+    <span class="n">ln_hash</span> <span class="o">*</span><span class="n">tensor_table</span><span class="p">;</span>                 <span class="cm">/* the tensor table */</span>
+    <span class="n">ln_hash</span> <span class="o">*</span><span class="n">op_table</span><span class="p">;</span>                     <span class="cm">/* the operator table */</span>
+    <span class="n">ln_dfg</span>  <span class="o">*</span><span class="n">dfg</span><span class="p">;</span>                          <span class="cm">/* the data flow graph */</span>
+    <span class="n">ln_list</span> <span class="o">*</span><span class="n">ops</span><span class="p">;</span>                          <span class="cm">/* the operator list */</span>
+    <span class="kt">void</span>    <span class="o">*</span><span class="n">mem_starts</span><span class="p">[</span><span class="n">LN_MEM_TYPE_SIZE</span><span class="p">];</span> <span class="cm">/* the memory start addresses */</span>
+    <span class="kt">size_t</span>   <span class="n">mem_sizes</span><span class="p">[</span><span class="n">LN_MEM_TYPE_SIZE</span><span class="p">];</span>  <span class="cm">/* the memory sizes */</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_context</span> <span class="n">ln_context</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>ln_context</code> acts the role as the <strong>single point of truth</strong> of other data 
+structures of a specific NN model.</p>
+<ol>
+<li>
+<p>It has a <code>tensor_table</code> to manage all the tensors used by the model.
+Every <a href="#operator">operator</a> has to create and insert its output tensors in
+the tensor table in its <code>pre_run</code> function, and remove the tensors in its
+<code>post_run</code> function.</p>
+</li>
+<li>
+<p>It has an <code>op_table</code> to manage all the operators used by the model.
+The context has to create and insert operators to <code>op_table</code>, and remove them
+from <code>op_table</code> when initializing/finalizing the context, and when optimizing 
+the model.</p>
+</li>
+<li>
+<p>It has a <code>dfg</code> to represent the <a href="#data-flow-graph">data flow graph</a> of the model,
+which is used to reserve the topological infomation used in model optimization.</p>
+</li>
+<li>
+<p>It has a <code>ops</code> to represent a list of the operators,
+which is used to reserve the linear form the operators used in model optimization.</p>
+</li>
+<li>
+<p>It has a <code>mem_starts</code> to record the memory start addresses of all kinds of
+memory types (main memory, GPU memory, etc.). It is used in the execution phase
+of the model.</p>
+</li>
+<li>
+<p>It has a <code>mem_sizes</code> to record the memory sizes of all kinds of memory types
+needed by the model. It is determined in the memory planning phase in model 
+optimization. It is used in the execution phase as the allocation size of
+different memory types.</p>
+</li>
+</ol>
+<p><code>ln_context</code> has the following operations to complete its main functions.</p>
+<ul>
+<li>
+<p><strong><code>ln_context *ln_context_create(void)</code></strong></p>
+<p>Create a context, and zero-initialize its fields.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_free(ln_context *ctx)</code></strong></p>
+<p>Free a context, as well as its <code>tensor_table</code> (as well as all its tensors),
+<code>op_table</code> (as well as all the operators), <code>dfg</code>, and <code>ops</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_init(ln_context *ctx, const char *source)</code></strong></p>
+<p>Initialize a context from a model source JSON file. 
+Create all the operators and tensors and build the data flow graph.
+See <a href="Intermediate-Representation.html">Intermediate Representation</a>
+for details of the <code>source</code>'s format.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_compile(ln_context *ctx, const char *target)</code></strong></p>
+<p>Execute speed and memory optimization on <code>target</code> platform,
+such as "cpu", "tensorrt", etc.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_print(const ln_context *ctx, const char *outfile)</code></strong></p>
+<p>Print the current linear form of operators in a JSON file named <code>outfile</code>.
+See <a href="Intermediate-Representation.html">Intermediate Representation</a>
+for details of the outfile format.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_load(ln_context *ctx, const char *datafile)</code></strong></p>
+<p>Allocate the memory of different kinds of memory types required by the model.
+Load data from a <code>datafile</code> to the memory address of tensors' data.
+Use <code>tools/genwts.pl -h</code> for the format of the <code>datafile</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_set_data(ln_context *ctx, const char *tname, const void *data)</code></strong></p>
+<p>Copy the value of tensor named <code>tname</code> from <code>data</code>.</p>
+</li>
+<li>
+<p><strong><code>void *ln_context_get_data(ln_context *ctx, const char *tname, void *data)</code></strong></p>
+<p>Copy the value of tensor named <code>tname</code> to <code>data</code>.</p>
+</li>
+<li>
+<p><strong><code>size_t ln_context_data_size(ln_context *ctx, const char *tname)</code></strong></p>
+<p>Return the size in bytes of the data of tensor named <code>tname</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_set_param(ln_context *ctx, const char *opname, const char *pname, ...)</code></strong></p>
+<p>Set the parameter value of parameter named <code>pname</code> of operator named <code>opname</code>.
+Arguments after <code>pname</code> should conform to the data type of the parameter.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_run(const ln_context *ctx)</code></strong></p>
+<p>Run the <code>run</code> function of all operators in the order of <code>ctx-&gt;ops</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_unload(ln_context *ctx)</code></strong></p>
+<p>Free the memory allocated by <code>ln_context_load</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_cleanup(ln_context *ctx)</code></strong></p>
+<p>Cleanup a context. Release all the resources acquired by <code>ln_context_init</code>.</p>
+</li>
+</ul>
+<p>Besides, <code>ln_context</code> has the following operations to support the above 
+main functions. Some are used in <code>ln_pass</code> module for optimization passes.</p>
+<ul>
+<li>
+<p><strong><code>void ln_context_init_ops(ln_context *ctx)</code></strong></p>
+</li>
+<li>
+<p><strong><code>void ln_context_cleanup_ops(ln_context *ctx)</code></strong></p>
+</li>
+<li><strong><code>void ln_context_replace_ops(ln_context *ctx, ln_list **position, size_t len, ln_list *new_ops)</code></strong></li>
+<li><strong><code>void ln_context_remove_op(ln_context *ctx, ln_list **positio)</code></strong></li>
+<li><strong><code>void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)</code></strong></li>
+<li><strong><code>void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops)</code></strong></li>
+<li><strong><code>int ln_context_check(const ln_context *ctx)</code></strong></li>
+<li><strong><code>void ln_context_alloc_mem(ln_context *ctx)</code></strong></li>
+<li><strong><code>void ln_context_dealloc_mem(ln_context *ctx)</code></strong></li>
 </ul></div>
         </div>
 

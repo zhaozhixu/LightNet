@@ -272,7 +272,27 @@ Options:
 
 
 <h3 id="c-api">C API<a class="headerlink" href="#c-api" title="Permanent link">&para;</a></h3>
-<h3 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">&para;</a></h3></div>
+<h3 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">&para;</a></h3>
+<p>An example using the python api is in <code>example/detect.py</code> and demoed with
+<code>example/object-detect.py</code>.
+This example performs an object detection algorithm using 
+<a href="https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html">TensorRT</a>,
+with <a href="https://arxiv.org/abs/1807.11164">ShuffleNetV2</a> as back-bone conv-net
+and <a href="https://arxiv.org/abs/1612.01051">SqueezeDet</a>'s detection part as feature
+expression algorithm. </p>
+<p>To play with this demo, LightNet should be configured with</p>
+<div class="codehilite"><pre><span></span>--with-tensorrt=yes --with-python=yes
+</pre></div>
+
+
+<p>After compilation and installation, enter the following
+command in the repository and you should get a dection window with bouding 
+boxes detecting the images in <code>example/data/images</code> dynamicly.</p>
+<div class="codehilite"><pre><span></span>example/object-detect.py -d example/data/images
+</pre></div>
+
+
+<p><img alt="Demo" src="../img/demo.png" /></p></div>
         </div>
 
         <footer class="col-md-12">
