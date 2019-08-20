@@ -161,4 +161,4 @@ boxes detecting the images in `example/data/images` dynamicly.
 
     example/object-detect.py -d example/data/images
 
-![Demo](../img/demo.png)
+![Demo](img/demo.png)

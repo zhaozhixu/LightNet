@@ -31,7 +31,7 @@ options:
     -d    display bounding box in a "dection" window;
           press 'space' to pause, 'q' to exit
 '''
-    print (usage)
+    print(usage)
     exit(exit_code)
 
 def main():
@@ -44,20 +44,21 @@ def main():
 
     detect.init()
     files = sorted(os.listdir(img_dir))
-    time_start=time.time()
+    run_time = 0
     img_num = 0
     for f in files:
         if f.split('.')[-1] != 'jpg':
             continue
-        img = cv2.imread(img_dir+'/'+f, 1)
-        img_shape = img.shape
-        bbox = detect.run(img, img_shape[0], img_shape[1])
+        file_path = img_dir+'/'+f
+        time_start=time.time()
+        img = cv2.imread(file_path, 1)
+        bbox = detect.run(img, img.shape[0], img.shape[1])
+        time_end = time.time()
+        run_time = run_time + time_end - time_start
         img_num = img_num + 1
         if do_display:
             draw_bbox(img, bbox)
 
-    time_end = time.time()
-    run_time = time_end-time_start
     detect.cleanup()
     print("total image number: "+str(img_num))
     print("frames per second: "+str(img_num/run_time))
