@@ -1,4 +1,4 @@
-{   // same as upsample now
+{
     "ops": [
         {
             "optype": "resize",
@@ -10,23 +10,15 @@
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_NONE",
                  "dtype": "src->dtype", "ndim": "src->ndim",
-                 "custom": '''
-{
-dst_dims = ln_alloc(sizeof(int)*dst_ndim);
-for (int i = 0; i < dst_ndim; i++)
-    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
-}
-''',
-                 "cleanup": "ln_free(dst_dims);"}
+                 "dims": "dims"}
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
                  "realtype": "int",
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
-                {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "float", "gt": 0,
-                 "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+                {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "gt": 0, "len": "src->ndim",}
             ]
         },
         {
@@ -39,25 +31,17 @@ for (int i = 0; i < dst_ndim; i++)
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CPU",
                  "dtype": "src->dtype", "ndim": "src->ndim",
-                 "custom": '''
-{
-dst_dims = ln_alloc(sizeof(int)*dst_ndim);
-for (int i = 0; i < dst_ndim; i++)
-    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
-}
-''',
-                 "cleanup": "ln_free(dst_dims);"}
+                 "dims": "dims"}
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
                  "realtype": "int",
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
-                {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "float", "gt": 0,
-                 "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+                {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "gt": 0, "len": "src->ndim",}
             ],
-            "run": "tl_tensor_resize(src, dst, dst->dims, mode);"
+            "run": "tl_tensor_resize(src, dst, dims, mode);"
         },
         {
             "optype": "resize_cuda",
@@ -69,25 +53,17 @@ for (int i = 0; i < dst_ndim; i++)
             "tensors_out": [
                 {"arg_name": "dst", "mtype": "LN_MEM_CUDA",
                  "dtype": "src->dtype", "ndim": "src->ndim",
-                 "custom": '''
-{
-dst_dims = ln_alloc(sizeof(int)*dst_ndim);
-for (int i = 0; i < dst_ndim; i++)
-    dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
-}
-''',
-                 "cleanup": "ln_free(dst_dims);"}
+                 "dims": "dims"}
             ],
             "params": [
                 {"arg_name": "mode", "ptype": "LN_PARAM_STRING",
                  "realtype": "int",
                  "from_func": "tl_resize_type_from_str",
                  "check": "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
-                {"arg_name": "scales", "ptype": "LN_PARAM_ARRAY_NUMBER",
-                 "realtype": "float", "gt": 0,
-                 "check": "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+                {"arg_name": "dims", "ptype": "LN_PARAM_ARRAY_NUMBER",
+                 "realtype": "int", "gt": 0, "len": "src->ndim",}
             ],
-            "run": "tl_tensor_resize_cuda(src, dst, dst->dims, mode);"
+            "run": "tl_tensor_resize_cuda(src, dst, dims, mode);"
         }
     ]
 }

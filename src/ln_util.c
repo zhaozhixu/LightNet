@@ -219,15 +219,33 @@ int ln_streqn(const char *s1, const char *s2, size_t n)
     return !!!strncmp(s1, s2, n);
 }
 
-int ln_is_prefix_plus_number(const char *str, const char *prefix)
+int ln_subfixed(const char *s, const char *subfix)
+{
+    if (!s || !subfix)
+        return 0;
+
+    const char *sp = s;
+    const char *sfp = subfix;
+
+    while (*sp++);
+    while (*sfp++);
+    while (*--sp == *--sfp && sp != s && sfp != subfix);
+
+    if (*sp == *sfp && sfp == subfix)
+        return 1;
+    return 0;
+}
+
+int ln_is_prefix_plus_digit(const char *str, const char *prefix)
 {
     if (!str || !prefix)
         return 0;
 
     const char *s = str;
     const char *p = prefix;
-    while (*s++ == *p++);
-    if (*--s && !*--p) {
+
+    while (*s && *p && *s++ == *p++);
+    if (*s && !*p) {
         while (isdigit(*s++));
         if (!*--s)
             return 1;

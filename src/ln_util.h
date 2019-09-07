@@ -79,7 +79,8 @@ char *ln_strcat_alloc(const char *s1, const char *s2);
 char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim);
 int ln_streq(const char *s1, const char *s2);
 int ln_streqn(const char *s1, const char *s2, size_t n);
-int ln_is_prefix_plus_number(const char *str, const char *prefix);
+int ln_subfixed(const char *s, const char *subfix);
+int ln_is_prefix_plus_digit(const char *str, const char *prefix);
 int ln_digit_num(ssize_t num);
 int ln_output_dim_conv(int input_dim, int size, int stride, int padding,
                        int dilation);

@@ -407,6 +407,20 @@ static ln_list *ep_avgpool2d(const ln_context *ctx, const ln_op *self, int *matc
     }
 }
 
+static ln_list *ep_submean(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "submean_cpu");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+}
+
 static ln_hash_init_entry init_ep_funcs[] = {
     {"create", ep_create},
     {"conv2d", ep_conv2d},
@@ -435,6 +449,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"lrelu", ep_lrelu},
     {"detect_yolov3", ep_detect_yolov3},
     {"avgpool2d", ep_avgpool2d},
+    {"submean", ep_submean},
     LN_HASH_INIT_ENTRY_NULL
 };
 static ln_hash *ep_funcs_hash = NULL;

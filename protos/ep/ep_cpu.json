@@ -246,5 +246,14 @@
                 }
             ]
         },
+        {
+            "optype": "submean",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["submean_cpu"]
+                }
+            ]
+        },
     ]
 }

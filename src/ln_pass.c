@@ -90,9 +90,11 @@ void ln_pass_preprocess(ln_context *ctx)
                 if (!te->isstatic)
                     goto no_move;
             }
+            pos = last_tensors_defination(ctx, op->op_arg->tensors_in);
+            if (pos == lp)
+                goto no_move;
             op_copy = ln_op_copy(op);
             ln_context_remove_op(ctx, lp);
-            pos = last_tensors_defination(ctx, op_copy->op_arg->tensors_in);
             ln_context_add_op(ctx, pos, op_copy);
             continue;
         }

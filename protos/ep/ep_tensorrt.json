@@ -24,6 +24,9 @@
                         "self.outs[dst]=>transform_bboxSQD.ins[src_delta]",
                         "self.outs[dst]=>transform_bboxSQD.ins[src_anchor]",
                         "self.outs[dst]=>rearange.ins[src]",
+                        "self.outs[dst]=>submean.ins[src]",
+                        "self.outs[dst]=>resize.ins[src]",
+                        "self.outs[dst]=>upsample.ins[src]",
                     ],
                     "replace": ["create_cuda"]
                 },
@@ -640,6 +643,24 @@
                 {
                     "cond": [],
                     "replace": ["rearange_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "resize",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["resize_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "submean",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["submean_cuda"]
                 }
             ]
         },

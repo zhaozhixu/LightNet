@@ -249,18 +249,16 @@ static void pe_free(void *p)
 static int have_successor_except(const ln_op *trt_op, const char *tname,
                                  const ln_op *op, const ln_dfg *dfg)
 {
-    ln_list *suc_ens;
-    ln_graph_edge_node *en;
+    ln_list *suc_ops;
     ln_op *suc_op;
     int ret = 0;
 
-    suc_ens = ln_dfg_nexts(dfg, trt_op, tname);
-    if (!suc_ens) {
+    suc_ops = ln_dfg_nexts(dfg, trt_op, tname);
+    if (!suc_ops) {
         ret = 0;
         goto end;
     }
-    LN_LIST_FOREACH(en, suc_ens) {
-        suc_op = en->node->data;
+    LN_LIST_FOREACH(suc_op, suc_ops) {
         if (!ln_streq(suc_op->op_arg->name, op->op_arg->name)) {
             ret = 1;
             goto end;
@@ -269,7 +267,7 @@ static int have_successor_except(const ln_op *trt_op, const char *tname,
     ret = 0;
 
 end:
-    ln_list_free(suc_ens);
+    ln_list_free(suc_ops);
     return ret;
 }
 

@@ -586,8 +586,7 @@ static void add_params(cJSON *params_json, ln_list *params)
         switch (pe->type) {
         case LN_PARAM_BOOL:
             item = cJSON_AddBoolToObject(param_json, "value",
-                                         pe->value_bool ?
-                                         cJSON_True : cJSON_False);
+                                         pe->value_bool ? 1 : 0);
             break;
         case LN_PARAM_NULL:
             item = cJSON_AddNullToObject(param_json, "value");

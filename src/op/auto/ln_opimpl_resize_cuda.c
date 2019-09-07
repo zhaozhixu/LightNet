@@ -32,7 +32,7 @@ struct priv_s {
     ln_tensor_entry *src_entry;
     ln_tensor_entry *dst_entry;
     ln_param_entry  *mode_entry;
-    ln_param_entry  *scales_entry;
+    ln_param_entry  *dims_entry;
 };
 
 /* This function should do the parameter checking and tensor shape inference. */
@@ -51,8 +51,8 @@ static void resize_cuda_pre_run(ln_op_arg *op_arg)
     tl_dtype              dst_dtype;
     int                   mode;
     ln_param_entry       *mode_entry;
-    float                *scales;
-    ln_param_entry       *scales_entry;
+    int                  *dims;
+    ln_param_entry       *dims_entry;
     int                   tensors_in_n;
     int                   tensors_out_n;
     int                   params_n;
@@ -91,40 +91,31 @@ static void resize_cuda_pre_run(ln_op_arg *op_arg)
     mode = mode;
     ln_opck_satisfy_msg(mode != -1, "`mode` should be 'TL_NEAREST' or 'TL_LINEAR'");
 
-    scales_entry = ln_param_list_find(op_arg->params, "scales");
-    ln_opck_param_exist(scales_entry, "scales");
-    ln_opck_param_type(scales_entry, LN_PARAM_ARRAY_NUMBER);
-    scales = scales_entry->value_array_float;
-    ln_opck_param_array_float_gt(scales_entry, 0);
-    scales = scales;
-    ln_opck_satisfy_msg(scales_entry->array_len == src->ndim, "the length of `scales` should be the same as the rank of input `src`");
+    dims_entry = ln_param_list_find(op_arg->params, "dims");
+    ln_opck_param_exist(dims_entry, "dims");
+    ln_opck_param_type(dims_entry, LN_PARAM_ARRAY_NUMBER);
+    ln_opck_param_array_len_eq(dims_entry, src->ndim);
+    dims = dims_entry->value_array_int;
+    ln_opck_param_array_int_gt(dims_entry, 0);
+    dims = dims;
 
     /* define output tensor shape, tensor data should be NULL */
     dst_ndim = src->ndim;
+    dst_dims = dims;
     dst_dtype = src->dtype;
-    /* begin custom code */
-    {
-    dst_dims = ln_alloc(sizeof(int)*dst_ndim);
-    for (int i = 0; i < dst_ndim; i++)
-        dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
-    }
-    /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
     dst_entry->offset = dst_list_entry->offset;
     ln_tensor_entry_set_creater(dst_entry, op_arg->name);
     dst_entry->mtype = LN_MEM_CUDA;
     ln_tensor_table_insert(op_arg->tensor_table, dst_entry);
-    /* begin custom code */
-    ln_free(dst_dims);
-    /* end custom code */
 
     /* use op_arg->priv to store private data to be used in other functions */
     priv = ln_alloc(sizeof(struct priv_s));
     priv->src_entry = src_entry;
     priv->dst_entry = dst_entry;
     priv->mode_entry = mode_entry;
-    priv->scales_entry = scales_entry;
+    priv->dims_entry = dims_entry;
     op_arg->priv = priv;
 }
 
@@ -135,9 +126,10 @@ static void resize_cuda_run(ln_op_arg *op_arg)
     tl_tensor     *src = priv->src_entry->tensor;
     tl_tensor     *dst = priv->dst_entry->tensor;
     int            mode = priv->mode_entry->value_int;
+    int           *dims = priv->dims_entry->value_array_int;
 
     /* begin custom code */
-    tl_tensor_resize_cuda(src, dst, dst->dims, mode);
+    tl_tensor_resize_cuda(src, dst, dims, mode);
     /* end custom code */
 }
 
@@ -162,7 +154,7 @@ static const char *out_arg_names[] = {
 
 static const char *param_arg_names[] = {
     "mode",
-    "scales",
+    "dims",
     NULL
 };
 

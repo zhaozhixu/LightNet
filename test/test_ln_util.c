@@ -128,6 +128,35 @@ START_TEST(test_ln_autopadding_deconv)
 END_TEST
 /* end of tests */
 
+START_TEST(test_ln_subfixed)
+{
+    ck_assert_int_eq(ln_subfixed("aaabbb", "bbb"), 1);
+    ck_assert_int_eq(ln_subfixed("bbb", "bbb"), 1);
+    ck_assert_int_eq(ln_subfixed("aaabbb", ""), 1);
+    ck_assert_int_eq(ln_subfixed("", ""), 1);
+    ck_assert_int_eq(ln_subfixed("aaabbb", "bbbb"), 0);
+    ck_assert_int_eq(ln_subfixed("abbb", "bbbb"), 0);
+    ck_assert_int_eq(ln_subfixed("bbb", "bbbb"), 0);
+    ck_assert_int_eq(ln_subfixed("", "bbbb"), 0);
+    ck_assert_int_eq(ln_subfixed(NULL, ""), 0);
+    ck_assert_int_eq(ln_subfixed("", NULL), 0);
+}
+END_TEST
+
+START_TEST(test_ln_is_prefix_plus_digit)
+{
+    ck_assert_int_eq(ln_is_prefix_plus_digit("aaa1", "aaa"), 1);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("aaa12", "aaa"), 1);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("aaa12", "aaa1"), 1);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("1", ""), 1);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("aaa1", "aa"), 0);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("aaa", "aaa"), 0);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("aaa12", "aa12"), 0);
+    ck_assert_int_eq(ln_is_prefix_plus_digit(NULL, ""), 0);
+    ck_assert_int_eq(ln_is_prefix_plus_digit("", NULL), 0);
+}
+END_TEST
+
 Suite *make_util_suite(void)
 {
      Suite *s;
@@ -141,6 +170,8 @@ Suite *make_util_suite(void)
      tcase_add_test(tc_util, test_ln_next_multiple_power2);
      tcase_add_test(tc_util, test_ln_autopadding_conv);
      tcase_add_test(tc_util, test_ln_autopadding_deconv);
+     tcase_add_test(tc_util, test_ln_subfixed);
+     tcase_add_test(tc_util, test_ln_is_prefix_plus_digit);
      /* end of adding tests */
 
      suite_add_tcase(s, tc_util);

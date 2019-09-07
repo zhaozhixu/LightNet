@@ -145,7 +145,7 @@ int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)
     size_t prefix_len = strlen(prefix);
 
     LN_LIST_FOREACH(tle, list) {
-        if (!ln_is_prefix_plus_number(tle->arg_name, prefix))
+        if (!ln_is_prefix_plus_digit(tle->arg_name, prefix))
             continue;
         idx = atoi(&tle->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;

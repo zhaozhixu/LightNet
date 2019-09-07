@@ -574,7 +574,7 @@ int ln_param_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)
     if (prefix_len >= LN_MAX_NAME_LEN)
         ln_msg_inter_error("prefix '%s' length exceeds LN_MAX_NAME_LEN", prefix);
     LN_LIST_FOREACH(pe, list) {
-        if (!ln_is_prefix_plus_number(pe->arg_name, prefix))
+        if (!ln_is_prefix_plus_digit(pe->arg_name, prefix))
             continue;
         idx = atoi(&pe->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;

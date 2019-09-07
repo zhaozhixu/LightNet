@@ -989,14 +989,12 @@ sub topo_cond {
 ({
     ln_op *next_op;
     ln_tensor_entry *te;
-    int ret;
+    int ret = 0;
 
     te = $entry;
     next_op = ln_dfg_next(ctx->dfg, self, te->name);
     if (!next_op) {
         ret = 1;
-    } else {
-        ret = 0;
     }
     ret;
 })
@@ -1022,23 +1020,25 @@ EOF
     $type = "int";
     $code = <<EOF;
 ({
+    ln_list *next_ops;
     ln_op *next_op;
     ln_tensor_entry *te;
     ln_tensor_list_entry *tle_next;
-    int ret;
+    int ret = 0;
 
     te = $entry;
-    next_op = ln_dfg_next(ctx->dfg, self, te->name);
-    if (!next_op || !ln_streq(next_op->op_arg->optype, "$optype")) {
-        ret = 0;
-    } else {
-        tle_next = ln_tensor_list_find_by_name(next_op->op_arg->$member, te->name);
-        if (!tle_next)
-            ret = 0;
-        else if (!ln_streq(tle_next->arg_name, "$arg_name"))
-            ret = 0;
-        else
-            ret = 1;
+    next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+    if (next_ops) {
+        LN_LIST_FOREACH(next_op, next_ops) {
+            if (!ln_streq(next_op->op_arg->optype, "$optype"))
+                continue;
+            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->$member, te->name);
+            if (tle_next && ln_streq(tle_next->arg_name, "$arg_name")) {
+                ret = 1;
+                break;
+            }
+        }
+        ln_list_free(next_ops);
     }
     ret;
 })

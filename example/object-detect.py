@@ -23,8 +23,8 @@ def draw_bbox(img, bbox):
         exit()
 
 def exit_usage(exit_code):
-    usage = '''Usage: Do object detection of *.jpg files in directory DIR:
-object-detect.py [options] DIR
+    usage = '''Usage: object-detect.py [options] DIR
+Do object detection of *.jpg files in directory DIR using Python API.
 
 options:
     -h    print this message
@@ -50,8 +50,8 @@ def main():
         if f.split('.')[-1] != 'jpg':
             continue
         file_path = img_dir+'/'+f
-        time_start=time.time()
         img = cv2.imread(file_path, 1)
+        time_start = time.time()
         bbox = detect.run(img, img.shape[0], img.shape[1])
         time_end = time.time()
         run_time = run_time + time_end - time_start

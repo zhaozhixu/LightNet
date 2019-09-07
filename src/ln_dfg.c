@@ -276,12 +276,21 @@ ln_list *ln_dfg_nexts(const ln_dfg *dfg, const ln_op *op, const char *tname)
 {
     ln_graph_node *node;
     ln_graph_edge_node edge_node;
-    ln_list *res;
+    ln_graph_edge_node *en;
+    ln_list *res_ens;
+    ln_list *res_ops = NULL;
 
     node = ln_hash_find(dfg->node_table, op->op_arg->name);
     edge_node.edge_data = (char *)tname;
-    res = ln_list_find_all_custom(node->out_edge_nodes, &edge_node, en_cmp_edge);
-    return res;
+    res_ens = ln_list_find_all_custom(node->out_edge_nodes,
+                                      &edge_node, en_cmp_edge);
+    if (res_ens) {
+        LN_LIST_FOREACH(en, res_ens) {
+            res_ops = ln_list_append(res_ops, en->node->data);
+        }
+        ln_list_free(res_ens);
+    }
+    return res_ops;
 }
 
 ln_op *ln_dfg_prev(const ln_dfg *dfg, const ln_op *op, const char *tname)

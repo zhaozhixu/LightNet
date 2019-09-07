@@ -58,16 +58,6 @@ def set_anchors(convout_w, convout_h, anchors_per_grid):
 
     return res
 
-mean = np.array([103.939, 116.779, 123.68], dtype=np.float32)
-ready_data = ln.lib.alloc(INPUT_W*INPUT_H*INPUT_C*4)
-
-def preprocess(data):
-    global mean, ready_data
-    data = cv2.resize(data, (INPUT_W, INPUT_H)).flatten()
-    ln.util.img_submean(data.ctypes.data_as(POINTER(c_ubyte)),
-                        mean.ctypes.data_as(POINTER(c_float)),
-                        ready_data, INPUT_H, INPUT_W, INPUT_C)
-
 infer = None
 out_dict = None
 current_dir = os.path.split(os.path.realpath(__file__))[0]
@@ -101,9 +91,7 @@ def cleanup():
         exit(1)
 
 def run(data, img_height, img_width):
-    global ready_data
-    preprocess(data)
-    in_dict = {'input': ready_data}
+    in_dict = {'input': data.ctypes.data_as(c_void_p)}
     param_dict = {'transform_bboxSQD0': {'img_width': c_double(img_width),
                                          'img_height': c_double(img_height)}}
     infer.set_data(in_dict)

@@ -166,6 +166,7 @@ ln_op *ln_op_copy_to_optype(const ln_hash *op_proto_table, const ln_op *op,
                                      ln_tensor_list_copy(op->op_arg->tensors_out),
                                      ln_param_list_copy(op->op_arg->params),
                                      op->op_arg->tensor_table);
+
     return new_op;
 }
 
@@ -230,7 +231,7 @@ int ln_op_list_unique_name(const ln_list *ops, char *buf, const char *prefix)
     if (prefix_len >= LN_MAX_NAME_LEN)
         ln_msg_inter_error("prefix '%s' length exceeds LN_MAX_NAME_LEN", prefix);
     LN_LIST_FOREACH(op, ops) {
-        if (!ln_is_prefix_plus_number(op->op_arg->name, prefix))
+        if (!ln_is_prefix_plus_digit(op->op_arg->name, prefix))
             continue;
         idx = atoi(&op->op_arg->name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;

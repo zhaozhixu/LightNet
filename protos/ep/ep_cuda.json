@@ -247,5 +247,23 @@
                 }
             ]
         },
+        {
+            "optype": "resize",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["resize_cuda"]
+                }
+            ]
+        },
+        {
+            "optype": "submean",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["submean_cuda"]
+                }
+            ]
+        },
     ]
 }

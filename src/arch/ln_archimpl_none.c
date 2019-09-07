@@ -55,6 +55,7 @@ extern ln_op ln_opimpl_scatter;
 extern ln_op ln_opimpl_svmr;
 extern ln_op ln_opimpl_ldmr;
 extern ln_op ln_opimpl_deconv2d;
+extern ln_op ln_opimpl_submean;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -92,6 +93,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_svmr,
     &ln_opimpl_ldmr,
     &ln_opimpl_deconv2d,
+    &ln_opimpl_submean,
 /* end of init none ops */
     NULL
 };

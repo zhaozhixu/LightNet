@@ -38,14 +38,12 @@ static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
     if ((({
         ln_op *next_op;
         ln_tensor_entry *te;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
         next_op = ln_dfg_next(ctx->dfg, self, te->name);
         if (!next_op) {
             ret = 1;
-        } else {
-            ret = 0;
         }
         ret;
     })
@@ -57,243 +55,337 @@ static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
     }
 
     else if ((({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "conv2d")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "conv2d"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "deconv2d")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "deconv2d"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "relu")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "relu"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "maxpool2d")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "maxpool2d"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "softmax")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "softmax"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "sigmoid")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "sigmoid"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "concat")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src1"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "concat"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src1")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "concat")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src2"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "concat"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src2")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "transform_bboxSQD")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src_delta"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "transform_bboxSQD"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src_delta")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "transform_bboxSQD")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src_anchor"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "transform_bboxSQD"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src_anchor")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
     ) ||
         (({
+        ln_list *next_ops;
         ln_op *next_op;
         ln_tensor_entry *te;
         ln_tensor_list_entry *tle_next;
-        int ret;
+        int ret = 0;
 
         te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
-        next_op = ln_dfg_next(ctx->dfg, self, te->name);
-        if (!next_op || !ln_streq(next_op->op_arg->optype, "rearange")) {
-            ret = 0;
-        } else {
-            tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
-            if (!tle_next)
-                ret = 0;
-            else if (!ln_streq(tle_next->arg_name, "src"))
-                ret = 0;
-            else
-                ret = 1;
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "rearange"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
+        }
+        ret;
+    })
+    ) ||
+        (({
+        ln_list *next_ops;
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret = 0;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "submean"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
+        }
+        ret;
+    })
+    ) ||
+        (({
+        ln_list *next_ops;
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret = 0;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "resize"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
+        }
+        ret;
+    })
+    ) ||
+        (({
+        ln_list *next_ops;
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret = 0;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "upsample"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
         }
         ret;
     })
@@ -3016,6 +3108,34 @@ static ln_list *ep_rearange(const ln_context *ctx, const ln_op *self, int *match
     }
 }
 
+static ln_list *ep_resize(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "resize_cuda");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+}
+
+static ln_list *ep_submean(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "submean_cuda");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+}
+
 static ln_list *ep_transform_bboxSQD(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
@@ -3097,6 +3217,8 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"sort1d_by_key", ep_sort1d_by_key},
     {"arange", ep_arange},
     {"rearange", ep_rearange},
+    {"resize", ep_resize},
+    {"submean", ep_submean},
     {"transform_bboxSQD", ep_transform_bboxSQD},
     {"pick1d", ep_pick1d},
     {"detect_yolov3", ep_detect_yolov3},
