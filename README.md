@@ -109,10 +109,10 @@ build LightNet.
 
 After compilation, the following components will be installed:
 
-- lightnet: LightNet command tool
-- liblightnet.so: LightNet runtime library
-- ir2json.pl: LightNet intermediate language (IL) interpreter
-- pylightnet (optional): LightNet python wrapper package
+- `lightnet`: LightNet command tool
+- `liblightnet.so`: LightNet runtime library
+- `ir2json.pl`: LightNet intermediate language (IL) interpreter
+- `pylightnet` (optional): LightNet python wrapper package
 
 LightNet provides 3 interfaces which can be used by developers and users:
 
@@ -185,12 +185,12 @@ can read):
 And you should get a series of bounding boxes coordinates (xmin, ymin,
 xmax, ymax), one for an input image, printed in the terminal like this:
 
-    bbox = [197.965088, 163.387146, 275.853577, 323.011322]
-    bbox = [197.478195, 161.533936, 276.260590, 322.812714]
-    bbox = [197.014648, 158.862747, 276.261810, 322.054504]
-    bbox = [196.676514, 160.987122, 275.435303, 322.000763]
-    bbox = [196.797455, 160.380035, 274.323181, 320.533020]
-    bbox = [196.917221, 161.277679, 273.463776, 319.580872]
+    [197.965088, 163.387146, 275.853577, 323.011322]
+    [197.478195, 161.533936, 276.260590, 322.812714]
+    [197.014648, 158.862747, 276.261810, 322.054504]
+    [196.676514, 160.987122, 275.435303, 322.000763]
+    [196.797455, 160.380035, 274.323181, 320.533020]
+    [196.917221, 161.277679, 273.463776, 319.580872]
     ......
     frames per second of detection: 245.948881
 
@@ -213,9 +213,15 @@ command for installation:
     pip3 install opencv-python
 
 After compilation and installation, enter the following
-commands in the `example` directory and you should get a dection window with 
-bouding boxes detecting the images in `example/data/images` dynamicly.
+commands in the `example` directory (the first command is to translate
+the *.net model file into a JSON file that the program can read):
 
-    example/object-detect.py -d example/data/images
+    ir2json.pl data/shuffledet_dac.net -o data/out.json
+    ./object-detect.py data/out.json data/shuffledet_dac.wts data/images
+
+Then you should get a dection window with bouding boxes detecting the images
+in `example/data/images` dynamicly like the following screenshot, 
+and a series of bounding boxes coordinates (xmin, ymin, xmax, ymax),
+one for an input image, printed in the terminal.
 
 ![Demo](docs/img/demo.png)

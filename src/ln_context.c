@@ -214,6 +214,8 @@ void ln_context_dealloc_mem(ln_context *ctx)
         ln_msg_debug("free memory %s: %lu bytes at address %p",
                      ln_mem_type_name(i), ctx->mem_sizes[i],
                      ctx->mem_starts[i]);
+        if (ctx->mem_starts[i] == 0)
+            continue;
         ln_mem_type_info(i).free_func(ctx->mem_starts[i]);
         ctx->mem_starts[i] = 0;
     }

@@ -9,8 +9,7 @@ import context
 import msg
 import option
 import util
-import compiler
-import infer
+from handler import handler
 
 lib.init()
 arch.init()

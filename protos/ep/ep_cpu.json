@@ -255,5 +255,14 @@
                 }
             ]
         },
+        {
+            "optype": "resize",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["resize_cpu"]
+                }
+            ]
+        },
     ]
 }

@@ -18,6 +18,7 @@ ANCHOR_SHAPE = [ 229., 137., 48., 71., 289., 245.,
                  185., 134., 85., 142., 31., 41.,
                  197., 191., 237., 206., 63., 108.]
 
+# the original algorithm is from SqueezeDet's official source code
 def set_anchors(convout_w, convout_h, anchors_per_grid):
     H, W, B = 12, 20, 9
     anchor_shapes = np.reshape(
@@ -58,45 +59,43 @@ def set_anchors(convout_w, convout_h, anchors_per_grid):
 
     return res
 
-infer = None
+handler = None
 out_dict = None
-current_dir = os.path.split(os.path.realpath(__file__))[0]
 
-def init():
-    global infer, out_dict, current_dir
-    # compile model, *.net is the model file
-    cmd = 'ir2json.pl ' + current_dir + '/data/shuffledet_dac.net > ' \
-        + current_dir + '/data/net.json'
-    status = os.system(cmd)
-    if status != 0:
-        print("ir2json.pl failed")
-        exit(1)
-    compiler = ln.compiler.compiler(current_dir + '/data/net.json',
-                                    'tensorrt', current_dir + '/data/out.json')
-    compiler.compile()
-    # out.json is the compiled model, *.wts is the weight file
-    infer = ln.infer.infer(current_dir + '/data/out.json',
-                           current_dir + '/data/shuffledet_dac.wts')
-
-    out_dict = infer.create_data_dict(['final_bbox'])
+def init(net, datafile):
+    global handler, out_dict
+    # create a new LightNet handler
+    handler = ln.handler(net, datafile=datafile, target="tensorrt")
+    # compile model
+    handler.compile()
+    # init and load data
+    handler.load()
+    # create a dict to hold output data,
+    # 'final_bbox' is a tensor defined in the net
+    out_dict = handler.create_data_dict(['final_bbox'])
+    # create and set the anchors for object detection,
+    # 'anchors' is a tensor defined in the net
     anchors = set_anchors(CONVOUT_W, CONVOUT_H, ANCHORS_PER_GRID)
-    infer.set_data({'anchors': anchors.ctypes.data_as(POINTER(c_float))})
+    handler.set_data({'anchors': anchors.ctypes.data_as(POINTER(c_float))})
 
 def cleanup():
-    global current_dir
-    status = os.system('rm -f ' + current_dir + '/data/net.json ' \
-                       + current_dir + '/data/out.json')
-    if status != 0:
-        print("rm failed")
-        exit(1)
+    return
 
 def run(data, img_height, img_width):
+    global handler, out_dict
+    # set input data
     in_dict = {'input': data.ctypes.data_as(c_void_p)}
+    handler.set_data(in_dict)
+    # Set the original width and height of the image as parameters of
+    # operator 'transform_bboxSQD0' in the net.
+    # This is not necessary though, since the images' shape is fixed.
+    # Just to show the way to set operator parameters while running
     param_dict = {'transform_bboxSQD0': {'img_width': c_double(img_width),
                                          'img_height': c_double(img_height)}}
-    infer.set_data(in_dict)
-    infer.set_param(param_dict)
-    infer.run()
-    infer.get_data(out_dict)
+    handler.set_param(param_dict)
+    # run the net and copy output data to out_dict
+    handler.run()
+    handler.get_data(out_dict)
     res = ln.lib.cast_buf(out_dict['final_bbox'], c_float)
+
     return [res[0], res[1], res[2], res[3]]

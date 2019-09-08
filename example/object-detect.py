@@ -23,26 +23,26 @@ def draw_bbox(img, bbox):
         exit()
 
 def exit_usage(exit_code):
-    usage = '''Usage: object-detect.py [options] DIR
-Do object detection of *.jpg files in directory DIR using Python API.
+    usage = '''Usage: object-detect.py [options] NET_FILE WEIGHT_FILE IMG_DIR
+Do object detection of *.jpg images in directory IMG_DIR with network model
+in NET_FILE and weight data in WEIGHT_FILE datain directory using Python API.
 
 options:
     -h    print this message
-    -d    display bounding box in a "dection" window;
-          press 'space' to pause, 'q' to exit
 '''
     print(usage)
     exit(exit_code)
 
 def main():
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        exit_usage(1)
-    if sys.argv[1] == '-h':
+    if len(sys.argv) >= 2 and sys.argv[1] == '-h':
         exit_usage(0)
-    do_display = sys.argv[1] == '-d'
-    img_dir = sys.argv[-1]
+    if len(sys.argv) != 4:
+        exit_usage(1)
+    net = sys.argv[1]
+    weight_file = sys.argv[2]
+    img_dir = sys.argv[3]
 
-    detect.init()
+    detect.init(net, weight_file)
     files = sorted(os.listdir(img_dir))
     run_time = 0
     img_num = 0
@@ -56,13 +56,12 @@ def main():
         time_end = time.time()
         run_time = run_time + time_end - time_start
         img_num = img_num + 1
-        print(bbox)
-        if do_display:
-            draw_bbox(img, bbox)
+        print("[%.6f, %.6f, %.6f, %.6f]" % (bbox[0], bbox[1], bbox[2], bbox[3]))
+        draw_bbox(img, bbox)
 
     detect.cleanup()
-    print("total image number: "+str(img_num))
-    print("frames per second of detection: "+str(img_num/run_time))
+    print("total image number: %d" % img_num)
+    print("frames per second of detection: %.6f" % (img_num/run_time))
 
 if __name__ == "__main__":
     main()

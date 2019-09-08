@@ -34,11 +34,11 @@ int main(int argc, char **argv)
     ctx = ln_context_create();
     ln_context_init(ctx, option->source);
 
-    if (option->compile)
+    if (option->compile) {
         ln_context_compile(ctx, option->target);
-
-    if (!ln_streq(option->outfile, "!"))
-        ln_context_print(ctx, option->outfile);
+        if (!ln_streq(option->outfile, "!"))
+            ln_context_print(ctx, option->outfile);
+    }
 
     if (option->run) {
         ln_context_load(ctx, option->datafile);

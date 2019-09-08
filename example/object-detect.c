@@ -59,6 +59,7 @@ static void prepare_anchors(float *anchors)
      }
 }
 
+/* filter for JPEG files */
 static int jpeg_filter(const struct dirent *de)
 {
     if (ln_streq(de->d_name, ".") || ln_streq(de->d_name, "..")
@@ -102,9 +103,10 @@ static void do_detection(ln_context *ctx, const char *img_dir)
     char **filelist;
     int filenum = 0;
     double time, total_time = 0;
-    unsigned char *img;  /* image data */
-    float *anchors;      /* anchors for object detection */
-    float bbox[4];       /* bounding box result */
+    unsigned char *img;         /* image data */
+    int img_width, img_height;  /* image shape */
+    float *anchors;             /* anchors for object detection */
+    float bbox[4];              /* bounding box result */
 
     /* prepare and set anchor data, "anchors" is a tensor defined in model */
     anchors = (float *)malloc(CONVOUT_H * CONVOUT_W * ANCHOR_PER_GRID * 4
@@ -118,16 +120,30 @@ static void do_detection(ln_context *ctx, const char *img_dir)
     img = (unsigned char *)malloc(sizeof(unsigned char) * IMG_H * IMG_W * 3);
 
     for (int i = 0; filelist[i]; i++) {
-        load_jpeg(filelist[i], img, NULL, NULL);
+        /* read image file */
+        load_jpeg(filelist[i], img, &img_height, &img_width);
         LN_TIMEIT_START;
+        /* set input data, 'input' is a tensor defined in the net */
         ln_context_set_data(ctx, "input", img);
+        /* Set the original width and height of the image as parameters of
+         * operator 'transform_bboxSQD0' in the net.
+         * This is not necessary though, since the images' shape is fixed.
+         * Just to show the way to set operator parameters while running */
+        ln_context_set_param(ctx, "transform_bboxSQD0", "img_width",
+                             (double)img_width);
+        ln_context_set_param(ctx, "transform_bboxSQD0", "img_height",
+                             (double)img_height);
+        /* run the net and copy output data 'final_bbox' to bbox, 'final_bbox' is
+         * a tensor defined in the net */
         ln_context_run(ctx);
         ln_context_get_data(ctx, "final_bbox", bbox);
         LN_TIMEIT_END(&time);
+
         total_time += time;
         filenum++;
-        printf("bbox = [%f, %f, %f, %f]\n", bbox[0], bbox[1], bbox[2], bbox[3]);
+        printf("[%f, %f, %f, %f]\n", bbox[0], bbox[1], bbox[2], bbox[3]);
     }
+    printf("total image number: %d\n", filenum);
     printf("frames per second of detection: %f\n", filenum / total_time);
 
     free(img);

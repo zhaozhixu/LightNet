@@ -1,24 +1,49 @@
+import sys
 from ctypes import *
 import pylightnet as ln
 
-class infer(object):
-    def __init__(self, source, weight=None, options=[]):
-        if weight is None:
-            argv = ['(infer)', '-r', source] + options
+class handler(object):
+    def __init__(self, net, target="cpu", outfile="out.json", datafile=None,
+                 compile_only=False, run_only=False, options=[]):
+        if datafile is not None:
+            datafile_opt = ['-f', datafile]
         else:
-            argv = ['(infer)', '-r', '-f', weight, source] + options
+            datafile_opt = []
+        if compile_only:
+            compile_opt = ['-c']
+        else:
+            compile_opt = []
+        if run_only:
+            run_opt = ['-r']
+        else:
+            run_opt = []
+
+        argv = [sys.argv[0], '-t', target, '-o', outfile, net] + \
+            datafile_opt + compile_opt + run_opt + options
         self.option = ln.option.create(ln.lib.str_array(argv))
-        ln.msg.init(self.option)
         self.ctx = ln.context.create()
         ln.context.init(self.ctx, ln.option.get_source(self.option))
-        ln.context.load(self.ctx, ln.option.get_datafile(self.option))
 
     def __del__(self):
         ln.context.unload(self.ctx)
         ln.context.cleanup(self.ctx)
         ln.context.free(self.ctx)
-        ln.msg.cleanup()
         ln.option.free(self.option)
+
+    def compile(self):
+        if not ln.option.get_compile(self.option):
+            sys.stderr.write("LightNet handler " + str(self) +
+                             " is not initialized to be compilable\n")
+            return
+        ln.context.compile(self.ctx, ln.option.get_target(self.option))
+        if not ln.util.streq(ln.option.get_outfile(self.option), b'!'):
+            ln.context.Print(self.ctx, ln.option.get_outfile(self.option));
+
+    def load(self):
+        ln.context.load(self.ctx, ln.option.get_datafile(self.option))
+
+    def run(self):
+        ln.context.run(self.ctx)
 
     def create_data_dict(self, names):
         out_dict = {}
