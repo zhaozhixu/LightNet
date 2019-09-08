@@ -48,8 +48,8 @@ typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 #define LN_MAXLINE 4096
 
 #define LN_TIMEIT_START { double _t1, _t2; _t1 = ln_clock();
-#define LN_TIMEIT_END(msg, varg...)                             \
-    _t2 = ln_clock(); ln_msg_info(msg"%.6fs", ##varg, _t2 - _t1); }
+#define LN_TIMEIT_END(duration)                 \
+    _t2 = ln_clock(); *(duration) = _t2 - _t1; }
 
 #define LN_MAX_NAME_LEN 512      /* including the terminating null byte ('\0') */
 #define LN_MAX_NAME_IDX (UINT32_MAX)

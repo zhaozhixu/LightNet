@@ -98,4 +98,5 @@ def run(data, img_height, img_width):
     infer.set_param(param_dict)
     infer.run()
     infer.get_data(out_dict)
-    return ln.lib.cast_buf(out_dict['final_bbox'], c_float)
+    res = ln.lib.cast_buf(out_dict['final_bbox'], c_float)
+    return [res[0], res[1], res[2], res[3]]

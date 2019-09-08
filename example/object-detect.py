@@ -56,12 +56,13 @@ def main():
         time_end = time.time()
         run_time = run_time + time_end - time_start
         img_num = img_num + 1
+        print(bbox)
         if do_display:
             draw_bbox(img, bbox)
 
     detect.cleanup()
     print("total image number: "+str(img_num))
-    print("frames per second: "+str(img_num/run_time))
+    print("frames per second of detection: "+str(img_num/run_time))
 
 if __name__ == "__main__":
     main()

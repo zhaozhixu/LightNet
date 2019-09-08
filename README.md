@@ -116,13 +116,9 @@ After compilation, the following components will be installed:
 
 LightNet provides 3 interfaces which can be used by developers and users:
 
-- Command line
-- C API
-- Python API
-
-<!-- - [Command line](Getting-Started.md#Command-line) -->
-<!-- - [C API](Getting-Started.md#C-API) -->
-<!-- - [Python API](Getting-Started.md#Python-API) -->
+- [Command line](#command-line)
+- [C API Demo](#c-api-demo)
+- [Python API Demo](#python-api-demo)
 
 ### Command line
 
@@ -153,25 +149,72 @@ Options:
                          defined when compiling)
 ```
 
-<!-- ### C API -->
+### C API Demo
 
-### Python API
+An example using the C API is in `example/object-detect.c`. 
 
-An example using the python api is in `example/detect.py` and demoed with
-`example/object-detect.py`.
-This example performs an object detection algorithm using 
+This example performs an single-object detection algorithm using 
 [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html),
 with [ShuffleNetV2](https://arxiv.org/abs/1807.11164) as back-bone conv-net
 and [SqueezeDet](https://arxiv.org/abs/1612.01051)'s detection part as feature
 expression algorithm. 
+    
+To play with this demo, LightNet should be configured with
+
+    --with-tensorrt=yes
+
+And to minimalize dependencies, this demo uses 
+[libjpeg](https://libjpeg-turbo.org) to read JPEG files, which requires
+`libjpeg-dev` package to be installed, and can be installed in Ubuntu via
+
+    apt install libjpeg-dev
+    
+After the compilation and installation of LightNet, you need to enter the
+`example` directory and compile the demo:
+
+    cd example
+    make
+    
+Then, in the `example` directory, enter the following commands (the first
+command is to translate the *.net model file into a JSON file that the program
+can read):
+
+    ir2json.pl data/shuffledet_dac.net -o data/out.json
+    ./object-detect data/out.json data/shuffledet_dac.wts data/images
+
+And you should get a series of bounding boxes coordinates (xmin, ymin,
+xmax, ymax), one for an input image, printed in the terminal like this:
+
+    bbox = [197.965088, 163.387146, 275.853577, 323.011322]
+    bbox = [197.478195, 161.533936, 276.260590, 322.812714]
+    bbox = [197.014648, 158.862747, 276.261810, 322.054504]
+    bbox = [196.676514, 160.987122, 275.435303, 322.000763]
+    bbox = [196.797455, 160.380035, 274.323181, 320.533020]
+    bbox = [196.917221, 161.277679, 273.463776, 319.580872]
+    ......
+    frames per second of detection: 245.948881
+
+In real projects, developers may draw the bounding boxes in the original image
+with any libraries they like (such as OpenCV, GTK...).
+
+### Python API Demo
+
+An example using the python API is in `example/detect.py` and demoed with
+`example/object-detect.py`. This example does the same detection algorithm as
+the [C API demo](#c-api-demo).
 
 To play with this demo, LightNet should be configured with
 
     --with-tensorrt=yes --with-python=yes
+    
+And [OpenCV](https://opencv.org) for Python3 should be installed. A possible
+command for installation:
+
+    pip3 install opencv-python
 
 After compilation and installation, enter the following
-command in the repository and you should get a dection window with bouding 
-boxes detecting the images in `example/data/images` dynamicly.
+commands in the `example` directory and you should get a dection window with 
+bouding boxes detecting the images in `example/data/images` dynamicly.
 
     example/object-detect.py -d example/data/images
 

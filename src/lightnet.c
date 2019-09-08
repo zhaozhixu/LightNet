@@ -26,6 +26,7 @@ int main(int argc, char **argv)
 {
     ln_context *ctx;
     ln_option *option;
+    double time;
 
     option = ln_option_create(argc, argv);
     ln_msg_init(option);
@@ -43,7 +44,8 @@ int main(int argc, char **argv)
         ln_context_load(ctx, option->datafile);
         LN_TIMEIT_START;
         ln_context_run(ctx);
-        LN_TIMEIT_END("run time: ");
+        LN_TIMEIT_END(&time);
+        ln_msg_info("run time: %fs", time);
         ln_context_unload(ctx);
     }
 

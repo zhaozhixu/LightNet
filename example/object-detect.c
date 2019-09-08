@@ -4,23 +4,10 @@
 #include <stdlib.h>
 #include "lightnet.h"
 
+/* load jpeg image using libjpeg */
 extern void load_jpeg(char* filename, unsigned char *jdata,
                       int *image_height, int *image_width);
 
-static void exit_usage(int exit_code)
-{
-    const char *usage = "\
-Usage: object-detect [options] DIR\n\
-Do object detection of *.jpg files in directory DIR using C API.\n\
-\n\
-options:\n\
-    -h    print this message\n\
-";
-    fprintf(stderr, "%s", usage);
-    exit(exit_code);
-}
-
-static const int MAX_PATH_LEN = 1024;
 static const int IMG_H = 360;
 static const int IMG_W = 640;
 static const int INPUT_H = 368;
@@ -32,6 +19,21 @@ static const float ANCHOR_SHAPE[] = { 229., 137., 48., 71., 289., 245.,
                                       185., 134., 85., 142., 31., 41.,
                                       197., 191., 237., 206., 63., 108.};
 
+static void exit_usage(int exit_code)
+{
+    const char *usage = "\
+Usage: object-detect [options] NET_FILE WEIGHT_FILE IMG_DIR\n\
+Do object detection of *.jpg images in directory IMG_DIR with network model\n\
+in NET_FILE and weight data in WEIGHT_FILE datain directory using C API.\n\
+\n\
+options:\n\
+    -h    print this message\n\
+";
+    fprintf(stderr, "%s", usage);
+    exit(exit_code);
+}
+
+/* the original algorithm is from SqueezeDet's official source code */
 static void prepare_anchors(float *anchors)
 {
      float center_x[CONVOUT_W], center_y[CONVOUT_H];
@@ -57,19 +59,90 @@ static void prepare_anchors(float *anchors)
      }
 }
 
+static int jpeg_filter(const struct dirent *de)
+{
+    if (ln_streq(de->d_name, ".") || ln_streq(de->d_name, "..")
+        || !ln_subfixed(de->d_name, ".jpg"))
+        return 0;
+    return 1;
+}
+
+static char **create_jpeg_filelist(const char *dir_name)
+{
+    struct dirent **files;
+    char **filelist;
+    size_t len;
+    int n;
+
+    if ((n = scandir(dir_name, &files, jpeg_filter, alphasort)) == -1)
+        err(EXIT_FAILURE, "%s", dir_name);
+
+    filelist = (char **)malloc(sizeof(char *) * (n + 1)); /* end with NULL */
+    for (int i = 0; i < n; i++) {
+        len = strlen(dir_name) + strlen(files[i]->d_name) + 2;
+        filelist[i] = (char *)malloc(sizeof(char) * len);
+        snprintf(filelist[i], len, "%s/%s", dir_name, files[i]->d_name);
+        free(files[i]);
+    }
+    filelist[n] = NULL;
+    free(files);
+
+    return filelist;
+}
+
+static void free_jpeg_filelist(char **filelist)
+{
+    for (int i = 0; filelist[i]; i++)
+        free(filelist[i]);
+    free(filelist);
+}
+
+static void do_detection(ln_context *ctx, const char *img_dir)
+{
+    char **filelist;
+    int filenum = 0;
+    double time, total_time = 0;
+    unsigned char *img;  /* image data */
+    float *anchors;      /* anchors for object detection */
+    float bbox[4];       /* bounding box result */
+
+    /* prepare and set anchor data, "anchors" is a tensor defined in model */
+    anchors = (float *)malloc(CONVOUT_H * CONVOUT_W * ANCHOR_PER_GRID * 4
+                              * sizeof(float));
+    prepare_anchors(anchors);
+    ln_context_set_data(ctx, "anchors", anchors);
+    free(anchors);
+
+    /* get a list of JEPG files */
+    filelist = create_jpeg_filelist(img_dir);
+    img = (unsigned char *)malloc(sizeof(unsigned char) * IMG_H * IMG_W * 3);
+
+    for (int i = 0; filelist[i]; i++) {
+        load_jpeg(filelist[i], img, NULL, NULL);
+        LN_TIMEIT_START;
+        ln_context_set_data(ctx, "input", img);
+        ln_context_run(ctx);
+        ln_context_get_data(ctx, "final_bbox", bbox);
+        LN_TIMEIT_END(&time);
+        total_time += time;
+        filenum++;
+        printf("bbox = [%f, %f, %f, %f]\n", bbox[0], bbox[1], bbox[2], bbox[3]);
+    }
+    printf("frames per second of detection: %f\n", filenum / total_time);
+
+    free(img);
+    free_jpeg_filelist(filelist);
+}
+
 int main(int argc, char **argv)
 {
-    ln_context *ctx;
-    const char *net;
-    const char *wts;
-    struct dirent *de;
-    DIR *dir;
-    const char *img_dir;
-    char img_path[MAX_PATH_LEN];
-    unsigned char *img;
-    float *anchors;
-    float bbox[4];
+    const char *net;     /* neural network model file */
+    const char *wts;     /* neural network weight file */
+    const char *img_dir; /* image directory */
 
+    ln_context *ctx;     /* lightnet context for compilation and inference */
+
+    /* parse command line arguments */
     if (argc >= 2 && ln_streq(argv[1], "-h"))
         exit_usage(EXIT_SUCCESS);
     if (argc != 4)
@@ -78,40 +151,21 @@ int main(int argc, char **argv)
     wts = argv[2];
     img_dir = argv[3];
 
+    /* initialize lightnet, compile network and load weight data */
     ln_arch_init();
     ctx = ln_context_create();
     ln_context_init(ctx, net);
     ln_context_compile(ctx, "tensorrt");
     ln_context_load(ctx, wts);
 
-    anchors = malloc(CONVOUT_H * CONVOUT_W * ANCHOR_PER_GRID * 4
-                     * sizeof(float);
-    prepare_anchors(anchors);
-    ln_context_set_data(ctx, "anchors", anchors);
-    free(anchors);
+    /* do inference for images in 'img_dir' */
+    do_detection(ctx, img_dir);
 
-    if (!(dir = opendir(img_dir)))
-        err(EXIT_FAILURE, "%s", img_dir);
-    img = malloc(sizeof(unsigned char) * IMG_H * IMG_W * 3);
-    while ((de = readdir(dir))) {
-        if (ln_streq(de->d_name, ".") || ln_streq(de->d_name, "..")
-            || !ln_subfixed(de->d_name, ".jpg"))
-            continue;
-        snprintf(img_path, MAX_PATH_LEN, "%s/%s", img_dir, de->d_name);
-        load_jpeg(img_path, img, NULL, NULL);
-        ln_context_set_data(ctx, "input", img);
-        LN_TIMEIT_START;
-        ln_context_run(ctx);
-        LN_TIMEIT_END("run time: ");
-        ln_context_get_data(ctx, "final_bbox", bbox);
-        printf("bbox = [%f, %f, %f, %f]\n", bbox[0], bbox[1], bbox[2], bbox[3]);
-    }
-
+    /* clean up */
     ln_context_unload(ctx);
     ln_context_cleanup(ctx);
     ln_context_free(ctx);
     ln_arch_cleanup();
-    free(img);
 
     return 0;
 }
