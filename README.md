@@ -1,3 +1,7 @@
+# LightNet
+
+[![Build Status](https://travis-ci.org/zhaozhixu/LightNet.svg?branch=master)](https://travis-ci.org/zhaozhixu/LightNet)
+
 A light weight neural network optimizer framework for different software/hardware
 backends. The first version is still under development.
 

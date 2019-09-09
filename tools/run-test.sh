@@ -2,4 +2,4 @@
 
 set -ev
 
-make test
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib

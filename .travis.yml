@@ -1,0 +1,15 @@
+language: c
+
+dist: bionic
+
+python:
+  - 2.7
+  - 3.7
+
+install:
+  - tools/install-deps.sh
+
+scripts:
+  - tools/run-test.sh
+
+
