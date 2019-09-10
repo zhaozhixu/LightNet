@@ -109,6 +109,31 @@ build LightNet.
     object files, and `make uninstall` to remove installed files from
     the installation directory.
 
+## Model Format
+
+LightNet uses an independent model format (or
+[Intermediate Representation](Documentation/Intermediate-Representation.md), IR)
+for neural network models, to provide the ability to support model
+formats of all kinds of NN frameworks, and to provide the flexibility to perform
+various optimization operations on the NN model.
+
+The text-format IR directly consumed by LightNet is defined in a JSON format,
+which is verbose and well-formed and can be easily parsed, although a little hard
+for human to read (when the model gets bigger and has tens of thousands of lines). 
+Thus we also provide a concise format for that JSON IR, 
+called LightNet [Intermediate Language](Documentation/Intermediate-Language.md)
+(IL) for the ease of human reading, subfixed with `.net`.
+There is of course a tool, `ir2json.pl`, to carry out the task of translate 
+the IL to JSON IR, which is installed by default.
+Our sample models in `protos/net` directory are all written in IL.
+
+A model produced by another NN framework (such as Tensorflow) should be 
+converted to an IR or IL model before compilation. LightNet has a subproject
+in `tools/onnx2ln` that hopes to reduce the difficulty of that procedure.
+By now, the most reliable way is (of course) to rewrite the NN model to the
+concise IL format, which is often composed of only a hundred of lines or so.
+And the other `tools/onnx2ln` method is still under development.
+
 ## Usage
 
 After compilation, the following components will be installed:
