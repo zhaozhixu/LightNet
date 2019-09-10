@@ -42,7 +42,7 @@ static void print_usage_exit(void)
 {
     const char *usage = "\
 Usage: lightnet [OPTION...] SOURCE\n\
-Apply compilation procedures to SOURCE according to the options.\n\
+Compile a neural network model SOURCE and/or run the compiled model.\n\
 If SOURCE is -, read standard input.\n\
 \n\
 Options:\n\
