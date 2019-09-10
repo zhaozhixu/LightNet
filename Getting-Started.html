@@ -121,6 +121,7 @@
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#getting-started">Getting Started</a></li>
             <li><a href="#installation">Installation</a></li>
+            <li><a href="#model-format">Model Format</a></li>
             <li><a href="#usage">Usage</a></li>
     </ul>
 </div></div>
@@ -147,7 +148,7 @@ build LightNet.</p>
 <p>(Optional) Packages for building documents</p>
 <p>Use the following commands to install the packages for building documents:</p>
 <div class="codehilite"><pre><span></span>apt-get install python3-pip
-pip3 install mkdocs markdown==3.1.1
+pip3 install mkdocs markdown&gt;=3.1.1 pygments
 </pre></div>
 
 
@@ -230,68 +231,122 @@ object files, and <code>make uninstall</code> to remove installed files from
 the installation directory.</p>
 </li>
 </ol>
+<h2 id="model-format">Model Format<a class="headerlink" href="#model-format" title="Permanent link">&para;</a></h2>
+<p>LightNet uses an independent model format (or
+<a href="Documentation/Intermediate-Representation.html">Intermediate Representation</a>, IR)
+for neural network models, to provide the ability to support model
+formats of all kinds of NN frameworks, and to provide the flexibility to perform
+various optimization operations on the NN model.</p>
+<p>The text-format IR directly consumed by LightNet is defined in a JSON format,
+which is verbose and well-formed and can be easily parsed, although a little hard
+for human to read (when the model gets bigger and has tens of thousands of lines). 
+Thus we also provide a concise format for that JSON IR, 
+called LightNet <a href="Documentation/Intermediate-Language.html">Intermediate Language</a>
+(IL) for the ease of human reading, subfixed with <code>.net</code>.
+There is of course a tool, <code>ir2json.pl</code>, to carry out the task of translate 
+the IL to JSON IR, which is installed by default.
+Our sample models in <code>protos/net</code> directory are all written in IL.</p>
+<p>A model produced by another NN framework (such as Tensorflow) should be 
+converted to an IR or IL model before compilation. LightNet has a subproject
+in <code>tools/onnx2ln</code> that hopes to reduce the difficulty of that procedure.
+By now, the most reliable way is (of course) to rewrite the NN model to the
+concise IL format, which is often composed of only a hundred of lines or so.
+And the other <code>tools/onnx2ln</code> method is still under development.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <p>After compilation, the following components will be installed:</p>
 <ul>
-<li>lightnet: LightNet command tool</li>
-<li>liblightnet.so: LightNet runtime library</li>
-<li>ir2json.pl: LightNet intermediate language (IL) interpreter</li>
-<li>pylightnet (optional): LightNet python wrapper package</li>
+<li><code>lightnet</code>: LightNet command tool</li>
+<li><code>liblightnet.so</code>: LightNet runtime library</li>
+<li><code>ir2json.pl</code>: LightNet intermediate language (IL) interpreter</li>
+<li><code>pylightnet</code> (optional): LightNet python wrapper package</li>
 </ul>
 <p>LightNet provides 3 interfaces which can be used by developers and users:</p>
 <ul>
-<li><a href="Getting-Started.html#Command-line">Command line</a></li>
-<li><a href="Getting-Started.html#C-API">C API</a></li>
-<li><a href="Getting-Started.html#Python-API">Python API</a></li>
+<li><a href="#command-line">Command line</a></li>
+<li><a href="#c-api-demo">C API Demo</a></li>
+<li><a href="#python-api-demo">Python API Demo</a></li>
 </ul>
 <h3 id="command-line">Command line<a class="headerlink" href="#command-line" title="Permanent link">&para;</a></h3>
-<p>From the command line, type <code>lightnet -h</code> can display the program usage, as 
-follows.</p>
-<div class="codehilite"><pre><span></span>Usage: lightnet [OPTION...] SOURCE
-Apply compilation procedures to SOURCE according to the options.
-If SOURCE is -, read standard input.
-
-Options:
-  -h, --help             display this message
-  -v, --version          display version information
-  -o, --outfile=FILE     specify output file name; if FILE is -, print to
-                         standard output; if FILE is !, do not print;
-                         (default: out.json)
-  -t, --target=TARGET    specify target platform (default: cpu)
-  -f, --datafile=FILE    specify tensor data file
-  -c, --compile          compile only; do not run
-  -r, --run              run only; do not compile; SOURCE should have been
-                         memory-planned
-  -Wwarn                 display warnings (default)
-  -w, -Wno-warn          do not display warnings
-  -Winter                display internal warnings (default)
-  -Wno-inter             do not display internal warnings
-  -debug                 display debug messages (only works with LN_DEBUG
-                         defined when compiling)
-</pre></div>
-
-
-<h3 id="c-api">C API<a class="headerlink" href="#c-api" title="Permanent link">&para;</a></h3>
-<h3 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">&para;</a></h3>
-<p>An example using the python api is in <code>example/detect.py</code> and demoed with
-<code>example/object-detect.py</code>.
-This example performs an object detection algorithm using 
+<p>From the command line, type <code>lightnet -h</code> to display the program usage.</p>
+<p>The command line interface is designed for two goals: compile a neural network
+model to a more efficient model according to specified target platform; and
+run the optimized model with fixed data for debug/test purpose.</p>
+<h3 id="c-api-demo">C API Demo<a class="headerlink" href="#c-api-demo" title="Permanent link">&para;</a></h3>
+<p>An example using the C API is in <code>example/object-detect.c</code>. </p>
+<p>This example performs an single-object detection algorithm using 
 <a href="https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html">TensorRT</a>,
 with <a href="https://arxiv.org/abs/1807.11164">ShuffleNetV2</a> as back-bone conv-net
 and <a href="https://arxiv.org/abs/1612.01051">SqueezeDet</a>'s detection part as feature
 expression algorithm. </p>
 <p>To play with this demo, LightNet should be configured with</p>
+<div class="codehilite"><pre><span></span>--with-tensorrt=yes
+</pre></div>
+
+
+<p>And to minimalize dependencies, this demo uses 
+<a href="https://libjpeg-turbo.org">libjpeg</a> to read JPEG files, which requires
+<code>libjpeg-dev</code> package to be installed, and can be installed in Ubuntu via</p>
+<div class="codehilite"><pre><span></span>apt install libjpeg-dev
+</pre></div>
+
+
+<p>After the compilation and installation of LightNet, you need to enter the
+<code>example</code> directory and compile the demo:</p>
+<div class="codehilite"><pre><span></span>cd example
+make
+</pre></div>
+
+
+<p>Then, in the <code>example</code> directory, enter the following commands (the first
+command is to translate the *.net IL model file into a JSON file that the
+program can read):</p>
+<div class="codehilite"><pre><span></span>ir2json.pl data/shuffledet_dac.net -o data/out.json
+./object-detect data/out.json data/shuffledet_dac.wts data/images
+</pre></div>
+
+
+<p>And you should get a series of bounding boxes coordinates (xmin, ymin,
+xmax, ymax), one for an input image, printed in the terminal like this:</p>
+<div class="codehilite"><pre><span></span>[197.965088, 163.387146, 275.853577, 323.011322]
+[197.478195, 161.533936, 276.260590, 322.812714]
+[197.014648, 158.862747, 276.261810, 322.054504]
+[196.676514, 160.987122, 275.435303, 322.000763]
+[196.797455, 160.380035, 274.323181, 320.533020]
+[196.917221, 161.277679, 273.463776, 319.580872]
+......
+frames per second of detection: 245.948881
+</pre></div>
+
+
+<p>In real projects, developers may draw the bounding boxes in the original image
+with any libraries they like (such as OpenCV, GTK...).</p>
+<h3 id="python-api-demo">Python API Demo<a class="headerlink" href="#python-api-demo" title="Permanent link">&para;</a></h3>
+<p>An example using the python API is in <code>example/detect.py</code> and demoed with
+<code>example/object-detect.py</code>. This example does the same detection algorithm as
+the <a href="#c-api-demo">C API demo</a>.</p>
+<p>To play with this demo, LightNet should be configured with</p>
 <div class="codehilite"><pre><span></span>--with-tensorrt=yes --with-python=yes
 </pre></div>
 
 
-<p>After compilation and installation, enter the following
-command in the repository and you should get a dection window with bouding 
-boxes detecting the images in <code>example/data/images</code> dynamicly.</p>
-<div class="codehilite"><pre><span></span>example/object-detect.py -d example/data/images
+<p>And <a href="https://opencv.org">OpenCV</a> for Python3 should be installed. A possible
+command for installation:</p>
+<div class="codehilite"><pre><span></span>pip3 install opencv-python
 </pre></div>
 
 
+<p>After compilation and installation, enter the following
+commands in the <code>example</code> directory (the first command is to translate
+the *.net IL model file into a JSON file that the program can read):</p>
+<div class="codehilite"><pre><span></span>ir2json.pl data/shuffledet_dac.net -o data/out.json
+./object-detect.py data/out.json data/shuffledet_dac.wts data/images
+</pre></div>
+
+
+<p>Then you should get a dection window with bouding boxes detecting the images
+in <code>example/data/images</code> dynamicly like the following screenshot, 
+and a series of bounding boxes coordinates (xmin, ymin, xmax, ymax),
+one for an input image, printed in the terminal.</p>
 <p><img alt="Demo" src="img/demo.png" /></p></div>
         </div>
 
