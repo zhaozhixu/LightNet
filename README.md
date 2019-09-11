@@ -24,8 +24,8 @@ other distros as well.
 Most required packages can be installed using the following commands
 (`sudo` permission may be required):
 
-    apt-get install build-essential perl git pkg-config check
-    cpan install JSON Sort::strverscmp
+    $ sudo apt-get install build-essential perl git pkg-config check
+    $ sudo cpan install JSON Sort::strverscmp
 
 This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight),
 a lightweight tensor operation library. Install it according to 
@@ -36,15 +36,15 @@ build LightNet.
 
     Use the following commands to install the packages for building documents:
     
-        apt-get install python3-pip
-        pip3 install mkdocs markdown>=3.1.1 pygments
+        $ sudo apt-get install python3-pip
+        $ sudo pip3 install -U mkdocs markdown>=3.1.1 pygments
 
 * (Optional) Packages for building python packages
 
     Use the following commands to install the packages for building python packages 
     (python3 for example):
     
-        apt-get install python3-setuptools
+        $ sudo apt-get install python3-setuptools
 
 * (Optional) CUDA dependency
 
@@ -74,25 +74,25 @@ build LightNet.
 
 1. Clone this repository to your local directory.
 
-        cd <my_working_directory>
-        git clone https://github.com/zhaozhixu/LightNet.git
-        cd LightNet
+        $ cd <my_working_directory>
+        $ git clone https://github.com/zhaozhixu/LightNet.git
+        $ cd LightNet
 
 2. Configure and build
 
     First, configure your installation using:
     
-        chmod +x configure
-        ./configure
+        $ chmod +x configure
+        $ ./configure
     
     There are options to custom your building and installation process.
     You can append them after `./configure`. For example, use
     
-        ./configure --install-dir=DIR
+        $ ./configure --install-dir=DIR
         
     to set the installation directory (default is `/usr/local`). Use
     
-        ./configure --with-cuda=yes
+        $ ./configure --with-cuda=yes
         
     if you want to build with CUDA support.
     
@@ -112,7 +112,7 @@ build LightNet.
 ## Model Format
 
 LightNet uses an independent model format (or
-[Intermediate Representation](Documentation/Intermediate-Representation.md), IR)
+[Intermediate Representation](docs/Documentation/Intermediate-Representation.md), IR)
 for neural network models, to provide the ability to support model
 formats of all kinds of NN frameworks, and to provide the flexibility to perform
 various optimization operations on the NN model.
@@ -121,11 +121,19 @@ The text-format IR directly consumed by LightNet is defined in a JSON format,
 which is verbose and well-formed and can be easily parsed, although a little hard
 for human to read (when the model gets bigger and has tens of thousands of lines). 
 Thus we also provide a concise format for that JSON IR, 
-called LightNet [Intermediate Language](Documentation/Intermediate-Language.md)
+called LightNet [Intermediate Language](docs/Documentation/Intermediate-Language.md)
 (IL) for the ease of human reading, subfixed with `.net`.
 There is of course a tool, `ir2json.pl`, to carry out the task of translate 
 the IL to JSON IR, which is installed by default.
 Our sample models in `protos/net` directory are all written in IL.
+
+For example, the following command translates the IL in `protos/net/yolov3.net` to 
+the IR format `yolov3.json`.
+
+    $ ir2json.pl protos/net/yolov3.net -o yolov3.json
+    
+Without `-o yolov3.json`, `ir2json.pl` will print to stdout, which is useful when
+combined with `lightnet` command line tool using pipes.
 
 A model produced by another NN framework (such as Tensorflow) should be 
 converted to an IR or IL model before compilation. LightNet has a subproject
@@ -136,49 +144,69 @@ And the other `tools/onnx2ln` method is still under development.
 
 ## Usage
 
-After compilation, the following components will be installed:
+After compilation and installation, the following components will be installed:
 
-- `lightnet`: LightNet command tool
+- `lightnet`: LightNet command line tool
 - `liblightnet.so`: LightNet runtime library
 - `ir2json.pl`: LightNet intermediate language (IL) interpreter
 - `pylightnet` (optional): LightNet python wrapper package
 
 LightNet provides 3 interfaces which can be used by developers and users:
 
-- [Command line](#command-line)
-- [C API Demo](#c-api-demo)
-- [Python API Demo](#python-api-demo)
+- [Command Line Interface](#command-line-interface)
+- [C API](#c-api)
+- [Python API](#python-api)
 
 ### Command line
 
-From the command line, type `lightnet -h` can display the program usage, as 
-follows.
+From the command line, type `lightnet -h` to display the program's usage.
 
-```
-Usage: lightnet [OPTION...] SOURCE
-Apply compilation procedures to SOURCE according to the options.
-If SOURCE is -, read standard input.
+The command line interface is designed for two purposes: compile a neural network
+model to a more efficient model according to specified target platform; and
+run the optimized model with fixed data for debug/test purpose.
 
-Options:
-  -h, --help             display this message
-  -v, --version          display version information
-  -o, --outfile=FILE     specify output file name; if FILE is -, print to
-                         standard output; if FILE is !, do not print;
-                         (default: out.json)
-  -t, --target=TARGET    specify target platform (default: cpu)
-  -f, --datafile=FILE    specify tensor data file
-  -c, --compile          compile only; do not run
-  -r, --run              run only; do not compile; SOURCE should have been
-                         memory-planned
-  -Wwarn                 display warnings (default)
-  -w, -Wno-warn          do not display warnings
-  -Winter                display internal warnings (default)
-  -Wno-inter             do not display internal warnings
-  -debug                 display debug messages (only works with LN_DEBUG
-                         defined when compiling)
-```
+By default, `lightnet` both compiles and runs the compiled model with zeroed data.
+Suppose there is a `yolov3.json` generated by the command in 
+[Model Format](#model-format) section:
 
-### C API Demo
+    $ ir2json.pl protos/net/yolov3.net -o yolov3.json
+
+Then the following command will compile the IR format model 
+`yolov3.json`, save the compiled model in `out.json`, and run the compiled model 
+with zeroed data.
+
+    $ lightnet -t tensorrt yolov3.json
+    
+Combined `ir2json.pl`, more human-readable IL models can also be read, with 
+pipes. In the following command, `ir2json.pl` first reads the model in 
+`protos/net/yolov3.net` and prints converted IR model to the pipe, then 
+`lightnet` reads the model from the pipe (the trialing `-` tells `lightnet`
+to read from stdin), compiles and runs it.
+
+    $ ir2json.pl protos/net/yolov3.net | lightnet -t tensorrt -
+    
+Running the above command in LightNet's root directory will give you the 
+the running time of the model:
+
+    info: run time: 0.017325s
+    
+To just compile a model without running it, use the `-c` option. Default output
+file name is `out.json`, and `-o` option can change the output file name.
+
+    $ lightnet -t tensorrt -c -o yolov3-compiled.json yolov3.json
+    
+To just run a compiled model without compile it (again), use the `-r` option.
+
+    $ lightnet -r yolov3-compiled.json
+    
+And if you have prepared a specific
+[data file](docs/Documentation/Miscellaneous.md#data-file-format)
+for the tensors in the model (maybe the weights), you can specify it with 
+`-f` option.
+
+    $ lightnet -r yolov3-compiled.json -f your-datafile.wts
+
+### C API
 
 An example using the C API is in `example/object-detect.c`. 
 
@@ -196,20 +224,20 @@ And to minimalize dependencies, this demo uses
 [libjpeg](https://libjpeg-turbo.org) to read JPEG files, which requires
 `libjpeg-dev` package to be installed, and can be installed in Ubuntu via
 
-    apt install libjpeg-dev
+    $ sudo apt install libjpeg-dev
     
 After the compilation and installation of LightNet, you need to enter the
 `example` directory and compile the demo:
 
-    cd example
-    make
+    $ cd example
+    $ make
     
 Then, in the `example` directory, enter the following commands (the first
-command is to translate the *.net model file into a JSON file that the program
-can read):
+command is to translate the *.net IL model file into a JSON file that the
+program can read):
 
-    ir2json.pl data/shuffledet_dac.net -o data/out.json
-    ./object-detect data/out.json data/shuffledet_dac.wts data/images
+    $ ir2json.pl data/shuffledet_dac.net -o data/out.json
+    $ ./object-detect data/out.json data/shuffledet_dac.wts data/images
 
 And you should get a series of bounding boxes coordinates (xmin, ymin,
 xmax, ymax), one for an input image, printed in the terminal like this:
@@ -226,11 +254,11 @@ xmax, ymax), one for an input image, printed in the terminal like this:
 In real projects, developers may draw the bounding boxes in the original image
 with any libraries they like (such as OpenCV, GTK...).
 
-### Python API Demo
+### Python API
 
 An example using the python API is in `example/detect.py` and demoed with
 `example/object-detect.py`. This example does the same detection algorithm as
-the [C API demo](#c-api-demo).
+the [C API demo](#c-api).
 
 To play with this demo, LightNet should be configured with
 
@@ -239,18 +267,18 @@ To play with this demo, LightNet should be configured with
 And [OpenCV](https://opencv.org) for Python3 should be installed. A possible
 command for installation:
 
-    pip3 install opencv-python
+    $ pip3 install -U opencv-python
 
 After compilation and installation, enter the following
 commands in the `example` directory (the first command is to translate
-the *.net model file into a JSON file that the program can read):
+the *.net IL model file into a JSON file that the program can read):
 
-    ir2json.pl data/shuffledet_dac.net -o data/out.json
-    ./object-detect.py data/out.json data/shuffledet_dac.wts data/images
+    $ ir2json.pl data/shuffledet_dac.net -o data/out.json
+    $ ./object-detect.py data/out.json data/shuffledet_dac.wts data/images
 
 Then you should get a dection window with bouding boxes detecting the images
 in `example/data/images` dynamicly like the following screenshot, 
 and a series of bounding boxes coordinates (xmin, ymin, xmax, ymax),
 one for an input image, printed in the terminal.
 
-![Demo](docs/img/demo.png)
+![Demo](img/demo.png)
