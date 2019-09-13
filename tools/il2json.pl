@@ -10,8 +10,8 @@ use File::Temp;
 no warnings 'experimental::smartmatch';
 
 my $usage =<<EOF;
-Usage: $0 [OPTION...] [INFILE]
-Generate JSON-format IR code from INFILE which is in simplified IR format.
+Usage: il2json.pl [OPTION...] [INFILE]
+Generate JSON-format IR code from INFILE which is in simplified IL format.
 Read input from standard input if INFILE is not given. It will do the C-style
 preprocessing using gcc before the generation.
 

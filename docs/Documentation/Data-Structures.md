@@ -159,7 +159,7 @@ hold every element of the list, for example:
 
 ## Queue
 
-`ln_queue` is a simple single-in single-out linked list, using two list nodes
+`ln_queue` is a simple first-in first-out (FIFO) linked list, using two list nodes
 for its head and tail.
 
     :::c
@@ -176,6 +176,10 @@ for its head and tail.
 
     Create an empty queue.
 
+- **`void ln_queue_free(ln_queue *queue)`**
+
+    Free the queue.
+
 - **`ln_queue *ln_queue_enqueue(ln_queue *queue, void *data)`**
 
     Add an element to the head of the queue. Create a new queue if 
@@ -185,9 +189,35 @@ for its head and tail.
 
     Remove and return the element at the tail of the queue.
 
-- **`void ln_queue_free(ln_queue *queue)`**
+## Stack
 
-    Free the queue.
+`ln_stack` is a simple first-in last-out (FILO) linked list, using a list node for
+its top.
+
+    :::c
+    struct ln_stack {
+        ln_list  *top;
+        size_t    size;
+    };
+    typedef struct ln_stack ln_stack;
+    
+`ln_stack` supports the following oeprations:
+
+- **`ln_stack *ln_stack_create(void)`**
+
+    Create an empty stack.
+
+- **`void ln_stack_free(ln_stack *stack)`**
+
+    Free the stack.
+
+- **`ln_stack *ln_stack_push(ln_stack *stack, void *data)`**
+
+    Push an element to the top of the stack.
+
+- **`void *ln_stack_pop(ln_stack *stack)`**
+
+    Pop the top element out of the stack.
 
 ## Hash Table
 
@@ -1567,13 +1597,76 @@ main functions. Some are used in `ln_pass` module for optimization passes.
 
 - **`void ln_context_init_ops(ln_context *ctx)`**
 
-    
+    Initialize the operators, insert them to the operator table, 
+    run their `pre_run`s and construct the data flow graph.
 
 - **`void ln_context_cleanup_ops(ln_context *ctx)`**
+
+    Finalize the operators, do the opposite things that `ln_context_init_ops` 
+    does.
+
 - **`void ln_context_replace_ops(ln_context *ctx, ln_list **position, size_t len, ln_list *new_ops)`**
-- **`void ln_context_remove_op(ln_context *ctx, ln_list **positio)`**
+
+    Replace the operators in `ctx->ops` at `position` with `ops` of length `len`.
+    And automatically update the data flow graph `ctx->dfg`.
+
+- **`void ln_context_remove_op(ln_context *ctx, ln_list **position)`**
+
+    Remove the operator at `postion` in `ctx->ops`.
+
 - **`void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)`**
+
+    Add `new_op` to `postion` in `ctx->ops`.
+
 - **`void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops)`**
+
+    Substitute `old_ops` with `new_ops` in `ctx`.
+
 - **`int ln_context_check(const ln_context *ctx)`**
+
+    Check the context's validity, which should be checked after every alternation
+    of the operators.
+
 - **`void ln_context_alloc_mem(ln_context *ctx)`**
+
+    Allocate the memory that the context's tensors use. This must be called after
+    the memory has been planned.
+
 - **`void ln_context_dealloc_mem(ln_context *ctx)`**
+
+    Deallocate the memory allocated by `ln_context_alloc_mem()`.
+
+## Architecture
+
+The backend information of a specific hardware or software is stored in the
+architecture struct, `ln_arch`.
+
+    :::c
+    typedef ln_list *(*ln_expander_func) (const ln_context *ctx, const ln_op *op,
+                                          int *match);
+    typedef ln_list *(*ln_combiner_func) (const ln_context *ctx,
+                                          const ln_list *win_ops, size_t win_size,
+                                          int *match);
+    typedef ln_list *(*ln_subgraph_func) (const ln_context *ctx, ln_list **old_ops);
+    typedef ln_list *(*ln_schedule_func) (const ln_context *ctx);
+
+    struct ln_arch {
+        void              (*init_func)(void **priv_p); /* pointer to priv */
+        void              (*cleanup_func)(void **priv_p);
+        void               *priv;
+        ln_op             **reg_ops;       /* NULL terminated */
+        ln_expander_func   *ep_funcs;      /* NULL terminated */
+        ln_combiner_func   *cb_funcs;      /* NULL terminated */
+        ln_subgraph_func   *sg_funcs;      /* NULL terminated */
+        ln_schedule_func   *sd_funcs;      /* NULL terminated */
+        char               *arch_name;
+    };
+    typedef struct ln_arch ln_arch;
+
+    struct ln_arch_info {
+        ln_hash  *arch_table;
+        ln_hash  *op_proto_table;
+    };
+    typedef struct ln_arch_info ln_arch_info;
+
+    extern ln_arch_info ln_global_arch_info;

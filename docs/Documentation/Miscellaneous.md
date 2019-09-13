@@ -45,6 +45,7 @@ would be transformed into the following JSON:
         "some_string": "    No worries about \"strings\" and\nnewlines here!"
     }
 
+## Data File Format
 
 ## Tools
 
@@ -80,7 +81,7 @@ You can always get help for a tool by typing `tool_name -h`.
     A weight file generator. Convert the input text file containing weight
     numbers to one text file in hexadecimal string format.
 
-* `ir2json.pl`
+* `il2json.pl`
 
     Generate JSON-format IR code from input file which is in 
     [simplified IR format]().

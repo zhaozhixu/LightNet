@@ -6,6 +6,7 @@ software/hardware backends.
 ## Getting Started
 
 * [Installation](Getting-Started.md#installation)
+* [Model Format](Getting-Started.md#model-format)
 * [Usage](Getting-Started.md#usage)
 
 ## Documentation
@@ -15,6 +16,7 @@ software/hardware backends.
 * [Build Options](Documentation/Build-Options.md)
 * [Data Structures](Documentation/Data-Structures.md)
 * [Intermediate Representation](Documentation/Intermediate-Representation.md)
+* [Intermediate Language](Documentation/Intermediate-Language.md)
 * [Operator Description](Documentation/Operator-Description.md)
 * [Optimizer Description](Documentation/Optimizer-Description.md)
 * [Miscellaneous](Documentation/Miscellaneous.md)
