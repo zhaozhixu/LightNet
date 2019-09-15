@@ -75,6 +75,10 @@
 </li>
                                     
 <li >
+    <a href="Intermediate-Language.html">Intermediate Language</a>
+</li>
+                                    
+<li >
     <a href="Operator-Description.html">Operator Description</a>
 </li>
                                     
@@ -122,6 +126,7 @@
         <li class="main active"><a href="#data-structures">Data Structures</a></li>
             <li><a href="#linked-list">Linked List</a></li>
             <li><a href="#queue">Queue</a></li>
+            <li><a href="#stack">Stack</a></li>
             <li><a href="#hash-table">Hash Table</a></li>
             <li><a href="#graph">Graph</a></li>
             <li><a href="#memory-model">Memory Model</a></li>
@@ -130,6 +135,7 @@
             <li><a href="#operator">Operator</a></li>
             <li><a href="#data-flow-graph">Data Flow Graph</a></li>
             <li><a href="#context">Context</a></li>
+            <li><a href="#architecture">Architecture</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
@@ -294,7 +300,7 @@ elements' values.</p>
 </li>
 </ul>
 <h2 id="queue">Queue<a class="headerlink" href="#queue" title="Permanent link">&para;</a></h2>
-<p><code>ln_queue</code> is a simple single-in single-out linked list, using two list nodes
+<p><code>ln_queue</code> is a simple first-in first-out (FIFO) linked list, using two list nodes
 for its head and tail.</p>
 <div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_queue</span> <span class="p">{</span>
     <span class="n">ln_list</span>  <span class="o">*</span><span class="n">head</span><span class="p">;</span>
@@ -312,6 +318,10 @@ for its head and tail.</p>
 <p>Create an empty queue.</p>
 </li>
 <li>
+<p><strong><code>void ln_queue_free(ln_queue *queue)</code></strong></p>
+<p>Free the queue.</p>
+</li>
+<li>
 <p><strong><code>ln_queue *ln_queue_enqueue(ln_queue *queue, void *data)</code></strong></p>
 <p>Add an element to the head of the queue. Create a new queue if 
 <code>queue == NULL</code>.</p>
@@ -320,9 +330,35 @@ for its head and tail.</p>
 <p><strong><code>void *ln_queue_dequeue(ln_queue *queue)</code></strong></p>
 <p>Remove and return the element at the tail of the queue.</p>
 </li>
+</ul>
+<h2 id="stack">Stack<a class="headerlink" href="#stack" title="Permanent link">&para;</a></h2>
+<p><code>ln_stack</code> is a simple first-in last-out (FILO) linked list, using a list node for
+its top.</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_stack</span> <span class="p">{</span>
+    <span class="n">ln_list</span>  <span class="o">*</span><span class="n">top</span><span class="p">;</span>
+    <span class="kt">size_t</span>    <span class="n">size</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_stack</span> <span class="n">ln_stack</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>ln_stack</code> supports the following oeprations:</p>
+<ul>
 <li>
-<p><strong><code>void ln_queue_free(ln_queue *queue)</code></strong></p>
-<p>Free the queue.</p>
+<p><strong><code>ln_stack *ln_stack_create(void)</code></strong></p>
+<p>Create an empty stack.</p>
+</li>
+<li>
+<p><strong><code>void ln_stack_free(ln_stack *stack)</code></strong></p>
+<p>Free the stack.</p>
+</li>
+<li>
+<p><strong><code>ln_stack *ln_stack_push(ln_stack *stack, void *data)</code></strong></p>
+<p>Push an element to the top of the stack.</p>
+</li>
+<li>
+<p><strong><code>void *ln_stack_pop(ln_stack *stack)</code></strong></p>
+<p>Pop the top element out of the stack.</p>
 </li>
 </ul>
 <h2 id="hash-table">Hash Table<a class="headerlink" href="#hash-table" title="Permanent link">&para;</a></h2>
@@ -1122,6 +1158,81 @@ different state-transfer functions.</p>
 </pre></div>
 
 
+<p>Every operator should implement its own <code>ln_op</code> structures, which 
+are resident in <code>src/op</code>, and register its structures in the architecture 
+defination it runs on. </p>
+<p>For example, an operator <code>foo_cpu</code> that has input tensor "src", output tensor "dst",
+and string parameter "param" should have the following structure defined 
+in some file like <code>src/op/ln_opimpl_foo_cpu.c</code>.</p>
+<div class="codehilite"><pre><span></span><span class="k">static</span> <span class="kt">void</span> <span class="nf">foo_pre_run</span><span class="p">(</span><span class="n">ln_op_arg</span> <span class="o">*</span><span class="n">op_arg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* check the input and paramenter and define the output tensor shape */</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">foo_run</span><span class="p">(</span><span class="n">ln_op_arg</span> <span class="o">*</span><span class="n">op_arg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* do the computation */</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">foo_post_run</span><span class="p">(</span><span class="n">ln_op_arg</span> <span class="o">*</span><span class="n">op_arg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cm">/* do the cleanup */</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">in_arg_names</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;src&quot;</span><span class="p">,</span>
+    <span class="nb">NULL</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">out_arg_names</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;dst&quot;</span><span class="p">,</span>
+    <span class="nb">NULL</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">param_arg_names</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;param&quot;</span><span class="p">,</span>
+    <span class="nb">NULL</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="k">const</span> <span class="n">ln_param_type</span> <span class="n">param_ptypes</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">LN_PARAM_STRING</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="n">ln_op_arg</span> <span class="n">op_arg_foo</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">optype</span> <span class="o">=</span> <span class="s">&quot;foo_cpu&quot;</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">arch</span> <span class="o">=</span> <span class="s">&quot;cpu&quot;</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">in_arg_names</span> <span class="o">=</span> <span class="n">in_arg_names</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">out_arg_names</span> <span class="o">=</span> <span class="n">out_arg_names</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">param_arg_names</span> <span class="o">=</span> <span class="n">param_arg_names</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">param_ptypes</span> <span class="o">=</span> <span class="n">param_ptypes</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="cm">/* NULL functions are equivalent to empty functions */</span>
+<span class="n">ln_op</span> <span class="n">ln_opimpl_foo_cpu</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">op_arg</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">op_arg_foo</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">pre_run</span> <span class="o">=</span> <span class="n">foo_pre_run</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">static_run</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">run</span> <span class="o">=</span> <span class="n">foo_run</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">post_run</span> <span class="o">=</span> <span class="n">foo_post_run</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">calc_offset</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">,</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>And in <code>src/arch/ln_archimpl_cpu.c</code>, the operator shoud register itself via
+these code:</p>
+<div class="codehilite"><pre><span></span><span class="k">extern</span> <span class="n">ln_op</span> <span class="n">ln_opimpl_foo_cpu</span><span class="p">;</span>
+<span class="p">......</span>
+<span class="k">static</span> <span class="n">ln_op</span> <span class="o">*</span><span class="n">ops_cpu</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="p">...</span>
+<span class="o">&amp;</span><span class="n">ln_opimpl_foo_cpu</span><span class="p">,</span>
+<span class="p">...</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>Many operators can be automatically generated and registered by 
+operator descriptions, which can reduce enormous coding efforts. Those generated
+operator definations are resident in <code>src/op/auto</code>. See section 
+<a href="Operator-Description.html">Operator Description</a> for more details of the description
+and the associated code generation tool.</p>
 <p><code>ln_op</code> generally supports the following operations:</p>
 <ul>
 <li>
@@ -1181,8 +1292,8 @@ replacing <code>conv</code> with <code>conv_cuda</code>.</p>
 </li>
 </ul>
 <p>The are both an operator table and an operator list existing in a LightNet <a href="#context">context</a>.
-While the former has the ownership of all operators, the latter retains a linear
-form of the operators, which contains the execution order of the operators.</p>
+While the former is the <em>single spot of truth</em> of all operators, the latter retains
+a linear form of the operators, which contains the execution order of the operators.</p>
 <p>The operator list supports the following operations:</p>
 <ul>
 <li>
@@ -1703,18 +1814,150 @@ main functions. Some are used in <code>ln_pass</code> module for optimization pa
 <ul>
 <li>
 <p><strong><code>void ln_context_init_ops(ln_context *ctx)</code></strong></p>
+<p>Initialize the operators, insert them to the operator table, 
+run their <code>pre_run</code>s and construct the data flow graph.</p>
 </li>
 <li>
 <p><strong><code>void ln_context_cleanup_ops(ln_context *ctx)</code></strong></p>
+<p>Finalize the operators, do the opposite things that <code>ln_context_init_ops</code> 
+does.</p>
 </li>
-<li><strong><code>void ln_context_replace_ops(ln_context *ctx, ln_list **position, size_t len, ln_list *new_ops)</code></strong></li>
-<li><strong><code>void ln_context_remove_op(ln_context *ctx, ln_list **positio)</code></strong></li>
-<li><strong><code>void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)</code></strong></li>
-<li><strong><code>void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops)</code></strong></li>
-<li><strong><code>int ln_context_check(const ln_context *ctx)</code></strong></li>
-<li><strong><code>void ln_context_alloc_mem(ln_context *ctx)</code></strong></li>
-<li><strong><code>void ln_context_dealloc_mem(ln_context *ctx)</code></strong></li>
-</ul></div>
+<li>
+<p><strong><code>void ln_context_replace_ops(ln_context *ctx, ln_list **position, size_t len, ln_list *new_ops)</code></strong></p>
+<p>Replace the operators in <code>ctx-&gt;ops</code> at <code>position</code> with <code>ops</code> of length <code>len</code>.
+And automatically update the data flow graph <code>ctx-&gt;dfg</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_remove_op(ln_context *ctx, ln_list **position)</code></strong></p>
+<p>Remove the operator at <code>postion</code> in <code>ctx-&gt;ops</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_add_op(ln_context *ctx, ln_list **position, ln_op *new_op)</code></strong></p>
+<p>Add <code>new_op</code> to <code>postion</code> in <code>ctx-&gt;ops</code>.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_subgraph(ln_context *ctx, ln_list *old_ops, ln_list *new_ops)</code></strong></p>
+<p>Substitute <code>old_ops</code> with <code>new_ops</code> in <code>ctx</code>.</p>
+</li>
+<li>
+<p><strong><code>int ln_context_check(const ln_context *ctx)</code></strong></p>
+<p>Check the context's validity, which should be checked after every alternation
+of the operators.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_alloc_mem(ln_context *ctx)</code></strong></p>
+<p>Allocate the memory that the context's tensors use. This must be called after
+the memory has been planned.</p>
+</li>
+<li>
+<p><strong><code>void ln_context_dealloc_mem(ln_context *ctx)</code></strong></p>
+<p>Deallocate the memory allocated by <code>ln_context_alloc_mem()</code>.</p>
+</li>
+</ul>
+<h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
+<p>The backend information of a specific hardware or software is stored in the
+architecture struct, <code>ln_arch</code>.</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="n">ln_list</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ln_expander_func</span><span class="p">)</span> <span class="p">(</span><span class="k">const</span> <span class="n">ln_context</span> <span class="o">*</span><span class="n">ctx</span><span class="p">,</span> <span class="k">const</span> <span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">,</span>
+                                      <span class="kt">int</span> <span class="o">*</span><span class="n">match</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">ln_list</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ln_combiner_func</span><span class="p">)</span> <span class="p">(</span><span class="k">const</span> <span class="n">ln_context</span> <span class="o">*</span><span class="n">ctx</span><span class="p">,</span>
+                                      <span class="k">const</span> <span class="n">ln_list</span> <span class="o">*</span><span class="n">win_ops</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">win_size</span><span class="p">,</span>
+                                      <span class="kt">int</span> <span class="o">*</span><span class="n">match</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">ln_list</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ln_subgraph_func</span><span class="p">)</span> <span class="p">(</span><span class="k">const</span> <span class="n">ln_context</span> <span class="o">*</span><span class="n">ctx</span><span class="p">,</span> <span class="n">ln_list</span> <span class="o">**</span><span class="n">old_ops</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="n">ln_list</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ln_schedule_func</span><span class="p">)</span> <span class="p">(</span><span class="k">const</span> <span class="n">ln_context</span> <span class="o">*</span><span class="n">ctx</span><span class="p">);</span>
+
+<span class="k">struct</span> <span class="n">ln_arch</span> <span class="p">{</span>
+    <span class="kt">void</span>              <span class="p">(</span><span class="o">*</span><span class="n">init_func</span><span class="p">)(</span><span class="kt">void</span> <span class="o">**</span><span class="n">priv_p</span><span class="p">);</span> <span class="cm">/* pointer to priv */</span>
+    <span class="kt">void</span>              <span class="p">(</span><span class="o">*</span><span class="n">cleanup_func</span><span class="p">)(</span><span class="kt">void</span> <span class="o">**</span><span class="n">priv_p</span><span class="p">);</span>
+    <span class="kt">void</span>               <span class="o">*</span><span class="n">priv</span><span class="p">;</span>
+    <span class="n">ln_op</span>             <span class="o">**</span><span class="n">reg_ops</span><span class="p">;</span>       <span class="cm">/* NULL terminated */</span>
+    <span class="n">ln_expander_func</span>   <span class="o">*</span><span class="n">ep_funcs</span><span class="p">;</span>      <span class="cm">/* NULL terminated */</span>
+    <span class="n">ln_combiner_func</span>   <span class="o">*</span><span class="n">cb_funcs</span><span class="p">;</span>      <span class="cm">/* NULL terminated */</span>
+    <span class="n">ln_subgraph_func</span>   <span class="o">*</span><span class="n">sg_funcs</span><span class="p">;</span>      <span class="cm">/* NULL terminated */</span>
+    <span class="n">ln_schedule_func</span>   <span class="o">*</span><span class="n">sd_funcs</span><span class="p">;</span>      <span class="cm">/* NULL terminated */</span>
+    <span class="kt">char</span>               <span class="o">*</span><span class="n">arch_name</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_arch</span> <span class="n">ln_arch</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Every architecture has its own registered operators in <code>reg_ops</code>, 
+which are the operators that can run on this platform and has the same
+<code>arch</code> field as that arch's <code>arch_name</code>.</p>
+<p><code>ln_arch</code> also contains the optimizer functions that the platform can perform
+on the operators in one context, which should be provided by the <code>ln_arch</code>'s 
+author. There are four kinds of optimizer functions, each of which has an array
+of <code>NULL</code> terminated function pointers, which are applied to the context in order
+when LightNet is compiling the NN model. The optimizer functions includes:</p>
+<ul>
+<li>
+<p><strong><code>ln_list *(*ln_expander_func) (const ln_context *ctx, const ln_op *op, int *match)</code></strong></p>
+<p>Expand operator <code>op</code> to the operators in the returned list. 
+The returned list may be <code>NULL</code>, in which case the original <code>op</code> is removed.
+If <code>op</code> cannot be expanded by this function, <code>*match</code> should be assigned with
+0, else it should be assigned with 1.</p>
+</li>
+<li>
+<p><strong><code>ln_list *(*ln_combiner_func) (const ln_context *ctx, const ln_list *win_ops, size_t win_size, int *match)</code></strong></p>
+<p>Combine operators in list <code>win_ops</code> of length <code>win_size</code> to another list of
+operators in the returned list.
+The returned list may be <code>NULL</code>, in which case the original <code>win_ops</code> is removed.
+If <code>win_ops</code> cannot be combined by this function, <code>*match</code> should be assigned with
+0, else it should be assigned with 1.</p>
+</li>
+<li>
+<p>(experiment) <strong><code>ln_list *(*ln_subgraph_func) (const ln_context *ctx, ln_list **old_ops)</code></strong></p>
+<p>Substitute operators in <code>old_ops</code> to the operators in the returned list.</p>
+</li>
+<li>
+<p>(experiment) <strong><code>ln_list *(*ln_schedule_func) (const ln_context *ctx)</code></strong></p>
+<p>Schedule the order of operators in <code>ctx-&gt;ops</code>.</p>
+</li>
+</ul>
+<p>An expander function can transform <em>one</em> operator <code>op</code> to one or several other
+operators in its returned operator list. An combiner function can transform
+<em>several</em> operators to one or several other operators in its returned operator 
+list. Those two function may seems overlayed in functionalities, but they're 
+designed to implement a well-known "peephole optimizer" learned from classic
+compiler techniques, that first expands individual abstract instructions 
+to platform-related low-level instructions, then combines adjacent low-level
+instructions to fewer instructions which can fulfill complex tasks in less time.</p>
+<p>The expander functions and combiner functions are all operations performed on the
+linear form of operators. Although they can make optimization decisions according
+to the information gived by data flow graph though <code>ctx-&gt;dfg</code>, the optimizations
+themselves must be made on operators adjacent in <code>ctx-&gt;ops</code>.</p>
+<p>The subgrapher function and scheduler function are experiment features that are 
+not stable now.</p>
+<p>Besides, there is an <code>init_func</code> and <code>cleanup_func</code> associated with a private
+data pointer <code>priv</code> in a <code>ln_arch</code> structure, which are used for the 
+initialization and finalization of the architecture. The <code>priv</code> data pointer can
+be used for any data structure that the architecture may use for its private data
+during its runtime.</p>
+<p>Every architecture must define its own <code>ln_arch</code> structure, which are resident
+in <code>src/arch</code>, and register itself in <code>src/ln_arch.c</code>. </p>
+<p>Some optimizer functions can be automatically generated by
+optimizer descriptions. Those generated optimizer functions are resident in
+<code>src/arch/auto</code>. See <a href="Optimizer-Description.html">Optimizer Description</a>
+for more details.</p>
+<p>LightNet's architectures have a global access point <code>LN_ARCH</code>, 
+of type <code>struct ln_arch_info</code>:</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">ln_arch_info</span> <span class="p">{</span>
+    <span class="n">ln_hash</span>  <span class="o">*</span><span class="n">arch_table</span><span class="p">;</span>
+    <span class="n">ln_hash</span>  <span class="o">*</span><span class="n">op_proto_table</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ln_arch_info</span> <span class="n">ln_arch_info</span><span class="p">;</span>
+
+<span class="k">extern</span> <span class="n">ln_arch_info</span> <span class="n">ln_global_arch_info</span><span class="p">;</span>
+<span class="cp">#define LN_ARCH ln_global_arch_info</span>
+</pre></div>
+
+
+<p><code>LN_ARCH.arch_table</code> is a hash table that has all registered architectures 
+in it. It has registered <code>ln_arch</code> pointers as its values and their <code>arch_name</code>s
+as it keys. Besides, <code>LN_ARCH.op_proto_table</code> is another hash table that has
+all operators from all architectures in it, that has the registered operator
+pointers as its values and their <code>optypes</code>s as its keys.
+Thus, developers can look up the registered architectures and operators from
+<code>LN_ARCH</code> very convinently.</p></div>
         </div>
 
         <footer class="col-md-12">
