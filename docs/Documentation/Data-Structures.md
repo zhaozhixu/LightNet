@@ -1034,6 +1034,83 @@ different state-transfer functions.
     };
     typedef struct ln_op_arg ln_op_arg;
 
+Every operator should implement its own `ln_op` structures, which 
+are resident in `src/op`, and register its structures in the architecture 
+defination it runs on. 
+
+For example, an operator `foo_cpu` that has input tensor "src", output tensor "dst",
+and string parameter "param" should have the following structure defined 
+in some file like `src/op/ln_opimpl_foo_cpu.c`.
+
+    :::c
+    static void foo_pre_run(ln_op_arg *op_arg) {
+        /* check the input and paramenter and define the output tensor shape */
+    }
+    
+    static void foo_run(ln_op_arg *op_arg) {
+        /* do the computation */
+    }
+    
+    static void foo_post_run(ln_op_arg *op_arg) {
+        /* do the cleanup */
+    }
+    
+    static const char *in_arg_names[] = {
+        "src",
+        NULL
+    };
+
+    static const char *out_arg_names[] = {
+        "dst",
+        NULL
+    };
+
+    static const char *param_arg_names[] = {
+        "param",
+        NULL
+    };
+
+    static const ln_param_type param_ptypes[] = {
+        LN_PARAM_STRING,
+    };
+
+    static ln_op_arg op_arg_foo = {
+        .optype = "foo_cpu",
+        .arch = "cpu",
+        .in_arg_names = in_arg_names,
+        .out_arg_names = out_arg_names,
+        .param_arg_names = param_arg_names,
+        .param_ptypes = param_ptypes,
+    };
+    
+    /* NULL functions are equivalent to empty functions */
+    ln_op ln_opimpl_foo_cpu = {
+        .op_arg = &op_arg_foo,
+        .pre_run = foo_pre_run,
+        .static_run = NULL,
+        .run = foo_run,
+        .post_run = foo_post_run,
+        .calc_offset = NULL,
+    };
+
+And in `src/arch/ln_archimpl_cpu.c`, the operator shoud register itself via
+these code:
+
+    :::c
+    extern ln_op ln_opimpl_foo_cpu;
+    ......
+    static ln_op *ops_cpu[] = {
+    ...
+    &ln_opimpl_foo_cpu,
+    ...
+    };
+
+Many operators can be automatically generated and registered by 
+operator descriptions, which can reduce enormous coding efforts. Those generated
+operator definations are resident in `src/op/auto`. See section 
+[Operator Description](Operator-Description.md) for more details of the description
+and the associated code generation tool.
+
 `ln_op` generally supports the following operations:
 
 - **`ln_op *ln_op_create_from_proto(const ln_op *op_proto, const char *name, ln_list *tensors_in, ln_list *tensors_out, ln_list *params, ln_hash *tensor_table)`**
@@ -1092,8 +1169,8 @@ different state-transfer functions.
     Find an operator's input or output tensor list entry with the entry's `arg_name`.
 
 The are both an operator table and an operator list existing in a LightNet [context](#context).
-While the former has the ownership of all operators, the latter retains a linear
-form of the operators, which contains the execution order of the operators.
+While the former is the *single spot of truth* of all operators, the latter retains
+a linear form of the operators, which contains the execution order of the operators.
 
 The operator list supports the following operations:
 
@@ -1663,6 +1740,74 @@ architecture struct, `ln_arch`.
     };
     typedef struct ln_arch ln_arch;
 
+Every architecture has its own registered operators in `reg_ops`, 
+which are the operators that can run on this platform and has the same
+`arch` field as that arch's `arch_name`.
+
+`ln_arch` also contains the optimizer functions that the platform can perform
+on the operators in one context, which should be provided by the `ln_arch`'s 
+author. There are four kinds of optimizer functions, each of which has an array
+of `NULL` terminated function pointers, which are applied to the context in order
+when LightNet is compiling the NN model. The optimizer functions includes:
+
+- **`ln_list *(*ln_expander_func) (const ln_context *ctx, const ln_op *op, int *match)`**
+  
+    Expand operator `op` to the operators in the returned list. 
+    The returned list may be `NULL`, in which case the original `op` is removed.
+    If `op` cannot be expanded by this function, `*match` should be assigned with
+    0, else it should be assigned with 1.
+
+- **`ln_list *(*ln_combiner_func) (const ln_context *ctx, const ln_list *win_ops, size_t win_size, int *match)`**
+
+    Combine operators in list `win_ops` of length `win_size` to another list of
+    operators in the returned list.
+    The returned list may be `NULL`, in which case the original `win_ops` is removed.
+    If `win_ops` cannot be combined by this function, `*match` should be assigned with
+    0, else it should be assigned with 1.
+
+- (experiment) **`ln_list *(*ln_subgraph_func) (const ln_context *ctx, ln_list **old_ops)`**
+
+    Substitute operators in `old_ops` to the operators in the returned list.
+
+- (experiment) **`ln_list *(*ln_schedule_func) (const ln_context *ctx)`**
+
+    Schedule the order of operators in `ctx->ops`.
+
+An expander function can transform *one* operator `op` to one or several other
+operators in its returned operator list. An combiner function can transform
+*several* operators to one or several other operators in its returned operator 
+list. Those two function may seems overlayed in functionalities, but they're 
+designed to implement a well-known "peephole optimizer" learned from classic
+compiler techniques, that first expands individual abstract instructions 
+to platform-related low-level instructions, then combines adjacent low-level
+instructions to fewer instructions which can fulfill complex tasks in less time.
+
+The expander functions and combiner functions are all operations performed on the
+linear form of operators. Although they can make optimization decisions according
+to the information gived by data flow graph though `ctx->dfg`, the optimizations
+themselves must be made on operators adjacent in `ctx->ops`.
+
+The subgrapher function and scheduler function are experiment features that are 
+not stable now.
+
+Besides, there is an `init_func` and `cleanup_func` associated with a private
+data pointer `priv` in a `ln_arch` structure, which are used for the 
+initialization and finalization of the architecture. The `priv` data pointer can
+be used for any data structure that the architecture may use for its private data
+during its runtime.
+
+Every architecture must define its own `ln_arch` structure, which are resident
+in `src/arch`, and register itself in `src/ln_arch.c`. 
+
+Some optimizer functions can be automatically generated by
+optimizer descriptions. Those generated optimizer functions are resident in
+`src/arch/auto`. See [Optimizer Description](Optimizer-Description.md)
+for more details.
+
+LightNet's architectures have a global access point `LN_ARCH`, 
+of type `struct ln_arch_info`:
+
+    :::c
     struct ln_arch_info {
         ln_hash  *arch_table;
         ln_hash  *op_proto_table;
@@ -1670,3 +1815,12 @@ architecture struct, `ln_arch`.
     typedef struct ln_arch_info ln_arch_info;
 
     extern ln_arch_info ln_global_arch_info;
+    #define LN_ARCH ln_global_arch_info
+
+`LN_ARCH.arch_table` is a hash table that has all registered architectures 
+in it. It has registered `ln_arch` pointers as its values and their `arch_name`s
+as it keys. Besides, `LN_ARCH.op_proto_table` is another hash table that has
+all operators from all architectures in it, that has the registered operator
+pointers as its values and their `optypes`s as its keys.
+Thus, developers can look up the registered architectures and operators from
+`LN_ARCH` very convinently.
