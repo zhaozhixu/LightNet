@@ -567,7 +567,7 @@ signed/unsigned integers, and bool.
 `tl_tensor` supports many tensor operations, see [TensorLight](https://github.com/zhaozhixu/TensorLight) for more details.
 
 In LightNet, all tensors in a NN model are managed by a tensor table. The tensor
-table is a hash table, with tensors' names as its keys and tensor table entries
+table is a hash table, with tensors' `name`s as its keys and tensor table entries
 as its values. The tensor table entry structure is defined as follows.
 
     :::c
@@ -676,7 +676,7 @@ structure `ln_tensor_list_entry`.
     
 `ln_tensor_list_entry` is used in an operator's input/output tensor list. `name`
 and `offset` are the same as those in the tensor's table entry. `name` is used
-to find the tensor table entry from the operator. `offset` is used to store
+to find the tensor table entry from the tensor table. `offset` is used to store
 the memory-planned address in the optimized output operator stream. `arg_name`
 is the argument name of the tensor in the operator, such as "stride" in an 
 "conv2d" operator.
@@ -1033,6 +1033,19 @@ different state-transfer functions.
         const ln_param_type  *param_ptypes;
     };
     typedef struct ln_op_arg ln_op_arg;
+
+The `name` field should be a unique string among all operators in this context.
+This is the unique ID of this operator. The NN model in 
+[IL format](../Getting-Started.md#model-format) can generate this string 
+automatically with the IL-to-IR generation tool `il2json.pl`.
+
+The `optype` field is the operator type that denotes the operation it performs,
+which should be one of the operator prototypes' `optype` registered in all 
+usable [architectures](#architecture), which can be accessed by 
+`LN_ARCH.op_proto_table`.
+
+The `arch` field is the architecture name this operator can run on, which should
+be the same as its operator prototype's `arch` field.
 
 Every operator should implement its own `ln_op` structures, which 
 are resident in `src/op`, and register its structures in the architecture 
@@ -1481,7 +1494,7 @@ as known as computing graph.
     };
     typedef struct ln_dfg ln_dfg;
 
-`ln_dfg` has a `graph` as its core data structure, with operators as nodes and
+`ln_dfg` has a [`graph`](#graph) as its core data structure, with operators as nodes and
 tensor names as edges. Besides, it has a `node_table` to manage all the graph nodes
 in a hash table, keyed by operator names, a `dangling_outs` list to manage all 
 the reaching out dangling edge nodes, and a `dangling_ins` list to manage all 
@@ -1715,7 +1728,7 @@ main functions. Some are used in `ln_pass` module for optimization passes.
 
 ## Architecture
 
-The backend information of a specific hardware or software is stored in the
+The backend information of a specific hardware or software platform is stored in the
 architecture struct, `ln_arch`.
 
     :::c

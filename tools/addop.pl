@@ -242,7 +242,7 @@ sub gen_struct_def {
     if (exists $op->{extra_privs}) {
         my $extra_privs = $op->{extra_privs};
         foreach (@$extra_privs) {
-            &err_exit("'$op->{optype}' needs an `type` and `name` in one of the `extra_privs`")
+            &err_exit("'$op->{optype}' needs an `type` and `name` in every `extra_privs`")
                 unless exists $_->{type} and exists $_->{name};
             push @defs, "$_->{type} $_->{name};";
         }
