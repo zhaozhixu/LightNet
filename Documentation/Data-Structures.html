@@ -693,7 +693,7 @@ signed/unsigned integers, and bool.</p>
 
 <p><code>tl_tensor</code> supports many tensor operations, see <a href="https://github.com/zhaozhixu/TensorLight">TensorLight</a> for more details.</p>
 <p>In LightNet, all tensors in a NN model are managed by a tensor table. The tensor
-table is a hash table, with tensors' names as its keys and tensor table entries
+table is a hash table, with tensors' <code>name</code>s as its keys and tensor table entries
 as its values. The tensor table entry structure is defined as follows.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/* NOTE: ALWAYS access tensor entry via its name in tensor table, since the</span>
 <span class="cm">   entry may be not the same during passes. It is owned by the tensor table. */</span>
@@ -802,7 +802,7 @@ structure <code>ln_tensor_list_entry</code>.</p>
 
 <p><code>ln_tensor_list_entry</code> is used in an operator's input/output tensor list. <code>name</code>
 and <code>offset</code> are the same as those in the tensor's table entry. <code>name</code> is used
-to find the tensor table entry from the operator. <code>offset</code> is used to store
+to find the tensor table entry from the tensor table. <code>offset</code> is used to store
 the memory-planned address in the optimized output operator stream. <code>arg_name</code>
 is the argument name of the tensor in the operator, such as "stride" in an 
 "conv2d" operator.</p>
@@ -1158,6 +1158,16 @@ different state-transfer functions.</p>
 </pre></div>
 
 
+<p>The <code>name</code> field should be a unique string among all operators in this context.
+This is the unique ID of this operator. The NN model in 
+<a href="../Getting-Started.html#model-format">IL format</a> can generate this string 
+automatically with the IL-to-IR generation tool <code>il2json.pl</code>.</p>
+<p>The <code>optype</code> field is the operator type that denotes the operation it performs,
+which should be one of the operator prototypes' <code>optype</code> registered in all 
+usable <a href="#architecture">architectures</a>, which can be accessed by 
+<code>LN_ARCH.op_proto_table</code>.</p>
+<p>The <code>arch</code> field is the architecture name this operator can run on, which should
+be the same as its operator prototype's <code>arch</code> field.</p>
 <p>Every operator should implement its own <code>ln_op</code> structures, which 
 are resident in <code>src/op</code>, and register its structures in the architecture 
 defination it runs on. </p>
@@ -1611,7 +1621,7 @@ as known as computing graph.</p>
 </pre></div>
 
 
-<p><code>ln_dfg</code> has a <code>graph</code> as its core data structure, with operators as nodes and
+<p><code>ln_dfg</code> has a <a href="#graph"><code>graph</code></a> as its core data structure, with operators as nodes and
 tensor names as edges. Besides, it has a <code>node_table</code> to manage all the graph nodes
 in a hash table, keyed by operator names, a <code>dangling_outs</code> list to manage all 
 the reaching out dangling edge nodes, and a <code>dangling_ins</code> list to manage all 
@@ -1855,7 +1865,7 @@ the memory has been planned.</p>
 </li>
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
-<p>The backend information of a specific hardware or software is stored in the
+<p>The backend information of a specific hardware or software platform is stored in the
 architecture struct, <code>ln_arch</code>.</p>
 <div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="n">ln_list</span> <span class="o">*</span><span class="p">(</span><span class="o">*</span><span class="n">ln_expander_func</span><span class="p">)</span> <span class="p">(</span><span class="k">const</span> <span class="n">ln_context</span> <span class="o">*</span><span class="n">ctx</span><span class="p">,</span> <span class="k">const</span> <span class="n">ln_op</span> <span class="o">*</span><span class="n">op</span><span class="p">,</span>
                                       <span class="kt">int</span> <span class="o">*</span><span class="n">match</span><span class="p">);</span>

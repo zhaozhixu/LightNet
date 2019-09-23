@@ -128,7 +128,91 @@
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h1 id="operator-description">Operator Description<a class="headerlink" href="#operator-description" title="Permanent link">&para;</a></h1></div>
+<h1 id="operator-description">Operator Description<a class="headerlink" href="#operator-description" title="Permanent link">&para;</a></h1>
+<p>LightNet can generate operator defination code from Operator Descriptions
+automatically, which is conforming to the following format:</p>
+<div class="codehilite"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;ops&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">...</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;optype&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;author&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;arch&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;autogen&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">BOOL</span>
+            <span class="s2">&quot;extra_privs&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;type&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;tensors_in&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;mtype&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span> 
+                    <span class="s2">&quot;ndim&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;len&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;sametype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;sameshape&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;static&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">BOOL</span><span class="p">,</span>
+                    <span class="s2">&quot;check&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;checks&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="p">[</span>
+                        <span class="s2">&quot;check&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                        <span class="p">...</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;custom&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="p">...</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;tensors_out&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;mtype&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;ndim&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span> 
+                    <span class="s2">&quot;dims&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;len&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;dtype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;custom&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;owner&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;static&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">BOOL</span><span class="p">,</span>
+                    <span class="s2">&quot;mtype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;cleanup&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;params&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;ptype&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;realtype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;from_func&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;eq&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;gt&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;ge&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;lt&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;le&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;ne&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;check&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;checks&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="p">[</span>
+                        <span class="s2">&quot;check&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                        <span class="p">...</span>
+                    <span class="p">],</span>
+                    <span class="s2">&quot;custom&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;custom&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;static_run&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;run&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;post_run&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;calc_offset&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="p">...</span>
+        <span class="p">},</span>
+        <span class="p">...</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div></div>
         </div>
 
         <footer class="col-md-12">

@@ -124,11 +124,136 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#intermediate-representation">Intermediate Representation</a></li>
+            <li><a href="#json-ir-format">JSON IR Format</a></li>
+            <li><a href="#example">Example</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h1 id="intermediate-representation">Intermediate Representation<a class="headerlink" href="#intermediate-representation" title="Permanent link">&para;</a></h1></div>
+<h1 id="intermediate-representation">Intermediate Representation<a class="headerlink" href="#intermediate-representation" title="Permanent link">&para;</a></h1>
+<h2 id="json-ir-format">JSON IR Format<a class="headerlink" href="#json-ir-format" title="Permanent link">&para;</a></h2>
+<p>LightNet uses a JSON formatted intermediate representation (IR) to represent
+NN models, which is conforming to the following format:</p>
+<div class="codehilite"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;ops&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;optype&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+            <span class="s2">&quot;tensors_in&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">STRING</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;tensors_out&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span> 
+                    <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="nx">STRING</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;params&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="nx">STRING</span> <span class="nx">or</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">BOOL</span> <span class="nx">or</span> <span class="nx">ARRAY</span> <span class="k">of</span> <span class="o">&lt;</span><span class="nx">STRING</span> <span class="nx">or</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">BOOL</span><span class="o">&gt;</span>
+                <span class="p">},</span>
+                <span class="p">...</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="p">...</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The IR format is very simple. It contains an array of operators <code>ops</code>, in which
+every operator is a JSON object. An operator should has the following fields:</p>
+<ul>
+<li><code>name</code>: A string name that is unique among all operators.</li>
+<li><code>optype</code>: A string of operator type that denotes the operation it performs.</li>
+<li><code>tensors_in</code>: The input tensors of the operator.</li>
+<li><code>tensors_out</code>: The output tensors of the operator.</li>
+<li><code>params</code>: The parameters of the operator.</li>
+</ul>
+<p>See <a href="Data-Structures.html#operator">Operator</a> for the corresponding C data
+ structures of the above fields used by LightNet .</p>
+<p><code>tensors_in</code>, <code>tensors_out</code> and <code>params</code> all have a <code>arg_name</code> field. If you think the
+operator as a C function, then <code>arg_name</code> is the argument name of that function.
+Thus, <code>arg_name</code> must be unique in the scope of the operator.</p>
+<p>The <code>name</code> field in a tensor is the tensor's unique name among all tensors,
+which is used to look up the tensor in the tensor table. New tensors can only be
+defined in output tensors, and input tensors must have been defined by previous
+operators in their output tensors.
+See <a href="Data-Structures.html#tensor">Tensor</a> for details of the underlying data 
+structures.</p>
+<p>The <code>value</code> field in a paramenter is its value, of the data type that the 
+paramenter requires. See <a href="Data-Structures.html#parameter">Parameter</a> for
+the possible data types and the underlying data structures used by parameters.</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<p>The following code is an example of a simple IR composed of 3 operators: <code>create1</code>,
+<code>slice1</code>, and <code>print1</code>. <code>create1</code> first creates a tensor <code>tensor1</code> of shape
+2 x 4, with float data [1, 2, 3, 4, 5, 6, 7, 8], then <code>slice1</code> slices the tensor
+in its second axis (axis starts from 0), resulting to a tensor <code>tensor2</code> of
+shape 2 x 3. Finally <code>print1</code> prints <code>tensor2</code> to stdout.</p>
+<div class="codehilite"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;ops&quot;</span><span class="o">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;create1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;optype&quot;</span><span class="o">:</span> <span class="s2">&quot;create&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tensors_in&quot;</span><span class="o">:</span> <span class="p">[</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;tensors_out&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;dst&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;tensor1&quot;</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;params&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;TL_FLOAT&quot;</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;dims&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]},</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]},</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;ran&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]},</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;from_file&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;slice1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;optype&quot;</span><span class="o">:</span> <span class="s2">&quot;slice&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tensors_in&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;tensor1&quot;</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;tensors_out&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;dst&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;tensor2&quot;</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;params&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;axis&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;len&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="mi">3</span><span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;print1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;optype&quot;</span><span class="o">:</span> <span class="s2">&quot;print&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;tensors_in&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="o">:</span> <span class="s2">&quot;tensor2&quot;</span><span class="p">}</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;tensors_out&quot;</span><span class="o">:</span> <span class="p">[</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;params&quot;</span><span class="o">:</span> <span class="p">[</span>
+                <span class="p">{</span><span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="s2">&quot;msg&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;tensor2:&quot;</span><span class="p">}</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>If the above code is saved in <code>example.json</code>, executing the following 
+command will gives <code>print1</code>'s message:</p>
+<div class="codehilite"><pre><span></span>$ lightnet example.json
+tensor2:
+[[2.000 3.000 4.000]
+ [6.000 7.000 8.000]]
+info: run time: 0.000019s
+</pre></div></div>
         </div>
 
         <footer class="col-md-12">

@@ -124,11 +124,20 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#intermediate-language">Intermediate Language</a></li>
+            <li><a href="#il-format">IL Format</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
-<h1 id="intermediate-language">Intermediate Language<a class="headerlink" href="#intermediate-language" title="Permanent link">&para;</a></h1></div>
+<h1 id="intermediate-language">Intermediate Language<a class="headerlink" href="#intermediate-language" title="Permanent link">&para;</a></h1>
+<h2 id="il-format">IL Format<a class="headerlink" href="#il-format" title="Permanent link">&para;</a></h2>
+<p>The <a href="Intermediate-Representation.html">Intermediate Representation</a> may seems
+simple at the first glance. But when we're writing a real neural network,
+the model file in JSON IR format is easily getting tens of thousands of lines,
+which is still piece of cake for computers, but a nightmare for humans.</p>
+<p>Thus, LightNet provides a "concise version" of JSON IR format, which contains
+the exactly the same information as JSON IR, called LightNet Intermediate
+Language (IL), conforming to the following format:</p></div>
         </div>
 
         <footer class="col-md-12">
