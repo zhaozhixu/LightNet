@@ -178,9 +178,9 @@ every operator is a JSON object. An operator should has the following fields:</p
 </ul>
 <p>See <a href="Data-Structures.html#operator">Operator</a> for the corresponding C data
  structures of the above fields used by LightNet .</p>
-<p><code>tensors_in</code>, <code>tensors_out</code> and <code>params</code> all have a <code>arg_name</code> field. If you think the
-operator as a C function, then <code>arg_name</code> is the argument name of that function.
-Thus, <code>arg_name</code> must be unique in the scope of the operator.</p>
+<p>The elements of <code>tensors_in</code>, <code>tensors_out</code> and <code>params</code> all have a <code>arg_name</code> 
+field. Think the operator as a C function, then <code>arg_name</code> is the argument name 
+of that function. Thus, <code>arg_name</code> must be unique in the scope of the operator.</p>
 <p>The <code>name</code> field in a tensor is the tensor's unique name among all tensors,
 which is used to look up the tensor in the tensor table. New tensors can only be
 defined in output tensors, and input tensors must have been defined by previous
@@ -247,7 +247,7 @@ shape 2 x 3. Finally <code>print1</code> prints <code>tensor2</code> to stdout.<
 
 
 <p>If the above code is saved in <code>example.json</code>, executing the following 
-command will gives <code>print1</code>'s message:</p>
+command will give <code>print1</code>'s message:</p>
 <div class="codehilite"><pre><span></span>$ lightnet example.json
 tensor2:
 [[2.000 3.000 4.000]

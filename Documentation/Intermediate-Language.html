@@ -137,7 +137,45 @@ the model file in JSON IR format is easily getting tens of thousands of lines,
 which is still piece of cake for computers, but a nightmare for humans.</p>
 <p>Thus, LightNet provides a "concise version" of JSON IR format, which contains
 the exactly the same information as JSON IR, called LightNet Intermediate
-Language (IL), conforming to the following format:</p></div>
+Language (IL), which can be transformed to JSON IR by <code>il2json.pl</code> (installed
+by default).</p>
+<p>The basic format for an operator's representation in IL is:</p>
+<div class="codehilite"><pre><span></span><span class="n">OPTYPE</span><span class="p">(</span><span class="n">TENSOR_IN_ARG_NAME1</span><span class="o">=</span><span class="n">TENSOR_IN_NAME1</span><span class="p">,</span> 
+       <span class="n">TENSOR_IN_ARG_NAME2</span><span class="o">=</span><span class="n">TENSOR_IN_NAME2</span><span class="p">,</span> <span class="p">...</span> <span class="o">|</span>
+       <span class="n">TENSOR_OUT_ARG_NAME1</span><span class="o">=</span><span class="n">TENSOR_OUT_NAME1</span><span class="p">,</span>
+       <span class="n">TENSOR_OUT_ARG_NAME1</span><span class="o">=</span><span class="n">TENSOR_OUT_NAME1</span><span class="p">,</span> <span class="p">...</span> <span class="o">|</span>
+       <span class="n">PARAM_ARG_NAME1</span><span class="o">=</span><span class="n">PARAM_VALUE1</span><span class="p">,</span>
+       <span class="n">PARAM_ARG_NAME2</span><span class="o">=</span><span class="n">PARAM_VALUE2</span><span class="p">,</span> <span class="p">...);</span>
+</pre></div>
+
+
+<p>For example, <a href="Intermediate-Representation.html#example">the example IR used in Intermediate Representation section</a>
+that composed of 3 operators (<code>create1</code>, <code>slice1</code>, <code>print1</code>) can also be written
+in IL:</p>
+<div class="codehilite"><pre><span></span><span class="n">create</span><span class="p">(</span><span class="o">|</span> <span class="n">dst</span><span class="o">=</span><span class="n">tensor1</span> <span class="o">|</span> <span class="n">dtype</span><span class="o">=</span><span class="n">TL_FLOAT</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span>
+       <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">ran</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">from_file</span><span class="o">=</span><span class="nb">false</span><span class="p">);</span>
+<span class="n">slice</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">tensor1</span> <span class="o">|</span> <span class="n">dst</span><span class="o">=</span><span class="n">tensor2</span> <span class="o">|</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">len</span><span class="o">=</span><span class="mi">3</span><span class="p">);</span>
+<span class="n">print</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">tensor2</span> <span class="o">|</span> <span class="o">|</span> <span class="n">msg</span><span class="o">=</span><span class="s">&quot;tensor2:&quot;</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Save the above code in <code>example.net</code>, and <code>il2json.pl</code> can generate the same code
+as in the <a href="Intermediate-Representation.html#example">example IR</a>:</p>
+<div class="codehilite"><pre><span></span>$ il2json.pl example.net -o example.json
+</pre></div>
+
+
+<p>Or you can combine <code>ir2json</code> and <code>lightnet</code> with the pipe:</p>
+<div class="codehilite"><pre><span></span>$ il2json.pl example.net | lightnet -
+tensor2:
+[[2.000 3.000 4.000]
+[6.000 7.000 8.000]]
+info: run time: 0.000062s
+</pre></div>
+
+
+<p>The IL interpreter utlizes the C preprocessor of GCC, thus all C preprocessor
+syntaxes are legal in IL.</p></div>
         </div>
 
         <footer class="col-md-12">
