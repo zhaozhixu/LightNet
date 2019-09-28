@@ -49,9 +49,9 @@ every operator is a JSON object. An operator should has the following fields:
  See [Operator](Data-Structures.md#operator) for the corresponding C data
  structures of the above fields used by LightNet .
 
-`tensors_in`, `tensors_out` and `params` all have a `arg_name` field. If you think the
-operator as a C function, then `arg_name` is the argument name of that function.
-Thus, `arg_name` must be unique in the scope of the operator.
+The elements of `tensors_in`, `tensors_out` and `params` all have a `arg_name` 
+field. Think the operator as a C function, then `arg_name` is the argument name 
+of that function. Thus, `arg_name` must be unique in the scope of the operator.
 
 The `name` field in a tensor is the tensor's unique name among all tensors,
 which is used to look up the tensor in the tensor table. New tensors can only be
@@ -122,7 +122,7 @@ shape 2 x 3. Finally `print1` prints `tensor2` to stdout.
     }
 
 If the above code is saved in `example.json`, executing the following 
-command will gives `print1`'s message:
+command will give `print1`'s message:
 
     $ lightnet example.json
     tensor2:
