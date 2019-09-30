@@ -124,13 +124,15 @@
                 <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
         <li class="main active"><a href="#intermediate-language">Intermediate Language</a></li>
-            <li><a href="#il-format">IL Format</a></li>
+            <li><a href="#basic-il-format">Basic IL Format</a></li>
+            <li><a href="#wrap-operators-with-macros">Wrap Operators with Macros</a></li>
+            <li><a href="#embeded-scripts">Embeded Scripts</a></li>
     </ul>
 </div></div>
                 <div class="col-md-9" role="main">
 
 <h1 id="intermediate-language">Intermediate Language<a class="headerlink" href="#intermediate-language" title="Permanent link">&para;</a></h1>
-<h2 id="il-format">IL Format<a class="headerlink" href="#il-format" title="Permanent link">&para;</a></h2>
+<h2 id="basic-il-format">Basic IL Format<a class="headerlink" href="#basic-il-format" title="Permanent link">&para;</a></h2>
 <p>The <a href="Intermediate-Representation.html">Intermediate Representation</a> may seems
 simple at the first glance. But when we're writing a real neural network,
 the model file in JSON IR format is easily getting tens of thousands of lines,
@@ -165,17 +167,88 @@ as in the <a href="Intermediate-Representation.html#example">example IR</a>:</p>
 </pre></div>
 
 
-<p>Or you can combine <code>ir2json</code> and <code>lightnet</code> with the pipe:</p>
+<p>Then you can feed <code>example.json</code> directly to <code>lightnet</code>. Or you can just combine 
+<code>il2json</code> and <code>lightnet</code> with a pipe:</p>
 <div class="codehilite"><pre><span></span>$ il2json.pl example.net | lightnet -
 tensor2:
 [[2.000 3.000 4.000]
-[6.000 7.000 8.000]]
+ [6.000 7.000 8.000]]
 info: run time: 0.000062s
 </pre></div>
 
 
+<h2 id="wrap-operators-with-macros">Wrap Operators with Macros<a class="headerlink" href="#wrap-operators-with-macros" title="Permanent link">&para;</a></h2>
 <p>The IL interpreter utlizes the C preprocessor of GCC, thus all C preprocessor
-syntaxes are legal in IL.</p></div>
+syntaxes are legal in an IL.</p>
+<p>For example, it is common to have a <code>conv2d</code> and a <code>relu</code> operator in a row in
+NN models. Instead of writing <code>conv2d</code> and <code>relu</code> repeatedly, we can use
+<code>#define</code> directive to wrap them in a macro for future uses.</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define conv(in_name, out_name, in_c, out_c,                            \</span>
+<span class="cp">             _size, _stride, _padding, _dilation)                       \</span>
+<span class="cp">    create(| dst=out_name##_wts |                                       \</span>
+<span class="cp">           dtype=TL_FLOAT, dims=[out_c, in_c, _size, _size],            \</span>
+<span class="cp">           ran=[-10, 10], data=[0], from_file=true);                    \</span>
+<span class="cp">    create(| dst=out_name##_bias | dtype=TL_FLOAT, dims=[out_c],        \</span>
+<span class="cp">           ran=[-10, 10], data=[0], from_file=true);                    \</span>
+<span class="cp">    conv2d(src=in_name, weight=out_name##_wts, bias=out_name##_bias |   \</span>
+<span class="cp">           dst=out_name | group=1, size=[_size, _size],                 \</span>
+<span class="cp">           stride=[_stride, _stride],                                   \</span>
+<span class="cp">           padding=[_padding, _padding, _padding, _padding],            \</span>
+<span class="cp">           autopad=&quot;NOTSET&quot;,                                            \</span>
+<span class="cp">           dilation=[_dilation, _dilation])</span>
+
+<span class="cp">#define conv_relu(in_name, out_name, in_c, out_c,       \</span>
+<span class="cp">                  _size, _stride, _padding, _dilation)  \</span>
+<span class="cp">    conv(in_name, out_name##_conv, in_c, out_c,         \</span>
+<span class="cp">         _size, _stride, _padding, _dilation);          \</span>
+<span class="cp">    relu(src=out_name##_conv | dst=out_name |)</span>
+</pre></div>
+
+
+<p>The above code first defined a <code>conv</code> macro, which consists of two <code>create</code>
+operators and a <code>conv2d</code> operator. The two <code>create</code>s create the tensors
+for the weight and the bias of the <code>conv2d</code>. The <code>conv2d</code> operator does the
+convolution algorithm using the input tensor named <code>in_name</code>, to the output
+tensor named <code>out_name</code>, with a weight tensor named <code>out_name##wts</code> and a
+bias tensor named <code>out_name##bias</code>. The <code>##</code> is the string-concatation operator
+in the C preprocessor which concat the macro parameter <code>out_name</code> with <code>wts</code> 
+or <code>bias</code>, so that when we calls <code>conv(tensor1, tensor2,...)</code>, the weight 
+tensor gets <code>tensor2_wts</code> and the bias tensor gets <code>tensor2_bias</code> as their names
+automatically.</p>
+<p>Some readers may notice that some macro parameters are prefixed with a <code>_</code>.
+That's to prevent the parameter names from conflicting with the argument
+names of the operators in the macro, such as the <code>padding</code> argument of <code>conv2d</code>.</p>
+<p>The code then defined a <code>conv_relu</code> macro, which calls the
+former <code>conv</code> macro and feeds its output to the input of a <code>relu</code> operator.</p>
+<h2 id="embeded-scripts">Embeded Scripts<a class="headerlink" href="#embeded-scripts" title="Permanent link">&para;</a></h2>
+<p>Sometimes we want some constant expressions to be calculated before we actually
+translate the IL, which cannot be done by the C preprocessor.
+So besides the C preprocessor, IL supports embeded scripts to process the IL text.</p>
+<p>Embeded scripts are enclosed in <code>${eval ... }</code> expressions. Suppose we needs
+to get the anchor number in an object detection network 
+(<a href="https://arxiv.org/abs/1612.01051">SqueezeDet</a>), whose anchor number can be
+calculated as</p>
+<div class="codehilite"><pre><span></span>anchor_num = anchors_per_grid * grid_height * grid_width
+</pre></div>
+
+
+<p>Using embeded scripts, this can be written as:</p>
+<div class="codehilite"><pre><span></span><span class="cp">#define ANCHORS_PER_GRID 9</span>
+<span class="cp">#define CONVOUT_H 12</span>
+<span class="cp">#define CONVOUT_W 20</span>
+<span class="cp">#define ANCHOR_NUM ${eval ANCHOR_PER_GRID * CONVOUT_H * CONVOUT_W}</span>
+</pre></div>
+
+
+<p>Embeded scripts are actually Perl code snippets. So in principle, any legal Perl
+code can be run in an <code>eval</code> expression.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Since embeded scripts are Perl code, be cautious that malicious code may
+do nasty things to your system if an untrusty IL is interpreted with
+privileged priorities. Of course, there is never a good reason for an IL
+text to be translated with privileges.</p>
+</div></div>
         </div>
 
         <footer class="col-md-12">
