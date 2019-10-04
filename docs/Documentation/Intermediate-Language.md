@@ -98,16 +98,17 @@ former `conv` macro and feeds its output to the input of a `relu` operator.
 
 Sometimes we want some constant expressions to be calculated before we actually
 translate the IL, which cannot be done by the C preprocessor.
-So besides the C preprocessor, IL supports embeded scripts to process the IL text.
+So after the C preprocessor, IL supports embeded scripts to process the IL text
+further.
 
 Embeded scripts are enclosed in `${eval ... }` expressions. Suppose we needs
 to get the anchor number in an object detection network 
-([SqueezeDet](https://arxiv.org/abs/1612.01051)), whose anchor number can be
+(such as [SqueezeDet](https://arxiv.org/abs/1612.01051)), whose anchor number can be
 calculated as
 
     anchor_num = anchors_per_grid * grid_height * grid_width
     
-Using embeded scripts, this can be written as:
+Using embeded scripts, this may be written as:
 
     :::c
     #define ANCHORS_PER_GRID 9
@@ -121,5 +122,5 @@ code can be run in an `eval` expression.
 !!!warning
     Since embeded scripts are Perl code, be cautious that malicious code may
     do nasty things to your system if an untrusty IL is interpreted with
-    privileged priorities. Of course, there is never a good reason for an IL
+    privileged priorities. Of course, there is **never** a good reason for an IL
     text to be translated with privileges.

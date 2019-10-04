@@ -973,16 +973,16 @@ A `ln_op` has its own life cycle, as showned below.
 <img style="transform:scale(0.7)" src=../img/op_state.png>
 
 `ln_op` has 4 states in its lift cycle: **init**, **checked**, **ready**, **end**.
-After created, a `ln_op` is in the **init** state. It has to execute its `pre_run`
+After created, a `ln_op` is in the **init** state. It has to execute its `pre_run()`
 function to check the validity of its input tensors and parameters, define 
 its output tensors' shape, data type and so on, register its output tensors in the
 tensor table, and then enter the **checked** state. 
 For most operators, **checked** state is equivalent to **ready** state,
-while there are some operators that need to execute its `static_run` function 
+while there are some operators that need to execute its `static_run()` function 
 first to initialize their private data. 
-In the **ready** state, an operator can execute its `run` function over and 
+In the **ready** state, an operator can execute its `run()` function over and 
 over again to do its real computation work. 
-Or it can execute its `post_run` function to finalize its life cycle, 
+Or it can execute its `post_run()` function to finalize its life cycle, 
 free all the private memory it allocated in its life cycle, unregister its
 output tensors from the tensor table, and enter the **end** state, where the
 LightNet [context](#context) can safely remove this operator from the operator table and
@@ -1007,7 +1007,7 @@ pointers, which has the same prototype `ln_op_func`:
 
 Besides `ln_op_func`, there is another `ln_op_offset_func` used in some 
 operators that hace to determine their output tensors' data address offsets
-according to their input tensors.
+according to some other tensors.
 
 Those functions all has a `ln_op_arg` as their argument, through which they can
 access and manipulate the operators' input tensors (`tensors_in`), output tensors
@@ -1057,7 +1057,7 @@ in some file like `src/op/ln_opimpl_foo_cpu.c`.
 
     :::c
     static void foo_pre_run(ln_op_arg *op_arg) {
-        /* check the input and paramenter and define the output tensor shape */
+        /* check the input and parameter and define the output tensor shape */
     }
     
     static void foo_run(ln_op_arg *op_arg) {
@@ -1279,7 +1279,7 @@ when the check fails.
 
 !!! warning
 
-    Those convinent macros should **only** used in a `pre_run` function 
+    Those convinent macros should **only** used in a `pre_run()` function 
     because of the function arguments they required. 
     Normally we shouldn't use those kind of error handling routines in
     other state-transfer functions, where errors should be considered

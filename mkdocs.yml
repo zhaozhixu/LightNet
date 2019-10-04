@@ -22,7 +22,7 @@ edit_uri: ""
 use_directory_urls: false
 
 theme:
-  name: mkdocs
+  name: readthedocs
   highlightjs: false
 
 markdown_extensions:

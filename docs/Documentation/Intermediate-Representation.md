@@ -60,8 +60,8 @@ operators in their output tensors.
 See [Tensor](Data-Structures.md#tensor) for details of the underlying data 
 structures.
 
-The `value` field in a paramenter is its value, of the data type that the 
-paramenter requires. See [Parameter](Data-Structures.md#parameter) for
+The `value` field in a parameter is its value, of the data type that the 
+parameter requires. See [Parameter](Data-Structures.md#parameter) for
 the possible data types and the underlying data structures used by parameters.
 
 ## Example
