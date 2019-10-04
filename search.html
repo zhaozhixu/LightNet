@@ -7,16 +7,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   
-  <link rel="shortcut icon" href="/img/favicon.ico">
+  <link rel="shortcut icon" href="./img/favicon.ico">
   <title>LightNet</title>
   <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
 
-  <link rel="stylesheet" href="/css/theme.css" type="text/css" />
-  <link rel="stylesheet" href="/css/theme_extra.css" type="text/css" />
-  <link href="/css/codehilite.css" rel="stylesheet">
+  <link rel="stylesheet" href="./css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="./css/theme_extra.css" type="text/css" />
+  <link href="./css/codehilite.css" rel="stylesheet">
   
-  <script src="/js/jquery-2.1.1.min.js" defer></script>
-  <script src="/js/modernizr-2.8.3.min.js" defer></script> 
+  <script src="./js/jquery-2.1.1.min.js" defer></script>
+  <script src="./js/modernizr-2.8.3.min.js" defer></script> 
   
 </head>
 
@@ -27,9 +27,9 @@
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
       <div class="wy-side-nav-search">
-        <a href="/index.html" class="icon icon-home"> LightNet</a>
+        <a href="./index.html" class="icon icon-home"> LightNet</a>
         <div role="search">
-  <form id ="rtd-search-form" class="wy-form" action="//search.html" method="get">
+  <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
   </form>
 </div>
@@ -41,12 +41,12 @@
           
             <li class="toctree-l1">
 		
-    <a class="" href="/index.html">Home</a>
+    <a class="" href="./index.html">Home</a>
 	    </li>
           
             <li class="toctree-l1">
 		
-    <a class="" href="/Getting-Started.html">Getting Started</a>
+    <a class="" href="./Getting-Started.html">Getting Started</a>
 	    </li>
           
             <li class="toctree-l1">
@@ -55,46 +55,46 @@
     <ul class="subnav">
                 <li class="">
                     
-    <a class="" href="/Documentation/Introduction.html">Introduction</a>
+    <a class="" href="./Documentation/Introduction.html">Introduction</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Project-Structure.html">Project Structure</a>
+    <a class="" href="./Documentation/Project-Structure.html">Project Structure</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Build-Options.html">Build Options</a>
+    <a class="" href="./Documentation/Build-Options.html">Build Options</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Data-Structures.html">Data Structures</a>
+    <a class="" href="./Documentation/Data-Structures.html">Data Structures</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Intermediate-Representation.html">Intermediate Representation</a>
+    <a class="" href="./Documentation/Intermediate-Representation.html">Intermediate Representation</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Intermediate-Language.html">Intermediate Language</a>
+    <a class="" href="./Documentation/Intermediate-Language.html">Intermediate Language</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Operator-Description.html">Operator Description</a>
+    <a class="" href="./Documentation/Operator-Description.html">Operator Description</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Optimizer-Description.html">Optimizer Description</a>
+    <a class="" href="./Documentation/Optimizer-Description.html">Optimizer Description</a>
                 </li>
                 <li class="">
                     
-    <a class="" href="/Documentation/Miscellaneous.html">Miscellaneous</a>
+    <a class="" href="./Documentation/Miscellaneous.html">Miscellaneous</a>
                 </li>
     </ul>
 	    </li>
           
             <li class="toctree-l1">
 		
-    <a class="" href="/Hacking.html">Hacking</a>
+    <a class="" href="./Hacking.html">Hacking</a>
 	    </li>
           
         </ul>
@@ -107,7 +107,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="/index.html">LightNet</a>
+        <a href="./index.html">LightNet</a>
       </nav>
 
       
@@ -115,7 +115,7 @@
         <div class="rst-content">
           <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="/index.html">Docs</a> &raquo;</li>
+    <li><a href="./index.html">Docs</a> &raquo;</li>
     
     
     <li class="wy-breadcrumbs-aside">
@@ -128,9 +128,16 @@
             <div class="section">
               
 
-  <h1 id="404-page-not-found">404</h1>
+  <h1 id="search">Search Results</h1>
 
-  <p><strong>Page not found</strong></p>
+  <form id="content_search" action="search.html">
+    <span role="status" aria-live="polite" class="ui-helper-hidden-accessible"></span>
+    <input name="q" id="mkdocs-search-query" type="text" class="search_input search-query ui-autocomplete-input" placeholder="Search the Docs" autocomplete="off" autofocus title="Type search term here">
+  </form>
+
+  <div id="mkdocs-search-results" class="search-results">
+    Searching...
+  </div>
 
 
             </div>
@@ -164,10 +171,10 @@
       
     </span>
 </div>
-    <script>var base_url = '/';</script>
-    <script src="/js/theme.js" defer></script>
-      <script src="/js/baidu_analyse.js" defer></script>
-      <script src="/search/main.js" defer></script>
+    <script>var base_url = '.';</script>
+    <script src="./js/theme.js" defer></script>
+      <script src="./js/baidu_analyse.js" defer></script>
+      <script src="./search/main.js" defer></script>
 
 </body>
 </html>

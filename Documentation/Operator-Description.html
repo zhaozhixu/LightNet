@@ -1,136 +1,167 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Operator Description - LightNet</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link href="../css/codehilite.css" rel="stylesheet">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Operator Description";
+    var mkdocs_page_input_path = "Documentation/Operator-Description.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../index.html" class="icon icon-home"> LightNet</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../index.html">Home</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../Getting-Started.html">Getting Started</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <span class="caption-text">Documentation</span>
+    <ul class="subnav">
+                <li class="">
+                    
+    <a class="" href="Introduction.html">Introduction</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="Project-Structure.html">Project Structure</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="Build-Options.html">Build Options</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="Data-Structures.html">Data Structures</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="Intermediate-Representation.html">Intermediate Representation</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="Intermediate-Language.html">Intermediate Language</a>
+                </li>
+                <li class=" current">
+                    
+    <a class="current" href="Operator-Description.html">Operator Description</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l3"><a href="#operator-description">Operator Description</a></li>
+    
+        <ul>
         
+            <li><a class="toctree-l4" href="#main-format">Main Format</a></li>
         
+            <li><a class="toctree-l4" href="#input-tensor-defination">Input Tensor Defination</a></li>
         
-        <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Operator Description - LightNet</title>
-        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
-        <link href="../css/font-awesome.min.css" rel="stylesheet">
-        <link href="../css/base.css" rel="stylesheet">
-        <link href="../css/codehilite.css" rel="stylesheet">
-        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-        <!--[if lt IE 9]>
-            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-        <![endif]-->
+            <li><a class="toctree-l4" href="#output-tensor-defination">Output Tensor Defination</a></li>
+        
+            <li><a class="toctree-l4" href="#parameter-defination">Parameter Defination</a></li>
+        
+        </ul>
+    
 
-        <script src="../js/jquery-1.10.2.min.js" defer></script>
-        <script src="../js/bootstrap-3.0.3.min.js" defer></script> 
-    </head>
-
-    <body>
-
-        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
-            <div class="container">
-
-                <!-- Collapsed navigation -->
-                <div class="navbar-header">
-                    <!-- Expander button -->
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="sr-only">Toggle navigation</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" href="../index.html">LightNet</a>
-                </div>
-
-                <!-- Expanded navigation -->
-                <div class="navbar-collapse collapse">
-                        <!-- Main navigation -->
-                        <ul class="nav navbar-nav">
-                            <li >
-                                <a href="../index.html">Home</a>
-                            </li>
-                            <li >
-                                <a href="../Getting-Started.html">Getting Started</a>
-                            </li>
-                            <li class="dropdown active">
-                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation <b class="caret"></b></a>
-                                <ul class="dropdown-menu">
-                                    
-<li >
-    <a href="Introduction.html">Introduction</a>
-</li>
-                                    
-<li >
-    <a href="Project-Structure.html">Project Structure</a>
-</li>
-                                    
-<li >
-    <a href="Build-Options.html">Build Options</a>
-</li>
-                                    
-<li >
-    <a href="Data-Structures.html">Data Structures</a>
-</li>
-                                    
-<li >
-    <a href="Intermediate-Representation.html">Intermediate Representation</a>
-</li>
-                                    
-<li >
-    <a href="Intermediate-Language.html">Intermediate Language</a>
-</li>
-                                    
-<li class="active">
-    <a href="Operator-Description.html">Operator Description</a>
-</li>
-                                    
-<li >
-    <a href="Optimizer-Description.html">Optimizer Description</a>
-</li>
-                                    
-<li >
-    <a href="Miscellaneous.html">Miscellaneous</a>
-</li>
-                                </ul>
-                            </li>
-                            <li >
-                                <a href="../Hacking.html">Hacking</a>
-                            </li>
-                        </ul>
-
-                    <ul class="nav navbar-nav navbar-right">
-                        <li>
-                            <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
-                                <i class="fa fa-search"></i> Search
-                            </a>
-                        </li>
-                            <li >
-                                <a rel="next" href="Intermediate-Language.html">
-                                    <i class="fa fa-arrow-left"></i> Previous
-                                </a>
-                            </li>
-                            <li >
-                                <a rel="prev" href="Optimizer-Description.html">
-                                    Next <i class="fa fa-arrow-right"></i>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="https://github.com/zhaozhixu/LightNet"><i class="fa fa-github"></i> GitHub</a>
-                            </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="container">
-                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
-    <ul class="nav bs-sidenav">
-        <li class="main active"><a href="#operator-description">Operator Description</a></li>
     </ul>
-</div></div>
-                <div class="col-md-9" role="main">
+                </li>
+                <li class="">
+                    
+    <a class="" href="Optimizer-Description.html">Optimizer Description</a>
+                </li>
+                <li class="">
+                    
+    <a class="" href="Miscellaneous.html">Miscellaneous</a>
+                </li>
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../Hacking.html">Hacking</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
 
-<h1 id="operator-description">Operator Description<a class="headerlink" href="#operator-description" title="Permanent link">&para;</a></h1>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">LightNet</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+    
+      
+        
+          <li>Documentation &raquo;</li>
+        
+      
+    
+    <li>Operator Description</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="operator-description">Operator Description<a class="headerlink" href="#operator-description" title="Permanent link">&para;</a></h1>
+<h2 id="main-format">Main Format<a class="headerlink" href="#main-format" title="Permanent link">&para;</a></h2>
 <p>LightNet can generate operator defination code from Operator Descriptions
-automatically, which is conforming to the following format:</p>
+automatically, which are JSONs conforming to the following format:</p>
 <div class="codehilite"><pre><span></span><span class="p">{</span>
     <span class="s2">&quot;ops&quot;</span><span class="o">:</span> <span class="p">[</span>
         <span class="p">...</span>
@@ -150,6 +181,7 @@ automatically, which is conforming to the following format:</p>
                 <span class="p">{</span>
                     <span class="s2">&quot;arg_name&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;mtype&quot;</span><span class="o">:</span> <span class="nx">STRING</span><span class="p">,</span> 
+                    <span class="s2">&quot;dtype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span> 
                     <span class="s2">&quot;ndim&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;len&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;sametype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
@@ -173,10 +205,9 @@ automatically, which is conforming to the following format:</p>
                     <span class="s2">&quot;dims&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;len&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">NUMBER</span> <span class="nx">or</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;dtype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
-                    <span class="s2">&quot;custom&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;owner&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;static&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">BOOL</span><span class="p">,</span>
-                    <span class="s2">&quot;mtype&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
+                    <span class="s2">&quot;custom&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
                     <span class="s2">&quot;cleanup&quot;</span><span class="o">:</span> <span class="nx">OPTIONAL</span> <span class="nx">STRING</span><span class="p">,</span>
                 <span class="p">},</span>
                 <span class="p">...</span>
@@ -212,84 +243,166 @@ automatically, which is conforming to the following format:</p>
         <span class="p">...</span>
     <span class="p">]</span>
 <span class="p">}</span>
-</pre></div></div>
-        </div>
+</pre></div>
 
-        <footer class="col-md-12">
-            <hr>
-            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
-        </footer>
-        <script>
-            var base_url = "..",
-                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
-        </script>
-        <script src="../js/base.js" defer></script>
-        <script src="../js/baidu_analyse.js" defer></script>
-        <script src="../search/main.js" defer></script>
 
-        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+<p>An operator description file can contain several operator descriptions that
+are members of the <code>ops</code> array.</p>
+<p>An operator description must contain those fields:</p>
+<ul>
+<li><code>optype</code>: A string that is unique across all operator definations,
+  representing the operator's type.</li>
+<li><code>author</code>: A string of the author's name of this operator description.</li>
+<li><code>arch</code>: A string of the name of the <a href="Data-Structures.html#architecture">architecture</a>
+  where the operator can run.</li>
+<li><code>tensors_in</code>: An array of the definations of the input tensors.</li>
+<li><code>tensors_out</code>: An array of the definations of the output tensors.</li>
+<li><code>params</code>: An array of the definations of the parameters.</li>
+</ul>
+<p>As the <a href="Data-Structures.html#operator">operator section</a> has said, an operator has
+a life cycle, or a state machine that transfered by four functions: <code>pre_run()</code>,
+<code>static_run()</code>, <code>run()</code> and <code>post_run()</code>. The majority of the <code>pre_run()</code> code
+are generated by the above fields.</p>
+<p>Besides, an operator description may optionally contains those fields:</p>
+<ul>
+<li><code>autogen</code>: A bool that indicates whether this operator description
+  should be used for the generation of the operator defination. Assume <code>true</code>
+  if omitted.</li>
+<li><code>extra_privs</code>: An array of the declarations of extra members of the
+  private structure <code>struct priv_s</code> which has an instance allocated in
+  <code>pre_run()</code>, whose pointer is stored in the <code>priv</code> field of the operator's
+  <code>ln_op_arg</code>. The elements of <code>extra_privs</code> have two fields: <code>type</code> and <code>name</code>.
+  The former is the C data type of the extra member. The latter is the C
+  identifier of the extra member.</li>
+<li><code>custom</code>: A string of custom code the author may append to the end of 
+  <code>pre_run()</code>.</li>
+<li><code>static_run</code>: A string of the code of <code>static_run()</code>, which will be <code>NULL</code>
+  if this field is omitted.</li>
+<li><code>run</code>: A string of the code of <code>run()</code>, which will be <code>NULL</code> if this field
+  is omitted, and the operator won't execute any runtime calculation, which
+  may be the case of operators like <code>create</code>, or some "abstract" operators like
+  those of <code>none</code> architecture that only exist for the convinence of
+  optimization.</li>
+<li><code>post_run</code>: A string of the code of <code>post_run()</code>, which will be <code>NULL</code>
+  if this field is omitted.</li>
+<li><code>calc_offset</code>: A string of the code of <code>calc_offset()</code>, which will be <code>NULL</code>
+  if this field is omitted.</li>
+</ul>
+<h2 id="input-tensor-defination">Input Tensor Defination<a class="headerlink" href="#input-tensor-defination" title="Permanent link">&para;</a></h2>
+<p>The elements of <code>tensors_in</code> are the definations of the input tensors, which
+can be used to generate the code for the sanity checking of input tensors.
+They must at least contains those fields:</p>
+<ul>
+<li><code>arg_name</code>: A string of the argument name of the tensor in the operator.</li>
+<li><code>mtype</code>: A string of an enum of the memory type of the tensor's data. See
+  <a href="Data-Structures.html#memory-model">memory model</a> for possible memory types.</li>
+</ul>
+<p>Optionally, the elements of <code>tensors_in</code> may also contain those fields:</p>
+<ul>
+<li><code>ndim</code>: The number of dimensions of this tensor. This could be a literal
+  constant number, or a C code snnippet that can be evaluated to the number
+  of dimensions.</li>
+<li><code>len</code>: The number of elements of this tensor. This could be a literal
+  constant number, or a C code snnippet that can be evaluated to the number
+  of dimensions.</li>
+<li><code>dtype</code>: A string of an enum of the supported tensor data type. See
+  <a href="Data-Structures.html#tensor">tensor</a> for all possible data types.</li>
+<li><code>sametype</code>: If this tensor has the same <code>dtype</code> of another tensor,
+  it can set this field as that tensor's <code>arg_name</code>.</li>
+<li><code>sameshape</code>: If this tensor has the same shape of another tensor,
+  it can set this field as that tensor's <code>arg_name</code>.</li>
+<li><code>static</code>: A bool that indicates whether this tensor's data is static,
+  that is, it would not be freed and reused by another tensor. Assume <code>false</code>
+  if omitted.</li>
+<li><code>check</code>: A string of the arguments of the macro <code>ln_opck_satisfy()</code> or
+  <code>ln_opck_satisfy_msg()</code>, depending on the number of the arguments, used as
+    an additional check for this tensor.</li>
+<li><code>checks</code>: An array of additional checks for this tensor, whose elements
+  are of the same usage of <code>check</code>.</li>
+<li><code>custom</code>: A string of custom code the author may append to the code about
+  this tensor.</li>
+</ul>
+<h2 id="output-tensor-defination">Output Tensor Defination<a class="headerlink" href="#output-tensor-defination" title="Permanent link">&para;</a></h2>
+<p>The elements of <code>tensors_out</code> are the definations of the output tensors, which
+can be used to generate the code for the sanity checking, shape inference and
+registration of output tensors. They must contain those fields:</p>
+<ul>
+<li><code>arg_name</code>: A string of the argument name of the tensor in the operator.</li>
+<li><code>mtype</code>: A string of an enum of the memory type of the tensor's data. See
+  <a href="Data-Structures.html#memory-model">memory model</a> for possible memory types.</li>
+</ul>
+<p>Optionally, the elements of <code>tensors_out</code> may also contain those fields:</p>
+<ul>
+<li><code>ndim</code>: The number of dimensions of this tensor. This could be a literal
+  constant number, or a C code snnippet that can be evaluated to the number
+  of dimensions.</li>
+<li><code>dims</code>: An array of numbers of the dimensions of this tensor, whose length
+  should be equal with <code>ndim</code>.</li>
+<li><code>len</code>: The number of elements of this tensor. This could be a literal
+  constant number, or a C code snnippet that can be evaluated to the number
+  of dimensions.</li>
+<li><code>dtype</code>: A string of an enum of the supported tensor data type. See
+  <a href="Data-Structures.html#tensor">tensor</a> for all possible data types.</li>
+<li><code>owner</code>: If this tensor's data memory is shared with another input tensor,
+  it could set this field to that tensor's <code>arg_name</code>. If this tensor's data
+  address (<code>ln_tensor.tensor-&gt;data</code>) starts in the middle of another input
+  tensor, the operator should also supply an <code>calc_offset</code> to calculate the
+  start address from that input tensor.</li>
+<li><code>static</code>: A bool that indicates whether this tensor's data is static,
+  that is, it would not be freed and reused by another tensor. Assume <code>false</code>
+  if omitted.</li>
+<li></li>
+</ul>
+<h2 id="parameter-defination">Parameter Defination<a class="headerlink" href="#parameter-defination" title="Permanent link">&para;</a></h2>
+              
             </div>
-            <div class="modal-body">
-                <p>
-                    From here you can search these documents. Enter
-                    your search terms below.
-                </p>
-                <form role="form">
-                    <div class="form-group">
-                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
-                    </div>
-                </form>
-                <div id="mkdocs-search-results"></div>
-            </div>
-            <div class="modal-footer">
-            </div>
-        </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="Optimizer-Description.html" class="btn btn-neutral float-right" title="Optimizer Description">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="Intermediate-Language.html" class="btn btn-neutral" title="Intermediate Language"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
     </div>
-</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="Keyboard Shortcuts Modal" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                <h4 class="modal-title" id="exampleModalLabel">Keyboard Shortcuts</h4>
-            </div>
-            <div class="modal-body">
-              <table class="table">
-                <thead>
-                  <tr>
-                    <th style="width: 20%;">Keys</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td class="help shortcut"><kbd>?</kbd></td>
-                    <td>Open this help</td>
-                  </tr>
-                  <tr>
-                    <td class="next shortcut"><kbd>n</kbd></td>
-                    <td>Next page</td>
-                  </tr>
-                  <tr>
-                    <td class="prev shortcut"><kbd>p</kbd></td>
-                    <td>Previous page</td>
-                  </tr>
-                  <tr>
-                    <td class="search shortcut"><kbd>s</kbd></td>
-                    <td>Search</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="modal-footer">
-            </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
         </div>
-    </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/zhaozhixu/LightNet" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href="Intermediate-Language.html" style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="Optimizer-Description.html" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
 </div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../js/baidu_analyse.js" defer></script>
+      <script src="../search/main.js" defer></script>
 
-    </body>
+</body>
 </html>
