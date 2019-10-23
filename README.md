@@ -274,6 +274,8 @@ one for an input image, printed in the terminal.
 
 ![Demo](docs/img/demo.png)
 
+The Python API is analogous to the [C API](#c-api), whose usage is generally the same.
+
 ## Model Format
 
 LightNet uses an independent model format (or
