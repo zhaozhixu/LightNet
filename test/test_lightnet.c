@@ -21,21 +21,24 @@
  */
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <check.h>
 
 #include "test_lightnet.h"
 
+#ifndef LN_TEST_RESULT_DIR
+#define LN_TEST_RESULT_DIR "."
+#endif
+
 int main(int argc, char **argv)
 {
      int number_failed;
-     int status;
+     const char *cmd;
      SRunner *sr;
 
      sr = srunner_create(make_master_suite());
      srunner_add_suite(sr, make_util_suite());
 #ifdef LN_CUDA
-     /* srunner_add_suite(sr, make_cuda_suite()); */
+     srunner_add_suite(sr, make_cuda_suite());
 #endif
      srunner_add_suite(sr, make_list_suite());
      srunner_add_suite(sr, make_queue_suite());
@@ -52,13 +55,33 @@ int main(int argc, char **argv)
      srunner_add_suite(sr, make_opimpl_suite());
      /* end of adding suites */
 
-     srunner_set_xml (sr, "result/check_output.xml");
+     srunner_set_xml (sr, LN_TEST_RESULT_DIR"/check_output.xml");
      srunner_run_all(sr, CK_NORMAL);
      number_failed = srunner_ntests_failed(sr);
      srunner_free(sr);
-     status = system("sed -i 's,http://check.sourceforge.net/xml/check_unittest.xslt,check_unittest.xslt,g' result/check_output.xml");
-     if (status < 0)
-          fprintf(stderr, "system() error\n");
+
+     cmd = "sed -i 's,http://check.sourceforge.net/xml/check_unittest.xslt,#style1,g' "
+	     LN_TEST_RESULT_DIR"/check_output.xml";
+     if (system(cmd) < 0)
+	 fprintf(stderr, "system(%s) error\n", cmd);
+     cmd = "sed -i '3i\\<doc>' "LN_TEST_RESULT_DIR"/check_output.xml";
+     if (system(cmd) < 0)
+	 fprintf(stderr, "system(%s) error\n", cmd);
+     cmd = "echo '<style>' >> "LN_TEST_RESULT_DIR"/check_output.xml";
+     if (system(cmd) < 0)
+	 fprintf(stderr, "system(%s) error\n", cmd);
+     cmd = "cat "LN_TEST_RESULT_DIR"/check_unittest.xslt >> "
+	     LN_TEST_RESULT_DIR"/check_output.xml";
+     if (system(cmd) < 0)
+	 fprintf(stderr, "system(%s) error\n", cmd);
+     cmd = "sed -i 's,<xsl:stylesheet,<xsl:stylesheet id=\"style1\",g' "
+	     LN_TEST_RESULT_DIR"/check_output.xml";
+     if (system(cmd) < 0)
+	     fprintf(stderr, "system(%s) error\n", cmd);
+     cmd = "echo '</style></doc>' >> "LN_TEST_RESULT_DIR"/check_output.xml";
+     if (system(cmd) < 0)
+	 fprintf(stderr, "system(%s) error\n", cmd);
+
 
      return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -28,7 +28,7 @@ NN models, which is conforming to the following format:
                 "params": [
                     {
                         "arg_name": STRING,
-                        "value": STRING or NUMBER or BOOL or ARRAY of <STRING or NUMBER or BOOL>
+                        "value": (ARRAY of) STRING or NUMBER or BOOL
                     },
                     ...
                 ]

@@ -46,15 +46,15 @@ $ xsltproc check_unittest.xslt check_output.xml > check_output.html
 </xsl:template>
 
 <xsl:template match="c:test[@result='success']">
-  <tr bgcolor="green"><xsl:apply-templates/></tr>
+  <tr bgcolor="#90EE90"><xsl:apply-templates/></tr>
 </xsl:template>
 
 <xsl:template match="c:test[@result='error']">
-  <tr bgcolor="red"><xsl:apply-templates/></tr>
+  <tr bgcolor="#FF1493"><xsl:apply-templates/></tr>
 </xsl:template>
 
 <xsl:template match="c:test[@result='failure']">
-  <tr bgcolor="red"><xsl:apply-templates/></tr>
+  <tr bgcolor="#FF6954"><xsl:apply-templates/></tr>
 </xsl:template>
 
 <xsl:template match="c:path">

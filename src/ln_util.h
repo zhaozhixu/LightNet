@@ -63,7 +63,6 @@ typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 LN_CPPSTART
 #endif
 
-char *ln_sprint_version(char *buf);
 void *ln_alloc(size_t size);
 void *ln_realloc(void *ptr, size_t size);
 char *ln_strdup(const char *s);

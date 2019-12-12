@@ -23,13 +23,13 @@ core
 GPATH
 GRTAGS
 GTAGS
-obj/
-build/
+obj*/
+build*/
 dist/
 example/object-detect
 __pycache__/
 *.egg-info/
 .install-log
 
-debug/
+debug*/
 *.org

@@ -28,6 +28,7 @@
 
 enum ln_param_type {
     /* NULL should always be the first type */
+    LN_PARAM_INVALID = -1,
     LN_PARAM_NULL = 0,
     LN_PARAM_STRING,
     LN_PARAM_NUMBER,
@@ -35,8 +36,8 @@ enum ln_param_type {
     LN_PARAM_ARRAY_STRING,
     LN_PARAM_ARRAY_NUMBER,
     LN_PARAM_ARRAY_BOOL,
-    LN_PARAM_INVALID
-    /* INVALID should always be the last type */
+    LN_PARAM_TYPE_SIZE
+    /* LN_PARAM_TYPE_SIZE should always be the last type */
 };
 typedef enum ln_param_type ln_param_type;
 

@@ -34,7 +34,7 @@ ln_param_entry *ln_param_entry_create(const char *arg_name, ln_param_type type)
 {
     ln_param_entry *entry;
 
-    assert(type >= LN_PARAM_NULL && type <= LN_PARAM_INVALID);
+    assert(type >= LN_PARAM_NULL && type < LN_PARAM_TYPE_SIZE);
     entry = ln_alloc(sizeof(ln_param_entry));
     entry->arg_name = ln_strdup(arg_name);
     entry->type = type;

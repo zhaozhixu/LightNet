@@ -6,7 +6,8 @@ TARGET_BIN = $(TARGET)
 LIBTARGET_A = lib$(TARGET).a
 LIBTARGET_SO = lib$(TARGET).so
 
-INCPATHS += -Iarch -Iop -I../$(BUILD_DIR)/include/$(TARGET)
+BUILD_DIR := ../$(BUILD_DIR)
+INCPATHS += -Iarch -Iop -I$(BUILD_DIR)/include/$(TARGET)
 CFLAGS += -fPIC
 CXXFLAGS += -fPIC
 CUFLAGS += --compiler-options '-fPIC' --linker-options '-Wl,--no-undefined -shared' -shared
@@ -35,7 +36,7 @@ CUDNN_SRC = $(filter %cudnn.c %cudnn.cu,$(SRC))
 TENSORRT_SRC = $(filter %tensorrt.c %tensorrt.cc,$(SRC))
 DPU_SRC = $(filter %dpu.c %dpu.cc,$(SRC))
 
-OBJDIR = obj
+OBJDIR = $(BUILD_DIR)/src
 OBJS   = $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(NORMAL_SRC)))
 OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(NORMAL_SRC)))
 OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(NORMAL_SRC)))
@@ -86,25 +87,25 @@ $(OBJDIR)/$(LIBTARGET_A): $(OBJS)
 $(OBJDIR)/%.o: %.c
 	$(call make-obj-dir)
 	$(call make-depend-c,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $<
+	$(ECHO) Compiling: $@
 	$(AT)$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cpp
 	$(call make-obj-dir)
 	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $<
+	$(ECHO) Compiling: $@
 	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cc
 	$(call make-obj-dir)
 	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $<
+	$(ECHO) Compiling: $@
 	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cu
 	$(call make-obj-dir)
 	$(call make-depend-cu,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling CUDA: $<
+	$(ECHO) Compiling CUDA: $@
 	$(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
 
 clean:
