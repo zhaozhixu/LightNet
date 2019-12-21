@@ -23,38 +23,46 @@
 #ifndef _TEST_LIGHTNET_H_
 #define _TEST_LIGHTNET_H_
 
-#include <stdio.h>
 #include <check.h>
+#include <stdio.h>
 #include <math.h>
-#include <tl_check.h>
+
+#include "test_record.h"
+
+#ifndef LN_TEST_RESULT_DIR
+#define LN_TEST_RESULT_DIR "."
+#endif
+
+#ifndef LN_TEST_DATA_DIR
+#define LN_TEST_DATA_DIR "."
+#endif
 
 #ifdef __cplusplus
-#define CPPSTART extern "C" {
-#define CPPEND }
+TEST_CPPSTART
 #endif
 
 Suite *make_master_suite(void);
-Suite *make_util_suite(void);
+void add_util_record(test_record *record);
 #ifdef LN_CUDA
-Suite *make_cuda_suite(void);
+void add_cuda_record(test_record *record);
 #endif
-Suite *make_list_suite(void);
-Suite *make_queue_suite(void);
-Suite *make_stack_suite(void);
-Suite *make_hash_suite(void);
-Suite *make_graph_suite(void);
-Suite *make_msg_suite(void);
-Suite *make_param_suite(void);
-Suite *make_tensor_suite(void);
-Suite *make_op_suite(void);
-Suite *make_parse_suite(void);
-Suite *make_mem_suite(void);
-Suite *make_pass_suite(void);
-Suite *make_opimpl_suite(void);
+void add_list_record(test_record *record);
+void add_queue_record(test_record *record);
+void add_stack_record(test_record *record);
+void add_hash_record(test_record *record);
+void add_graph_record(test_record *record);
+void add_msg_record(test_record *record);
+void add_param_record(test_record *record);
+void add_tensor_record(test_record *record);
+void add_op_record(test_record *record);
+void add_parse_record(test_record *record);
+void add_mem_record(test_record *record);
+void add_pass_record(test_record *record);
+void add_opimpl_record(test_record *record);
 /* end of declarations */
 
 #ifdef __cplusplus
-CPPEND
+TEST_CPPEND
 #endif
 
 #endif /* _TEST_LIGHTNET_H_ */

@@ -39,7 +39,7 @@ END_TEST
 EOF
 
   $test_add_str = $test_add_str.<<EOF;
-     tcase_add_test(tc_$suite_name, test_ln_${test_name});
+     tcase_add_test(tc, test_ln_${test_name});
 EOF
 }
 chomp $tests_str;
@@ -68,6 +68,8 @@ my $suite_tpl = <<EOF;
  * SOFTWARE.
  */
 
+#include <check.h>
+#include <tl_check.h>
 #include "test_lightnet.h"
 #include "../src/ln_${suite_name}.h"
 
@@ -81,21 +83,23 @@ static void checked_teardown(void)
 $tests_str
 /* end of tests */
 
-Suite *make_${suite_name}_suite(void)
+static TCase *make_${suite_name}_tcase(void)
 {
-     Suite *s;
-     TCase *tc_${suite_name};
+     TCase *tc;
 
-     s = suite_create("${suite_name}");
-     tc_${suite_name} = tcase_create("${suite_name}");
-     tcase_add_checked_fixture(tc_${suite_name}, checked_setup, checked_teardown);
+     tc = tcase_create("${suite_name}");
+     tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
 
 $test_add_str
      /* end of adding tests */
 
-     suite_add_tcase(s, tc_${suite_name});
+     return tc;
+}
 
-     return s;
+void add_${suite_name}_record(test_record *record)
+{
+    test_record_add_suite(record, "${suite_name}");
+    test_record_add_tcase(record, "${suite_name}", "${suite_name}", make_${suite_name}_tcase);
 }
 EOF
 
@@ -121,7 +125,7 @@ open TEST, '>', $test_file
 print TEST $suite_tpl;
 close TEST;
 
-my $declare = "Suite *make_${suite_name}_suite(void);";
+my $declare = "void add_${suite_name}_record(test_record *record);";
 my $header_file = "$root/test/test_lightnet.h";
 copy($header_file, "$header_file.bak")
   or die "Cannot backup file $header_file: $!";
@@ -136,7 +140,7 @@ while (<HEADER_BAK>) {
 close HEADER;
 close HEADER_BAK;
 
-my $adding_suite = "srunner_add_suite(sr, make_${suite_name}_suite());";
+my $adding_suite = "add_${suite_name}_record(record);";
 my $main_file = "$root/test/test_lightnet.c";
 copy($main_file, "$main_file.bak")
   or die "Cannot backup file $main_file: $!";

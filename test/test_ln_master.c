@@ -34,17 +34,17 @@ static void checked_teardown(void)
 
 Suite *make_master_suite(void)
 {
-     Suite *s;
-     TCase *tc_master;
+    Suite *s;
+    TCase *tc_master;
 
-     s = suite_create("master");
-     tc_master = tcase_create("master");
-     tcase_add_checked_fixture(tc_master, checked_setup, checked_teardown);
+    s = suite_create("master");
+    tc_master = tcase_create("master");
+    tcase_add_checked_fixture(tc_master, checked_setup, checked_teardown);
 
 
-     /* end of adding tests */
+    /* end of adding tests */
 
-     suite_add_tcase(s, tc_master);
+    suite_add_tcase(s, tc_master);
 
-     return s;
+    return s;
 }

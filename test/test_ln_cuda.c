@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <check.h>
+#include <tl_check.h>
 #include "test_lightnet.h"
 #include "../src/arch/ln_cuda.h"
 
@@ -246,35 +248,37 @@ START_TEST(test_ln_cuda_stream_sync)
 END_TEST
 /* end of tests */
 
-Suite *make_cuda_suite(void)
+static TCase *make_cuda_tcase(void)
 {
-     Suite *s;
-     TCase *tc_cuda;
+    TCase *tc;
 
-     s = suite_create("cuda");
-     tc_cuda = tcase_create("cuda");
-     tcase_add_checked_fixture(tc_cuda, checked_setup, checked_teardown);
+    tc = tcase_create("cuda");
+    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
 
-     tcase_add_test(tc_cuda, test_ln_cuda_set_device);
-     tcase_add_test(tc_cuda, test_ln_cuda_get_device);
-     tcase_add_test(tc_cuda, test_ln_is_device_mem);
-     tcase_add_test(tc_cuda, test_ln_alloc_cuda);
-     tcase_add_test(tc_cuda, test_ln_memset_cuda);
-     tcase_add_test(tc_cuda, test_ln_memcpy_h2d);
-     tcase_add_test(tc_cuda, test_ln_memcpy_d2h);
-     tcase_add_test(tc_cuda, test_ln_memcpy_d2d);
-     tcase_add_test(tc_cuda, test_ln_free_cuda);
-     tcase_add_test(tc_cuda, test_ln_clone_h2d);
-     tcase_add_test(tc_cuda, test_ln_clone_d2h);
-     tcase_add_test(tc_cuda, test_ln_clone_d2d);
-     tcase_add_test(tc_cuda, test_ln_repeat_h2d);
-     tcase_add_test(tc_cuda, test_ln_repeat_d2h);
-     tcase_add_test(tc_cuda, test_ln_repeat_d2d);
-     tcase_add_test(tc_cuda, test_ln_cuda_stream_create);
-     tcase_add_test(tc_cuda, test_ln_cuda_stream_sync);
-     /* end of adding tests */
+    tcase_add_test(tc, test_ln_cuda_set_device);
+    tcase_add_test(tc, test_ln_cuda_get_device);
+    tcase_add_test(tc, test_ln_is_device_mem);
+    tcase_add_test(tc, test_ln_alloc_cuda);
+    tcase_add_test(tc, test_ln_memset_cuda);
+    tcase_add_test(tc, test_ln_memcpy_h2d);
+    tcase_add_test(tc, test_ln_memcpy_d2h);
+    tcase_add_test(tc, test_ln_memcpy_d2d);
+    tcase_add_test(tc, test_ln_free_cuda);
+    tcase_add_test(tc, test_ln_clone_h2d);
+    tcase_add_test(tc, test_ln_clone_d2h);
+    tcase_add_test(tc, test_ln_clone_d2d);
+    tcase_add_test(tc, test_ln_repeat_h2d);
+    tcase_add_test(tc, test_ln_repeat_d2h);
+    tcase_add_test(tc, test_ln_repeat_d2d);
+    tcase_add_test(tc, test_ln_cuda_stream_create);
+    tcase_add_test(tc, test_ln_cuda_stream_sync);
+    /* end of adding tests */
 
-     suite_add_tcase(s, tc_cuda);
+    return tc;
+}
 
-     return s;
+void add_cuda_record(test_record *record)
+{
+    test_record_add_suite(record, "cuda");
+    test_record_add_tcase(record, "cuda", "cuda", make_cuda_tcase);
 }

@@ -86,7 +86,7 @@ endif
 
 ifeq ($(DOC), yes)
 MAKE_DOC = mkdocs build -c -d $(BUILD_DOC)
-INSTALL_DOC_CMD = cp -r $(BUILD_DOC) $(INSTALL_DOC)
+INSTALL_DOC_CMD = if [ -d $(BUILD_DOC) ]; then cp -r $(BUILD_DOC) $(INSTALL_DOC); fi
 UNINSTALL_DOC_CMD = rm -rf $(INSTALL_DOC)
 else
 MAKE_DOC =
@@ -132,8 +132,8 @@ endef
 define make-bin
 $(AT)cp $(OBJ_BIN) $(BUILD_BIN_MMM)
 $(AT)ln -sf $(BUILD_BIN_MMM) $(BUILD_BIN)
-# TODO: orgnize tools
-$(AT)cp tools/il2json.pl $(BUILD_BIN_DIR)/il2json.pl
+$(AT)# TODO: orgnize tools
+$(AT)cp tools/il2json $(BUILD_BIN_DIR)/il2json
 endef
 
 define make-doc
@@ -148,7 +148,7 @@ ln -sf $(INSTALL_SO_MMM) $(INSTALL_SO_MM)
 ln -sf $(INSTALL_SO_MMM) $(INSTALL_SO)
 cp $(BUILD_BIN_MMM) $(INSTALL_BIN_MMM)
 ln -sf $(INSTALL_BIN_MMM) $(INSTALL_BIN)
-cp $(BUILD_BIN_DIR)/il2json.pl $(INSTALL_BIN_DIR)/il2json.pl
+cp $(BUILD_BIN_DIR)/il2json $(INSTALL_BIN_DIR)/il2json
 $(INSTALL_DOC_CMD)
 perl tools/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
 $(INSTALL_PYTHON)
@@ -162,7 +162,7 @@ rm -f $(INSTALL_SO_MM)
 rm -f $(INSTALL_SO_MMM)
 rm -f $(INSTALL_BIN)
 rm -f $(INSTALL_BIN_MMM)
-rm -f $(INSTALL_BIN_DIR)/il2json.pl
+rm -f $(INSTALL_BIN_DIR)/il2json
 $(UNINSTALL_DOC_CMD)
 rm -f $(PKGCONFIG_DIR)/$(TARGET).pc
 $(UNINSTALL_PYTHON)
@@ -176,14 +176,11 @@ endef
 
 .PHONY: all lib bin test doc clean info install uninstall
 
-all: lib bin test doc
+all: lib bin
 
 install:
 	$(call make-install-dir)
 	$(call make-install)
-
-test: bin
-	$(AT)+(cd $(TEST_DIR) && make)
 
 bin: lib
 	$(call make-build-dir)
@@ -194,6 +191,9 @@ lib:
 	$(call pre-make-lib)
 	$(AT)+(cd $(SRC_DIR) && make)
 	$(call make-lib)
+
+test:
+	$(AT)+(cd $(TEST_DIR) && make)
 
 doc:
 	$(call make-build-dir)
@@ -207,7 +207,7 @@ uninstall:
 
 info:
 	@echo "Available make targets:"
-	@echo "  all: make lib, bin, test, doc"
+	@echo "  all: make lib, bin"
 	@echo "  lib: make libraries"
 	@echo "  bin: make executables"
 	@echo "  test: make and run tests"

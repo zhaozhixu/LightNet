@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <check.h>
+#include <tl_check.h>
 #include "test_lightnet.h"
 #include "../src/ln_stack.h"
 
@@ -33,50 +35,52 @@ static void checked_teardown(void)
 
 START_TEST(test_ln_stack_push_pop)
 {
-     ln_stack *s;
+    ln_stack *s;
 
-     s = ln_stack_create();
+    s = ln_stack_create();
 
-     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
-     ln_stack_push(s, (void *)1);
-     ln_stack_push(s, (void *)2);
-     ln_stack_push(s, (void *)3);
+    ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+    ln_stack_push(s, (void *)1);
+    ln_stack_push(s, (void *)2);
+    ln_stack_push(s, (void *)3);
 
-     ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
-     ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
-     ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
-     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
-     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+    ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
+    ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
+    ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
+    ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+    ck_assert_ptr_eq(ln_stack_pop(s), NULL);
 
-     ln_stack_push(s, (void *)1);
-     ln_stack_push(s, (void *)2);
-     ln_stack_push(s, (void *)3);
+    ln_stack_push(s, (void *)1);
+    ln_stack_push(s, (void *)2);
+    ln_stack_push(s, (void *)3);
 
-     ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
-     ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
-     ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
-     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
-     ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+    ck_assert_int_eq((size_t)ln_stack_pop(s), 3);
+    ck_assert_int_eq((size_t)ln_stack_pop(s), 2);
+    ck_assert_int_eq((size_t)ln_stack_pop(s), 1);
+    ck_assert_ptr_eq(ln_stack_pop(s), NULL);
+    ck_assert_ptr_eq(ln_stack_pop(s), NULL);
 
-     ln_stack_free(s);
+    ln_stack_free(s);
 }
 END_TEST
 
 /* end of tests */
 
-Suite *make_stack_suite(void)
+static TCase *make_stack_tcase(void)
 {
-     Suite *s;
-     TCase *tc_stack;
+    TCase *tc;
 
-     s = suite_create("stack");
-     tc_stack = tcase_create("stack");
-     tcase_add_checked_fixture(tc_stack, checked_setup, checked_teardown);
+    tc = tcase_create("stack");
+    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
 
-     tcase_add_test(tc_stack, test_ln_stack_push_pop);
-     /* end of adding tests */
+    tcase_add_test(tc, test_ln_stack_push_pop);
+    /* end of adding tests */
 
-     suite_add_tcase(s, tc_stack);
+    return tc;
+}
 
-     return s;
+void add_stack_record(test_record *record)
+{
+    test_record_add_suite(record, "stack");
+    test_record_add_tcase(record, "stack", "stack", make_stack_tcase);
 }

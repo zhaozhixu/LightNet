@@ -20,50 +20,33 @@
  * SOFTWARE.
  */
 
-#include <check.h>
-#include <tl_check.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include "test_lightnet.h"
-#include "../src/ln_op.h"
-#include "../src/ln_pass.h"
-#include "../src/ln_arch.h"
+#ifndef _TEST_RECORD_H_
+#define _TEST_RECORD_H_
 
+struct test_record {
+    const char ***tcase_names_array;
+    const void ***tcase_ptrs_array;
+    int          *tcase_nums;
+    const char  **suite_names;
+    int           suites_num;
+};
+typedef struct test_record test_record;
 
-static void checked_setup(void)
-{
-}
+#ifdef __cplusplus
+#define TEST_CPPSTART extern "C" {
+#define TEST_CPPEND }
+#endif
 
-static void checked_teardown(void)
-{
-}
+test_record *test_record_create(void);
+test_record *test_record_create_filtered(const test_record *record,
+                                         const char *glob);
+void test_record_free(test_record *record);
+int test_record_add_suite(test_record *record, const char *suite_name);
+int test_record_add_tcase(test_record *record, const char *suite_name,
+                          const char *tcase_name, const void *tcase_ptr);
 
-START_TEST(test_ln_opimpl_create)
-{
-    /* ln_op *op; */
-    /* ln_list *ops; */
-    /* char *json_str; */
+#ifdef __cplusplus
+TEST_CPPEND
+#endif
 
-    /* json_str = ln_read_text("test_ops.json"); */
-}
-END_TEST
-/* end of tests */
-
-static TCase *make_opimpl_tcase(void)
-{
-    TCase *tc;
-
-    tc = tcase_create("opimpl");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_opimpl_create);
-    /* end of adding tests */
-
-    return tc;
-}
-
-void add_opimpl_record(test_record *record)
-{
-    test_record_add_suite(record, "opimpl");
-    test_record_add_tcase(record, "opimpl", "opimpl", make_opimpl_tcase);
-}
+#endif  /* _TEST_RECORD_H_ */

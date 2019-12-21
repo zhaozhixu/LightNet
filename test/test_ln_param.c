@@ -20,6 +20,8 @@
  * SOFTWARE.
  */
 
+#include <check.h>
+#include <tl_check.h>
 #include "test_lightnet.h"
 #include "../src/ln_param.h"
 
@@ -240,28 +242,30 @@ START_TEST(test_ln_param_type_name)
 END_TEST
 /* end of tests */
 
-Suite *make_param_suite(void)
+static TCase *make_param_tcase(void)
 {
-    Suite *s;
-    TCase *tc_param;
+    TCase *tc;
 
-    s = suite_create("param");
-    tc_param = tcase_create("param");
-    tcase_add_checked_fixture(tc_param, checked_setup, checked_teardown);
+    tc = tcase_create("param");
+    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
 
-    tcase_add_test(tc_param, test_ln_param_list_append_string);
-    tcase_add_test(tc_param, test_ln_param_list_append_number);
-    tcase_add_test(tc_param, test_ln_param_list_append_bool);
-    tcase_add_test(tc_param, test_ln_param_list_append_null);
-    tcase_add_test(tc_param, test_ln_param_list_append_array_string);
-    tcase_add_test(tc_param, test_ln_param_list_append_array_number);
-    tcase_add_test(tc_param, test_ln_param_list_append_array_bool);
-    tcase_add_test(tc_param, test_ln_param_list_find_by_arg_name);
-    tcase_add_test(tc_param, test_ln_param_list_length);
-    tcase_add_test(tc_param, test_ln_param_type_name);
+    tcase_add_test(tc, test_ln_param_list_append_string);
+    tcase_add_test(tc, test_ln_param_list_append_number);
+    tcase_add_test(tc, test_ln_param_list_append_bool);
+    tcase_add_test(tc, test_ln_param_list_append_null);
+    tcase_add_test(tc, test_ln_param_list_append_array_string);
+    tcase_add_test(tc, test_ln_param_list_append_array_number);
+    tcase_add_test(tc, test_ln_param_list_append_array_bool);
+    tcase_add_test(tc, test_ln_param_list_find_by_arg_name);
+    tcase_add_test(tc, test_ln_param_list_length);
+    tcase_add_test(tc, test_ln_param_type_name);
     /* end of adding tests */
 
-    suite_add_tcase(s, tc_param);
+    return tc;
+}
 
-    return s;
+void add_param_record(test_record *record)
+{
+    test_record_add_suite(record, "param");
+    test_record_add_tcase(record, "param", "param", make_param_tcase);
 }

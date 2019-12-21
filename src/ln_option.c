@@ -21,6 +21,7 @@
  */
 
 #include <getopt.h>
+#include "ln_option.h"
 #include "lightnet.h"
 
 static void print_version_exit(void)

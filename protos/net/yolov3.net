@@ -75,6 +75,7 @@ res_unit(conv6, res20, 1024, 512, 1024);
 res_unit(res20, res21, 1024, 512, 1024);
 res_unit(res21, res22, 1024, 512, 1024);
 res_unit(res22, res23, 1024, 512, 1024);
+
 conv_bn_lrelu(res23, conv7, 1024, 512, 1, 1, 0, 1);
 conv_bn_lrelu(conv7, conv8, 512, 1024, 3, 1, 1, 1);
 conv_bn_lrelu(conv8, conv9, 1024, 512, 1, 1, 0, 1);

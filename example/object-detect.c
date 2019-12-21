@@ -2,6 +2,7 @@
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "lightnet.h"
 
 /* load jpeg image using libjpeg */
@@ -120,9 +121,9 @@ static void do_detection(ln_context *ctx, const char *img_dir)
     img = (unsigned char *)malloc(sizeof(unsigned char) * IMG_H * IMG_W * 3);
 
     for (int i = 0; filelist[i]; i++) {
-        /* read image file */
         load_jpeg(filelist[i], img, &img_height, &img_width);
         LN_TIMEIT_START;
+
         /* set input data, 'input' is a tensor defined in the net */
         ln_context_set_data(ctx, "input", img);
         /* Set the original width and height of the image as parameters of
@@ -137,8 +138,8 @@ static void do_detection(ln_context *ctx, const char *img_dir)
          * a tensor defined in the net */
         ln_context_run(ctx);
         ln_context_get_data(ctx, "final_bbox", bbox);
-        LN_TIMEIT_END(&time);
 
+        LN_TIMEIT_END(&time);
         total_time += time;
         filenum++;
         printf("[%f, %f, %f, %f]\n", bbox[0], bbox[1], bbox[2], bbox[3]);

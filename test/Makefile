@@ -7,12 +7,13 @@ LIBTARGET_A = lib$(TARGET).a
 
 BUILD_DIR := ../$(BUILD_DIR)
 SRCOBJ = $(BUILD_DIR)/src/$(LIBTARGET_A)
-TEST_RESULT_DIR=$(OBJDIR)/result
+TEST_RESULT_DIR = `realpath $(OBJDIR)/result`
+TEST_DATA_DIR = `realpath data`
 
 INCPATHS += -I../src -I../src/arch -I../src/op `pkg-config --cflags check`
 LDFLAGS += `pkg-config --libs check` -lpthread
 
-CFLAGS += -DLN_TEST_RESULT_DIR="\"$(TEST_RESULT_DIR)\""
+CFLAGS += -DLN_TEST_RESULT_DIR="\"$(TEST_RESULT_DIR)\"" -DLN_TEST_DATA_DIR="\"$(TEST_DATA_DIR)\""
 CFLAGS += $(INCPATHS)
 CXXFLAGS += $(INCPATHS)
 CUFLAGS += $(INCPATHS)
@@ -43,8 +44,7 @@ endif
 all: $(OBJDIR)/$(TARGET_TEST)
 	$(ECHO) Running tests...
 	$(AT)if [ ! -d $(TEST_RESULT_DIR) ]; then mkdir -p $(TEST_RESULT_DIR); fi
-	$(AT)cp result/check_unittest.xslt $(TEST_RESULT_DIR)/check_unittest.xslt
-	$(AT)$(OBJDIR)/$(TARGET_TEST)
+	$(AT)$(OBJDIR)/$(TARGET_TEST) $(TEST_ARGS)
 
 $(OBJDIR)/$(TARGET_TEST): $(OBJS) $(SRCOBJ)
 	$(ECHO) Linking: $@

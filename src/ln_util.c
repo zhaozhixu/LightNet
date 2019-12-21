@@ -511,8 +511,7 @@ void ln_err_bt(const char *fmt, ...)
  */
 void ln_err_exit(int error, const char *fmt, ...)
 {
-    va_list
-        ap;
+    va_list ap;
     va_start(ap, fmt);
     err_doit(1, error, fmt, ap);
     va_end(ap);
