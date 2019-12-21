@@ -163,8 +163,8 @@ simple at the first glance. But when we're writing a real neural network,
 the model file in JSON IR format is easily getting tens of thousands of lines,
 which is still piece of cake for computers, but a nightmare for humans.</p>
 <p>Thus, LightNet provides a "concise version" of JSON IR format, which contains
-the exactly the same information as JSON IR, called LightNet Intermediate
-Language (IL), which can be transformed to JSON IR by <code>il2json.pl</code> (installed
+exactly the same information as JSON IR, called LightNet Intermediate
+Language (IL), which can be transformed to JSON IR by <code>il2json</code> (installed
 by default).</p>
 <p>The basic format for an operator's representation in IL is:</p>
 <div class="codehilite"><pre><span></span><span class="n">OPTYPE</span><span class="p">(</span><span class="n">TENSOR_IN_ARG_NAME1</span><span class="o">=</span><span class="n">TENSOR_IN_NAME1</span><span class="p">,</span> 
@@ -186,15 +186,15 @@ in IL:</p>
 </pre></div>
 
 
-<p>Save the above code in <code>example.net</code>, and <code>il2json.pl</code> can generate the same code
+<p>Save the above code in <code>example.net</code>, and <code>il2json</code> can generate the same code
 as in the <a href="Intermediate-Representation.html#example">example IR</a>:</p>
-<div class="codehilite"><pre><span></span>$ il2json.pl example.net -o example.json
+<div class="codehilite"><pre><span></span>$ il2json example.net -o example.json
 </pre></div>
 
 
 <p>Then you can feed <code>example.json</code> directly to <code>lightnet</code>. Or you can just combine 
 <code>il2json</code> and <code>lightnet</code> with a pipe:</p>
-<div class="codehilite"><pre><span></span>$ il2json.pl example.net | lightnet -
+<div class="codehilite"><pre><span></span>$ il2json example.net | lightnet -
 tensor2:
 [[2.000 3.000 4.000]
  [6.000 7.000 8.000]]
