@@ -135,11 +135,11 @@ specified target platform to be run later with CLI or API.
 
 By default, `lightnet` both compiles and runs the model with zeroed data.
 It accepts models in the form of 
-[Intermediate Representation](docs/Documentation/Intermediate-Representation.md)
+[Intermediate Representation](https://zhaozhixu.github.io/LightNet/Documentation/Intermediate-Representation.html)
 written in JSON. For a simple example, suppose we have a tiny network composed of
 three operators: `create`, `slice`, and `print`, which create a tensor, 
 slice it in some dimensions and print it to stdout, as described
-[here](docs/Documentation/Intermediate-Representation.md#example).
+[here](https://zhaozhixu.github.io/LightNet/Documentation/Intermediate-Representation.html#example).
 
 If we save the above tiny model in `example.json`, execute the following
 command, and we will get `print`'s message:
@@ -170,7 +170,7 @@ and run the compiled model with zeroed data.
     info: run time: 0.015035s
     
 As we can see, combined with `il2json` utility, more human-readable IL (
-[Intermediate Language](docs/Documentation/Intermediate-Language.md))
+[Intermediate Language](https://zhaozhixu.github.io/LightNet/Documentation/Intermediate-Language.html))
 models can also be accepted. In the following command, `il2json` first reads
 the IL model in `protos/net/yolov3.net` and prints converted
 IR model to the pipe, then `lightnet` reads the IR model from the pipe
@@ -191,7 +191,7 @@ use the `-r` option.
     info: run time: 0.014979s
     
 And if you have prepared a specific
-[data file](docs/Documentation/Miscellaneous.md#data-file-format)
+[data file](https://zhaozhixu.github.io/LightNet/Documentation/Miscellaneous.html#data-file-format)
 for the tensors in the model (maybe the weights), you can specify it with 
 `-f` option.
 
@@ -274,7 +274,7 @@ one for an input image, printed in the terminal.
 ## Model Format
 
 LightNet uses an independent model format (or
-[Intermediate Representation](docs/Documentation/Intermediate-Representation.md), IR)
+[Intermediate Representation](https://zhaozhixu.github.io/LightNet/Documentation/Intermediate-Representation.html), IR)
 for neural network models, to provide the ability to support model
 formats of all kinds of NN frameworks, and to provide the flexibility to perform
 various optimization operations on the NN model.
@@ -283,7 +283,7 @@ The text-format IR directly consumed by LightNet is defined in a JSON format,
 which is verbose and well-formed and can be easily parsed, although a little
 hard for human to read (when the model gets bigger and has tens of thousands
 of lines of code). Thus we also provide a concise format for that JSON IR, 
-called LightNet [Intermediate Language](docs/Documentation/Intermediate-Language.md)
+called LightNet [Intermediate Language](https://zhaozhixu.github.io/LightNet/Documentation/Intermediate-Language.html)
 (IL) for the ease of human reading, subfixed with `.net`.
 There is of course a tool, `il2json`, to carry out the task of translate 
 the IL to JSON IR, which is installed by default.
