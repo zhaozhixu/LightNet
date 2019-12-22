@@ -116,8 +116,9 @@ hold every element of the list, for example:
 
 - **`void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)`**
 
-    Find an element in the list, which can be compared with `data` by `cmp`
-    returning 0. Return the element if it's found, else return `NULL`.
+    Find an element in the list, which can be compared with `data` and
+    considered equal by `cmp` returning 0.
+    Return the element if it's found, else return `NULL`.
 
 - **`ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)`**
 
@@ -1037,7 +1038,7 @@ different state-transfer functions.
 The `name` field should be a unique string among all operators in this context.
 This is the unique ID of this operator. The NN model in 
 [IL format](../Getting-Started.md#model-format) can generate this string 
-automatically with the IL-to-IR generation tool `il2json.pl`.
+automatically with the IL-to-IR generation tool `il2json`.
 
 The `optype` field is the operator type that denotes the operation it performs,
 which should be one of the operator prototypes' `optype` registered in all 

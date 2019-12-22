@@ -8,8 +8,8 @@ the model file in JSON IR format is easily getting tens of thousands of lines,
 which is still piece of cake for computers, but a nightmare for humans.
 
 Thus, LightNet provides a "concise version" of JSON IR format, which contains
-the exactly the same information as JSON IR, called LightNet Intermediate
-Language (IL), which can be transformed to JSON IR by `il2json.pl` (installed
+exactly the same information as JSON IR, called LightNet Intermediate
+Language (IL), which can be transformed to JSON IR by `il2json` (installed
 by default).
 
 The basic format for an operator's representation in IL is:
@@ -32,15 +32,15 @@ in IL:
     slice(src=tensor1 | dst=tensor2 | axis=1, start=1, len=3);
     print(src=tensor2 | | msg="tensor2:");
     
-Save the above code in `example.net`, and `il2json.pl` can generate the same code
+Save the above code in `example.net`, and `il2json` can generate the same code
 as in the [example IR](Intermediate-Representation.md#example):
 
-    $ il2json.pl example.net -o example.json
+    $ il2json example.net -o example.json
 
 Then you can feed `example.json` directly to `lightnet`. Or you can just combine 
 `il2json` and `lightnet` with a pipe:
     
-    $ il2json.pl example.net | lightnet -
+    $ il2json example.net | lightnet -
     tensor2:
     [[2.000 3.000 4.000]
      [6.000 7.000 8.000]]

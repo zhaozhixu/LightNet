@@ -230,6 +230,9 @@ xmax, ymax), one for an input image, printed in the terminal like this:
 In real projects, developers may draw the bounding boxes in the original image
 with any libraries they like (such as OpenCV, GTK...).
 
+The [Data Structures Documentation](Documentation/Data-Structures.md) describes
+the technical details of the design and usage of C API.
+
 ### Python API
 
 An example using the python API is in `example/detect.py` and demoed with
@@ -257,6 +260,8 @@ and a series of bounding boxes coordinates (xmin, ymin, xmax, ymax),
 one for an input image, printed in the terminal.
 
 ![Demo](img/demo.png)
+
+The Python API is analogous to the [C API](#c-api), whose usage is generally the same.
 
 ## Model Format
 

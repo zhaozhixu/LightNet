@@ -205,7 +205,7 @@ This example performs an single-object detection algorithm using
 [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html),
 with [ShuffleNetV2](https://arxiv.org/abs/1807.11164) as back-bone conv-net
 and [SqueezeDet](https://arxiv.org/abs/1612.01051)'s detection part as feature
-expression algorithm. 
+expression algorithm.
     
 To play with this demo, LightNet should be configured with
 
@@ -242,6 +242,9 @@ xmax, ymax), one for an input image, printed in the terminal like this:
 
 In real projects, developers may draw the bounding boxes in the original image
 with any libraries they like (such as OpenCV, GTK...).
+
+The [Data Structures Documentation](https://zhaozhixu.github.io/LightNet/Documentation/Data-Structures.html) describes
+the technical details of the design and usage of C API.
 
 ### Python API
 

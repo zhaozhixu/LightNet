@@ -25,6 +25,10 @@ theme:
   name: readthedocs
   highlightjs: false
 
+plugins:
+  - search:
+      separator: '\W+'
+
 markdown_extensions:
   - toc:
       permalink: true
