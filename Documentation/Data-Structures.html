@@ -291,8 +291,9 @@ pointer value. Return the element if it's found, else return <code>NULL</code>.<
 </li>
 <li>
 <p><strong><code>void *ln_list_find_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></strong></p>
-<p>Find an element in the list, which can be compared with <code>data</code> by <code>cmp</code>
-returning 0. Return the element if it's found, else return <code>NULL</code>.</p>
+<p>Find an element in the list, which can be compared with <code>data</code> and
+considered equal by <code>cmp</code> returning 0.
+Return the element if it's found, else return <code>NULL</code>.</p>
 </li>
 <li>
 <p><strong><code>ln_list *ln_list_find_all_custom(ln_list *list, void *data, ln_cmp_func cmp)</code></strong></p>

@@ -396,6 +396,8 @@ frames per second of detection: 245.948881
 
 <p>In real projects, developers may draw the bounding boxes in the original image
 with any libraries they like (such as OpenCV, GTK...).</p>
+<p>The <a href="Documentation/Data-Structures.html">Data Structures Documentation</a> describes
+the technical details of the design and usage of C API.</p>
 <h3 id="python-api">Python API<a class="headerlink" href="#python-api" title="Permanent link">&para;</a></h3>
 <p>An example using the python API is in <code>example/detect.py</code> and demoed with
 <code>example/object-detect.py</code>. This example does the same detection algorithm as
@@ -423,6 +425,7 @@ in <code>example/data/images</code> dynamicly like the following screenshot,
 and a series of bounding boxes coordinates (xmin, ymin, xmax, ymax),
 one for an input image, printed in the terminal.</p>
 <p><img alt="Demo" src="img/demo.png" /></p>
+<p>The Python API is analogous to the <a href="#c-api">C API</a>, whose usage is generally the same.</p>
 <h2 id="model-format">Model Format<a class="headerlink" href="#model-format" title="Permanent link">&para;</a></h2>
 <p>LightNet uses an independent model format (or
 <a href="Documentation/Intermediate-Representation.html">Intermediate Representation</a>, IR)
