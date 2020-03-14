@@ -118,7 +118,7 @@ sub gen_head_block {
     my $head_code = defined $head ? $head : " ";
     my $head_block_tpl = <<EOF;
 /*
- * Copyright (c) 2018-2019 $author
+ * Copyright (c) 2018-2020 $author
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
