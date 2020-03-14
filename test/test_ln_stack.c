@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_stack.h"
 
 static void checked_setup(void)
@@ -33,7 +33,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_stack_push_pop)
+LN_TEST_START(test_ln_stack_push_pop)
 {
     ln_stack *s;
 
@@ -62,25 +62,12 @@ START_TEST(test_ln_stack_push_pop)
 
     ln_stack_free(s);
 }
-END_TEST
+LN_TEST_END
 
-/* end of tests */
-
-static TCase *make_stack_tcase(void)
+LN_TEST_TCASE_START(stack, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("stack");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_stack_push_pop);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_stack_push_pop);
 }
+LN_TEST_TCASE_END
 
-void add_stack_record(test_record *record)
-{
-    test_record_add_suite(record, "stack");
-    test_record_add_tcase(record, "stack", "stack", make_stack_tcase);
-}
+LN_TEST_ADD_TCASE(stack);

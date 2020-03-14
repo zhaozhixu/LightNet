@@ -158,7 +158,7 @@ static ln_list *cb_func_single_replace(const ln_context *ctx,
         }
         replace_flag[i++] = 0;
     }
-    if (!match) {
+    if (!*match) {
         ln_free(replace_flag);
         return NULL;
     }

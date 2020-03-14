@@ -46,6 +46,7 @@ void ln_context_free(ln_context *ctx)
     ln_op_table_free(ctx->op_table);
     ln_dfg_free(ctx->dfg);
     ln_op_list_free(ctx->ops);
+    ln_free(ctx);
 }
 
 static void init_op(ln_context *ctx, ln_op *op)

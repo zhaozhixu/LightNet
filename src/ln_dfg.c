@@ -22,9 +22,15 @@
 
 #include "ln_dfg.h"
 
+static void ln_graph_node_free_wrapper(void *p)
+{
+    ln_graph_node_free(p);
+}
+
 static ln_hash *table_create(void)
 {
-    return ln_hash_create(ln_str_hash, ln_str_cmp, ln_free, NULL);
+    return ln_hash_create(ln_str_hash, ln_str_cmp, ln_free,
+                          ln_graph_node_free_wrapper);
 }
 
 static void table_free(ln_hash *table)

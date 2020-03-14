@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_tensor.h"
 
 #define ARR(type, varg...) (type[]){varg}
@@ -35,7 +35,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_tensor_list)
+LN_TEST_START(test_ln_tensor_list)
 {
     ln_list *tensors;
     char *name;
@@ -53,9 +53,9 @@ START_TEST(test_ln_tensor_list)
 
     ln_tensor_list_free(tensors);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_tensor_table)
+LN_TEST_START(test_ln_tensor_table)
 {
     ln_hash *table;
     ln_tensor_entry *e, *e1, *e2;
@@ -97,9 +97,9 @@ START_TEST(test_ln_tensor_table)
 
     ln_tensor_table_free(table);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_tensor_table_load_trt_weight_file)
+LN_TEST_START(test_ln_tensor_table_load_trt_weight_file)
 {
     ln_hash *table;
     ln_tensor_entry *te;
@@ -131,26 +131,14 @@ START_TEST(test_ln_tensor_table_load_trt_weight_file)
     tl_free(wts2->data);
     ln_tensor_table_free(table);
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_tensor_tcase(void)
+LN_TEST_TCASE_START(tensor, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("tensor");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_tensor_list);
-    tcase_add_test(tc, test_ln_tensor_table);
-    tcase_add_test(tc, test_ln_tensor_table_load_trt_weight_file);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_tensor_list);
+    LN_TEST_ADD_TEST(test_ln_tensor_table);
+    LN_TEST_ADD_TEST(test_ln_tensor_table_load_trt_weight_file);
 }
+LN_TEST_TCASE_END
 
-void add_tensor_record(test_record *record)
-{
-    test_record_add_suite(record, "tensor");
-    test_record_add_tcase(record, "tensor", "tensor", make_tensor_tcase);
-}
+LN_TEST_ADD_TCASE(tensor);

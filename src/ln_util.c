@@ -37,9 +37,9 @@ void *ln_alloc(size_t size)
 {
     void *p;
 
-    p = malloc(size);
+    p = calloc(1, size);
     if (p == NULL) {
-        err(EXIT_FAILURE, "ln_alloc(): malloc(%lu) failed", size);
+        err(EXIT_FAILURE, "ln_alloc(): calloc(1, %lu) failed", size);
     }
 
     return p;

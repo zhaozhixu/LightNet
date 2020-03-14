@@ -23,7 +23,7 @@
 #include <check.h>
 #include <tl_check.h>
 #include <assert.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_op.h"
 
 static int pre_run_count = 0;
@@ -151,12 +151,12 @@ static void checked_teardown(void)
     ln_op_list_free(test_op_list);
 }
 
-START_TEST(test_ln_op_list_create_from_array)
+LN_TEST_START(test_ln_op_list_create_from_array)
 {
-    ln_list *oplist;
+    ln_list *oplist, *oplist1;
     ln_op *op;
 
-    oplist = ln_op_list_create_from_array(op_array);
+    oplist1 = oplist = ln_op_list_create_from_array(op_array);
 
     op = oplist->data;
     ck_assert_ptr_eq(op, &opimpl0);
@@ -169,21 +169,21 @@ START_TEST(test_ln_op_list_create_from_array)
     oplist = oplist->next;
     ck_assert_ptr_eq(oplist, NULL);
 
-    ln_op_list_free(oplist);
+    ln_op_list_free(oplist1);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_free)
+LN_TEST_START(test_ln_op_list_free)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_free_lists_too)
+LN_TEST_START(test_ln_op_list_free_lists_too)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_find_by_optype)
+LN_TEST_START(test_ln_op_list_find_by_optype)
 {
     ln_op *op;
 
@@ -196,9 +196,9 @@ START_TEST(test_ln_op_list_find_by_optype)
     op = ln_op_list_find_by_optype(test_op_list, "not_exist");
     ck_assert_ptr_eq(op, NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_find_by_name)
+LN_TEST_START(test_ln_op_list_find_by_name)
 {
     ln_op *op;
 
@@ -211,9 +211,9 @@ START_TEST(test_ln_op_list_find_by_name)
     op = ln_op_list_find_by_name(test_op_list, "not_exist");
     ck_assert_ptr_eq(op, NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_create_from_proto)
+LN_TEST_START(test_ln_op_create_from_proto)
 {
     ln_op *op;
     ln_list *tensors;
@@ -243,73 +243,61 @@ START_TEST(test_ln_op_create_from_proto)
     ln_tensor_table_free(tensor_table);
     ln_op_free(op);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_free)
+LN_TEST_START(test_ln_op_free)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_free_lists_too)
+LN_TEST_START(test_ln_op_free_lists_too)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_do_pre_run)
+LN_TEST_START(test_ln_op_list_do_pre_run)
 {
     ln_op_list_do_pre_run(test_op_list);
     ck_assert_int_eq(pre_run_count, 3);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_do_static_run)
+LN_TEST_START(test_ln_op_list_do_static_run)
 {
     ln_op_list_do_static_run(test_op_list);
     ck_assert_int_eq(static_run_count, 1);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_do_run)
+LN_TEST_START(test_ln_op_list_do_run)
 {
     ln_op_list_do_run(test_op_list);
     ck_assert_int_eq(run_count, 3);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_op_list_do_post_run)
+LN_TEST_START(test_ln_op_list_do_post_run)
 {
     ln_op_list_do_post_run(test_op_list);
     ck_assert_int_eq(post_run_count, 3);
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_op_tcase(void)
+LN_TEST_TCASE_START(op, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("op");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_op_list_create_from_array);
-    tcase_add_test(tc, test_ln_op_list_free);
-    tcase_add_test(tc, test_ln_op_list_free_lists_too);
-    tcase_add_test(tc, test_ln_op_list_find_by_optype);
-    tcase_add_test(tc, test_ln_op_list_find_by_name);
-    tcase_add_test(tc, test_ln_op_create_from_proto);
-    tcase_add_test(tc, test_ln_op_free);
-    tcase_add_test(tc, test_ln_op_free_lists_too);
-    tcase_add_test(tc, test_ln_op_list_do_pre_run);
-    tcase_add_test(tc, test_ln_op_list_do_static_run);
-    tcase_add_test(tc, test_ln_op_list_do_run);
-    tcase_add_test(tc, test_ln_op_list_do_post_run);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_op_list_create_from_array);
+    LN_TEST_ADD_TEST(test_ln_op_list_free);
+    LN_TEST_ADD_TEST(test_ln_op_list_free_lists_too);
+    LN_TEST_ADD_TEST(test_ln_op_list_find_by_optype);
+    LN_TEST_ADD_TEST(test_ln_op_list_find_by_name);
+    LN_TEST_ADD_TEST(test_ln_op_create_from_proto);
+    LN_TEST_ADD_TEST(test_ln_op_free);
+    LN_TEST_ADD_TEST(test_ln_op_free_lists_too);
+    LN_TEST_ADD_TEST(test_ln_op_list_do_pre_run);
+    LN_TEST_ADD_TEST(test_ln_op_list_do_static_run);
+    LN_TEST_ADD_TEST(test_ln_op_list_do_run);
+    LN_TEST_ADD_TEST(test_ln_op_list_do_post_run);
 }
+LN_TEST_TCASE_END
 
-void add_op_record(test_record *record)
-{
-    test_record_add_suite(record, "op");
-    test_record_add_tcase(record, "op", "op", make_op_tcase);
-}
+LN_TEST_ADD_TCASE(op);

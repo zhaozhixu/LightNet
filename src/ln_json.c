@@ -82,7 +82,6 @@ static ln_list *parse_array_value(const cJSON *array_json,
             switch (first_type) {
             case LN_PARAM_STRING:
                 array_string = ln_alloc(sizeof(char *)*array_len);
-                memset(array_string, 0, sizeof(char *)*array_len);
                 break;
             case LN_PARAM_NUMBER:
                 array_number = ln_alloc(sizeof(double)*array_len);
@@ -145,6 +144,16 @@ static ln_list *parse_array_value(const cJSON *array_json,
     default:
         assert(0 && "handled before, shouldn't get here");
         break;
+    }
+
+    if (array_bool)
+        ln_free(array_bool);
+    if (array_number)
+        ln_free(array_number);
+    if (array_string) {
+        for (int i = 0; i < array_len; i++)
+            ln_free(array_string[i]);
+        ln_free(array_string);
     }
 
     return param_list;
@@ -496,6 +505,7 @@ ln_list *ln_json_parse(char *json_str, ln_context *ctx)
 
     ctx->ops = ops;
     cJSON_Delete(json);
+    ln_free(newline_indices);
     return ops;
 }
 

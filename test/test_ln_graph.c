@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_graph.h"
 
 static int *data;
@@ -49,7 +49,7 @@ static void checked_teardown(void)
     ln_graph_free(graph);
 }
 
-START_TEST(test_ln_graph_node_create)
+LN_TEST_START(test_ln_graph_node_create)
 {
     ln_graph_node *node;
 
@@ -62,9 +62,9 @@ START_TEST(test_ln_graph_node_create)
 
     ln_graph_node_free(node);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_create)
+LN_TEST_START(test_ln_graph_create)
 {
     ln_graph *g;
 
@@ -74,9 +74,9 @@ START_TEST(test_ln_graph_create)
 
     ln_graph_free(g);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_add)
+LN_TEST_START(test_ln_graph_add)
 {
     ln_graph_node *n;
     ln_list *l;
@@ -90,9 +90,9 @@ START_TEST(test_ln_graph_add)
     for (i = 0, l = graph->nodes; l; l = l->next, i++)
         ck_assert_int_eq(*(int *)((ln_graph_node *)l->data)->data, data[i]);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_find)
+LN_TEST_START(test_ln_graph_find)
 {
     ln_graph_node **n_array;
     ln_graph_node *n;
@@ -117,9 +117,9 @@ START_TEST(test_ln_graph_find)
     num = -1;
     ck_assert_ptr_eq(ln_graph_find(graph, &num), NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_link_unlink)
+LN_TEST_START(test_ln_graph_link_unlink)
 {
     int i;
 
@@ -185,9 +185,9 @@ START_TEST(test_ln_graph_link_unlink)
     ck_assert_ptr_eq(ln_graph_find(graph, &data[3])->out_edge_nodes, NULL);
     ck_assert_ptr_eq(ln_graph_find(graph, &data[4])->out_edge_nodes, NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_copy)
+LN_TEST_START(test_ln_graph_copy)
 {
     int i;
     ln_graph *g;
@@ -240,9 +240,9 @@ START_TEST(test_ln_graph_copy)
 
     ln_graph_free(g);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_num_outlier)
+LN_TEST_START(test_ln_graph_num_outlier)
 {
     int i;
 
@@ -257,9 +257,9 @@ START_TEST(test_ln_graph_num_outlier)
     ln_graph_link(graph, &data[0], &data[1], &data[1]);
     ck_assert_int_eq(ln_graph_num_outlier(graph), 0);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_topsort)
+LN_TEST_START(test_ln_graph_topsort)
 {
     ln_list *res;
     ln_list *sub_list;
@@ -308,9 +308,9 @@ START_TEST(test_ln_graph_topsort)
     ck_assert_int_eq(res_num, -1);
     ln_graph_free_topsortlist(res);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_graph_dft_after_prev)
+LN_TEST_START(test_ln_graph_dft_after_prev)
 {
     ln_list *res;
     ln_list *l;
@@ -333,38 +333,27 @@ START_TEST(test_ln_graph_dft_after_prev)
     for (l = res, i = 0; l; l = l->next, i++) {
         ck_assert_int_eq(*(int *)l->data, res_true[i]);
     }
+    ln_list_free(res);
 
     ln_graph_link(graph, &data[3], &data[5], &data[2]);
     ln_graph_link(graph, &data[5], &data[0], &data[2]);
     res_num = ln_graph_dft_after_prev(graph, &res);
     ck_assert_int_eq(res_num, -1);
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_graph_tcase(void)
+LN_TEST_TCASE_START(graph, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("graph");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_graph_node_create);
-    tcase_add_test(tc, test_ln_graph_create);
-    tcase_add_test(tc, test_ln_graph_add);
-    tcase_add_test(tc, test_ln_graph_find);
-    tcase_add_test(tc, test_ln_graph_link_unlink);
-    tcase_add_test(tc, test_ln_graph_copy);
-    tcase_add_test(tc, test_ln_graph_num_outlier);
-    tcase_add_test(tc, test_ln_graph_topsort);
-    tcase_add_test(tc, test_ln_graph_dft_after_prev);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_graph_node_create);
+    LN_TEST_ADD_TEST(test_ln_graph_create);
+    LN_TEST_ADD_TEST(test_ln_graph_add);
+    LN_TEST_ADD_TEST(test_ln_graph_find);
+    LN_TEST_ADD_TEST(test_ln_graph_link_unlink);
+    LN_TEST_ADD_TEST(test_ln_graph_copy);
+    LN_TEST_ADD_TEST(test_ln_graph_num_outlier);
+    LN_TEST_ADD_TEST(test_ln_graph_topsort);
+    LN_TEST_ADD_TEST(test_ln_graph_dft_after_prev);
 }
+LN_TEST_TCASE_END
 
-void add_graph_record(test_record *record)
-{
-    test_record_add_suite(record, "graph");
-    test_record_add_tcase(record, "graph", "graph", make_graph_tcase);
-}
+LN_TEST_ADD_TCASE(graph);

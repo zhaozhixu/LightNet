@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_param.h"
 
 static void checked_setup(void)
@@ -33,7 +33,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_param_list_append_string)
+LN_TEST_START(test_ln_param_list_append_string)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -51,9 +51,9 @@ START_TEST(test_ln_param_list_append_string)
 
     ln_param_list_free(params);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_append_number)
+LN_TEST_START(test_ln_param_list_append_number)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -82,9 +82,9 @@ START_TEST(test_ln_param_list_append_number)
     ck_assert(entry->value_double == 2.2);
     ln_param_list_free(params);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_append_bool)
+LN_TEST_START(test_ln_param_list_append_bool)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -102,9 +102,9 @@ START_TEST(test_ln_param_list_append_bool)
     ln_param_list_free(params);
 
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_append_null)
+LN_TEST_START(test_ln_param_list_append_null)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -119,9 +119,9 @@ START_TEST(test_ln_param_list_append_null)
     ck_assert_int_eq(entry->type, LN_PARAM_NULL);
     ln_param_list_free(params);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_append_array_string)
+LN_TEST_START(test_ln_param_list_append_array_string)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -147,9 +147,9 @@ START_TEST(test_ln_param_list_append_array_string)
     ck_assert_str_eq(entry->value_array_string[1], array_string2[1]);
     ln_param_list_free(params);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_append_array_number)
+LN_TEST_START(test_ln_param_list_append_array_number)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -191,9 +191,9 @@ START_TEST(test_ln_param_list_append_array_number)
     ck_assert(entry->value_array_double[1] == array_double2[1]);
     ln_param_list_free(params);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_append_array_bool)
+LN_TEST_START(test_ln_param_list_append_array_bool)
 {
     ln_list *params;
     ln_param_entry *entry;
@@ -217,19 +217,19 @@ START_TEST(test_ln_param_list_append_array_bool)
     ck_assert_int_eq(entry->value_array_bool[1], array_bool2[1]);
     ln_param_list_free(params);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_find_by_arg_name)
+LN_TEST_START(test_ln_param_list_find_by_arg_name)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_list_length)
+LN_TEST_START(test_ln_param_list_length)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_param_type_name)
+LN_TEST_START(test_ln_param_type_name)
 {
     ck_assert_str_eq(ln_param_type_name(LN_PARAM_NULL), "LN_PARAM_NULL");
     ck_assert_str_eq(ln_param_type_name(LN_PARAM_STRING), "LN_PARAM_STRING");
@@ -239,33 +239,21 @@ START_TEST(test_ln_param_type_name)
     ck_assert_str_eq(ln_param_type_name(LN_PARAM_ARRAY_NUMBER), "LN_PARAM_ARRAY_NUMBER");
     ck_assert_str_eq(ln_param_type_name(LN_PARAM_ARRAY_BOOL), "LN_PARAM_ARRAY_BOOL");
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_param_tcase(void)
+LN_TEST_TCASE_START(param, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("param");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_param_list_append_string);
-    tcase_add_test(tc, test_ln_param_list_append_number);
-    tcase_add_test(tc, test_ln_param_list_append_bool);
-    tcase_add_test(tc, test_ln_param_list_append_null);
-    tcase_add_test(tc, test_ln_param_list_append_array_string);
-    tcase_add_test(tc, test_ln_param_list_append_array_number);
-    tcase_add_test(tc, test_ln_param_list_append_array_bool);
-    tcase_add_test(tc, test_ln_param_list_find_by_arg_name);
-    tcase_add_test(tc, test_ln_param_list_length);
-    tcase_add_test(tc, test_ln_param_type_name);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_param_list_append_string);
+    LN_TEST_ADD_TEST(test_ln_param_list_append_number);
+    LN_TEST_ADD_TEST(test_ln_param_list_append_bool);
+    LN_TEST_ADD_TEST(test_ln_param_list_append_null);
+    LN_TEST_ADD_TEST(test_ln_param_list_append_array_string);
+    LN_TEST_ADD_TEST(test_ln_param_list_append_array_number);
+    LN_TEST_ADD_TEST(test_ln_param_list_append_array_bool);
+    LN_TEST_ADD_TEST(test_ln_param_list_find_by_arg_name);
+    LN_TEST_ADD_TEST(test_ln_param_list_length);
+    LN_TEST_ADD_TEST(test_ln_param_type_name);
 }
+LN_TEST_TCASE_END
 
-void add_param_record(test_record *record)
-{
-    test_record_add_suite(record, "param");
-    test_record_add_tcase(record, "param", "param", make_param_tcase);
-}
+LN_TEST_ADD_TCASE(param);

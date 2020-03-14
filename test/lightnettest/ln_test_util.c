@@ -20,31 +20,43 @@
  * SOFTWARE.
  */
 
-#include "test_lightnet.h"
+#include <err.h>
+#include <assert.h>
+#include "ln_test_util.h"
 
-static void checked_setup(void)
+void *ln_test_alloc(size_t size)
 {
+    void *p;
+
+    p = calloc(1, size);
+    if (p == NULL) {
+        err(EXIT_FAILURE, "%s(): calloc(1, %lu) failed", __func__, size);
+    }
+
+    return p;
 }
 
-static void checked_teardown(void)
+void *ln_test_realloc(void *ptr, size_t size)
 {
+    void *p;
+
+    p = realloc(ptr, size);
+    if (p == NULL && size != 0) {
+        err(EXIT_FAILURE, "%s(): realloc() failed", __func__);
+    }
+
+    return p;
 }
 
-/* end of tests */
-
-Suite *make_master_suite(void)
+char *ln_test_strdup(const char *s)
 {
-    Suite *s;
-    TCase *tc_master;
+    char *new_s;
 
-    s = suite_create("master");
-    tc_master = tcase_create("master");
-    tcase_add_checked_fixture(tc_master, checked_setup, checked_teardown);
+    assert(s);
+    new_s = strdup(s);
+    if (new_s == NULL) {
+        err(EXIT_FAILURE, "%s(): strdup(%s) failed", __func__, s);
+    }
 
-
-    /* end of adding tests */
-
-    suite_add_tcase(s, tc_master);
-
-    return s;
+    return new_s;
 }

@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_mem.h"
 
 static void checked_setup(void)
@@ -33,7 +33,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_mem_pool_alloc)
+LN_TEST_START(test_ln_mem_pool_alloc)
 {
     ln_mem_pool *mem_pool;
     size_t addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8;
@@ -86,30 +86,18 @@ START_TEST(test_ln_mem_pool_alloc)
     ck_assert_int_eq(addr8, 40);
     ln_mem_pool_free(mem_pool);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_mem_pool_dealloc)
+LN_TEST_START(test_ln_mem_pool_dealloc)
 {
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_mem_tcase(void)
+LN_TEST_TCASE_START(mem, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("mem");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_mem_pool_alloc);
-    tcase_add_test(tc, test_ln_mem_pool_dealloc);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_mem_pool_alloc);
+    LN_TEST_ADD_TEST(test_ln_mem_pool_dealloc);
 }
+LN_TEST_TCASE_END
 
-void add_mem_record(test_record *record)
-{
-    test_record_add_suite(record, "mem");
-    test_record_add_tcase(record, "mem", "mem", make_mem_tcase);
-}
+LN_TEST_ADD_TCASE(mem);

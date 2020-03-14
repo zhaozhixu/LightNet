@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_util.h"
 #include "../src/ln_list.h"
 
@@ -63,7 +63,7 @@ static int cmp(const void *p1, const void *p2)
     return *(int *)p1 - *(int *)p2;
 }
 
-START_TEST(test_ln_list_append_nth)
+LN_TEST_START(test_ln_list_append_nth)
 {
     ln_list *l;
 
@@ -73,9 +73,9 @@ START_TEST(test_ln_list_append_nth)
     ck_assert_int_eq(*(int *)ln_list_nth_data(l, 1), 1);
     ln_list_free(l);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_remove)
+LN_TEST_START(test_ln_list_remove)
 {
     int num, i;
 
@@ -98,9 +98,9 @@ START_TEST(test_ln_list_remove)
     for (i = 0; i < data_len; i++)
         ck_assert_int_eq(*(int *)ln_list_nth_data(list, i), data[i]);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_remove_custom)
+LN_TEST_START(test_ln_list_remove_custom)
 {
     int num, i;
 
@@ -123,7 +123,7 @@ START_TEST(test_ln_list_remove_custom)
     for (i = 0; i < data_len; i++)
         ck_assert_int_eq(*(int *)ln_list_nth_data(list, i), data[i]);
 }
-END_TEST
+LN_TEST_END
 
 static int cmp_remove_all(const void *p1, const void *p2)
 {
@@ -138,7 +138,7 @@ static void empty_free(void *p)
 {
 }
 
-START_TEST(test_ln_list_remove_all_custom_deep)
+LN_TEST_START(test_ln_list_remove_all_custom_deep)
 {
     list = ln_list_remove_all_custom_deep(list, &data[0], cmp_remove_all,
                                           empty_free);
@@ -147,9 +147,9 @@ START_TEST(test_ln_list_remove_all_custom_deep)
     ck_assert_int_eq(*(int *)ln_list_nth_data(list, 2), 2);
     ck_assert_ptr_eq(ln_list_nth_data(list, 3), NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_remove_insert_nth)
+LN_TEST_START(test_ln_list_remove_insert_nth)
 {
     int i;
 
@@ -185,9 +185,9 @@ START_TEST(test_ln_list_remove_insert_nth)
     for (i = 0; i < data_len; i++)
         ck_assert_int_eq(*(int *)ln_list_nth_data(list, i), data[i]);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_find)
+LN_TEST_START(test_ln_list_find)
 {
     int n1 = 6;
     int n2 = -1;
@@ -202,9 +202,9 @@ START_TEST(test_ln_list_find)
     p = ln_list_find(list, &n2);
     ck_assert_ptr_eq(p, NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_find_custom)
+LN_TEST_START(test_ln_list_find_custom)
 {
     int n1 = 6;
     int n2 = -1;
@@ -219,9 +219,9 @@ START_TEST(test_ln_list_find_custom)
     p = ln_list_find_custom(list, &n2, &cmp);
     ck_assert_ptr_eq(p, NULL);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_position)
+LN_TEST_START(test_ln_list_position)
 {
     int pos;
     ln_list *l;
@@ -232,13 +232,14 @@ START_TEST(test_ln_list_position)
     l = (ln_list *)ln_alloc(sizeof(ln_list));
     pos = ln_list_position(list, l);
     ck_assert_int_eq(pos, -1);
+    ln_list_free(l);
 
     pos = ln_list_position(list, NULL);
     ck_assert_int_eq(pos, -1);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_index)
+LN_TEST_START(test_ln_list_index)
 {
     int pos;
     int n;
@@ -250,9 +251,9 @@ START_TEST(test_ln_list_index)
     pos = ln_list_index(list, &n);
     ck_assert_int_eq(pos, -1);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_index_custom)
+LN_TEST_START(test_ln_list_index_custom)
 {
     int pos;
     int n;
@@ -264,10 +265,10 @@ START_TEST(test_ln_list_index_custom)
     pos = ln_list_index_custom(list, &n, cmp);
     ck_assert_int_eq(pos, -1);
 }
-END_TEST
+LN_TEST_END
 
 
-START_TEST(test_ln_list_length)
+LN_TEST_START(test_ln_list_length)
 {
     ln_list *l;
     int data;
@@ -278,10 +279,11 @@ START_TEST(test_ln_list_length)
     l = ln_list_append(l, &data);
     ck_assert_int_eq(ln_list_length(l), 1);
     ck_assert_int_eq(ln_list_length(list), 5);
+    ln_list_free(l);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_from_array_size_t)
+LN_TEST_START(test_ln_list_from_array_size_t)
 {
     ln_list *l;
     size_t i;
@@ -295,10 +297,11 @@ START_TEST(test_ln_list_from_array_size_t)
     for (i = 0; i < 3; i++) {
         ck_assert_int_eq((size_t)ln_list_nth_data(l, i), i);
     }
+    ln_list_free(l);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_free_deep)
+LN_TEST_START(test_ln_list_free_deep)
 {
     ln_list *l;
     int *int1, *int2;
@@ -311,11 +314,11 @@ START_TEST(test_ln_list_free_deep)
     l = ln_list_append(l, int2);
     ln_list_free_deep(l, free_int_wrapper);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_list_reverse)
+LN_TEST_START(test_ln_list_reverse)
 {
-    ln_list *l;
+    ln_list *l, *l1;
     int *int1, *int2, *int3;
 
     int1 = ln_alloc(sizeof(int));
@@ -324,7 +327,7 @@ START_TEST(test_ln_list_reverse)
     *int1 = 1;
     *int2 = 2;
     *int3 = 3;
-    l = ln_list_prepend(NULL, int1);
+    l1 = l = ln_list_prepend(NULL, int1);
     l = ln_list_prepend(l, int2);
     l = ln_list_prepend(l, int3);
     l = ln_list_reverse(l);
@@ -335,39 +338,27 @@ START_TEST(test_ln_list_reverse)
     ck_assert_int_eq(*(int *)l->data, 3);
     l = l->next;
     ck_assert_ptr_eq(l, NULL);
-    ln_list_free_deep(l, free_int_wrapper);
+    ln_list_free_deep(l1, free_int_wrapper);
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_list_tcase(void)
+LN_TEST_TCASE_START(list, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("list");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_list_append_nth);
-    tcase_add_test(tc, test_ln_list_remove);
-    tcase_add_test(tc, test_ln_list_remove_custom);
-    tcase_add_test(tc, test_ln_list_remove_all_custom_deep);
-    tcase_add_test(tc, test_ln_list_remove_insert_nth);
-    tcase_add_test(tc, test_ln_list_find);
-    tcase_add_test(tc, test_ln_list_find_custom);
-    tcase_add_test(tc, test_ln_list_position);
-    tcase_add_test(tc, test_ln_list_index);
-    tcase_add_test(tc, test_ln_list_index_custom);
-    tcase_add_test(tc, test_ln_list_length);
-    tcase_add_test(tc, test_ln_list_from_array_size_t);
-    tcase_add_test(tc, test_ln_list_free_deep);
-    tcase_add_test(tc, test_ln_list_reverse);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_list_append_nth);
+    LN_TEST_ADD_TEST(test_ln_list_remove);
+    LN_TEST_ADD_TEST(test_ln_list_remove_custom);
+    LN_TEST_ADD_TEST(test_ln_list_remove_all_custom_deep);
+    LN_TEST_ADD_TEST(test_ln_list_remove_insert_nth);
+    LN_TEST_ADD_TEST(test_ln_list_find);
+    LN_TEST_ADD_TEST(test_ln_list_find_custom);
+    LN_TEST_ADD_TEST(test_ln_list_position);
+    LN_TEST_ADD_TEST(test_ln_list_index);
+    LN_TEST_ADD_TEST(test_ln_list_index_custom);
+    LN_TEST_ADD_TEST(test_ln_list_length);
+    LN_TEST_ADD_TEST(test_ln_list_from_array_size_t);
+    LN_TEST_ADD_TEST(test_ln_list_free_deep);
+    LN_TEST_ADD_TEST(test_ln_list_reverse);
 }
+LN_TEST_TCASE_END
 
-void add_list_record(test_record *record)
-{
-    test_record_add_suite(record, "list");
-    test_record_add_tcase(record, "list", "list", make_list_tcase);
-}
+LN_TEST_ADD_TCASE(list);

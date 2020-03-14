@@ -217,7 +217,7 @@ And to minimalize dependencies, this demo uses
 
     $ sudo apt-get install libjpeg-dev
     
-After the compilation and installation of LightNet, you need to enter the
+After the [installation](#installation) of LightNet, you need to enter the
 `example` directory and compile the demo:
 
     $ cd example
@@ -261,7 +261,7 @@ command for installation:
 
     $ pip3 install -U opencv-python
 
-After compilation and installation, enter the following
+After [installation](#installation), enter the following
 commands in the `example` directory:
 
     $ il2json data/shuffledet_dac.net -o data/out.json

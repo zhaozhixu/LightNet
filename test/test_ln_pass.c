@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_pass.h"
 #include "../src/ln_json.h"
 #include "../src/ln_arch.h"
@@ -43,6 +43,7 @@ static void checked_setup(void)
 static void checked_teardown(void)
 {
     ln_arch_cleanup();
+    ln_context_cleanup_ops(ctx);
     ln_context_free(ctx);
     ln_free(json_str);
 }
@@ -68,7 +69,7 @@ static void assert_op_eq(ln_op *op, char *optype, char *opname)
 #define ARR(type, varg...) (type[]){varg}
 
 /* TODO: test it throughly */
-START_TEST(test_ln_pass_combiner)
+LN_TEST_START(test_ln_pass_combiner)
 {
 #ifdef LN_CUDA
     ln_op *op;
@@ -201,14 +202,14 @@ START_TEST(test_ln_pass_combiner)
     ck_assert_array_int_eq(param_entry->value_array_int, ARR(int,2,4), 2);
 #endif
 }
-END_TEST
+LN_TEST_END
 
 static void mem_pools_free_wrapper(void *p)
 {
     ln_mem_pool_free(p);
 }
 
-START_TEST(test_ln_pass_mem)
+LN_TEST_START(test_ln_pass_mem)
 {
 #ifdef LN_CUDA
     ln_hash *mem_pools;
@@ -249,25 +250,13 @@ START_TEST(test_ln_pass_mem)
     ln_hash_free(mem_pools);
 #endif
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_pass_tcase(void)
+LN_TEST_TCASE_START(pass, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("pass");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_pass_combiner);
-    tcase_add_test(tc, test_ln_pass_mem);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_pass_combiner);
+    LN_TEST_ADD_TEST(test_ln_pass_mem);
 }
+LN_TEST_TCASE_END
 
-void add_pass_record(test_record *record)
-{
-    test_record_add_suite(record, "pass");
-    test_record_add_tcase(record, "pass", "pass", make_pass_tcase);
-}
+LN_TEST_ADD_TCASE(pass);

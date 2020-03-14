@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_queue.h"
 
 static int *data;
@@ -43,7 +43,7 @@ static void checked_teardown(void)
     ln_free(data);
 }
 
-START_TEST(test_ln_queue_create)
+LN_TEST_START(test_ln_queue_create)
 {
     ln_queue *q;
 
@@ -53,9 +53,9 @@ START_TEST(test_ln_queue_create)
     ck_assert_ptr_eq(q->tail, NULL);
     ln_queue_free(q);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_queue_enqueue_dequeue)
+LN_TEST_START(test_ln_queue_enqueue_dequeue)
 {
     ln_queue *q;
 
@@ -71,25 +71,13 @@ START_TEST(test_ln_queue_enqueue_dequeue)
 
     ln_queue_free(q);
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_queue_tcase(void)
+LN_TEST_TCASE_START(queue, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("queue");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_queue_create);
-    tcase_add_test(tc, test_ln_queue_enqueue_dequeue);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_queue_create);
+    LN_TEST_ADD_TEST(test_ln_queue_enqueue_dequeue);
 }
+LN_TEST_TCASE_END
 
-void add_queue_record(test_record *record)
-{
-    test_record_add_suite(record, "queue");
-    test_record_add_tcase(record, "queue", "queue", make_queue_tcase);
-}
+LN_TEST_ADD_TCASE(queue);

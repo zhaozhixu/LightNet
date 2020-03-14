@@ -20,33 +20,36 @@
  * SOFTWARE.
  */
 
-#ifndef _TEST_RECORD_H_
-#define _TEST_RECORD_H_
+#ifndef _LN_TEST_UTIL_H_
+#define _LN_TEST_UTIL_H_
 
-struct test_record {
-    const char ***tcase_names_array;
-    const void ***tcase_ptrs_array;
-    int          *tcase_nums;
-    const char  **suite_names;
-    int           suites_num;
-};
-typedef struct test_record test_record;
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
 
-#ifdef __cplusplus
-#define TEST_CPPSTART extern "C" {
-#define TEST_CPPEND }
-#endif
+#define ln_test_free free
 
-test_record *test_record_create(void);
-test_record *test_record_create_filtered(const test_record *record,
-                                         const char *glob);
-void test_record_free(test_record *record);
-int test_record_add_suite(test_record *record, const char *suite_name);
-int test_record_add_tcase(test_record *record, const char *suite_name,
-                          const char *tcase_name, const void *tcase_ptr);
+#define ln_test_free_arrays(arr, len)           \
+    do {                                        \
+        for (int _i = 0; _i < (len); _i++)      \
+            free((arr)[_i]);                    \
+        free((arr));                            \
+    } while(0)
 
 #ifdef __cplusplus
-TEST_CPPEND
+#define LN_TEST_CPPSTART extern "C" {
+#define LN_TEST_CPPEND }
+LN_TEST_CPPSTART
 #endif
 
-#endif  /* _TEST_RECORD_H_ */
+void *ln_test_alloc(size_t size);
+void *ln_test_realloc(void *ptr, size_t size);
+char *ln_test_strdup(const char *s);
+
+#ifdef __cplusplus
+LN_TEST_CPPEND
+#endif
+
+#endif  /* _LN_TEST_UTIL_H_ */

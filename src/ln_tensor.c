@@ -185,9 +185,8 @@ void ln_tensor_entry_free(ln_tensor_entry *entry)
 
 void ln_tensor_entry_free_tensor_too(ln_tensor_entry *entry)
 {
-    ln_free(entry->name);
     tl_tensor_free(entry->tensor);
-    ln_free(entry);
+    ln_tensor_entry_free(entry);
 }
 
 static void tensor_entry_free_tensor_too_wrapper(void *p)

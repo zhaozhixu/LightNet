@@ -23,10 +23,10 @@
 #include <check.h>
 #include <tl_check.h>
 #include <errno.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_msg.h"
 
-static void checked_checked_setup(void)
+static void checked_setup(void)
 {
 }
 
@@ -34,7 +34,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_msg_create)
+LN_TEST_START(test_ln_msg_create)
 {
     ln_msg *error;
 
@@ -56,9 +56,9 @@ START_TEST(test_ln_msg_create)
     ck_assert_int_eq(error->level, LN_MSG_ERROR_SYS);
     ln_msg_free(error);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_msg_handle)
+LN_TEST_START(test_ln_msg_handle)
 {
     /* ln_msg *error; */
     /* int errsv; */
@@ -89,25 +89,13 @@ START_TEST(test_ln_msg_handle)
     /* ln_msg_handle(&error); */
     /* ck_assert_ptr_eq(error, NULL); */
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_msg_tcase(void)
+LN_TEST_TCASE_START(msg, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("msg");
-    tcase_add_checked_fixture(tc, checked_checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_msg_create);
-    tcase_add_test(tc, test_ln_msg_handle);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_msg_create);
+    LN_TEST_ADD_TEST(test_ln_msg_handle);
 }
+LN_TEST_TCASE_END
 
-void add_msg_record(test_record *record)
-{
-    test_record_add_suite(record, "msg");
-    test_record_add_tcase(record, "msg", "msg", make_msg_tcase);
-}
+LN_TEST_ADD_TCASE(msg);

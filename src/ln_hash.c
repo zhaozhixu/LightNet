@@ -103,7 +103,6 @@ ln_hash *ln_hash_create_full(ln_hash_func hash_func, ln_cmp_func cmp_func,
     hash->load_factor = load_factor;
     hash->thresh = (int)(load_factor * capacity);
     hash->table = ln_alloc(sizeof(hash_entry *) * capacity);
-    memset(hash->table, 0, sizeof(hash_entry *) * capacity);
     hash->size = 0;
 
     return hash;
@@ -168,7 +167,6 @@ static void hash_resize(ln_hash *hash, int new_capacity)
     }
 
     hash_entry **new_table = ln_alloc(sizeof(hash_entry *) * new_capacity);
-    memset(new_table, 0, sizeof(hash_entry *) * new_capacity);
     hash_transfer(hash, new_table, new_capacity);
     ln_free(hash->table);
     hash->table = new_table;

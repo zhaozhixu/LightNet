@@ -20,49 +20,40 @@
  * SOFTWARE.
  */
 
-#ifndef _TEST_LIGHTNET_H_
-#define _TEST_LIGHTNET_H_
+#ifndef _LN_TEST_RECORD_H_
+#define _LN_TEST_RECORD_H_
 
-#include <check.h>
-#include <stdio.h>
-#include <math.h>
+#include "ln_test_util.h"
 
-#include "test_record.h"
-
-#ifndef LN_TEST_RESULT_DIR
-#define LN_TEST_RESULT_DIR "."
-#endif
-
-#ifndef LN_TEST_DATA_DIR
-#define LN_TEST_DATA_DIR "."
-#endif
+struct ln_test_record {
+    const char ***test_names_array;
+    int          *test_nums;
+    const char  **suite_names;
+    const void  **suite_ptrs;
+    int           suites_num;
+};
+typedef struct ln_test_record ln_test_record;
 
 #ifdef __cplusplus
-TEST_CPPSTART
+LN_TEST_CPPSTART
 #endif
 
-Suite *make_master_suite(void);
-void add_util_record(test_record *record);
-#ifdef LN_CUDA
-void add_cuda_record(test_record *record);
-#endif
-void add_list_record(test_record *record);
-void add_queue_record(test_record *record);
-void add_stack_record(test_record *record);
-void add_hash_record(test_record *record);
-void add_graph_record(test_record *record);
-void add_msg_record(test_record *record);
-void add_param_record(test_record *record);
-void add_tensor_record(test_record *record);
-void add_op_record(test_record *record);
-void add_parse_record(test_record *record);
-void add_mem_record(test_record *record);
-void add_pass_record(test_record *record);
-void add_opimpl_record(test_record *record);
-/* end of declarations */
+void ln_test_record_init(ln_test_record *record);
+ln_test_record *ln_test_record_create(void);
+void ln_test_record_finalize(ln_test_record *record);
+void ln_test_record_free(ln_test_record *record);
+int ln_test_record_add_suite(ln_test_record *record, const char *suite_name,
+                             const void *suite_ptr);
+int ln_test_record_add_test(ln_test_record *record, const char *suite_name,
+                            const char *test_name);
+const void *ln_test_record_find_suite_ptr(const ln_test_record *record,
+                                          const char *name);
+ln_test_record *ln_test_record_create_filtered(const ln_test_record *record,
+                                               const char *glob);
+void ln_test_record_print(const ln_test_record *record);
 
 #ifdef __cplusplus
-TEST_CPPEND
+LN_TEST_CPPEND
 #endif
 
-#endif /* _TEST_LIGHTNET_H_ */
+#endif  /* _LN_TEST_RECORD_H_ */

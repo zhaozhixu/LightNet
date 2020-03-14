@@ -20,9 +20,10 @@
  * SOFTWARE.
  */
 
+#ifdef LN_CUDA
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/arch/ln_cuda.h"
 
 static void checked_setup(void)
@@ -33,21 +34,21 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_cuda_set_device)
+LN_TEST_START(test_ln_cuda_set_device)
 {
     ln_cuda_set_device(0);
     ck_assert_int_eq(ln_cuda_get_device(), 0);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_cuda_get_device)
+LN_TEST_START(test_ln_cuda_get_device)
 {
     ln_cuda_set_device(0);
     ck_assert_int_eq(ln_cuda_get_device(), 0);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_is_device_mem)
+LN_TEST_START(test_ln_is_device_mem)
 {
     int *p;
 
@@ -58,18 +59,18 @@ START_TEST(test_ln_is_device_mem)
     ck_assert_int_eq(ln_is_device_mem(p), 0);
     ln_free(p);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_alloc_cuda)
+LN_TEST_START(test_ln_alloc_cuda)
 {
     int *p = ln_alloc_cuda(10);
 
     ck_assert_int_eq(ln_is_device_mem(p), 1);
     ln_free_cuda(p);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_memset_cuda)
+LN_TEST_START(test_ln_memset_cuda)
 {
     int *p = ln_alloc_cuda(sizeof(int)*5);
     int p_h[5] = {0};
@@ -80,9 +81,9 @@ START_TEST(test_ln_memset_cuda)
         ck_assert_int_eq(p_h[i], -1);
     ln_free_cuda(p);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_memcpy_h2d)
+LN_TEST_START(test_ln_memcpy_h2d)
 {
     int *p = ln_alloc_cuda(sizeof(int)*5);
     int p_h[5] = {0, 1, 2, 3, 4};
@@ -95,9 +96,9 @@ START_TEST(test_ln_memcpy_h2d)
         ck_assert_int_eq(p_d_h[i], i);
     ln_free_cuda(p);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_memcpy_d2h)
+LN_TEST_START(test_ln_memcpy_d2h)
 {
     int *p = ln_alloc_cuda(sizeof(int)*5);
     int p_h[5] = {0};
@@ -108,9 +109,9 @@ START_TEST(test_ln_memcpy_d2h)
         ck_assert_int_eq(p_h[i], -1);
     ln_free_cuda(p);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_memcpy_d2d)
+LN_TEST_START(test_ln_memcpy_d2d)
 {
     int *p1 = ln_alloc_cuda(sizeof(int)*5);
     int *p2 = ln_alloc_cuda(sizeof(int)*5);
@@ -125,9 +126,9 @@ START_TEST(test_ln_memcpy_d2d)
     ln_free_cuda(p1);
     ln_free_cuda(p2);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_free_cuda)
+LN_TEST_START(test_ln_free_cuda)
 {
     int *p = ln_alloc_cuda(10);
 
@@ -135,9 +136,9 @@ START_TEST(test_ln_free_cuda)
     ln_free_cuda(p);
     ck_assert_int_eq(ln_is_device_mem(p), 0);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_clone_h2d)
+LN_TEST_START(test_ln_clone_h2d)
 {
     int array[] = {0, 1, 2};
     int *array_d, *array_h;
@@ -151,9 +152,9 @@ START_TEST(test_ln_clone_h2d)
     ln_free(array_h);
     ln_free_cuda(array_d);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_clone_d2h)
+LN_TEST_START(test_ln_clone_d2h)
 {
     int array[] = {0, 1, 2};
     int *array_d, *array_h;
@@ -167,9 +168,9 @@ START_TEST(test_ln_clone_d2h)
     ln_free(array_h);
     ln_free_cuda(array_d);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_clone_d2d)
+LN_TEST_START(test_ln_clone_d2d)
 {
     int array[] = {0, 1, 2};
     int *array_d1, *array_d2, *array_h;
@@ -185,9 +186,9 @@ START_TEST(test_ln_clone_d2d)
     ln_free_cuda(array_d1);
     ln_free_cuda(array_d2);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_repeat_h2d)
+LN_TEST_START(test_ln_repeat_h2d)
 {
     int array[] = {0, 1, 2};
     int *array_d, *array_h;
@@ -201,9 +202,9 @@ START_TEST(test_ln_repeat_h2d)
     ln_free(array_h);
     ln_free_cuda(array_d);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_repeat_d2h)
+LN_TEST_START(test_ln_repeat_d2h)
 {
     int array[] = {0, 1, 2};
     int *array_d, *array_h;
@@ -217,9 +218,9 @@ START_TEST(test_ln_repeat_d2h)
     ln_free(array_h);
     ln_free_cuda(array_d);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_repeat_d2d)
+LN_TEST_START(test_ln_repeat_d2d)
 {
     int array[] = {0, 1, 2};
     int *array_d1, *array_d2, *array_h;
@@ -235,50 +236,41 @@ START_TEST(test_ln_repeat_d2d)
     ln_free_cuda(array_d1);
     ln_free_cuda(array_d2);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_cuda_stream_create)
+LN_TEST_START(test_ln_cuda_stream_create)
 {
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_cuda_stream_sync)
+LN_TEST_START(test_ln_cuda_stream_sync)
 {
 }
-END_TEST
+LN_TEST_END
 /* end of tests */
 
-static TCase *make_cuda_tcase(void)
+LN_TEST_TCASE_START(cuda, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("cuda");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_cuda_set_device);
-    tcase_add_test(tc, test_ln_cuda_get_device);
-    tcase_add_test(tc, test_ln_is_device_mem);
-    tcase_add_test(tc, test_ln_alloc_cuda);
-    tcase_add_test(tc, test_ln_memset_cuda);
-    tcase_add_test(tc, test_ln_memcpy_h2d);
-    tcase_add_test(tc, test_ln_memcpy_d2h);
-    tcase_add_test(tc, test_ln_memcpy_d2d);
-    tcase_add_test(tc, test_ln_free_cuda);
-    tcase_add_test(tc, test_ln_clone_h2d);
-    tcase_add_test(tc, test_ln_clone_d2h);
-    tcase_add_test(tc, test_ln_clone_d2d);
-    tcase_add_test(tc, test_ln_repeat_h2d);
-    tcase_add_test(tc, test_ln_repeat_d2h);
-    tcase_add_test(tc, test_ln_repeat_d2d);
-    tcase_add_test(tc, test_ln_cuda_stream_create);
-    tcase_add_test(tc, test_ln_cuda_stream_sync);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_cuda_set_device);
+    LN_TEST_ADD_TEST(test_ln_cuda_get_device);
+    LN_TEST_ADD_TEST(test_ln_is_device_mem);
+    LN_TEST_ADD_TEST(test_ln_alloc_cuda);
+    LN_TEST_ADD_TEST(test_ln_memset_cuda);
+    LN_TEST_ADD_TEST(test_ln_memcpy_h2d);
+    LN_TEST_ADD_TEST(test_ln_memcpy_d2h);
+    LN_TEST_ADD_TEST(test_ln_memcpy_d2d);
+    LN_TEST_ADD_TEST(test_ln_free_cuda);
+    LN_TEST_ADD_TEST(test_ln_clone_h2d);
+    LN_TEST_ADD_TEST(test_ln_clone_d2h);
+    LN_TEST_ADD_TEST(test_ln_clone_d2d);
+    LN_TEST_ADD_TEST(test_ln_repeat_h2d);
+    LN_TEST_ADD_TEST(test_ln_repeat_d2h);
+    LN_TEST_ADD_TEST(test_ln_repeat_d2d);
+    LN_TEST_ADD_TEST(test_ln_cuda_stream_create);
+    LN_TEST_ADD_TEST(test_ln_cuda_stream_sync);
 }
+LN_TEST_TCASE_END
 
-void add_cuda_record(test_record *record)
-{
-    test_record_add_suite(record, "cuda");
-    test_record_add_tcase(record, "cuda", "cuda", make_cuda_tcase);
-}
+LN_TEST_ADD_TCASE(cuda);
+
+#endif  /* LN_CUDA */

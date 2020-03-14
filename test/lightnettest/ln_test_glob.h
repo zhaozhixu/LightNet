@@ -20,38 +20,20 @@
  * SOFTWARE.
  */
 
-#include <check.h>
-#include <tl_check.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include "lightnettest/ln_test.h"
-#include "../src/ln_op.h"
-#include "../src/ln_pass.h"
-#include "../src/ln_arch.h"
+#ifndef _LN_TEST_GLOB_H_
+#define _LN_TEST_GLOB_H_
 
+#include "ln_test_util.h"
 
-static void checked_setup(void)
-{
-}
+#ifdef __cplusplus
+LN_TEST_CPPSTART
+#endif
 
-static void checked_teardown(void)
-{
-}
+int *ln_test_glob_match(const char *glob, const char *const *strs, int num_strs,
+                        int *num_matches);
 
-LN_TEST_START(test_ln_opimpl_create)
-{
-    /* ln_op *op; */
-    /* ln_list *ops; */
-    /* char *json_str; */
+#ifdef __cplusplus
+LN_TEST_CPPEND
+#endif
 
-    /* json_str = ln_read_text("test_ops.json"); */
-}
-LN_TEST_END
-
-LN_TEST_TCASE_START(opimpl, checked_setup, checked_teardown)
-{
-    LN_TEST_ADD_TEST(test_ln_opimpl_create);
-}
-LN_TEST_TCASE_END
-
-LN_TEST_ADD_TCASE(opimpl);
+#endif  /* _LN_TEST_GLOB_H_ */

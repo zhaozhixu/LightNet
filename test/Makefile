@@ -22,6 +22,7 @@ SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
 SRC += $(wildcard *.cc)
 SRC += $(wildcard *.cu)
+SRC += $(wildcard lightnettest/*.c)
 NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu,$(SRC))
 CUDA_SRC = $(filter %cuda.c %cuda.cu,$(SRC))
 CUDNN_SRC = $(filter %cudnn.c %cudnn.cu,$(SRC))
@@ -39,6 +40,10 @@ OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDNN_SRC)))
 endif
 endif
 
+define make-obj-dir
+$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/lightnettest; fi
+endef
+
 .PHONY: all clean
 
 all: $(OBJDIR)/$(TARGET_TEST)
@@ -51,25 +56,25 @@ $(OBJDIR)/$(TARGET_TEST): $(OBJS) $(SRCOBJ)
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.c
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-c,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling: $@
 	$(AT)$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cpp
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling: $@
 	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cc
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling: $@
 	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.cu
-	$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR); fi
+	$(call make-obj-dir)
 	$(call make-depend-cu,$<,$@,$(subst .o,.d,$@))
 	$(ECHO) Compiling CUDA: $@
 	$(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
@@ -79,4 +84,5 @@ clean:
 
 ifneq "$(MAKECMDGOALS)" "clean"
 -include $(OBJDIR)/*.d
+-include $(OBJDIR)/lightnettest/*.d
 endif

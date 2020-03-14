@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_util.h"
 
 static void checked_setup(void)
@@ -33,7 +33,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_strcat_delim_alloc)
+LN_TEST_START(test_ln_strcat_delim_alloc)
 {
     const char *str1 = "hello";
     const char *str2 = "world";
@@ -41,9 +41,9 @@ START_TEST(test_ln_strcat_delim_alloc)
     ck_assert_str_eq(str, "hello,world");
     ln_free(str);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_next_multiple_power2)
+LN_TEST_START(test_ln_next_multiple_power2)
 {
     ck_assert_int_eq(8, ln_next_multiple_power2(7, 8));
     ck_assert_int_eq(40, ln_next_multiple_power2(39, 8));
@@ -54,9 +54,9 @@ START_TEST(test_ln_next_multiple_power2)
     ck_assert_int_eq(8, ln_next_multiple_power2(8, 8));
     ck_assert_int_eq(8, ln_next_multiple_power2(2, 8));
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_autopadding_conv)
+LN_TEST_START(test_ln_autopadding_conv)
 {
     int padding[4];
     int *size;
@@ -114,9 +114,9 @@ START_TEST(test_ln_autopadding_conv)
     ln_autopadding_conv(padding, dims, size, stride, (int[]){1, 1}, ndim, "SAME_LOWER");
     ck_assert_array_int_eq(padding, ck_array(int, 1, 1, 1, 1), 4);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_autopadding_deconv)
+LN_TEST_START(test_ln_autopadding_deconv)
 {
     /* int padding[4]; */
     /* int *size; */
@@ -127,10 +127,10 @@ START_TEST(test_ln_autopadding_deconv)
 
 
 }
-END_TEST
+LN_TEST_END
 /* end of tests */
 
-START_TEST(test_ln_subfixed)
+LN_TEST_START(test_ln_subfixed)
 {
     ck_assert_int_eq(ln_subfixed("aaabbb", "bbb"), 1);
     ck_assert_int_eq(ln_subfixed("bbb", "bbb"), 1);
@@ -143,9 +143,9 @@ START_TEST(test_ln_subfixed)
     ck_assert_int_eq(ln_subfixed(NULL, ""), 0);
     ck_assert_int_eq(ln_subfixed("", NULL), 0);
 }
-END_TEST
+LN_TEST_END
 
-START_TEST(test_ln_is_prefix_plus_digit)
+LN_TEST_START(test_ln_is_prefix_plus_digit)
 {
     ck_assert_int_eq(ln_is_prefix_plus_digit("aaa1", "aaa"), 1);
     ck_assert_int_eq(ln_is_prefix_plus_digit("aaa12", "aaa"), 1);
@@ -157,28 +157,17 @@ START_TEST(test_ln_is_prefix_plus_digit)
     ck_assert_int_eq(ln_is_prefix_plus_digit(NULL, ""), 0);
     ck_assert_int_eq(ln_is_prefix_plus_digit("", NULL), 0);
 }
-END_TEST
+LN_TEST_END
 
-static TCase *make_util_tcase(void)
+LN_TEST_TCASE_START(util, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("util");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_strcat_delim_alloc);
-    tcase_add_test(tc, test_ln_next_multiple_power2);
-    tcase_add_test(tc, test_ln_autopadding_conv);
-    tcase_add_test(tc, test_ln_autopadding_deconv);
-    tcase_add_test(tc, test_ln_subfixed);
-    tcase_add_test(tc, test_ln_is_prefix_plus_digit);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_strcat_delim_alloc);
+    LN_TEST_ADD_TEST(test_ln_next_multiple_power2);
+    LN_TEST_ADD_TEST(test_ln_autopadding_conv);
+    LN_TEST_ADD_TEST(test_ln_autopadding_deconv);
+    LN_TEST_ADD_TEST(test_ln_subfixed);
+    LN_TEST_ADD_TEST(test_ln_is_prefix_plus_digit);
 }
+LN_TEST_TCASE_END
 
-void add_util_record(test_record *record)
-{
-    test_record_add_suite(record, "util");
-    test_record_add_tcase(record, "util", "util", make_util_tcase);
-}
+LN_TEST_ADD_TCASE(util);

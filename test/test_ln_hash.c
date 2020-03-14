@@ -22,7 +22,7 @@
 
 #include <check.h>
 #include <tl_check.h>
-#include "test_lightnet.h"
+#include "lightnettest/ln_test.h"
 #include "../src/ln_hash.h"
 
 typedef struct test_object test_object;
@@ -50,7 +50,7 @@ static void checked_teardown(void)
 {
 }
 
-START_TEST(test_ln_hash)
+LN_TEST_START(test_ln_hash)
 {
     ln_hash *hash;
     test_object *to0, *to2, *to3, *to4, *to6, *res;
@@ -149,24 +149,12 @@ START_TEST(test_ln_hash)
 
     ln_hash_free(hash);
 }
-END_TEST
-/* end of tests */
+LN_TEST_END
 
-static TCase *make_hash_tcase(void)
+LN_TEST_TCASE_START(hash, checked_setup, checked_teardown)
 {
-    TCase *tc;
-
-    tc = tcase_create("hash");
-    tcase_add_checked_fixture(tc, checked_setup, checked_teardown);
-
-    tcase_add_test(tc, test_ln_hash);
-    /* end of adding tests */
-
-    return tc;
+    LN_TEST_ADD_TEST(test_ln_hash);
 }
+LN_TEST_TCASE_END
 
-void add_hash_record(test_record *record)
-{
-    test_record_add_suite(record, "hash");
-    test_record_add_tcase(record, "hash", "hash", make_hash_tcase);
-}
+LN_TEST_ADD_TCASE(hash);
