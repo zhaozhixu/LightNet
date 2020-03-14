@@ -154,7 +154,7 @@ if ($opts{WITH_PYTHON} eq "yes") {
 }
 
 if ($opts{DOC} eq "yes") {
-    $output = `mkdocs --version`;;
+    $output = `mkdocs --version`;
     if (!defined $output or $output eq "") {
         &warn_msg("mkdocs is is not installed; documents are not going to be built");
         $opts{DOC} = "no";
@@ -184,7 +184,7 @@ close $conf_fh;
 sub mkdocs_version {
     my $str = shift;
     my $version = "";
-    $version = $1 if $str =~ /version (\d\.\d\.\d)/;
+    $version = $1 if $str =~ /version (\d\.\d(\.\d)?)/;
     $version;
 }
 
