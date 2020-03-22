@@ -4,103 +4,170 @@ use 5.014;
 use strict;
 use warnings;
 use Parse::RecDescent;
+use Data::Dumper;
+use JSON -convert_blessed_universally;;
 
 $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
-$::RD_HINT   = 1; # Give out hints to help fix problems.
+# $::RD_HINT   = 1;
+# $::RD_TRACE  = 1;
 
-our %vars;
+our $parse_tree;
+our $desc_table;
 
 my $grammar = <<'_EOGRAMMAR_';
 
-INTEGER : /[-+]?\d+/
-FLOAT : /[-+]?((\d*\.\d+)|(\d+\.?\d*))([eE][-+]?\d+)?/
-STRING : /"(\\.|[^"\\])*"/
-BOOL : /true|false/
-IDENTIFIER : /[A-Za-z_]+\w*/
+{ use 5.014; }
 
-primary_expression : INTEGER
-    | FLOAT
-    | STRING
-    | BOOL
-    | IDENTIFIER
-    | '(' expression ')'
+number : /[-+]?((\d*\.\d+)|(\d+\.?\d*))([eE][-+]?\d+)?/
 
-postfix_expression : primary_expression
-    | postfix_expression '[' expression ']'
-    | postfix_expression '(' argument_expression_list ')'
-    | postfix_expression '.' IDENTIFIER
-    | postfix_expression '=>' IDENTIFIER
+string : '"' /(\\.|[^"\\])*/s '"'
+    { $return = &main::escape($item[2]) }
+    | '"' <commit>
+    { &main::error($item[0], $thisline, $thiscolumn, $thisoffset, "'\"'") } <reject>
+    | code_block
+    | '`' /([^`])*/  '`'
+    { $return = $item[2] }
 
-argument_expression_list : <leftop: assignment_expression ',' assignment_expression>
+bool : /true|false/
+    { $return = $item[1] eq 'true' ? 1 : 0}
 
-unary_expression : postfix_expression
-    | '-' unary_expression
-    | '+' unary_expression
-    | '!' unary_expression
+identifier : /[A-Za-z_]+\w*/
 
-multiplicative_expression : <leftop: unary_expression '*' unary_expression>
-    | <leftop: unary_expression '/' unary_expression>
-    | <leftop: unary_expression '%' unary_expression>
+null : 'null'
+    { $return = undef; 1}
 
-additive_expression : <leftop: multiplicative_expression '+' multiplicative_expression>
-    | <leftop: multiplicative_expression '-' multiplicative_expression>
+delete : '-'
 
-relational_expression : <leftop: additive_expression '<' additive_expression>
-    | <leftop: additive_expression '<=' additive_expression>
-    | <leftop: additive_expression '>' additive_expression>
-    | <leftop: additive_expression '>=' additive_expression>
+code_start : /```\n/
 
-equality_expression : <leftop: relational_expression '==' relational_expression>
-    | <leftop: relational_expression '!=' relational_expression>
+code_end : /```(?=\s*?,?[ \t\f\r]*\n)/
 
-AND_expression : <leftop: equality_expression '&&' equality_expression>
+code : /.*?(?=\n\s*?```\s*?,?[ \t\f\r]*\n)/s
 
-OR_expression : <leftop: AND_expression '||' AND_expression>
+code_block : code_start code code_end
+    { $return = $item{code} }
 
-assignment_expression : <rightop: assignment_expression '=' unary_expression>
+operator_description : element
+    { $main::desc_table = $item{element}; }
 
-expression : <leftop: assignment_expression ',' assignment_expression>
+value : object
+    { $return = {type => "object", value => $item[1]} }
+    | array
+    { $return = {type => "array", value => $item[1]} }
+    | string
+    { $return = {type => "string", value => $item[1]} }
+    | number
+    { $return = {type => "number", value => $item[1]} }
+    | bool
+    { $return = {type => "bool", value => $item[1]} }
+    | null
+    { $return = {type => "null", value => $item[1]} }
+    | delete
+    { $return = {type => "delete", value => $item[1]} }
 
-declaration : declaration_specifier init_declarator_list
+object : '{' '}'
+    { $return = {} }
+    |'{' (members | ...!members) /,?/ ('}' | ...!'}')
+    {
+        if ($item[2]) {
+            if ($item[4]) {
+                my %object_hash;
+                map { $object_hash{$_->{key}} = $_->{value} } @{$item[2]};
+                $return = \%object_hash;
+            } else {
+                &main::error($item[0], $thisline, $thiscolumn, $thisoffset, "','", "'}'");
+                $return = undef;
+            }
+        } else {
+            &main::error($item[0], $thisline, $thiscolumn, $thisoffset, 'members', "'}'");
+            $return = undef;
+        }
+    }
 
-declaration_specifier : type_specifier declaration_specifier
-    | functional_specifier declaration_specifier
+members : member(s /,/)
+    { $return = $item[1] }
 
-init_declarator_list : init_declarator
-    | init_declarator_list init_declarator
+member : identifier ':' element
+    { $return = {key => $item{identifier}, value => $item{element}} }
+    | identifier ...!':'
+    { &main::error($item[0], $thisline, $thiscolumn, $thisoffset, "':'") } <reject>
 
-init_declarator : declarator
-    | declarator '=' initializer
+array : '[' ']'
+    { $return = [] }
+    |'[' (elements | ...!elements) /,?/ (']' | ...!']')
+    {
+        if ($item[2]) {
+            if ($item[4]) {
+                $return = $item[2];
+            } else {
+                &main::error($item[0], $thisline, $thiscolumn, $thisoffset, "','", "']'");
+                $return = undef;
+            }
+        } else {
+            &main::error($item[0], $thisline, $thiscolumn, $thisoffset, 'elements', "']'");
+            $return = undef;
+        }
+    }
 
-type_specifier : 'Graph'
-    | 'List'
-    | 'Operator'
-    | 'int'
-    | 'float'
-    | 'bool'
-    | 'string'
+elements : element(s /,/)
+    { $return = $item[1] }
+
+element : value
+    {
+        $return = {line => $thisline, column => $thiscolumn,
+                   type => $item{value}->{type}, value => $item{value}->{value}}
+    }
 
 _EOGRAMMAR_
 
-my $parser = Parse::RecDescent->new($grammar);
+my $parser = Parse::RecDescent->new($grammar) or die "Bad grammer!";
 
-while (<>) {
-    $parser->startrule($_);
+my $code = join "", <>;
+
+defined $parser->operator_description($code) or say "Bad source text!";
+$Data::Dumper::Indent = 1;
+say Dumper($desc_table);
+# say $desc_table->{pre_run};
+# say $desc_table->{value}->{post_run}->{value};
+
+sub error {
+    my $rule_name = shift;
+    my $line = shift;
+    my $column = shift;
+    my $offset = shift;
+    my @expects = @_;
+
+    $rule_name =~ s/_/ /g;
+    my $text = $code;
+    my $find = "";
+    if (substr($text, $offset) =~ /(.{0,70})\n/) {
+        $find = "\n    $1";
+        $find = "$find ..." if length($1) == 70;
+        $find .= "\n";
+    }
+    my $expects_str = "";
+    $expects_str = ", expecting ".(join " or ", @expects) if @expects > 0;
+
+    my $msg = "Error at $line:$column: Invalid $rule_name$expects_str$find";
+    print STDERR $msg;
 }
 
-sub eval_expression {
-    print "sub: ".(join " ", @_)."\n";
-    shift;
-    my ($lhs, $op, $rhs) = @_;
-    $lhs = $vars{$lhs} if $lhs=~/[^-+0-9]/;
-    eval "$lhs $op $rhs";
-}
+sub escape {
+    my $str = shift;
 
-print "a=2\n";             $parser->startrule("a=2");
-print "a=1+3\n";           $parser->startrule("a=1+3");
-print "print 5*7\n";       $parser->startrule("print 5*7");
-print "print 2/4\n";       $parser->startrule("print 2/4");
-print "print 2+2/4\n";     $parser->startrule("print 2+2/4");
-print "print 2+-2/4\n";    $parser->startrule("print 2+-2/4");
-print "a = 5 ; print a\n"; $parser->startrule("a = 5 ; print a");
+    my %tr = (
+              n => "\n",
+              r => "\r",
+              t => "\t",
+              f => "\f",
+              b => "\b",
+             );
+
+    $str =~ s{\\(?:(\W)|(.))}{
+        defined($1) ? $1:
+            defined($tr{$2}) ? $tr{$2} : $2
+        }seg;
+
+    $str;
+}

@@ -66,7 +66,7 @@ static void glob_match_strs(const char *glob, const char *const *strs, int len,
     }
 }
 
-/*
+/* Grammer of the filter string
  * GLOB : [a-zA-Z0-9._*]+
  * OR   : '|'
  * AND  : '&'
