@@ -3,20 +3,19 @@
 use 5.014;
 use warnings;
 use strict;
-use JSON;
 use File::Copy;
 use Getopt::Long;
 use Cwd 'abs_path';
 use File::Basename;
 use lib abs_path(dirname(__FILE__));
 use File::Path qw(make_path);
-use easyjson;
+use Opdesc;
+use Data::Dumper;
 no warnings 'experimental::smartmatch';
 
 my $usage = <<EOF;
-Usage: $0 [OPTION] [JSON_FILE(s)]
-Generate operator defination code from operator description JSON.
-Read the JSON string from standard input if JSON_FILE(s) are not given.
+Usage: $0 [OPTION] [OPDESC_FILE(s)]
+Generate operator defination code from operator description OPDESC_FILE(s).
 Print the output code to standard output if --dir and --root are omited.
 
 Options:
@@ -40,35 +39,39 @@ GetOptions(
            'root=s' => \$root,
           ) or &exit_msg(1, $usage);
 
-my @json_files = @ARGV;
-if (@json_files == 0) {
-    my $json_text = join '', <STDIN>;
-    &parse_and_generate($json_text);
+my @opdesc_files = @ARGV;
+if (@opdesc_files == 0) {
+    die "No OPDESC_FILE(s) are specified.\n";
 } else {
-    foreach my $json_file (@json_files) {
-        open JSON_FILE, '<', $json_file or die "Cannot open $json_file: $!";
-        my $json_text = join '', <JSON_FILE>;
-        close JSON_FILE;
-        &parse_and_generate($json_text, $json_file);
+    foreach my $opdesc_file (@opdesc_files) {
+        open OPDESC_FILE, '<', $opdesc_file or die "Cannot open $opdesc_file: $!";
+        my $opdesc_text = join '', <OPDESC_FILE>;
+        close OPDESC_FILE;
+        &parse_and_generate($opdesc_text, $opdesc_file);
     }
 }
 
 sub parse_and_generate {
-    my $json_text = shift;
-    my $json_file = shift;
-    $json_text = easyjson::easy_to_json($json_text);
-    my $json_obj = JSON->new->relaxed();
-    my $json = $json_obj->decode($json_text);
-    if (exists $json->{ops}) {
-        foreach my $op (@{$json->{ops}}) {
+    my $opdesc_text = shift;
+    my $opdesc_file = shift;
+
+    my $opdesc = Opdesc::parse($opdesc_text);
+    if (not defined $opdesc) {
+        print STDERR join "", map { "Error: $opdesc_file:$_" } @Opdesc::errors;
+        exit 1;
+    }
+    # $Data::Dumper::Indent = 1;
+    # say Dumper($opdesc);exit;
+    if (exists $opdesc->{ops}) {
+        foreach my $op (@{$opdesc->{ops}}) {
             next if exists $_->{autogen} and not $_->{autogen};
-            &gen_code($op, $json_file);
+            &gen_code($op, $opdesc_file);
         }
-    } elsif (exists $json->{optype}) {
-        return if exists $json->{autogen} and not $json->{autogen};
-        &gen_code($json, $json_file);
+    } elsif (exists $opdesc->{optype}) {
+        return if exists $opdesc->{autogen} and not $opdesc->{autogen};
+        &gen_code($opdesc, $opdesc_file);
     } else {
-        err_exit("JSON doesn't contain an 'ops' or 'optype' field");
+        err_exit("OPDESC doesn't contain an 'ops' or 'optype' field");
     }
 }
 
