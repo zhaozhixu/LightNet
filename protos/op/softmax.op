@@ -14,7 +14,7 @@
             params: [
                 {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
                  realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"`axis` should match the dimisions of `src`\""}
+                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimisions of 'src'\""}
             ]
         },
         {
@@ -31,7 +31,7 @@
             params: [
                 {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
                  realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"`axis` should match the dimisions of `src`\""}
+                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimisions of 'src'\""}
             ],
             run: ""
         },
@@ -49,7 +49,7 @@
             params: [
                 {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
                  realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"`axis` should match the dimisions of `src`\""}
+                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimisions of 'src'\""}
             ],
             run: ""
         }

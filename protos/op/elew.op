@@ -17,7 +17,7 @@
             params: [
                 {arg_name: "elew_op", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_elew_op_from_str",
-                 check: "elew_op != -1, \"`elew_op` param should be a supported tl_elew_op\""}
+                 check: "elew_op != -1, \"'elew_op' param should be a supported tl_elew_op\""}
             ]
         },
         {
@@ -37,7 +37,7 @@
             params: [
                 {arg_name: "elew_op", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_elew_op_from_str",
-                 check: "elew_op != -1, \"`elew_op` param should be a supported tl_elew_op\""}
+                 check: "elew_op != -1, \"'elew_op' param should be a supported tl_elew_op\""}
             ],
             run: "tl_tensor_elew(src1, src2, dst, elew_op);"
         },
@@ -58,7 +58,7 @@
             params: [
                 {arg_name: "elew_op", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_elew_op_from_str",
-                 check: "elew_op != -1, \"`elew_op` param should be a supported tl_elew_op\""}
+                 check: "elew_op != -1, \"'elew_op' param should be a supported tl_elew_op\""}
             ],
             run: "tl_tensor_elew_cuda(src1, src2, dst, elew_op);"
         }

@@ -23,10 +23,10 @@ for (int i = 0; i < dst_ndim; i++)
                 {arg_name: "mode", ptype: "LN_PARAM_STRING",
                  realtype: "int",
                  from_func: "tl_resize_type_from_str",
-                 check: "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
+                 check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {arg_name: "scales", ptype: "LN_PARAM_ARRAY_NUMBER",
                  realtype: "float", gt: 0,
-                 check: "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+                 check: "scales_entry->array_len == src->ndim, \"the length of 'scales' should be the same as the rank of input 'src'\""}
             ]
         },
         {
@@ -52,10 +52,10 @@ for (int i = 0; i < dst_ndim; i++)
                 {arg_name: "mode", ptype: "LN_PARAM_STRING",
                  realtype: "int",
                  from_func: "tl_resize_type_from_str",
-                 check: "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
+                 check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {arg_name: "scales", ptype: "LN_PARAM_ARRAY_NUMBER",
                  realtype: "float", gt: 0,
-                 check: "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+                 check: "scales_entry->array_len == src->ndim, \"the length of 'scales' should be the same as the rank of input 'src'\""}
             ],
             run: "tl_tensor_resize(src, dst, dst->dims, mode);"
         },
@@ -84,10 +84,10 @@ for (int i = 0; i < dst_ndim; i++)
                 {arg_name: "mode", ptype: "LN_PARAM_STRING",
                  realtype: "int",
                  from_func: "tl_resize_type_from_str",
-                 check: "mode != -1, \"`mode` should be 'TL_NEAREST' or 'TL_LINEAR'\""},
+                 check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
                 {arg_name: "scales", ptype: "LN_PARAM_ARRAY_NUMBER",
                  realtype: "float", gt: 0,
-                 check: "scales_entry->array_len == src->ndim, \"the length of `scales` should be the same as the rank of input `src`\""}
+                 check: "scales_entry->array_len == src->ndim, \"the length of 'scales' should be the same as the rank of input 'src'\""}
             ],
             run: "tl_tensor_resize_cuda(src, dst, dst->dims, mode);"
         }

@@ -19,7 +19,7 @@ dst_dims[0] = (int)len;
             params: [
                 {arg_name: "dtype", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
+                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
                 {arg_name: "start", ptype: "LN_PARAM_NUMBER",
                  realtype: "double"},
                 {arg_name: "stop", ptype: "LN_PARAM_NUMBER",
@@ -65,7 +65,7 @@ dst_dims[0] = (int)len;
             params: [
                 {arg_name: "dtype", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
+                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
                 {arg_name: "start", ptype: "LN_PARAM_NUMBER",
                  realtype: "double"},
                 {arg_name: "stop", ptype: "LN_PARAM_NUMBER",
@@ -120,7 +120,7 @@ dst_dims[0] = (int)len;
             params: [
                 {arg_name: "dtype", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
+                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
                 {arg_name: "start", ptype: "LN_PARAM_NUMBER",
                  realtype: "double"},
                 {arg_name: "stop", ptype: "LN_PARAM_NUMBER",

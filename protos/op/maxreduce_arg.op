@@ -20,7 +20,7 @@
             params: [
                 {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
                  realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"`axis` should match the dimensions of `src`\""}
+                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
             ]
         },
         {
@@ -43,7 +43,7 @@
             params: [
                 {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
                  realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"`axis` should match the dimensions of `src`\""}
+                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
             ],
             run: "tl_tensor_maxreduce(src, dst, arg, axis);"
         },
@@ -67,7 +67,7 @@
             params: [
                 {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
                  realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"`axis` should match the dimensions of `src`\""}
+                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
             ],
             run: "tl_tensor_maxreduce_cuda(src, dst, arg, axis);"
         }

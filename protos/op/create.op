@@ -14,7 +14,7 @@
             params: [
                 {arg_name: "dtype", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
+                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
                 {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
                  realtype: "int", gt: 0},
                 {arg_name: "ran", ptype: "LN_PARAM_ARRAY_NUMBER",
@@ -38,7 +38,7 @@
             params: [
                 {arg_name: "dtype", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
+                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
                 {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
                  realtype: "int", gt: 0},
                 {arg_name: "ran", ptype: "LN_PARAM_ARRAY_NUMBER",
@@ -82,7 +82,7 @@ ln_free(data_tmp);
             params: [
                 {arg_name: "dtype", ptype: "LN_PARAM_STRING",
                  realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"`dtype` param should be a supported tl_dtype\""},
+                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
                 {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
                  realtype: "int", gt: 0},
                 {arg_name: "ran", ptype: "LN_PARAM_ARRAY_NUMBER",

@@ -26,7 +26,7 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
 {
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` %d should match the dimensions of `src1` (%s )and `src2` (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "'axis' %d should match the dimensions of 'src1' (%s )and 'src2' (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
 }
 `
                 }
@@ -38,7 +38,7 @@ for (int i = 0; i < src1->ndim; i++) {
         continue;
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
+    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "'src1' (%s) and 'src2' (%s) should have the same shape, except in the dimension corresponding to 'axis' %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
 }
 }
 `
@@ -70,7 +70,7 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
 {
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` %d should match the dimensions of `src1` (%s )and `src2` (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "'axis' %d should match the dimensions of 'src1' (%s )and 'src2' (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
 }
 `
                 }
@@ -82,7 +82,7 @@ for (int i = 0; i < src1->ndim; i++) {
         continue;
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
+    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "'src1' (%s) and 'src2' (%s) should have the same shape, except in the dimension corresponding to 'axis' %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
 }
 }
 `,
@@ -115,7 +115,7 @@ dst_dims[axis] = src1->dims[axis] + src2->dims[axis];
 {
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "`axis` %d should match the dimensions of `src1` (%s )and `src2` (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
+    ln_opck_satisfy_msg(axis >= 0 && axis < src1->ndim, "'axis' %d should match the dimensions of 'src1' (%s )and 'src2' (%d)", axis, ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims));
 }
 `
                 }
@@ -127,7 +127,7 @@ for (int i = 0; i < src1->ndim; i++) {
         continue;
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "`src1` (%s) and `src2` (%s) should have the same shape, except in the dimension corresponding to `axis` %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
+    ln_opck_satisfy_msg(src1->dims[i] == src2->dims[i], "'src1' (%s) and 'src2' (%s) should have the same shape, except in the dimension corresponding to 'axis' %d", ln_sprint_shape(shape1, src1->ndim, src1->dims), ln_sprint_shape(shape2, src2->ndim, src2->dims), axis);
 }
 }
 `,

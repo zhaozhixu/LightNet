@@ -28,7 +28,7 @@ int *tmp = ln_alloc(src->ndim*sizeof(int));
 for (int i = 0; i < src->ndim; i++)
     tmp[axes[i]] = 1;
 for (int i = 0; i < src->ndim; i++)
-    ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
+    ln_opck_satisfy_msg(tmp[i], "'axes' should match the shape of 'src'");
 ln_free(tmp);
 }
 `
@@ -63,7 +63,7 @@ int *tmp = ln_alloc(src->ndim*sizeof(int));
 for (int i = 0; i < src->ndim; i++)
     tmp[axes[i]] = 1;
 for (int i = 0; i < src->ndim; i++)
-    ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
+    ln_opck_satisfy_msg(tmp[i], "'axes' should match the shape of 'src'");
 ln_free(tmp);
 }
 `
@@ -99,7 +99,7 @@ int *tmp = ln_alloc(src->ndim*sizeof(int));
 for (int i = 0; i < src->ndim; i++)
     tmp[axes[i]] = 1;
 for (int i = 0; i < src->ndim; i++)
-    ln_opck_satisfy_msg(tmp[i], "`axes` should match the shape of `src`");
+    ln_opck_satisfy_msg(tmp[i], "'axes' should match the shape of 'src'");
 ln_free(tmp);
 }
 `
