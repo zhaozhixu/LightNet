@@ -1,69 +1,45 @@
-{
-    ops: [
-        {
-            optype: "resize",
-            author: "Zhao Zhixu",
-            arch: "none",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_NONE"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_NONE",
-                 dtype: "src->dtype", ndim: "src->ndim",
-                 dims: "dims"}
-            ],
-            params: [
-                {arg_name: "mode", ptype: "LN_PARAM_STRING",
-                 realtype: "int",
-                 from_func: "tl_resize_type_from_str",
-                 check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
-                {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "int", gt: 0, len: "src->ndim",}
-            ]
-        },
-        {
-            optype: "resize_cpu",
-            author: "Zhao Zhixu",
-            arch: "cpu",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CPU"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CPU",
-                 dtype: "src->dtype", ndim: "src->ndim",
-                 dims: "dims"}
-            ],
-            params: [
-                {arg_name: "mode", ptype: "LN_PARAM_STRING",
-                 realtype: "int",
-                 from_func: "tl_resize_type_from_str",
-                 check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
-                {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "int", gt: 0, len: "src->ndim",}
-            ],
-            run: "tl_tensor_resize(src, dst, dims, mode);"
-        },
-        {
-            optype: "resize_cuda",
-            author: "Zhao Zhixu",
-            arch: "cuda",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CUDA"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA",
-                 dtype: "src->dtype", ndim: "src->ndim",
-                 dims: "dims"}
-            ],
-            params: [
-                {arg_name: "mode", ptype: "LN_PARAM_STRING",
-                 realtype: "int",
-                 from_func: "tl_resize_type_from_str",
-                 check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
-                {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "int", gt: 0, len: "src->ndim",}
-            ],
-            run: "tl_tensor_resize_cuda(src, dst, dims, mode);"
-        }
+resize {
+    optype: "resize",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [
+        {arg_name: "src", mtype: "LN_MEM_NONE"}
+    ],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE",
+         dtype: "src->dtype", ndim: "src->ndim",
+         dims: "dims"}
+    ],
+    params: [
+        {arg_name: "mode", ptype: "LN_PARAM_STRING",
+         realtype: "int",
+         from_func: "tl_resize_type_from_str",
+         check: "mode != -1, \"'mode' should be 'TL_NEAREST' or 'TL_LINEAR'\""},
+        {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
+         realtype: "int", gt: 0, len: "src->ndim",}
     ]
+}
+
+resize_cpu : resize {
+    optype: "resize_cpu",
+    arch: "cpu",
+    tensors_in: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    run: "tl_tensor_resize(src, dst, dims, mode);"
+}
+
+resize_cuda : resize {
+    optype: "resize_cuda",
+    arch: "cuda",
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    run: "tl_tensor_resize_cuda(src, dst, dims, mode);"
 }

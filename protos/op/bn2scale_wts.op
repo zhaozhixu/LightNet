@@ -1,4 +1,4 @@
-{
+bn2scale_wts_cpu {
     optype: "bn2scale_wts_cpu",
     author: "Zhao Zhixu",
     arch: "cpu",

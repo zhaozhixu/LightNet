@@ -1,83 +1,51 @@
-{
-    ops: [
-        {
-            optype: "reshape",
-            author: "Zhao Zhixu",
-            arch: "none",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_NONE"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_NONE", owner: "src_name",
-                 ndim: "dims_entry->array_len", dtype: "src->dtype",
-                 dims: "dims"}
-            ],
-            params: [
-                {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "int", ge: 1,
-                 custom: `
+reshape {
+    optype: "reshape",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [
+        {arg_name: "src", mtype: "LN_MEM_NONE"}
+    ],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE", owner: "src_name",
+         ndim: "dims_entry->array_len", dtype: "src->dtype",
+         dims: "dims"}
+    ],
+    params: [
+        {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
+         realtype: "int", ge: 1,
+         custom: `
 {
     char shape1[LN_MAXLINE];
     char shape2[LN_MAXLINE];
     ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "'src' (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
 }
 `
-                 }
-            ]
-        },
-        {
-            optype: "reshape_cpu",
-            author: "Zhao Zhixu",
-            arch: "cpu",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CPU"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CPU", owner: "src_name",
-                 ndim: "dims_entry->array_len", dtype: "src->dtype",
-                 dims: "dims"}
-            ],
-            params: [
-                {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "int", ge: 1,
-                 custom: `
-{
-    char shape1[LN_MAXLINE];
-    char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "'src' (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
-}
-`
-                }
-            ],
- //           static_run: "dst->data = src->data;",
-            calc_offset: "return src_entry->offset;"
-        },
-        {
-            optype: "reshape_cuda",
-            author: "Zhao Zhixu",
-            arch: "cuda",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CUDA"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA", owner: "src_name",
-                 ndim: "dims_entry->array_len", dtype: "src->dtype",
-                 dims: "dims"}
-            ],
-            params: [
-                {arg_name: "dims", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "int", ge: 1,
-                 custom: `
-{
-    char shape1[LN_MAXLINE];
-    char shape2[LN_MAXLINE];
-    ln_opck_satisfy_msg(src->len == ln_compute_length(dims_entry->array_len, dims), "'src' (%s) tensor's length %d should be equal to the reshaped (%s) length %d", ln_sprint_shape(shape1, src->ndim, src->dims), src->len, ln_sprint_shape(shape2, dims_entry->array_len, dims), ln_compute_length(dims_entry->array_len, dims));
-}
-`
-                }
-            ],
-   //         static_run: "dst->data = src->data;",
-            calc_offset: "return src_entry->offset;"
         }
-    ]
+    ],
+}
+
+reshape_cpu : reshape {
+    optype: "reshape_cpu",
+    arch: "cpu",
+    tensors_in: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    //           static_run: "dst->data = src->data;",
+    calc_offset: "return src_entry->offset;"
+}
+
+reshape_cuda : reshape {
+    optype: "reshape_cuda",
+    arch: "cuda",
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    //         static_run: "dst->data = src->data;",
+    calc_offset: "return src_entry->offset;"
 }

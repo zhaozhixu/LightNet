@@ -1,13 +1,11 @@
-{
+tensorrt {
     optype: "tensorrt",
     author: "Zhao Zhixu",
     arch: "tensorrt",
     autogen: false,
     variable_length: true,
-    tensors_in: [
-    ],
-    tensors_out: [
-    ],
+    tensors_in: [],
+    tensors_out: [],
     params: [
         {arg_name: "batch_size", ptype: "LN_PARAM_NUMBER",
          realtype: "int", gt: 0}

@@ -30,6 +30,7 @@ EOF
 
 my $INDENT_OFFSET = 4;
 my $INDENT_SPACE = " "x$INDENT_OFFSET;
+$Data::Dumper::Indent = 1;
 
 my $root = '';
 my $dir = '';
@@ -47,31 +48,20 @@ if (@opdesc_files == 0) {
         open OPDESC_FILE, '<', $opdesc_file or die "Cannot open $opdesc_file: $!";
         my $opdesc_text = join '', <OPDESC_FILE>;
         close OPDESC_FILE;
-        &parse_and_generate($opdesc_text, $opdesc_file);
+        my $opdesc = Opdesc::parse($opdesc_text, $opdesc_file);
+        if (not defined $opdesc) {
+            exit_msg(1, (join "", map { "ERROR: $opdesc_file:$_" } @Opdesc::errors));
+        }
     }
+    generate($Opdesc::desc_table);
 }
 
-sub parse_and_generate {
-    my $opdesc_text = shift;
-    my $opdesc_file = shift;
+sub generate {
+    my $opdesc = shift;
 
-    my $opdesc = Opdesc::parse($opdesc_text);
-    if (not defined $opdesc) {
-        print STDERR join "", map { "Error: $opdesc_file:$_" } @Opdesc::errors;
-        exit 1;
-    }
-    # $Data::Dumper::Indent = 1;
-    # say Dumper($opdesc);exit;
-    if (exists $opdesc->{ops}) {
-        foreach my $op (@{$opdesc->{ops}}) {
-            next if exists $_->{autogen} and not $_->{autogen};
-            &gen_code($op, $opdesc_file);
-        }
-    } elsif (exists $opdesc->{optype}) {
-        return if exists $opdesc->{autogen} and not $opdesc->{autogen};
-        &gen_code($opdesc, $opdesc_file);
-    } else {
-        err_exit("OPDESC doesn't contain an 'ops' or 'optype' field");
+    foreach (keys %$opdesc) {
+        next if exists $opdesc->{$_}{autogen} and not $opdesc->{$_}{autogen};
+        gen_code($opdesc->{$_}, $Opdesc::desc_info_table->{\$opdesc->{$_}}{file});
     }
 }
 
@@ -130,50 +120,6 @@ sub gen_code {
         my $arch_file = "${root}/src/arch/ln_archimpl_${arch}.c";
         &add_to_arch_file($arch_file, $optype, $arch);
     }
-}
-
-sub backup_write {
-    my $file = shift;
-    my $str = shift;
-    if (-e $file) {
-        &warn_msg("${file} exists, backuped with subfix .bak");
-        copy($file, "${file}.bak")
-            or die "Cannot backup file ${file}.bak: $!";
-    }
-    open FILE, '>', $file or die "Cannot open $file: $!";
-    print FILE $str;
-    close FILE;
-}
-
-sub add_to_arch_file {
-    my $arch_file = shift;
-    my $optype = shift;
-    my $arch = shift;
-
-    my $declare = "extern ln_op ln_opimpl_${optype};";
-    my $item = "&ln_opimpl_${optype},";
-
-    copy($arch_file, "${arch_file}.bak")
-        or die "Cannot backup file ${arch_file}: $!";
-    open ARCH_FILE_BAK, '<', "${arch_file}.bak"
-        or die "Cannot open ${arch_file}.bak: $!";
-    open ARCH_FILE, '>', $arch_file
-        or die "Cannot open ${arch_file}: $!";
-
-    my $declared = 0;
-    my $inited = 0;
-    while (<ARCH_FILE_BAK>) {
-        $declared = 1 if /$declare$/;
-        s|/\* end of declare $arch ops \*/|$declare\n/* end of declare $arch ops */|
-            unless $declared;
-        $inited = 1 if /$item$/;
-        s|/\* end of init $arch ops \*/|    $item\n/* end of init $arch ops */|
-            unless $inited;
-        print ARCH_FILE;
-    }
-
-    close ARCH_FILE;
-    close ARCH_FILE_BAK;
 }
 
 sub gen_head_block {
@@ -595,7 +541,7 @@ sub gen_pre_run_checks {
                 &err_exit("$param->{arg_name} has unsupported `ptype`: '$param->{ptype}'");
             }
         }
-        # to subpress -Wunused-but-set-variable
+        # to suppress -Wunused-but-set-variable
         push @states, "${arg_name} = ${arg_name};";
         if (exists $param->{check}) {
             if ($param->{check} =~ /,/) {
@@ -1023,6 +969,37 @@ sub add_custom_block {
     # push @$states, "}";
 }
 
+sub add_to_arch_file {
+    my $arch_file = shift;
+    my $optype = shift;
+    my $arch = shift;
+
+    my $declare = "extern ln_op ln_opimpl_${optype};";
+    my $item = "&ln_opimpl_${optype},";
+
+    copy($arch_file, "${arch_file}.bak")
+        or die "Cannot backup file ${arch_file}: $!";
+    open ARCH_FILE_BAK, '<', "${arch_file}.bak"
+        or die "Cannot open ${arch_file}.bak: $!";
+    open ARCH_FILE, '>', $arch_file
+        or die "Cannot open ${arch_file}: $!";
+
+    my $declared = 0;
+    my $inited = 0;
+    while (<ARCH_FILE_BAK>) {
+        $declared = 1 if /$declare$/;
+        s|/\* end of declare $arch ops \*/|$declare\n/* end of declare $arch ops */|
+            unless $declared;
+        $inited = 1 if /$item$/;
+        s|/\* end of init $arch ops \*/|    $item\n/* end of init $arch ops */|
+            unless $inited;
+        print ARCH_FILE;
+    }
+
+    close ARCH_FILE;
+    close ARCH_FILE_BAK;
+}
+
 sub make_defs_neat {
     my $defs = shift;
     my $max_offset = 0;
@@ -1058,6 +1035,19 @@ sub indent_line {
     my $nspaces = shift;
     my $state = shift;
     $state = " "x$nspaces.$state;
+}
+
+sub backup_write {
+  my $file = shift;
+  my $str = shift;
+  if (-e $file) {
+    &warn_msg("${file} exists, backuped with subfix .bak");
+    copy($file, "${file}.bak")
+      or die "Cannot backup file ${file}.bak: $!";
+  }
+  open FILE, '>', $file or die "Cannot open $file: $!";
+  print FILE $str;
+  close FILE;
 }
 
 sub err_exit {

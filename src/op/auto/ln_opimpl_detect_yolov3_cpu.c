@@ -211,8 +211,10 @@ static void detect_yolov3_cpu_pre_run(ln_op_arg *op_arg)
     boxes_ndim = 5;
     boxes_dtype = feature->dtype;
     /* begin custom code */
+    {
     int dims[] = {1, anchors->dims[0], 4, feature->dims[2], feature->dims[3]};
     boxes_dims = ln_clone(dims, sizeof(int)*5);
+    }
     /* end custom code */
     boxes = tl_tensor_create(NULL, boxes_ndim, boxes_dims, boxes_dtype);
     boxes_entry = ln_tensor_entry_create(boxes_name, boxes);

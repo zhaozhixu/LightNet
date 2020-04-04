@@ -1,33 +1,30 @@
-{
-    ops: [
-        {
-            optype: "arange",
-            author: "Zhao Zhixu",
-            arch: "none",
-            tensors_in: [
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_NONE", static: true,
-                 dtype: "dtype", ndim: 1,
-                 custom: `
+arange {
+    optype: "arange",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE", static: true,
+         dtype: "dtype", ndim: 1,
+         custom: `
 double len = ceil((stop - start) / step);
 dst_dims = ln_alloc(sizeof(int));
 dst_dims[0] = (int)len;
 `,
-                 cleanup: "ln_free(dst_dims);",},
-            ],
-            params: [
-                {arg_name: "dtype", ptype: "LN_PARAM_STRING",
-                 realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
-                {arg_name: "start", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-                {arg_name: "stop", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-                {arg_name: "step", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-            ],
-            custom: `
+         cleanup: "ln_free(dst_dims);",},
+    ],
+    params: [
+        {arg_name: "dtype", ptype: "LN_PARAM_STRING",
+         realtype: "int", from_func: "tl_dtype_from_str",
+         check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
+        {arg_name: "start", ptype: "LN_PARAM_NUMBER",
+         realtype: "double"},
+        {arg_name: "stop", ptype: "LN_PARAM_NUMBER",
+         realtype: "double"},
+        {arg_name: "step", ptype: "LN_PARAM_NUMBER",
+         realtype: "double"},
+    ],
+    custom: `
 {
 double max, min;
 max = tl_dtype_max_double(dtype);
@@ -43,53 +40,16 @@ ln_opck_param_double_gt(stop_entry, start_entry->value_double);
 /* TODO: expand to all possibilities */
 }
 `
-        },
-        {
-            optype: "arange_cpu",
-            author: "Zhao Zhixu",
-            arch: "cpu",
-            tensors_in: [
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CPU", static: true,
-                 dtype: "dtype", ndim: 1,
-                 custom: `
-{
-double len = ceil((stop - start) / step);
-dst_dims = ln_alloc(sizeof(int));
-dst_dims[0] = (int)len;
 }
-`,
-                 cleanup: "ln_free(dst_dims);"}
-            ],
-            params: [
-                {arg_name: "dtype", ptype: "LN_PARAM_STRING",
-                 realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
-                {arg_name: "start", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-                {arg_name: "stop", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-                {arg_name: "step", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-            ],
-            custom: `
-{
-double max, min;
-max = tl_dtype_max_double(dtype);
-min = tl_dtype_min_double(dtype);
-ln_opck_param_double_ge(start_entry, min);
-ln_opck_param_double_le(start_entry, max);
-ln_opck_param_double_ge(stop_entry, min);
-ln_opck_param_double_le(stop_entry, max);
-ln_opck_param_double_ge(step_entry, min);
-ln_opck_param_double_le(step_entry, max);
-ln_opck_param_double_ne(step_entry, 0);
-ln_opck_param_double_gt(stop_entry, start_entry->value_double);
-/* TODO: expand to all possibilities */
-}
-`,
-            static_run: `
+
+arange_cpu : arange {
+    optype: "arange_cpu",
+    arch: "cpu",
+    tensors_in: [],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    static_run: `
 double elem;
 size_t dsize = tl_size_of(dtype);
 for (int i = 0; i < dst->len; i++) {
@@ -97,54 +57,16 @@ for (int i = 0; i < dst->len; i++) {
     tl_convert(tl_padd(dst->data, i, dsize), dtype, &elem, TL_DOUBLE);
 }
 `
-        },
-        {
-            optype: "arange_cuda",
-            author: "Zhao Zhixu",
-            arch: "cuda",
-            tensors_in: [
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA", static: true,
-                 dtype: "dtype", ndim: 1,
-                 custom: `
-{
-double len = ceil((stop - start) / step);
-dst_dims = ln_alloc(sizeof(int));
-dst_dims[0] = (int)len;
 }
 
-`,
-                 cleanup: "ln_free(dst_dims);"}
-            ],
-            params: [
-                {arg_name: "dtype", ptype: "LN_PARAM_STRING",
-                 realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != -1, \"'dtype' param should be a supported tl_dtype\""},
-                {arg_name: "start", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-                {arg_name: "stop", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-                {arg_name: "step", ptype: "LN_PARAM_NUMBER",
-                 realtype: "double"},
-            ],
-            custom: `
-{
-double max, min;
-max = tl_dtype_max_double(dtype);
-min = tl_dtype_min_double(dtype);
-ln_opck_param_double_ge(start_entry, min);
-ln_opck_param_double_le(start_entry, max);
-ln_opck_param_double_ge(stop_entry, min);
-ln_opck_param_double_le(stop_entry, max);
-ln_opck_param_double_ge(step_entry, min);
-ln_opck_param_double_le(step_entry, max);
-ln_opck_param_double_ne(step_entry, 0);
-ln_opck_param_double_gt(stop_entry, start_entry->value_double);
-/* TODO: expand to all possibilities */
-}
-`,
-            static_run: `
+arange_cuda : arange {
+    optype: "arange_cuda",
+    arch: "cuda",
+    tensors_in: [],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    static_run: `
 double elem;
 size_t dsize = tl_size_of(dtype);
 void *data = ln_alloc(dsize * dst->len);
@@ -155,6 +77,4 @@ for (int i = 0; i < dst->len; i++) {
 ln_memcpy_h2d(dst->data, data, dsize * dst->len);
 ln_free(data);
 `
-        }
-    ]
 }

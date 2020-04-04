@@ -1,72 +1,47 @@
-{   // same as upsample now
-    ops: [
-        {
-            optype: "submean",
-            author: "Zhao Zhixu",
-            arch: "none",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_NONE", ndim: 3,
-                 check: "src->dtype != TL_BOOL"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_NONE",
-                 dtype: "dtype", ndim: "src->ndim",
-                 dims: "(int[]){src->dims[2], src->dims[0], src->dims[1]}",
-                }
-            ],
-            params: [
-                {arg_name: "mean", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "double", len: 3},
-                {arg_name: "dtype", ptype: "LN_PARAM_STRING",
-                 realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != TL_BOOL"}
-            ]
-        },
-        {
-            optype: "submean_cpu",
-            author: "Zhao Zhixu",
-            arch: "cpu",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CPU", ndim: 3,
-                 check: "src->dtype != TL_BOOL"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CPU",
-                 dtype: "dtype", ndim: "src->ndim",
-                 dims: "(int[]){src->dims[2], src->dims[0], src->dims[1]}",
-                }
-            ],
-            params: [
-                {arg_name: "mean", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "double", len: 3},
-                {arg_name: "dtype", ptype: "LN_PARAM_STRING",
-                 realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != TL_BOOL"}
-            ],
-            run: ""
-        },
-        {
-            optype: "submean_cuda",
-            author: "Zhao Zhixu",
-            arch: "cuda",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CUDA", ndim: 3,
-                 check: "src->dtype != TL_BOOL"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA",
-                 dtype: "dtype", ndim: "src->ndim",
-                 dims: "(int[]){src->dims[2], src->dims[0], src->dims[1]}",
-                }
-            ],
-            params: [
-                {arg_name: "mean", ptype: "LN_PARAM_ARRAY_NUMBER",
-                 realtype: "double", len: 3},
-                {arg_name: "dtype", ptype: "LN_PARAM_STRING",
-                 realtype: "int", from_func: "tl_dtype_from_str",
-                 check: "dtype != TL_BOOL"}
-            ],
-            run: "tl_tensor_submean_cuda(src, dst, mean);"
-        },
+// same as upsample now
+submean {
+    optype: "submean",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [
+        {arg_name: "src", mtype: "LN_MEM_NONE", ndim: 3,
+         check: "src->dtype != TL_BOOL"}
+    ],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE",
+         dtype: "dtype", ndim: "src->ndim",
+         dims: "(int[]){src->dims[2], src->dims[0], src->dims[1]}",
+        }
+    ],
+    params: [
+        {arg_name: "mean", ptype: "LN_PARAM_ARRAY_NUMBER",
+         realtype: "double", len: 3},
+        {arg_name: "dtype", ptype: "LN_PARAM_STRING",
+         realtype: "int", from_func: "tl_dtype_from_str",
+         check: "dtype != TL_BOOL"}
     ]
+}
+
+submean_cpu : submean {
+    optype: "submean_cpu",
+    arch: "cpu",
+    tensors_in: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    run: ""
+}
+
+submean_cuda : submean {
+    optype: "submean_cuda",
+    arch: "cuda",
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    run: "tl_tensor_submean_cuda(src, dst, mean);"
 }

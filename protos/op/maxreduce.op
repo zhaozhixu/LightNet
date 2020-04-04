@@ -1,63 +1,43 @@
-{
-    ops: [
-        {
-            optype: "maxreduce",
-            author: "Zhao Zhixu",
-            arch: "none",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_NONE"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_NONE",
-                 ndim: "src->ndim", dtype: "src->dtype",
-                 custom: "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
-                 cleanup: "ln_free(dst_dims);"}
-            ],
-            params: [
-                {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
-                 realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
-            ]
-        },
-        {
-            optype: "maxreduce_cpu",
-            author: "Zhao Zhixu",
-            arch: "cpu",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CPU"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CPU",
-                 ndim: "src->ndim", dtype: "src->dtype",
-                 custom: "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
-                 cleanup: "ln_free(dst_dims);"}
-            ],
-            params: [
-                {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
-                 realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
-            ],
-            run: "tl_tensor_maxreduce(src, dst, NULL, axis);"
-        },
-        {
-            optype: "maxreduce_cuda",
-            author: "Zhao Zhixu",
-            arch: "cuda",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CUDA"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA",
-                 ndim: "src->ndim", dtype: "src->dtype",
-                 custom: "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
-                 cleanup: "ln_free(dst_dims);"}
-            ],
-            params: [
-                {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
-                 realtype: "int",
-                 check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
-            ],
-            run: "tl_tensor_maxreduce_cuda(src, dst, NULL, axis);"
-        }
+maxreduce {
+    optype: "maxreduce",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [
+        {arg_name: "src", mtype: "LN_MEM_NONE"}
+    ],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE",
+         ndim: "src->ndim", dtype: "src->dtype",
+         custom: "dst_dims = ln_clone(src->dims, sizeof(int)*src->ndim);\ndst_dims[axis] = 1;",
+         cleanup: "ln_free(dst_dims);"}
+    ],
+    params: [
+        {arg_name: "axis", ptype: "LN_PARAM_NUMBER",
+         realtype: "int",
+         check: "axis >= 0 && axis < src->ndim, \"'axis' should match the dimensions of 'src'\""}
     ]
+}
+
+maxreduce_cpu : maxreduce {
+    optype: "maxreduce_cpu",
+    arch: "cpu",
+    tensors_in: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    run: "tl_tensor_maxreduce(src, dst, NULL, axis);"
+}
+
+maxreduce_cuda : maxreduce {
+    optype: "maxreduce_cuda",
+    arch: "cuda",
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    run: "tl_tensor_maxreduce_cuda(src, dst, NULL, axis);"
 }

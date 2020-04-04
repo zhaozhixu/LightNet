@@ -6,6 +6,7 @@ use 5.014;
 use strict;
 use warnings;
 use Parse::RecDescent;
+use Clone 'clone';
 use Data::Dumper;
 use constant HASH => ref {};
 use constant ARRAY => ref [];
@@ -89,8 +90,18 @@ null : 'null'
 
 delete : '-'
 
-operator_description : object /^\Z/
-    { $Opdesc::desc_table = $item{object}; }
+operator_description : named_objects (/^\Z/ | ...!/^\Z/)
+    {
+        if ($item[2] =~ /^\Z/) {
+            $return = $Opdesc::desc_table;
+        } else {
+            Opdesc::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset,
+                                 "named objects", "end of file");
+            $return = undef;
+        }
+    }
+    | { Opdesc::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset,
+                             "named objects"); } <reject>
 
 value : object
     { $return = {type => "object", value => $item[1]} }
@@ -133,6 +144,43 @@ object : '{' '}'
         } else {
             Opdesc::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset,
                                  'members', "'}'");
+            $return = undef;
+        }
+    }
+
+named_objects : named_object(s)
+    { $return = $item[1] }
+
+named_object : identifier object
+    {
+        if (exists $Opdesc::desc_table->{$item[1]}) {
+            Opdesc::error($item[0], $thisline, $thiscolumn, $thisoffset,
+                          "named object '$item[1]' has been defined before");
+            $return = undef;
+        } else {
+            $Opdesc::desc_table->{$item[1]} = $item{object};
+            Opdesc::add_info(\$Opdesc::desc_table->{$item[1]},
+                             {type => 'object', line => $thisline, column => $thiscolumn});
+            $return = { name => $item[1], object => $item{object}};
+        }
+    }
+    | identifier ':' identifier object <commit>
+    {
+        if (exists $Opdesc::desc_table->{$item[3]}) {
+            if (exists $Opdesc::desc_table->{$item[1]}) {
+                Opdesc::error($item[0], $thisline, $thiscolumn, $thisoffset,
+                              "named object '$item[1]' has been defined before");
+                $return = undef;
+            } else {
+                $Opdesc::desc_table->{$item[1]} = Opdesc::inherit_object(
+                    $Opdesc::desc_table->{$item[3]}, $item{object});
+                Opdesc::add_info(\$Opdesc::desc_table->{$item[1]},
+                                 {type => 'object', line => $thisline, column => $thiscolumn});
+                $return = { name => $item[1], object => $Opdesc::desc_table->{$item[1]}};
+            }
+        } else {
+            Opdesc::error($item[0], $thisline, $thiscolumn, $thisoffset,
+                          "undefined named object '$item[3]'");
             $return = undef;
         }
     }
@@ -186,12 +234,12 @@ element : value
                    type => $item{value}->{type}, value => $item{value}->{value}}
     }
 
-
 _EOGRAMMAR_
 
 our $desc_table;
 our $desc_info_table;
 our $code;
+our $file;
 our @errors;
 
 # $code = join "", <>;
@@ -205,10 +253,11 @@ our @errors;
 
 sub parse {
     my $text = shift;
+    $file = @_ == 1 ? shift : "";
 
     my $parser = Parse::RecDescent->new($grammar) or die "Bad grammer!\n";
-    $code = $text;
     $text = &remove_comment($text);
+    $code = $text;
     if (defined $parser->operator_description($text)) {
         return $desc_table;
     } else {
@@ -222,15 +271,86 @@ sub add_info {
 
     $desc_info_table->{$value_ref} = { type => $info->{type},
                                        line => $info->{line},
-                                       column => $info->{column} };
+                                       column => $info->{column},
+                                       file => $file};
+}
+
+sub inherit_object {
+    my ($base, $obj) = @_;
+
+    my $new_obj = clone($base);
+    foreach (keys %$obj) {
+        if ($desc_info_table->{\$obj->{$_}}{type} eq 'delete') {
+            delete $new_obj->{$_};
+        } elsif (ref $obj->{$_} eq HASH) {
+            if (exists $new_obj->{$_} and ref $new_obj->{$_} eq HASH) {
+                $new_obj->{$_} = &inherit_object($base->{$_}, $obj->{$_});
+            } else {
+                $new_obj->{$_} = clone($obj->{$_});
+            }
+        } elsif (ref $obj->{$_} eq ARRAY) {
+            if (exists $new_obj->{$_} and ref $new_obj->{$_} eq ARRAY) {
+                $new_obj->{$_} = &inherit_array($base->{$_}, $obj->{$_});
+            } else {
+                $new_obj->{$_} = clone($obj->{$_});
+            }
+        } else {
+            $new_obj->{$_} = clone($obj->{$_});
+        }
+    }
+    foreach (keys %$new_obj) {
+        if (exists $obj->{$_}) {
+            $desc_info_table->{\$new_obj->{$_}} = $desc_info_table->{\$obj->{$_}};
+            delete $desc_info_table->{\$obj->{$_}};
+        } else {
+            $desc_info_table->{\$new_obj->{$_}} = $desc_info_table->{\$base->{$_}};
+        }
+    }
+
+    $new_obj;
+}
+
+sub inherit_array {
+    my ($base, $array) = @_;
+
+    my $new_array = clone($base);
+    my @delete_ids;
+    for (my $i = 0; $i < @$array; $i++) {
+        if ($desc_info_table->{\$array->[$i]}{type} eq 'delete') {
+            push @delete_ids, $i;
+        } elsif (ref $array->[$i] eq HASH) {
+            if (exists $new_array->[$i] and ref $new_array->[$i] eq HASH) {
+                $new_array->[$i] = &inherit_object($base->[$i], $array->[$i]);
+            } else {
+                $new_array->[$i] = clone($array->[$i]);
+            }
+        } elsif (ref $array->[$i] eq ARRAY) {
+            if (exists $new_array->[$i] and ref $new_array->[$i] eq ARRAY) {
+                $new_array->[$i] = &inherit_array($base->[$i], $array->[$i]);
+            } else {
+                $new_array->[$i] = clone($array->[$i]);
+            }
+        } else {
+            $new_array->[$i] = clone($array->[$i]);
+        }
+    }
+    for (my $i = 0; $i < @$new_array; $i++) {
+        if (exists $array->[$i]) {
+            if ($desc_info_table->{\$array->[$i]}{type} ne 'delete') {
+                $desc_info_table->{\$new_array->[$i]} = $desc_info_table->{\$array->[$i]};
+            }
+            delete $desc_info_table->{\$array->[$i]};
+        } else {
+            $desc_info_table->{\$new_array->[$i]} = $desc_info_table->{\$base->[$i]};
+        }
+    }
+
+    delete @{$new_array}[@delete_ids];
+    $new_array;
 }
 
 sub error {
-    my $rule_name = shift;
-    my $line = shift;
-    my $column = shift;
-    my $offset = shift;
-    my $err_str = shift;
+    my ($rule_name, $line, $column, $offset, $err_str) = @_;
 
     $rule_name =~ s/_/ /g;
     my $text = $code;

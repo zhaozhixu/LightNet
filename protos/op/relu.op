@@ -1,69 +1,58 @@
-{
-    ops: [
-        {
-            optype: "relu",
-            author: "Zhao Zhixu",
-            arch: "none",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_NONE"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_NONE",
-                 ndim: "src->ndim", dtype: "src->dtype", dims: "src->dims"}
-            ],
-            params: [
-            ]
-        },
-        {
-            optype: "relu_cpu",
-            author: "Zhao Zhixu",
-            arch: "cpu",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CPU"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CPU",
-                 ndim: "src->ndim", dtype: "src->dtype", dims: "src->dims"}
-            ],
-            params: [
-            ],
-            run: ""
-        },
-        {
-            optype: "relu_cuda",
-            author: "Zhao Zhixu",
-            arch: "cuda",
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CUDA"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA",
-                 ndim: "src->ndim", dtype: "src->dtype", dims: "src->dims"}
-            ],
-            params: [
-            ],
-            run: ""
-        },
-        {
-            optype: "relu_cudnn",
-            author: "Zhao Zhixu",
-            arch: "cudnn",
-            extra_privs: [
-                {type: "cudnnTensorDescriptor_t", name: "src_desc"},
-                {type: "cudnnTensorDescriptor_t", name: "dst_desc"},
-                {type: "cudnnActivationDescriptor_t", name: "activation_desc"},
-                {type: "ln_cudnn_context *", name: "cudnn_context"},
-            ],
-            tensors_in: [
-                {arg_name: "src", mtype: "LN_MEM_CUDA"}
-            ],
-            tensors_out: [
-                {arg_name: "dst", mtype: "LN_MEM_CUDA",
-                 ndim: "src->ndim", dtype: "src->dtype", dims: "src->dims"}
-            ],
-            params: [
-            ],
-            static_run: `
+relu {
+    optype: "relu",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [
+        {arg_name: "src", mtype: "LN_MEM_NONE"}
+    ],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE",
+         ndim: "src->ndim", dtype: "src->dtype", dims: "src->dims"}
+    ],
+    params: [
+    ]
+}
+
+relu_cpu : relu {
+    optype: "relu_cpu",
+    arch: "cpu",
+    tensors_in: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    run: ""
+}
+
+relu_cuda : relu {
+    optype: "relu_cuda",
+    arch: "cuda",
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    run: ""
+}
+
+relu_cudnn : relu {
+    optype: "relu_cudnn",
+    arch: "cudnn",
+    extra_privs: [
+        {type: "cudnnTensorDescriptor_t", name: "src_desc"},
+        {type: "cudnnTensorDescriptor_t", name: "dst_desc"},
+        {type: "cudnnActivationDescriptor_t", name: "activation_desc"},
+        {type: "ln_cudnn_context *", name: "cudnn_context"},
+    ],
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    static_run: `
 ln_arch *arch = ln_hash_find(LN_ARCH.arch_table, "cudnn");
 assert(arch);
 priv->cudnn_context = arch->context;
@@ -75,17 +64,15 @@ LN_CUDNN_CK(cudnnSetActivationDescriptor(priv->activation_desc,
                                          CUDNN_NOT_PROPAGATE_NAN,
                                          0));
 `,
-            run: `
+    run: `
 LN_CUDNN_CK(cudnnActivationForward(priv->cudnn_context->cudnn_handle,
                                    priv->activation_desc, NULL,
                                    priv->src_desc, src->data, NULL,
                                    priv->dst_desc, dst->data));
 `,
-            post_run: `
+    post_run: `
 ln_cudnn_tensor_cleanup(priv->src_desc);
 ln_cudnn_tensor_cleanup(priv->dst_desc);
 LN_CUDNN_CK(cudnnDestroyActivationDescriptor(priv->activation_desc));
 `
-        }
-    ]
 }

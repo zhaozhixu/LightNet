@@ -122,11 +122,9 @@ static void arange_cuda_pre_run(ln_op_arg *op_arg)
     dst_ndim = 1;
     dst_dtype = dtype;
     /* begin custom code */
-    {
     double len = ceil((stop - start) / step);
     dst_dims = ln_alloc(sizeof(int));
     dst_dims[0] = (int)len;
-    }
     /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);

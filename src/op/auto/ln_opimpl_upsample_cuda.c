@@ -108,8 +108,6 @@ static void upsample_cuda_pre_run(ln_op_arg *op_arg)
     for (int i = 0; i < dst_ndim; i++)
         dst_dims[i] = (int)floorf(scales[i] * src->dims[i]);
     }
-    {
-    }
     /* end custom code */
     dst = tl_tensor_create(NULL, dst_ndim, dst_dims, dst_dtype);
     dst_entry = ln_tensor_entry_create(dst_name, dst);
