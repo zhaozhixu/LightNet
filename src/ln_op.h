@@ -598,7 +598,13 @@ LN_CPPEND
     do {                                                                \
         char _shape1[LN_MAXLINE];                                       \
         char _shape2[LN_MAXLINE];                                       \
-        ln_opck(LN_MSG_ERROR, tl_tensor_issameshape((entry1)->tensor, (entry2)->tensor), "%s: `%s`'s tensor `%s`(%s) and tensor `%s`(%s) should have the same shape", op_arg->optype, op_arg->name, (entry1)->name, ln_sprint_shape(_shape1, (entry1)->tensor->ndim, (entry1)->tensor->dims), (entry2)->name, ln_sprint_shape(_shape2, (entry2)->tensor->ndim, (entry2)->tensor->dims)); \
+        ln_opck(LN_MSG_ERROR,                                           \
+                tl_tensor_issameshape((entry1)->tensor, (entry2)->tensor), \
+                "%s: `%s`'s tensor `%s`(%s) and tensor `%s`(%s) should have the same shape", \
+                op_arg->optype, op_arg->name, (entry1)->name,           \
+                ln_sprint_shape(_shape1, (entry1)->tensor->ndim, (entry1)->tensor->dims), \
+                (entry2)->name,                                         \
+                ln_sprint_shape(_shape2, (entry2)->tensor->ndim, (entry2)->tensor->dims)); \
     } while (0)
 
 #define ln_opck_tensor_issametype(entry1, entry2)                       \
