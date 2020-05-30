@@ -1,6 +1,14 @@
 from ctypes import *
 import lib
 
+def version():
+    buf = lib.alloc(20)
+    lib.libln.ln_option_sprint_version(buf)
+    if lib.IS_PYTHON3:
+        return str(buf.value, encoding = "utf8")
+    else:
+        return str(buf.value)
+
 def create(argv):
     lib.libln.ln_option_create.restype = c_void_p
     return lib.libln.ln_option_create(len(argv), argv)

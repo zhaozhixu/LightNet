@@ -42,6 +42,7 @@ typedef struct ln_option ln_option;
 LN_CPPSTART
 #endif
 
+void ln_option_sprint_version(char *version_str);
 ln_option *ln_option_create(int argc, char **argv);
 void ln_option_free(ln_option *option);
 

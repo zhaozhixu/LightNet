@@ -231,6 +231,7 @@ Then, in the `example` directory, enter the following commands:
 And you should get a series of bounding boxes coordinates (xmin, ymin,
 xmax, ymax), one for an input image, printed in the terminal like this:
 
+    ... some TensorRT log ...
     [197.965088, 163.387146, 275.853577, 323.011322]
     [197.478195, 161.533936, 276.260590, 322.812714]
     [197.014648, 158.862747, 276.261810, 322.054504]

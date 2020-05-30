@@ -14,4 +14,4 @@ from handler import handler
 lib.init()
 arch.init()
 
-__version__ = lib.version()
+__version__ = option.version()

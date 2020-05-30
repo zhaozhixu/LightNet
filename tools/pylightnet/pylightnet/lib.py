@@ -35,11 +35,3 @@ def alloc(init_or_size, size=None):
 
 def cast_buf(buf, ctype):
     return cast(buf, POINTER(ctype))
-
-def version():
-    buf = alloc(20)
-    libln.ln_sprint_version(buf)
-    if IS_PYTHON3:
-        return str(buf.value, encoding = "utf8")
-    else:
-        return str(buf.value)

@@ -24,6 +24,12 @@
 #include "ln_option.h"
 #include "lightnet.h"
 
+void ln_option_sprint_version(char *version_str)
+{
+    snprintf(version_str, 20, "%d.%d.%d",
+             LN_MAJOR_VERSION, LN_MINOR_VERSION, LN_MICRO_VERSION);
+}
+
 static void print_version_exit(void)
 {
     char version_str[20] = {0};
@@ -33,8 +39,7 @@ Copyright (c) 2018-2020, Zhao Zhixu\n\
 Released under the MIT License.\n\
 ";
 
-    snprintf(version_str, 20, "%d.%d.%d",
-             LN_MAJOR_VERSION, LN_MINOR_VERSION, LN_MICRO_VERSION);
+    ln_option_sprint_version(version_str);
     fprintf(stderr, version, version_str);
     exit(EXIT_SUCCESS);
 }
