@@ -1,7 +1,5 @@
 #! /usr/bin/env perl
 
-package testgl;
-
 use 5.014;
 use warnings;
 use strict;
@@ -15,6 +13,7 @@ use File::Basename;
 use lib abs_path(dirname(__FILE__));
 use util;
 use easyjson;
+use Opdesc;
 use constant HASH => ref {};
 use constant ARRAY => ref [];
 use constant CODE => ref sub{};
@@ -1302,8 +1301,11 @@ sub find_op_desc {
         foreach (@possible_files) {
             my $file = "$opdir/$_";
             next unless -e $file;
-            &read_ops_json($file, \%global_ops);
-            $op = $global_ops{$optype} if exists $global_ops{$optype};
+            &read_op_desc($file, \%global_ops);
+            if (exists $global_ops{$optype}) {
+                $op = $global_ops{$optype};
+                last;
+            }
         }
         unless ($op) {
             &util::err_exit("Cannot find the description JSON for optype '$optype'");
@@ -1314,14 +1316,11 @@ sub find_op_desc {
 
 sub possible_op_files {
     my $optype = shift;
+
     my @names = ();
+    push @names, $optype.'.op';
     my @words = split '_', $optype;
-    if (@words == 1) {
-        push @names, $optype.'.json';
-    } else {
-        push @names, (join '_', @words[0..$#words-1]).'.json';
-        push @names, $optype.'.json';
-    }
+    push @names, (join '_', @words[0..$#words-1]).'.op';
     @names;
 }
 
@@ -1340,18 +1339,19 @@ sub read_json {
     &read_json_text($text);
 }
 
-sub read_ops_json {
+sub read_op_desc {
     my $file = shift;
     my $hash = shift;
-    my $json = &read_json($file);
-    if (exists $json->{ops}) {
-        foreach my $op (@{$json->{ops}}) {
-            $hash->{$op->{optype}} = $op;
-        }
-    } elsif (exists $json->{optype}) {
-        $hash->{$json->{optype}} = $json;
-    } else {
-        &util::err_exit("JSON file $file doesn't contain an 'ops' or 'optype' field");
+
+    open OPDESC_FILE, '<', $file or die "Cannot open $file: $!";
+    my $opdesc_text = join '', <OPDESC_FILE>;
+    close OPDESC_FILE;
+    my $opdesc = Opdesc::parse($opdesc_text, $file);
+    if (not defined $opdesc) {
+        die (join "", map { "ERROR: $file: $_" } @Opdesc::errors);
+    }
+    foreach (keys %$opdesc) {
+        $hash->{$_} = $opdesc->{$_};
     }
 }
 
@@ -1367,5 +1367,3 @@ sub err_unknown_last_field {
     my @fields = @_;
     &err_unknown_field($#fields, @fields);
 }
-
-1;

@@ -84,8 +84,7 @@ sub backup_write {
 
 sub err_exit {
     my $msg = $_[0];
-    print STDERR "ERROR: $msg\n";
-    exit 1;
+    die "ERROR: $msg";
 }
 
 sub warn_msg {
