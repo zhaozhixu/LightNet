@@ -11,7 +11,8 @@ def main(argv):
     ln.context.init(ctx, ln.option.get_source(option))
 
     if (ln.option.get_compile(option)):
-        ln.context.compile(ctx, ln.option.get_target(option))
+        ln.context.compile(ctx, ln.option.get_target(option),
+                           ln.option.get_datafile(option))
 
     if not ln.util.streq(ln.option.get_outfile(option), b"!"):
         ln.context.Print(ctx, ln.option.get_outfile(option))

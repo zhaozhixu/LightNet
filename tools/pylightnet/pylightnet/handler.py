@@ -35,7 +35,8 @@ class handler(object):
             sys.stderr.write("LightNet handler " + str(self) +
                              " is not initialized to be compilable\n")
             return
-        ln.context.compile(self.ctx, ln.option.get_target(self.option))
+        ln.context.compile(self.ctx, ln.option.get_target(self.option),
+                           ln.option.get_datafile(self.option))
         if not ln.util.streq(ln.option.get_outfile(self.option), b'!'):
             ln.context.Print(self.ctx, ln.option.get_outfile(self.option));
 

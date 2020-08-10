@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     ln_context_init(ctx, option->source);
 
     if (option->compile) {
-        ln_context_compile(ctx, option->target);
+        ln_context_compile(ctx, option->target, option->datafile);
         if (!ln_streq(option->outfile, "!"))
             ln_context_print(ctx, option->outfile);
     }

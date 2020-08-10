@@ -45,6 +45,7 @@ static void tensorrt_pre_run(ln_op_arg *op_arg)
     int ndim;
     tl_dtype dtype;
     char *arg_name;
+
     LN_LIST_FOREACH(tle, op_arg->tensors_out) {
         arg_name = ln_strcat_delim_alloc(tle->arg_name, "shape", '_');
         pe = ln_param_list_find(op_arg->params, arg_name);

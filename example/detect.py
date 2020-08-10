@@ -62,12 +62,13 @@ def set_anchors(convout_w, convout_h, anchors_per_grid):
 handler = None
 out_dict = None
 
-def init(net, datafile):
+def init(net, datafile, need_compile):
     global handler, out_dict
     # create a new LightNet handler
     handler = ln.handler(net, datafile=datafile, target="tensorrt")
-    # compile model
-    handler.compile()
+    if need_compile:
+        # compile model
+        handler.compile()
     # init and load data
     handler.load()
     # create a dict to hold output data,

@@ -14,8 +14,8 @@ def cleanup(ctx):
 def free(ctx):
     lib.libln.ln_context_free(ctx)
 
-def compile(ctx, target):
-    lib.libln.ln_context_compile(ctx, target)
+def compile(ctx, target, datafile):
+    lib.libln.ln_context_compile(ctx, target, datafile)
 
 def Print(ctx, outfile):
     lib.libln.ln_context_print(ctx, outfile)

@@ -58,8 +58,7 @@ void ln_param_entry_free(ln_param_entry *entry)
     ln_free(entry->arg_name);
     ln_free(entry->value_string);
     if (entry->type == LN_PARAM_ARRAY_STRING) {
-        int i;
-        for (i = 0; i < entry->array_len; i++)
+        for (int i = 0; i < entry->array_len; i++)
             ln_free(entry->value_array_string[i]);
     }
     ln_free(entry->value_array_string);
