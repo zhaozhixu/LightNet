@@ -136,7 +136,7 @@ void ln_msg_handle(ln_msg **msg)
         fflush(NULL);
         break;
     case LN_MSG_INFO:
-        fprintf(stderr, BOLD("info: ")"%s\n", (*msg)->err_str);
+        fprintf(stdout, BOLD("info: ")"%s\n", (*msg)->err_str);
         fflush(NULL);
         break;
     case LN_MSG_DEBUG:

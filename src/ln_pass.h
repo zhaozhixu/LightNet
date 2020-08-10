@@ -40,6 +40,8 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
                       const ln_combiner_func *cb_funcs);
 void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs);
 void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs);
+void ln_pass_optimize_with_data(ln_context *ctx, const ln_optdata_func *od_funcs,
+                                const char *datafile);
 void ln_pass_mem_plan(ln_context *ctx);
 
 #ifdef __cplusplus

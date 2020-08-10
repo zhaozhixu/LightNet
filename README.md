@@ -197,6 +197,12 @@ for the tensors in the model (maybe the weights), you can specify it with
 
     $ lightnet -r yolov3-compiled.json -f your-datafile.wts
 
+The `-f` option in `lightnet` may specifies the data file for both compilation
+and runtime.
+Some target platform may accept a data file in the compilation phase,
+such as the `tensorrt` platform, which enables the serialization of the tensorrt
+model, and makes the start up of the computation faster, see examples below.
+
 ### C API
 
 An example using the C API is in `example/object-detect.c`. 
@@ -223,10 +229,20 @@ After the [installation](#installation) of LightNet, you need to enter the
     $ cd example
     $ make
     
-Then, in the `example` directory, enter the following commands:
+Then, in the `example` directory, enter the following commands to run the model::
 
-    $ il2json data/shuffledet_dac.net -o data/out.json
-    $ ./object-detect data/out.json data/shuffledet_dac.wts data/images
+    $ il2json data/shuffledet_dac.net -o out.json
+    $ ./object-detect out.json data/shuffledet_dac.wts data/images
+
+Or, compile the model first, run the model later:
+
+    $ il2json data/shuffledet_dac.net | lightnet -c -t tensorrt -f data/shuffledet_dac.wts -
+    $ ./object-detect -r out.json data/shuffledet_dac.wts data/images
+
+The `-f` option in `lightnet` specifies a data file for compilation.
+Some target platform may accept a data file in the compilation phase,
+such as the `tensorrt` platform, which enables the serialization of the tensorrt
+model, and makes the start up of the computation faster.
 
 And you should get a series of bounding boxes coordinates (xmin, ymin,
 xmax, ymax), one for an input image, printed in the terminal like this:
@@ -263,10 +279,20 @@ command for installation:
     $ pip3 install -U opencv-python
 
 After [installation](#installation), enter the following
-commands in the `example` directory:
+commands in the `example` directory to run the model:
 
-    $ il2json data/shuffledet_dac.net -o data/out.json
-    $ ./object-detect.py data/out.json data/shuffledet_dac.wts data/images
+    $ il2json data/shuffledet_dac.net -o out.json
+    $ ./object-detect.py out.json data/shuffledet_dac.wts data/images
+
+Or, compile the model first, run the model later:
+
+    $ il2json data/shuffledet_dac.net | lightnet -c -t tensorrt -f data/shuffledet_dac.wts -
+    $ ./object-detect.py -r out.json data/shuffledet_dac.wts data/images
+
+The `-f` option in `lightnet` specifies a data file for compilation.
+Some target platform may accept a data file in the compilation phase,
+such as the `tensorrt` platform, which enables the serialization of the tensorrt
+model, and makes the start up of the computation faster.
 
 Then you should get a dection window with bouding boxes detecting the images
 in `example/data/images` dynamicly like the following screenshot, 

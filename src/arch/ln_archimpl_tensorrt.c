@@ -68,6 +68,15 @@ ln_schedule_func sd_funcs_tensorrt[] = {
     NULL
 };
 
+static ln_list *od_func_tensorrt(const ln_context *ctx);
+/* end of declare tensorrt optdatas */
+
+ln_optdata_func od_funcs_tensorrt[] = {
+    od_func_tensorrt,
+/* end of tensorrt optdatas */
+    NULL
+};
+
 extern void ln_expander_init_expander_tensorrt(void **priv_p);
 /* end of declare tensorrt init funcs */
 
@@ -415,6 +424,34 @@ static ln_list *cb_func_tensorrt(const ln_context *ctx,
     return new_ops;
 }
 
+/* just use it to serialize the engines */
+static ln_list *od_func_tensorrt(const ln_context *ctx)
+{
+    ln_op *op;
+    ln_param_entry *pe;
+    ln_list *tmp;
+    ln_list **lp;
+
+    LN_LIST_FOREACH(op, ctx->ops) {
+        if (ln_streq(op->op_arg->optype, "tensorrt"))
+            ln_tensorrt_serialize(op->op_arg);
+        for (lp = &op->op_arg->params; *lp;) {
+            pe = (*lp)->data;
+            if (!ln_streq(pe->arg_name, "bin") &&
+                !ln_streq(pe->arg_name, "bin_size")) {
+                tmp = *lp;
+                *lp = tmp->next;
+                ln_param_entry_free(pe);
+                ln_free(tmp);
+                continue;
+            }
+            lp = &(*lp)->next;
+        }
+    }
+
+    return NULL;
+}
+
 ln_arch ln_archimpl_tensorrt = {
     .init_func = init_tensorrt,
     .cleanup_func = cleanup_tensorrt,
@@ -423,5 +460,6 @@ ln_arch ln_archimpl_tensorrt = {
     .cb_funcs = cb_funcs_tensorrt,
     .sg_funcs = sg_funcs_tensorrt,
     .sd_funcs = sd_funcs_tensorrt,
+    .od_funcs = od_funcs_tensorrt,
     .arch_name = "tensorrt",
 };

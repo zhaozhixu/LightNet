@@ -228,7 +228,7 @@ void ln_context_init(ln_context *ctx, const char *source)
     ln_context_init_ops(ctx);
 }
 
-void ln_context_compile(ln_context *ctx, const char *target)
+void ln_context_compile(ln_context *ctx, const char *target, const char *datafile)
 {
     ln_arch *arch;
 
@@ -239,6 +239,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_pass_preprocess(ctx);
     ln_pass_combiner(ctx, 2, arch->cb_funcs);
     ln_pass_subgraph(ctx, arch->sg_funcs);
+    /* ln_context_print(ctx, "out_debug.json"); */
     ln_pass_schedule(ctx, arch->sd_funcs);
 
     /* make ops consistent */
@@ -247,6 +248,7 @@ void ln_context_compile(ln_context *ctx, const char *target)
     ln_op_list_do_pre_run(ctx->ops);
 
     ln_pass_mem_plan(ctx);
+    ln_pass_optimize_with_data(ctx, arch->od_funcs, datafile);
     /* ln_context_print(ctx, "out_debug.json"); */
 }
 

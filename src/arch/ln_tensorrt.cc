@@ -27,6 +27,7 @@
 #include "ln_op.h"
 #include "ln_tensorrt.h"
 #include "ln_tensorrt_plugin.h"
+#include "base64.h"
 
 #if NV_TENSORRT_MAJOR < 2
 #error TensorRT version below 2.x.x is not supported.
@@ -937,6 +938,49 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
     return engine;
 }
 
+static ICudaEngine *deserialize_engine(ln_op_arg *op_arg)
+{
+    const char *bin;
+    size_t bin_size;
+    unsigned char *model;
+    unsigned int model_size;
+    IRuntime *runtime;
+    ICudaEngine *engine;
+
+    bin = ln_param_list_find(op_arg->params, "bin")->value_string;
+    bin_size = ln_param_list_find(op_arg->params, "bin_size")->value_int;
+    model = (unsigned char *)ln_alloc(BASE64_DECODE_OUT_SIZE(bin_size));
+    model_size = base64_decode(bin, bin_size, model);
+
+    runtime = createInferRuntime(global_logger);
+    engine = runtime->deserializeCudaEngine(model, model_size);
+
+    runtime->destroy();
+    ln_free(model);
+
+    return engine;
+}
+
+void ln_tensorrt_serialize(ln_op_arg *op_arg)
+{
+    ICudaEngine *engine;
+    IHostMemory *mem;
+    char *bin;
+    unsigned int bin_size;
+
+    engine = create_engine(op_arg);
+    mem = engine->serialize();
+    bin = (char *)ln_alloc(BASE64_ENCODE_OUT_SIZE(mem->size()));
+    bin_size = base64_encode((const unsigned char *)mem->data(),
+                             mem->size(), bin);
+    ln_param_list_append_string(op_arg->params, "bin", bin);
+    ln_param_list_append_int(op_arg->params, "bin_size", bin_size);
+
+    ln_free(bin);
+    mem->destroy();
+    engine->destroy();
+}
+
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
 {
     ICudaEngine *engine;
@@ -950,7 +994,13 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
     ln_tensor_entry *te;
     int index;
 
-    engine = create_engine(op_arg);
+    if (ln_param_list_find(op_arg->params, "bin") &&
+        ln_param_list_find(op_arg->params, "bin_size")) {
+        engine = deserialize_engine(op_arg);
+    } else {
+        engine = create_engine(op_arg);
+    }
+
     assert(engine);
     context = engine->createExecutionContext();
     assert(context);
@@ -962,7 +1012,6 @@ ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg)
         if (!ln_streqn(tle->arg_name, "src", 3))
             continue;
         index = engine->getBindingIndex(tle->name);
-        // printf("%s %s %d\n", op_arg->name, tle->name, index);
         assert(index >= 0);
         te = ln_tensor_table_find(op_arg->tensor_table, tle->name);
         bindings[index] = te->tensor->data;

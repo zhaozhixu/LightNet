@@ -62,12 +62,12 @@ Options:\n\
   -c, --compile          compile only; do not run\n\
   -r, --run              run only; do not compile; SOURCE should have been\n\
                          memory-planned\n\
+  -d, --debug            display debug messages (only works with LN_DEBUG\n\
+                         defined when compiling)\n\
   -Wwarn                 display warnings (default)\n\
   -w, -Wno-warn          do not display warnings\n\
   -Winter                display internal warnings (default)\n\
   -Wno-inter             do not display internal warnings\n\
-  -debug                 display debug messages (only works with LN_DEBUG\n\
-                         defined when compiling)\n\
 ";
     fputs(usage, stderr);
     exit(EXIT_SUCCESS);

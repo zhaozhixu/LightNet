@@ -29,6 +29,7 @@ in NET_FILE and weight data in WEIGHT_FILE datain directory using C API.\n\
 \n\
 options:\n\
     -h    print this message\n\
+    -r    run compiled NET_FILE\n\
 ";
     fprintf(stderr, "%s", usage);
     exit(exit_code);
@@ -119,7 +120,6 @@ static void do_detection(ln_context *ctx, const char *img_dir)
     /* get a list of JEPG files */
     filelist = create_jpeg_filelist(img_dir);
     img = (unsigned char *)malloc(sizeof(unsigned char) * IMG_H * IMG_W * 3);
-
     for (int i = 0; filelist[i]; i++) {
         load_jpeg(filelist[i], img, &img_height, &img_width);
         LN_TIMEIT_START;
@@ -153,26 +153,35 @@ static void do_detection(ln_context *ctx, const char *img_dir)
 
 int main(int argc, char **argv)
 {
-    const char *net;     /* neural network model file */
-    const char *wts;     /* neural network weight file */
-    const char *img_dir; /* image directory */
+    const char *net;      /* neural network model file */
+    const char *wts;      /* neural network weight file */
+    const char *img_dir;  /* image directory */
+    int need_compile = 1; /* need compile or not */
 
-    ln_context *ctx;     /* lightnet context for compilation and inference */
+    ln_context *ctx;      /* lightnet context for compilation and inference */
 
     /* parse command line arguments */
     if (argc >= 2 && ln_streq(argv[1], "-h"))
         exit_usage(EXIT_SUCCESS);
-    if (argc != 4)
+    if (argc < 4)
         exit_usage(EXIT_FAILURE);
-    net = argv[1];
-    wts = argv[2];
-    img_dir = argv[3];
+    if (ln_streq(argv[1], "-r")) {
+        need_compile = 0;
+        net = argv[2];
+        wts = argv[3];
+        img_dir = argv[4];
+    } else {
+        net = argv[1];
+        wts = argv[2];
+        img_dir = argv[3];
+    }
 
     /* initialize lightnet, compile network and load weight data */
     ln_arch_init();
     ctx = ln_context_create();
     ln_context_init(ctx, net);
-    ln_context_compile(ctx, "tensorrt");
+    if (need_compile)
+        ln_context_compile(ctx, "tensorrt", wts);
     ln_context_load(ctx, wts);
 
     /* do inference for images in 'img_dir' */

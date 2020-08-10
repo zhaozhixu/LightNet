@@ -113,6 +113,9 @@ void ln_pass_expander(ln_context *ctx, const ln_expander_func *ep_funcs)
     int match;
     int i;
 
+    if (!ep_funcs)
+        return;
+
     ep_ops = NULL;
     for (lp = &ctx->ops; *lp; lp = &(*lp)->next) {
         op = (*lp)->data;
@@ -137,6 +140,9 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
     int count = 0;
     int match;
     int i;
+
+    if (!cb_funcs)
+        return;
 
     while (!stable) {
         stable = 1;
@@ -168,6 +174,9 @@ void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs)
     ln_subgraph_func sg;
     int i;
 
+    if (!sg_funcs)
+        return;
+
     for (i = 0; (sg = sg_funcs[i]); i++) {
         new_ops = sg(ctx, &old_ops);
         if (!old_ops)
@@ -188,8 +197,13 @@ void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs)
     ln_op *op;
     int i, n;
 
+    if (!sd_funcs)
+        return;
+
     for (i = 0; (sd = sd_funcs[i]); i++) {
         ops = sd(ctx);
+        if (!ops)
+            continue;
         n = 0;
         LN_LIST_FOREACH(op, ops) {
             if (!ln_hash_find(ctx->dfg->node_table, op->op_arg->name))
@@ -198,11 +212,30 @@ void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs)
             n++;
         }
         if (n != ln_hash_size(ctx->dfg->node_table))
-            ln_msg_error("the length of scheduled ops (%d) is not equal to the size of DFG (%d)", n, ln_hash_size(ctx->dfg->node_table));
+            ln_msg_error("the length of scheduled ops (%d) is not equal to the size of DFG (%d)",
+                         n, ln_hash_size(ctx->dfg->node_table));
 
         ln_list_free(ctx->ops);
         ctx->ops = ops;
     }
+}
+
+void ln_pass_optimize_with_data(ln_context *ctx, const ln_optdata_func *od_funcs,
+                                const char *datafile)
+{
+    ln_optdata_func od_func;
+    int i;
+
+    if (!od_funcs || !datafile)
+        return;
+
+    ln_context_load(ctx, datafile);
+
+    for (i = 0; (od_func = od_funcs[i]); i++) {
+        od_func(ctx);
+    }
+
+    ln_context_unload(ctx);
 }
 
 static void use_count_zero(ln_hash *use_counts, char *name)

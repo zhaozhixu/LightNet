@@ -37,6 +37,7 @@ const char *ln_tensorrt_version_str(void);
 int ln_tensorrt_version_cmp(const char *ver_compare_to);
 const char *ln_tensorrt_elew_name(const char *elew_name_tl);
 void ln_tensorrt_check_op(ln_op_arg *op_arg);
+void ln_tensorrt_serialize(ln_op_arg *op_arg);
 ln_tensorrt_bundle *ln_tensorrt_bundle_create(ln_op_arg *op_arg);
 void ln_tensorrt_bundle_free(ln_tensorrt_bundle *bundle);
 void ln_tensorrt_bundle_execute(ln_tensorrt_bundle *bundle);

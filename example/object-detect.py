@@ -29,20 +29,28 @@ in NET_FILE and weight data in WEIGHT_FILE datain directory using Python API.
 
 options:
     -h    print this message
+    -r    run compiled NET_FILE
 '''
     print(usage)
     exit(exit_code)
 
 def main():
+    need_compile = True
     if len(sys.argv) >= 2 and sys.argv[1] == '-h':
         exit_usage(0)
-    if len(sys.argv) != 4:
+    if len(sys.argv) < 4:
         exit_usage(1)
-    net = sys.argv[1]
-    weight_file = sys.argv[2]
-    img_dir = sys.argv[3]
+    if sys.argv[1] == '-r':
+        need_compile = False
+        net = sys.argv[2]
+        weight_file = sys.argv[3]
+        img_dir = sys.argv[4]
+    else:
+        net = sys.argv[1]
+        weight_file = sys.argv[2]
+        img_dir = sys.argv[3]
 
-    detect.init(net, weight_file)
+    detect.init(net, weight_file, need_compile)
     files = sorted(os.listdir(img_dir))
     run_time = 0
     img_num = 0
