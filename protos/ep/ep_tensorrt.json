@@ -1,7 +1,7 @@
 {
     "author": "Zhao Zhixu",
     "arch": "tensorrt",
-    "name": "expander_tensorrt",
+    "name": "tensorrt",
     "head": "#include \"ln_tensorrt.h\"",
     "ops": [
         {

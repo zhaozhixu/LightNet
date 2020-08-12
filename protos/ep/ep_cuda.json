@@ -1,6 +1,6 @@
 {
     "author": "Zhao Zhixu",
-    "name": "expander_cuda",
+    "name": "cuda",
     "arch": "cuda",
     "head": "#include \"ln_cuda.h\"",
     "ops": [

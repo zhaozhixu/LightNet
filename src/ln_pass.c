@@ -104,60 +104,45 @@ void ln_pass_preprocess(ln_context *ctx)
     ln_context_check(ctx);
 }
 
-void ln_pass_expander(ln_context *ctx, const ln_expander_func *ep_funcs)
+void ln_pass_expander(ln_context *ctx, ln_expander_func ep_func)
 {
     ln_op *op;
     ln_list **lp;
     ln_list *ep_ops;
-    ln_expander_func ep_func;
     int match;
-    int i;
-
-    if (!ep_funcs)
-        return;
 
     ep_ops = NULL;
     for (lp = &ctx->ops; *lp; lp = &(*lp)->next) {
         op = (*lp)->data;
-        for (i = 0; (ep_func = ep_funcs[i]); i++) {
-            match = 0;
-            ep_ops = ep_func(ctx, op, &match);
-            if (!match)
-                continue;
-            ln_context_replace_ops(ctx, lp, 1, ep_ops);
-            ln_context_check(ctx);
-        }
+        match = 0;
+        ep_ops = ep_func(ctx, op, &match);
+        if (!match)
+            continue;
+        ln_context_replace_ops(ctx, lp, 1, ep_ops);
+        ln_context_check(ctx);
     }
 }
 
-void ln_pass_combiner(ln_context *ctx, size_t win_size,
-                      const ln_combiner_func *cb_funcs)
+void ln_pass_combiner(ln_context *ctx, size_t win_size, ln_combiner_func cb_func)
 {
-    ln_combiner_func cb;
     ln_list *win_out;
     ln_list **lp;
     int stable = 0;
     int count = 0;
     int match;
-    int i;
-
-    if (!cb_funcs)
-        return;
 
     while (!stable) {
         stable = 1;
         for (lp = &ctx->ops; *lp; lp = &(*lp)->next) {
             if (ln_list_length(*lp) < win_size)
                 break;
-            for (i = 0; (cb = cb_funcs[i]); i++) {
-                match = 0;
-                win_out = cb(ctx, *lp, win_size, &match);
-                if (!match)
-                    continue;
-                stable = 0;
-                ln_context_replace_ops(ctx, lp, win_size, win_out);
-                ln_context_check(ctx);
-            }
+            match = 0;
+            win_out = cb_func(ctx, *lp, win_size, &match);
+            if (!match)
+                continue;
+            stable = 0;
+            ln_context_replace_ops(ctx, lp, win_size, win_out);
+            ln_context_check(ctx);
         }
         if (++count > MAX_PEEPHOLE_PASSES) {
             ln_msg_emit(LN_MSG_INTER_WARN,
@@ -167,74 +152,57 @@ void ln_pass_combiner(ln_context *ctx, size_t win_size,
     }
 }
 
-void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs)
+void ln_pass_subgraph(ln_context *ctx, ln_subgraph_func sg_func)
 {
     ln_list *old_ops = NULL;
     ln_list *new_ops = NULL;
-    ln_subgraph_func sg;
-    int i;
 
-    if (!sg_funcs)
+    new_ops = sg_func(ctx, &old_ops);
+    if (!old_ops)
         return;
 
-    for (i = 0; (sg = sg_funcs[i]); i++) {
-        new_ops = sg(ctx, &old_ops);
-        if (!old_ops)
-            continue;
-        ln_context_subgraph(ctx, old_ops, new_ops);
-        ln_context_check(ctx);
-        ln_list_free(old_ops);
-        ln_list_free(new_ops);
-        old_ops = NULL;
-        new_ops = NULL;
-    }
+    ln_context_subgraph(ctx, old_ops, new_ops);
+    ln_context_check(ctx);
+    ln_list_free(old_ops);
+    ln_list_free(new_ops);
+    old_ops = NULL;
+    new_ops = NULL;
 }
 
-void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs)
+void ln_pass_schedule(ln_context *ctx, ln_schedule_func sd_func)
 {
-    ln_schedule_func sd;
     ln_list *ops;
     ln_op *op;
-    int i, n;
+    int n;
 
-    if (!sd_funcs)
+    ops = sd_func(ctx);
+    if (!ops)
         return;
 
-    for (i = 0; (sd = sd_funcs[i]); i++) {
-        ops = sd(ctx);
-        if (!ops)
-            continue;
-        n = 0;
-        LN_LIST_FOREACH(op, ops) {
-            if (!ln_hash_find(ctx->dfg->node_table, op->op_arg->name))
-                ln_msg_error("scheduled op %s not found in DFG",
-                             op->op_arg->name);
-            n++;
-        }
-        if (n != ln_hash_size(ctx->dfg->node_table))
-            ln_msg_error("the length of scheduled ops (%d) is not equal to the size of DFG (%d)",
-                         n, ln_hash_size(ctx->dfg->node_table));
-
-        ln_list_free(ctx->ops);
-        ctx->ops = ops;
+    n = 0;
+    LN_LIST_FOREACH(op, ops) {
+        if (!ln_hash_find(ctx->dfg->node_table, op->op_arg->name))
+            ln_msg_error("scheduled op %s not found in DFG",
+                         op->op_arg->name);
+        n++;
     }
+    if (n != ln_hash_size(ctx->dfg->node_table))
+        ln_msg_error("the length of scheduled ops (%d) is not equal to the size of DFG (%d)",
+                     n, ln_hash_size(ctx->dfg->node_table));
+
+    ln_list_free(ctx->ops);
+    ctx->ops = ops;
 }
 
-void ln_pass_optimize_with_data(ln_context *ctx, const ln_optdata_func *od_funcs,
+void ln_pass_optimize_with_data(ln_context *ctx, ln_optdata_func od_func,
                                 const char *datafile)
 {
-    ln_optdata_func od_func;
-    int i;
 
-    if (!od_funcs || !datafile)
+    if (!datafile)
         return;
 
     ln_context_load(ctx, datafile);
-
-    for (i = 0; (od_func = od_funcs[i]); i++) {
-        od_func(ctx);
-    }
-
+    od_func(ctx);
     ln_context_unload(ctx);
 }
 
@@ -294,8 +262,8 @@ static void alloc_set_offset(ln_tensor_entry *te, ln_hash *mem_pools,
     set_offset(te, ln_mem_pool_alloc(mp, tl_tensor_size(te->tensor)));
     water_level = te->offset + tl_tensor_size(te->tensor);
     ctx->mem_sizes[te->mtype] =
-        ctx->mem_sizes[te->mtype] > water_level ?
-        ctx->mem_sizes[te->mtype] : water_level;
+            ctx->mem_sizes[te->mtype] > water_level ?
+            ctx->mem_sizes[te->mtype] : water_level;
 }
 
 static void dealloc_offset(ln_tensor_entry *te, ln_hash *mem_pools)
@@ -424,7 +392,7 @@ void ln_pass_mem_plan(ln_context *ctx)
                     assert(!owner_te->owner);
                     alloc_set_offset(owner_te, mem_pools, ctx);
                     total_sums[owner_te->mtype] +=
-                        tl_tensor_size(owner_te->tensor);
+                            tl_tensor_size(owner_te->tensor);
                 }
                 set_shared_offset(ctx->dfg, op, te);
                 continue;

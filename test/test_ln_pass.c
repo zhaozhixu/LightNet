@@ -68,6 +68,100 @@ static void assert_op_eq(ln_op *op, char *optype, char *opname)
 #define PARAMS (op->op_arg->params)
 #define ARR(type, varg...) (type[]){varg}
 
+static inline int can_replace(const char *optype)
+{
+    if (ln_streq(optype, "create") ||
+        ln_streq(optype, "conv2d") ||
+        ln_streq(optype, "maxpool2d") ||
+        ln_streq(optype, "maxreduce") ||
+        ln_streq(optype, "maxreduce_arg") ||
+        ln_streq(optype, "relu") ||
+        ln_streq(optype, "sigmoid") ||
+        ln_streq(optype, "reshape") ||
+        ln_streq(optype, "slice") ||
+        ln_streq(optype, "transpose") ||
+        ln_streq(optype, "zeros") ||
+        ln_streq(optype, "elew") ||
+        ln_streq(optype, "softmax") ||
+        ln_streq(optype, "concat") ||
+        ln_streq(optype, "upsample") ||
+        ln_streq(optype, "sort1d") ||
+        ln_streq(optype, "sort1d_by_key") ||
+        ln_streq(optype, "arange") ||
+        ln_streq(optype, "rearange") ||
+        ln_streq(optype, "transform_bboxSQD") ||
+        ln_streq(optype, "pick1d") ||
+        ln_streq(optype, "lrelu") ||
+        ln_streq(optype, "detect_yolov3") ||
+        ln_streq(optype, "print"))
+        return 1;
+    return 0;
+
+    /* for (int i = 0; ops_cuda[i]; i++) { */
+    /*     if (ln_streq(ops_cuda[i]->op_arg->optype, optype)) */
+    /*         return 1; */
+    /* } */
+    /* return 0; */
+}
+
+static ln_list *cb_func_single_replace(const ln_context *ctx,
+                                       const ln_list *ops, size_t size,
+                                       int *match)
+{
+    ln_op *op, *new_op, *op_proto;
+    ln_op_arg *op_arg;
+    ln_list *new_ops;
+    char *optype_cuda;
+    int *replace_flag;
+    size_t i;
+
+    *match = 0;
+    replace_flag = ln_alloc(sizeof(int) * size);
+    i = 0;
+    LN_LIST_FOREACH(op, ops) {
+        if (i >= size)
+            break;
+        if (can_replace(op->op_arg->optype)) {
+            replace_flag[i++] = 1;
+            *match = 1;
+            continue;
+        }
+        replace_flag[i++] = 0;
+    }
+    if (!*match) {
+        ln_free(replace_flag);
+        return NULL;
+    }
+
+    new_ops = NULL;
+    i = 0;
+    LN_LIST_FOREACH(op, ops) {
+        if (i >= size)
+            break;
+        op_arg = op->op_arg;
+        if (!replace_flag[i++]) {
+            new_op = ln_op_copy(op);
+        } else {
+            optype_cuda = ln_alloc(sizeof(char)*(strlen(op_arg->optype)+10));
+            strcpy(optype_cuda, op_arg->optype);
+            strcat(optype_cuda, "_cuda");
+            ln_arch *arch = ln_hash_find(LN_ARCH.arch_table, "cuda");
+            op_proto = ln_op_array_find_by_optype(arch->reg_ops, optype_cuda);
+            assert(op_proto && "optype_cuda not found");
+            new_op = ln_op_create_from_proto(op_proto, op_arg->name,
+                                             ln_tensor_list_copy(op_arg->tensors_in),
+                                             ln_tensor_list_copy(op_arg->tensors_out),
+                                             ln_param_list_copy(op_arg->params),
+                                             op_arg->tensor_table);
+            ln_free(optype_cuda);
+        }
+        new_ops = ln_list_append(new_ops, new_op);
+    }
+
+    ln_free(replace_flag);
+    return new_ops;
+}
+
 /* TODO: test it throughly */
 LN_TEST_START(test_ln_pass_combiner)
 {
@@ -75,10 +169,8 @@ LN_TEST_START(test_ln_pass_combiner)
     ln_op *op;
     ln_param_entry *param_entry;
     char *tensor_name;
-    ln_arch *arch;
 
-    arch = ln_hash_find(LN_ARCH.arch_table, "cuda");
-    ln_pass_combiner(ctx, 3, arch->cb_funcs);
+    ln_pass_combiner(ctx, 3, cb_func_single_replace);
 
     /* create1 */
     op = ln_op_list_find_by_name(ctx->ops, "create1");
@@ -215,10 +307,8 @@ LN_TEST_START(test_ln_pass_mem)
     ln_hash *mem_pools;
     ln_mem_pool *mem_pool_none;
     ln_tensor_entry *te;
-    ln_arch *arch;
 
-    arch = ln_hash_find(LN_ARCH.arch_table, "cuda");
-    ln_pass_combiner(ctx, 3, arch->cb_funcs);
+    ln_pass_combiner(ctx, 3, cb_func_single_replace);
     mem_pools = ln_hash_create(ln_direct_hash, ln_direct_cmp, NULL, mem_pools_free_wrapper);
     mem_pool_none = ln_mem_pool_create(4096, 1);
     ln_hash_insert(mem_pools, (void *)LN_MEM_NONE, mem_pool_none);

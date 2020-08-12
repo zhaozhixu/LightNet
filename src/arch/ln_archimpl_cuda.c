@@ -191,62 +191,48 @@ static ln_list *cb_func_single_replace(const ln_context *ctx,
     return new_ops;
 }
 
-extern ln_list *ln_expander_expander_cuda(const ln_context *ctx, const ln_op *op, int *match);
+extern ln_list *ln_expander_cuda(const ln_context *ctx, const ln_op *op, int *match);
 /* end of declare cuda expanders */
 
-ln_expander_func ep_funcs_cuda[] = {
-    ln_expander_expander_cuda,
-/* end of cuda expanders */
-    NULL
-};
-
-/* end of declare cuda combiners */
-
-ln_combiner_func cb_funcs_cuda[] = {
-    cb_func_single_replace,
-/* end of cuda combiners */
-    NULL
-};
-
-/* end of declare cuda subgraphers */
-
-ln_subgraph_func sg_funcs_cuda[] = {
-/* end of cuda subgraphers */
-    NULL
-};
-
-/* end of declare cuda schedulers */
-
-ln_schedule_func sd_funcs_cuda[] = {
-/* end of cuda schedulers */
-    NULL
-};
-
-extern void ln_expander_init_expander_cuda(void **priv_p);
+extern void ln_expander_init_cuda(void **priv_p);
 /* end of declare cuda init funcs */
 
 static void init_cuda(void **priv_p)
 {
-    ln_expander_init_expander_cuda(priv_p);
+    ln_expander_init_cuda(priv_p);
 /* end of exec cuda init funcs */
 }
 
-extern void ln_expander_cleanup_expander_cuda(void **priv_p);
+extern void ln_expander_cleanup_cuda(void **priv_p);
 /* end of declare cuda cleanup funcs */
 
 static void cleanup_cuda(void **priv_p)
 {
-    ln_expander_cleanup_expander_cuda(priv_p);
+    ln_expander_cleanup_cuda(priv_p);
 /* end of exec cuda cleanup funcs */
 }
 
+static void optimize_cuda (ln_context *ctx, const char *datafile)
+{
+    ln_pass_preprocess(ctx);
+    ln_pass_expander(ctx, ln_expander_cuda);
+    ln_pass_preprocess(ctx);
+    ln_pass_combiner(ctx, 2, cb_func_single_replace);
+
+    /* make ops consistent */
+    ln_op_list_do_post_run(ctx->ops);
+    assert(ln_hash_size(ctx->tensor_table) == 0);
+    ln_op_list_do_pre_run(ctx->ops);
+
+    ln_pass_mem_plan(ctx);
+    /* ln_context_print(ctx, "out_debug.json"); */
+}
+
 ln_arch ln_archimpl_cuda = {
+    .arch_name = "cuda",
+    .priv = NULL,
+    .reg_ops = ops_cuda,
     .init_func = init_cuda,
     .cleanup_func = cleanup_cuda,
-    .reg_ops = ops_cuda,
-    .ep_funcs = ep_funcs_cuda,
-    .cb_funcs = cb_funcs_cuda,
-    .sg_funcs = sg_funcs_cuda,
-    .sd_funcs = sd_funcs_cuda,
-    .arch_name = "cuda",
+    .optimize_func = optimize_cuda,
 };

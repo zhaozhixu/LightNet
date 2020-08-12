@@ -3227,25 +3227,25 @@ static ln_hash_init_entry init_ep_funcs[] = {
 };
 static ln_hash *ep_funcs_hash = NULL;
 
-void ln_expander_init_expander_tensorrt(void **priv_p)
+void ln_expander_init_tensorrt(void **priv_p)
 {
     ep_funcs_hash = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     ln_hash_init(ep_funcs_hash, init_ep_funcs);
 }
 
-void ln_expander_cleanup_expander_tensorrt(void **priv_p)
+void ln_expander_cleanup_tensorrt(void **priv_p)
 {
     ln_hash_free(ep_funcs_hash);
 }
 
-ln_list *ln_expander_expander_tensorrt(const ln_context *ctx, const ln_op *self, int *match)
+ln_list *ln_expander_tensorrt(const ln_context *ctx, const ln_op *self, int *match)
 {
     ln_expander_func  ep_func;
     ln_list          *new_ops;
     void             *value;
 
     if (!ln_hash_find_extended(ep_funcs_hash, self->op_arg->optype, NULL, &value))
-        ln_msg_inter_error("unsupported optype '%s' for expander_tensorrt expander",
+        ln_msg_inter_error("unsupported optype '%s' for tensorrt expander",
                            self->op_arg->optype);
 
     ep_func = value;

@@ -232,24 +232,10 @@ void ln_context_compile(ln_context *ctx, const char *target, const char *datafil
 {
     ln_arch *arch;
 
-    ln_pass_preprocess(ctx);
-    /* ln_context_print(ctx, "out_debug.json"); */
     arch = ln_hash_find(LN_ARCH.arch_table, target);
-    ln_pass_expander(ctx, arch->ep_funcs);
-    ln_pass_preprocess(ctx);
-    ln_pass_combiner(ctx, 2, arch->cb_funcs);
-    ln_pass_subgraph(ctx, arch->sg_funcs);
-    /* ln_context_print(ctx, "out_debug.json"); */
-    ln_pass_schedule(ctx, arch->sd_funcs);
-
-    /* make ops consistent */
-    ln_op_list_do_post_run(ctx->ops);
-    assert(ln_hash_size(ctx->tensor_table) == 0);
-    ln_op_list_do_pre_run(ctx->ops);
-
-    ln_pass_mem_plan(ctx);
-    ln_pass_optimize_with_data(ctx, arch->od_funcs, datafile);
-    /* ln_context_print(ctx, "out_debug.json"); */
+    if (!arch->optimize_func)
+        return;
+    arch->optimize_func(ctx, datafile);
 }
 
 void ln_context_print(const ln_context *ctx, const char *outfile)

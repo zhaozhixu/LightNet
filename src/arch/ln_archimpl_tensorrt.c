@@ -34,64 +34,24 @@ static ln_op *ops_tensorrt[] = {
     NULL
 };
 
-extern ln_list *ln_expander_expander_tensorrt(const ln_context *ctx, const ln_op *op, int *match);
+extern ln_list *ln_expander_tensorrt(const ln_context *ctx, const ln_op *op, int *match);
 /* end of declare tensorrt expanders */
 
-ln_expander_func ep_funcs_tensorrt[] = {
-    ln_expander_expander_tensorrt,
-/* end of tensorrt expanders */
-    NULL
-};
-
-static ln_list *cb_func_tensorrt(const ln_context *ctx,
-                                 const ln_list *win_ops, size_t win_size,
-                                 int *match);
-/* end of declare tensorrt combiners */
-
-ln_combiner_func cb_funcs_tensorrt[] = {
-    cb_func_tensorrt,
-/* end of tensorrt combiners */
-    NULL
-};
-
-/* end of declare tensorrt subgraphers */
-
-ln_subgraph_func sg_funcs_tensorrt[] = {
-/* end of tensorrt subgraphers */
-    NULL
-};
-
-/* end of declare tensorrt schedulers */
-
-ln_schedule_func sd_funcs_tensorrt[] = {
-/* end of tensorrt schedulers */
-    NULL
-};
-
-static ln_list *od_func_tensorrt(const ln_context *ctx);
-/* end of declare tensorrt optdatas */
-
-ln_optdata_func od_funcs_tensorrt[] = {
-    od_func_tensorrt,
-/* end of tensorrt optdatas */
-    NULL
-};
-
-extern void ln_expander_init_expander_tensorrt(void **priv_p);
+extern void ln_expander_init_tensorrt(void **priv_p);
 /* end of declare tensorrt init funcs */
 
 static void init_tensorrt(void **priv_p)
 {
-    ln_expander_init_expander_tensorrt(priv_p);
+    ln_expander_init_tensorrt(priv_p);
 /* end of exec tensorrt init funcs */
 }
 
-extern void ln_expander_cleanup_expander_tensorrt(void **priv_p);
+extern void ln_expander_cleanup_tensorrt(void **priv_p);
 /* end of declare tensorrt cleanup funcs */
 
 static void cleanup_tensorrt(void **priv_p)
 {
-    ln_expander_cleanup_expander_tensorrt(priv_p);
+    ln_expander_cleanup_tensorrt(priv_p);
 /* end of exec tensorrt cleanup funcs */
 }
 
@@ -452,14 +412,28 @@ static ln_list *od_func_tensorrt(const ln_context *ctx)
     return NULL;
 }
 
+static void optimize_tensorrt (ln_context *ctx, const char *datafile)
+{
+    ln_pass_preprocess(ctx);
+    ln_pass_expander(ctx, ln_expander_tensorrt);
+    ln_pass_preprocess(ctx);
+    ln_pass_combiner(ctx, 2, cb_func_tensorrt);
+
+    /* make ops consistent */
+    ln_op_list_do_post_run(ctx->ops);
+    assert(ln_hash_size(ctx->tensor_table) == 0);
+    ln_op_list_do_pre_run(ctx->ops);
+
+    ln_pass_mem_plan(ctx);
+    ln_pass_optimize_with_data(ctx, od_func_tensorrt, datafile);
+    /* ln_context_print(ctx, "out_debug.json"); */
+}
+
 ln_arch ln_archimpl_tensorrt = {
+    .arch_name = "tensorrt",
+    .priv = NULL,
+    .reg_ops = ops_tensorrt,
     .init_func = init_tensorrt,
     .cleanup_func = cleanup_tensorrt,
-    .reg_ops = ops_tensorrt,
-    .ep_funcs = ep_funcs_tensorrt,
-    .cb_funcs = cb_funcs_tensorrt,
-    .sg_funcs = sg_funcs_tensorrt,
-    .sd_funcs = sd_funcs_tensorrt,
-    .od_funcs = od_funcs_tensorrt,
-    .arch_name = "tensorrt",
+    .optimize_func = optimize_tensorrt,
 };

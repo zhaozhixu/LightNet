@@ -65,12 +65,11 @@ void ln_arch_init(void)
 {
     ln_op *op;
     int ret;
-    int i, j;
 
     LN_ARCH.arch_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
     LN_ARCH.op_proto_table = ln_hash_create(ln_str_hash, ln_str_cmp, NULL, NULL);
 
-    for (i = 0; archs[i]; i++) {
+    for (int i = 0; archs[i]; i++) {
         if (archs[i]->init_func)
             archs[i]->init_func(&archs[i]->priv);
         ret = ln_hash_insert(LN_ARCH.arch_table, archs[i]->arch_name, archs[i]);
@@ -78,7 +77,7 @@ void ln_arch_init(void)
             ln_msg_inter_error("duplicated arch name \"%s\"",
                                archs[i]->arch_name);
 
-        for (j = 0; (op = archs[i]->reg_ops[j]); j++) {
+        for (int j = 0; (op = archs[i]->reg_ops[j]); j++) {
             ret = ln_hash_insert(LN_ARCH.op_proto_table, op->op_arg->optype, op);
             if (!ret)
                 ln_msg_inter_error("duplicated optype \"%s\"",
@@ -89,9 +88,7 @@ void ln_arch_init(void)
 
 void ln_arch_cleanup(void)
 {
-    int i;
-
-    for (i = 0; archs[i]; i++) {
+    for (int i = 0; archs[i]; i++) {
         if (archs[i]->cleanup_func)
             archs[i]->cleanup_func(&archs[i]->priv);
     }
