@@ -99,61 +99,47 @@ static ln_op *ops_cpu[] = {
     NULL
 };
 
-extern ln_list *ln_expander_expander_cpu(const ln_context *ctx, const ln_op *op, int *match);
+extern ln_list *ln_expander_cpu(const ln_context *ctx, const ln_op *op, int *match);
 /* end of declare cpu expanders */
 
-ln_expander_func ep_funcs_cpu[] = {
-    ln_expander_expander_cpu,
-/* end of cpu expanders */
-    NULL
-};
-
-/* end of declare cpu combiners */
-
-ln_combiner_func cb_funcs_cpu[] = {
-/* end of cpu combiners */
-    NULL
-};
-
-/* end of declare cpu subgraphers */
-
-ln_subgraph_func sg_funcs_cpu[] = {
-/* end of cpu subgraphers */
-    NULL
-};
-
-/* end of declare cpu schedulers */
-
-ln_schedule_func sd_funcs_cpu[] = {
-/* end of cpu schedulers */
-    NULL
-};
-
-extern void ln_expander_init_expander_cpu(void **priv_p);
+extern void ln_expander_init_cpu(void **priv_p);
 /* end of declare cpu init funcs */
 
 static void init_cpu(void **priv_p)
 {
-    ln_expander_init_expander_cpu(priv_p);
+    ln_expander_init_cpu(priv_p);
 /* end of exec cpu init funcs */
 }
 
-extern void ln_expander_cleanup_expander_cpu(void **priv_p);
+extern void ln_expander_cleanup_cpu(void **priv_p);
 /* end of declare cpu cleanup funcs */
 
 static void cleanup_cpu(void **priv_p)
 {
-    ln_expander_cleanup_expander_cpu(priv_p);
+    ln_expander_cleanup_cpu(priv_p);
 /* end of exec cpu cleanup funcs */
 }
 
+static void optimize_cpu (ln_context *ctx, const char *datafile)
+{
+    ln_pass_preprocess(ctx);
+    ln_pass_expander(ctx, ln_expander_cpu);
+    ln_pass_preprocess(ctx);
+
+    /* make ops consistent */
+    ln_op_list_do_post_run(ctx->ops);
+    assert(ln_hash_size(ctx->tensor_table) == 0);
+    ln_op_list_do_pre_run(ctx->ops);
+
+    ln_pass_mem_plan(ctx);
+    /* ln_context_print(ctx, "out_debug.json"); */
+}
+
 ln_arch ln_archimpl_cpu = {
+    .arch_name = "cpu",
+    .priv = NULL,
+    .reg_ops = ops_cpu,
     .init_func = init_cpu,
     .cleanup_func = cleanup_cpu,
-    .reg_ops = ops_cpu,
-    .ep_funcs = ep_funcs_cpu,
-    .cb_funcs = cb_funcs_cpu,
-    .sg_funcs = sg_funcs_cpu,
-    .sd_funcs = sd_funcs_cpu,
-    .arch_name = "cpu",
+    .optimize_func = optimize_cpu,
 };

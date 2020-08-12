@@ -27,20 +27,27 @@
 #include "ln_hash.h"
 #include "ln_mem.h"
 #include "ln_op.h"
-#include "ln_arch.h"
 #include "ln_context.h"
+
+typedef ln_list *(*ln_expander_func) (const ln_context *ctx, const ln_op *op,
+                                      int *match);
+typedef ln_list *(*ln_combiner_func) (const ln_context *ctx,
+                                      const ln_list *win_ops, size_t win_size,
+                                      int *match);
+typedef ln_list *(*ln_subgraph_func) (const ln_context *ctx, ln_list **old_ops);
+typedef ln_list *(*ln_schedule_func) (const ln_context *ctx);
+typedef ln_list *(*ln_optdata_func) (const ln_context *ctx);
 
 #ifdef __cplusplus
 LN_CPPSTART
 #endif
 
 void ln_pass_preprocess(ln_context *ctx);
-void ln_pass_expander(ln_context *ctx, const ln_expander_func *ep_funcs);
-void ln_pass_combiner(ln_context *ctx, size_t win_size,
-                      const ln_combiner_func *cb_funcs);
-void ln_pass_subgraph(ln_context *ctx, const ln_subgraph_func *sg_funcs);
-void ln_pass_schedule(ln_context *ctx, const ln_schedule_func *sd_funcs);
-void ln_pass_optimize_with_data(ln_context *ctx, const ln_optdata_func *od_funcs,
+void ln_pass_expander(ln_context *ctx, ln_expander_func ep_func);
+void ln_pass_combiner(ln_context *ctx, size_t win_size, ln_combiner_func cb_func);
+void ln_pass_subgraph(ln_context *ctx, ln_subgraph_func sg_func);
+void ln_pass_schedule(ln_context *ctx, ln_schedule_func sd_func);
+void ln_pass_optimize_with_data(ln_context *ctx, ln_optdata_func od_func,
                                 const char *datafile);
 void ln_pass_mem_plan(ln_context *ctx);
 

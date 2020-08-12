@@ -31,12 +31,12 @@
 #include "ln_dfg.h"
 
 struct ln_context {
-    ln_hash *tensor_table;
-    ln_hash *op_table;
-    ln_dfg  *dfg;
-    ln_list *ops;
-    void    *mem_starts[LN_MEM_TYPE_SIZE];
-    size_t   mem_sizes[LN_MEM_TYPE_SIZE];
+    ln_hash     *tensor_table;
+    ln_hash     *op_table;
+    ln_dfg      *dfg;
+    ln_list     *ops;
+    void        *mem_starts[LN_MEM_TYPE_SIZE];
+    size_t       mem_sizes[LN_MEM_TYPE_SIZE];
 };
 typedef struct ln_context ln_context;
 

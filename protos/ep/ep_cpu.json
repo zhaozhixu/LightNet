@@ -1,6 +1,6 @@
 {
     "author": "Zhao Zhixu",
-    "name": "expander_cpu",
+    "name": "cpu",
     "arch": "cpu",
     "ops": [
         {

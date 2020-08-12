@@ -25,27 +25,15 @@
 
 #include "ln_op.h"
 #include "ln_context.h"
-
-typedef ln_list *(*ln_expander_func) (const ln_context *ctx, const ln_op *op,
-                                      int *match);
-typedef ln_list *(*ln_combiner_func) (const ln_context *ctx,
-                                      const ln_list *win_ops, size_t win_size,
-                                      int *match);
-typedef ln_list *(*ln_subgraph_func) (const ln_context *ctx, ln_list **old_ops);
-typedef ln_list *(*ln_schedule_func) (const ln_context *ctx);
-typedef ln_list *(*ln_optdata_func) (const ln_context *ctx);
+#include "ln_pass.h"
 
 struct ln_arch {
-    void              (*init_func)(void **priv_p); /* pointer to priv */
-    void              (*cleanup_func)(void **priv_p);
-    void               *priv;
-    ln_op             **reg_ops;       /* NULL terminated */
-    ln_expander_func   *ep_funcs;      /* NULL terminated */
-    ln_combiner_func   *cb_funcs;      /* NULL terminated */
-    ln_subgraph_func   *sg_funcs;      /* NULL terminated */
-    ln_schedule_func   *sd_funcs;      /* NULL terminated */
-    ln_optdata_func    *od_funcs;      /* NULL terminated */
     char               *arch_name;
+    void               *priv;
+    ln_op             **reg_ops;                 /* NULL terminated */
+    void              (*init_func)(void **priv_p /* pointer to priv */);
+    void              (*cleanup_func)(void **priv_p);
+    void              (*optimize_func)(ln_context *ctx, const char *datafile);
 };
 typedef struct ln_arch ln_arch;
 

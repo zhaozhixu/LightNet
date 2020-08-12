@@ -114,7 +114,7 @@ sub gen_head_block {
     my $author = shift;
     my $file = shift;
     my $head = shift;
-    my $head_code = defined $head ? $head : " ";
+    my $head_code = defined $head ? $head : "";
     my $head_block_tpl = <<EOF;
 /*
  * Copyright (c) 2018-2020 $author
@@ -737,7 +737,6 @@ sub add_to_arch_file {
     my $name = shift;
 
     my $declare = "extern ln_list *ln_expander_${name}(const ln_context *ctx, const ln_op *op, int *match);\n";
-    my $item = "    ln_expander_${name},\n";
     my $init_func = "extern void ln_expander_init_${name}(void **priv_p);\n";
     my $init_func_exec = "    ln_expander_init_${name}(priv_p);\n";
     my $cleanup_func = "extern void ln_expander_cleanup_${name}(void **priv_p);\n";
@@ -751,7 +750,6 @@ sub add_to_arch_file {
         or die "Cannot open ${arch_file}: $!";
 
     my $declared_done = 0;
-    my $item_done = 0;
     my $init_func_done = 0;
     my $init_func_exec_done = 0;
     my $cleanup_func_done = 0;
@@ -760,9 +758,6 @@ sub add_to_arch_file {
         $declared_done = 1 if $_ eq $declare;
         s|/\* end of declare $arch expanders \*/|$declare/* end of declare $arch expanders */|
             unless $declared_done;
-        $item_done = 1 if $_ eq $item;
-        s|/\* end of $arch expanders \*/|$item/* end of $arch expanders */|
-            unless $item_done;
         $init_func_done = 1 if $_ eq $init_func;
         s|/\* end of declare $arch init funcs \*/|$init_func/* end of declare $arch init funcs */|
             unless $init_func_done;

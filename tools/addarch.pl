@@ -70,32 +70,6 @@ static ln_op *ops_${arch}[] = {
 
 /* end of declare ${arch} expanders */
 
-ln_expander_func ep_funcs_${arch}[] = {
-/* end of ${arch} expanders */
-    NULL
-};
-
-/* end of declare ${arch} combiners */
-
-ln_combiner_func cb_funcs_${arch}[] = {
-/* end of ${arch} combiners */
-    NULL
-};
-
-/* end of declare ${arch} subgraphers */
-
-ln_subgraph_func sg_funcs_${arch}[] = {
-/* end of ${arch} subgraphers */
-    NULL
-};
-
-/* end of declare ${arch} schedulers */
-
-ln_schedule_func sd_funcs_${arch}[] = {
-/* end of ${arch} schedulers */
-    NULL
-};
-
 /* end of declare ${arch} init funcs */
 
 static void init_${arch}(void **priv_p)
@@ -110,15 +84,17 @@ static void cleanup_${arch}(void **priv_p)
 /* end of exec ${arch} cleanup funcs */
 }
 
+static void optimize_${arch} (ln_context *ctx, const char *datafile)
+{
+}
+
 ln_arch ln_archimpl_${arch} = {
+    .arch_name = "${arch}",
+    .priv = NULL,
+    .reg_ops = ops_${arch},
     .init_func = init_${arch},
     .cleanup_func = cleanup_${arch},
-    .reg_ops = ops_${arch},
-    .ep_funcs = ep_funcs_${arch},
-    .cb_funcs = cb_funcs_${arch},
-    .sg_funcs = sg_funcs_${arch},
-    .sd_funcs = sd_funcs_${arch},
-    .arch_name = "${arch}",
+    .optimize_func = optimize_${arch},
 };
 EOF
 

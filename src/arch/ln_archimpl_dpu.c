@@ -44,34 +44,12 @@ static ln_op *ops_dpu[] = {
 ln_list *ln_expander_dpu(const ln_context *ctx, const ln_op *self, int *match);
 /* end of declare dpu expanders */
 
-ln_expander_func ep_funcs_dpu[] = {
-/* end of dpu expanders */
-    NULL
-};
-
-/* end of declare dpu combiners */
-
-ln_combiner_func cb_funcs_dpu[] = {
-/* end of dpu combiners */
-    NULL
-};
-
 ln_list *ln_subgrapher_dpu(const ln_list *ops, const ln_dfg *dfg,
                            ln_list **old_ops);
 /* end of declare dpu subgraphers */
 
-ln_subgraph_func sg_funcs_dpu[] = {
-/* end of dpu subgraphers */
-    NULL
-};
-
 ln_list *ln_scheduler_dpu(const ln_dfg *dfg);
 /* end of declare dpu schedulers */
-
-ln_schedule_func sd_funcs_dpu[] = {
-/* end of dpu schedulers */
-    NULL
-};
 
 /* end of declare dpu init funcs */
 
@@ -183,13 +161,29 @@ ln_list *ln_scheduler_dpu(const ln_dfg *dfg)
     return ops;
 }
 
+static void optimize_dpu (ln_context *ctx, const char *datafile)
+{
+    ln_pass_preprocess(ctx);
+    ln_pass_expander(ctx, ln_expander_dpu);
+    ln_pass_preprocess(ctx);
+    /* ln_pass_combiner(ctx, 2, cb_func_dpu); */
+    ln_pass_subgraph(ctx, ln_subgrapher_dpu);
+    /* ln_pass_schedule(ctx, ln_scheduler_dpu); */
+
+    /* make ops consistent */
+    ln_op_list_do_post_run(ctx->ops);
+    assert(ln_hash_size(ctx->tensor_table) == 0);
+    ln_op_list_do_pre_run(ctx->ops);
+
+    ln_pass_mem_plan(ctx);
+    /* ln_context_print(ctx, "out_debug.json"); */
+}
+
 ln_arch ln_archimpl_dpu = {
+    .arch_name = "dpu",
+    .priv = NULL,
+    .reg_ops = ops_dpu,
     .init_func = init_dpu,
     .cleanup_func = cleanup_dpu,
-    .reg_ops = ops_dpu,
-    .ep_funcs = ep_funcs_dpu,
-    .cb_funcs = cb_funcs_dpu,
-    .sg_funcs = sg_funcs_dpu,
-    .sd_funcs = sd_funcs_dpu,
-    .arch_name = "dpu",
+    .optimize_func = optimize_dpu,
 };
