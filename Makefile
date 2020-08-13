@@ -21,7 +21,7 @@ BIN_MMM = $(BIN).$(MAJOR).$(MINOR).$(MICRO)
 OBJ_A = $(BUILD_SRC_DIR)/$(LIBTARGET_A)
 OBJ_SO = $(BUILD_SRC_DIR)/$(LIBTARGET_SO)
 OBJ_BIN = $(BUILD_SRC_DIR)/$(BIN)
-SRC_HEADERS = $(wildcard $(SRC_DIR)/ln_*.h)
+EXPORT_HEADERS = $(SRC_DIR)/ln_option.h $(SRC_DIR)/ln_msg.h $(SRC_DIR)/ln_util_common.h
 
 BUILD_INCLUDE_DIR = $(BUILD_DIR)/include/$(TARGET)
 BUILD_LIB_DIR = $(BUILD_DIR)/lib
@@ -122,16 +122,16 @@ $(AT)perl tools/addconfig.pl $(CONFIG_SRC) $(CONFIG_DST) -d $(CONFIG_DEFINES) -i
 endef
 
 define make-lib
-$(AT)cp $(SRC_HEADERS) $(BUILD_INCLUDE_DIR)
+$(AT)cp $(EXPORT_HEADERS) $(BUILD_INCLUDE_DIR)
 $(AT)cp $(OBJ_A) $(BUILD_A)
 $(AT)cp $(OBJ_SO) $(BUILD_SO_MMM)
-$(AT)ln -sf $(BUILD_SO_MMM) $(BUILD_SO_MM)
-$(AT)ln -sf $(BUILD_SO_MMM) $(BUILD_SO)
+$(AT)ln -sf $(LIBTARGET_SO_MMM) $(BUILD_SO_MM)
+$(AT)ln -sf $(LIBTARGET_SO_MMM) $(BUILD_SO)
 endef
 
 define make-bin
 $(AT)cp $(OBJ_BIN) $(BUILD_BIN_MMM)
-$(AT)ln -sf $(BUILD_BIN_MMM) $(BUILD_BIN)
+$(AT)ln -sf $(BIN_MMM) $(BUILD_BIN)
 $(AT)# TODO: orgnize tools
 $(AT)cp tools/il2json $(BUILD_BIN_DIR)/il2json
 endef

@@ -23,7 +23,6 @@
 #ifndef _LN_MSG_H_
 #define _LN_MSG_H_
 
-#include "ln_hash.h"
 #include "ln_option.h"
 
 /* LN_MSG_ERROR should always be 0 */
@@ -54,13 +53,13 @@ typedef struct ln_msg ln_msg;
         ln_msg_handle(&err);                                    \
     } while (0)
 
-#define ln_msg_emit_once(hash, key, level, fmt, varg...)        \
-    do {                                                        \
-        if (!ln_hash_find((hash), (key))) {                     \
-            ln_hash_insert((hash), (key), (void *)1);           \
-            ln_msg_emit((level), (fmt), ##varg);                \
-        }                                                       \
-    } while (0)
+/* #define ln_msg_emit_once(hash, key, level, fmt, varg...)        \ */
+/*     do {                                                        \ */
+/*         if (!ln_hash_find((hash), (key))) {                     \ */
+/*             ln_hash_insert((hash), (key), (void *)1);           \ */
+/*             ln_msg_emit((level), (fmt), ##varg);                \ */
+/*         }                                                       \ */
+/*     } while (0) */
 
 #define ln_msg_error(fmt, varg...)              \
     ln_msg_emit(LN_MSG_ERROR, (fmt), ##varg)

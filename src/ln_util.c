@@ -33,7 +33,7 @@
 
 #include "ln_util.h"
 
-void *ln_alloc(size_t size)
+LN_EXPORT void *ln_alloc(size_t size)
 {
     void *p;
 
@@ -45,7 +45,7 @@ void *ln_alloc(size_t size)
     return p;
 }
 
-void *ln_realloc(void *ptr, size_t size)
+LN_EXPORT void *ln_realloc(void *ptr, size_t size)
 {
     void *p;
 
@@ -57,7 +57,7 @@ void *ln_realloc(void *ptr, size_t size)
     return p;
 }
 
-char *ln_strdup(const char *s)
+LN_EXPORT char *ln_strdup(const char *s)
 {
     char *new_s;
 
@@ -68,6 +68,45 @@ char *ln_strdup(const char *s)
     }
 
     return new_s;
+}
+
+LN_EXPORT double ln_clock(void)
+{
+    struct timespec ts;
+    double time;
+
+    if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
+        err(EXIT_FAILURE, "ln_clock(): clock_gettime() failed");
+    time = ts.tv_sec + ts.tv_nsec * 1e-9;
+
+    return time;
+}
+
+LN_EXPORT int ln_streq(const char *s1, const char *s2)
+{
+    return !!!strcmp(s1, s2);
+}
+
+LN_EXPORT int ln_streqn(const char *s1, const char *s2, size_t n)
+{
+    return !!!strncmp(s1, s2, n);
+}
+
+LN_EXPORT int ln_subfixed(const char *s, const char *subfix)
+{
+    if (!s || !subfix)
+        return 0;
+
+    const char *sp = s;
+    const char *sfp = subfix;
+
+    while (*sp++);
+    while (*sfp++);
+    while (*--sp == *--sfp && sp != s && sfp != subfix);
+
+    if (*sp == *sfp && sfp == subfix)
+        return 1;
+    return 0;
 }
 
 char **ln_strarraydup(char *const *sa, int len)
@@ -199,33 +238,6 @@ char *ln_strcat_delim_alloc(const char *s1, const char *s2, char delim)
     dst[s1_len+1] = '\0';
     strcat(dst, s2);
     return dst;
-}
-
-int ln_streq(const char *s1, const char *s2)
-{
-    return !!!strcmp(s1, s2);
-}
-
-int ln_streqn(const char *s1, const char *s2, size_t n)
-{
-    return !!!strncmp(s1, s2, n);
-}
-
-int ln_subfixed(const char *s, const char *subfix)
-{
-    if (!s || !subfix)
-        return 0;
-
-    const char *sp = s;
-    const char *sfp = subfix;
-
-    while (*sp++);
-    while (*sfp++);
-    while (*--sp == *--sfp && sp != s && sfp != subfix);
-
-    if (*sp == *sfp && sfp == subfix)
-        return 1;
-    return 0;
 }
 
 int ln_is_prefix_plus_digit(const char *str, const char *prefix)
@@ -394,18 +406,6 @@ uint32_t ln_str_hash(const void *key)
 int ln_str_cmp(const void *p1, const void *p2)
 {
     return strcmp(p1, p2);
-}
-
-double ln_clock(void)
-{
-    struct timespec ts;
-    double time;
-
-    if (clock_gettime(CLOCK_REALTIME, &ts) == -1)
-        err(EXIT_FAILURE, "ln_clock(): clock_gettime() failed");
-    time = ts.tv_sec + ts.tv_nsec * 1e-9;
-
-    return time;
 }
 
 void ln_img_submean(const unsigned char *data, const float *mean, float *out,

@@ -20,45 +20,33 @@
  * SOFTWARE.
  */
 
-#ifndef _LN_LIGHTNET_H_
-#define _LN_LIGHTNET_H_
+#ifndef _LN_UTIL_COMMON_H_
+#define _LN_UTIL_COMMON_H_
 
-/* start of config */
-/* end of config */
+#include <stdlib.h>
 
-#include <stdio.h>
+#define ln_free free
 
-#include "ln_util_common.h"
-#include "ln_option.h"
-#include "ln_msg.h"
-
-struct ln_context;
-typedef struct ln_context ln_context;
+#define LN_TIMEIT_START { double _t1, _t2; _t1 = ln_clock();
+#define LN_TIMEIT_END(duration)                         \
+    _t2 = ln_clock(); *(duration) = _t2 - _t1; }
 
 #ifdef __cplusplus
+#define LN_CPPSTART extern "C" {
+#define LN_CPPEND }
 LN_CPPSTART
 #endif
 
-void ln_arch_init(void);
-void ln_arch_cleanup(void);
-
-ln_context *ln_context_create(void);
-void ln_context_free(ln_context *ctx);
-void ln_context_init(ln_context *ctx, const char *source);
-void ln_context_compile(ln_context *ctx, const char *target, const char *datafile);
-void ln_context_print(const ln_context *ctx, const char *outfile);
-void ln_context_load(ln_context *ctx, const char *datafile);
-void ln_context_set_data(ln_context *ctx, const char *tname, const void *data);
-void *ln_context_get_data(ln_context *ctx, const char *tname, void *data);
-size_t ln_context_data_size(ln_context *ctx, const char *tname);
-void ln_context_set_param(ln_context *ctx, const char *opname,
-                          const char *pname, ...);
-void ln_context_run(const ln_context *ctx);
-void ln_context_unload(ln_context *ctx);
-void ln_context_cleanup(ln_context *ctx);
+void *ln_alloc(size_t size);
+void *ln_realloc(void *ptr, size_t size);
+char *ln_strdup(const char *s);
+double ln_clock(void);
+int ln_streq(const char *s1, const char *s2);
+int ln_streqn(const char *s1, const char *s2, size_t n);
+int ln_subfixed(const char *s, const char *subfix);
 
 #ifdef __cplusplus
 LN_CPPEND
 #endif
 
-#endif  /* _LN_LIGHTNET_H_ */
+#endif	/* _LN_UTIL_COMMON_H__ */
