@@ -25,7 +25,7 @@
 #include "ln_json.h"
 #include "ln_pass.h"
 
-ln_context *ln_context_create(void)
+LN_EXPORT ln_context *ln_context_create(void)
 {
     ln_context *ctx;
 
@@ -40,13 +40,88 @@ ln_context *ln_context_create(void)
     return ctx;
 }
 
-void ln_context_free(ln_context *ctx)
+LN_EXPORT void ln_context_free(ln_context *ctx)
 {
     ln_tensor_table_free(ctx->tensor_table);
     ln_op_table_free(ctx->op_table);
     ln_dfg_free(ctx->dfg);
     ln_op_list_free(ctx->ops);
     ln_free(ctx);
+}
+
+
+LN_EXPORT void ln_context_init(ln_context *ctx, const char *source)
+{
+    ln_json_parse_file(source, ctx);
+    ln_context_init_ops(ctx);
+}
+
+LN_EXPORT void ln_context_compile(ln_context *ctx, const char *target, const char *datafile)
+{
+    ln_arch *arch;
+
+    arch = ln_hash_find(LN_ARCH.arch_table, target);
+    if (!arch->optimize_func)
+        return;
+    arch->optimize_func(ctx, datafile);
+}
+
+LN_EXPORT void ln_context_print(const ln_context *ctx, const char *outfile)
+{
+    if (ln_streq(outfile, "-"))
+        ln_json_fprint(stdout, ctx);
+    else
+        ln_json_print_file(outfile, ctx);
+}
+
+LN_EXPORT void ln_context_load(ln_context *ctx, const char *datafile)
+{
+    ln_context_alloc_mem(ctx);
+    if (datafile)
+        ln_tensor_table_load_trt_weight_file(ctx->tensor_table, datafile);
+    ln_op_list_do_static_run(ctx->ops);
+}
+
+LN_EXPORT void ln_context_set_data(ln_context *ctx, const char *tname, const void *data)
+{
+    ln_tensor_table_set_data(ctx->tensor_table, tname, data);
+}
+
+LN_EXPORT void *ln_context_get_data(ln_context *ctx, const char *tname, void *data)
+{
+    return ln_tensor_table_get_data(ctx->tensor_table, tname, data);
+}
+
+LN_EXPORT size_t ln_context_data_size(ln_context *ctx, const char *tname)
+{
+    return ln_tensor_table_data_size(ctx->tensor_table, tname);
+}
+
+LN_EXPORT void ln_context_set_param(ln_context *ctx, const char *opname,
+                          const char *pname, ...)
+{
+    va_list ap;
+
+    va_start(ap, pname);
+    ln_op_table_vset_param(ctx->op_table, opname, pname, ap);
+    va_end(ap);
+}
+
+LN_EXPORT void ln_context_run(const ln_context *ctx)
+{
+    /* LN_TIMEIT_START; */
+    ln_op_list_do_run(ctx->ops);
+    /* LN_TIMEIT_END("time of ln_context_run(): "); */
+}
+
+LN_EXPORT void ln_context_unload(ln_context *ctx)
+{
+    ln_context_dealloc_mem(ctx);
+}
+
+LN_EXPORT void ln_context_cleanup(ln_context *ctx)
+{
+    ln_context_cleanup_ops(ctx);
 }
 
 static void init_op(ln_context *ctx, ln_op *op)
@@ -220,78 +295,4 @@ void ln_context_dealloc_mem(ln_context *ctx)
         ln_mem_type_info(i).free_func(ctx->mem_starts[i]);
         ctx->mem_starts[i] = 0;
     }
-}
-
-void ln_context_init(ln_context *ctx, const char *source)
-{
-    ln_json_parse_file(source, ctx);
-    ln_context_init_ops(ctx);
-}
-
-void ln_context_compile(ln_context *ctx, const char *target, const char *datafile)
-{
-    ln_arch *arch;
-
-    arch = ln_hash_find(LN_ARCH.arch_table, target);
-    if (!arch->optimize_func)
-        return;
-    arch->optimize_func(ctx, datafile);
-}
-
-void ln_context_print(const ln_context *ctx, const char *outfile)
-{
-    if (ln_streq(outfile, "-"))
-        ln_json_fprint(stdout, ctx);
-    else
-        ln_json_print_file(outfile, ctx);
-}
-
-void ln_context_load(ln_context *ctx, const char *datafile)
-{
-    ln_context_alloc_mem(ctx);
-    if (datafile)
-        ln_tensor_table_load_trt_weight_file(ctx->tensor_table, datafile);
-    ln_op_list_do_static_run(ctx->ops);
-}
-
-void ln_context_set_data(ln_context *ctx, const char *tname, const void *data)
-{
-    ln_tensor_table_set_data(ctx->tensor_table, tname, data);
-}
-
-void *ln_context_get_data(ln_context *ctx, const char *tname, void *data)
-{
-    return ln_tensor_table_get_data(ctx->tensor_table, tname, data);
-}
-
-size_t ln_context_data_size(ln_context *ctx, const char *tname)
-{
-    return ln_tensor_table_data_size(ctx->tensor_table, tname);
-}
-
-void ln_context_set_param(ln_context *ctx, const char *opname,
-                          const char *pname, ...)
-{
-    va_list ap;
-
-    va_start(ap, pname);
-    ln_op_table_vset_param(ctx->op_table, opname, pname, ap);
-    va_end(ap);
-}
-
-void ln_context_run(const ln_context *ctx)
-{
-    /* LN_TIMEIT_START; */
-    ln_op_list_do_run(ctx->ops);
-    /* LN_TIMEIT_END("time of ln_context_run(): "); */
-}
-
-void ln_context_unload(ln_context *ctx)
-{
-    ln_context_dealloc_mem(ctx);
-}
-
-void ln_context_cleanup(ln_context *ctx)
-{
-    ln_context_cleanup_ops(ctx);
 }

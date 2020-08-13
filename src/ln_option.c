@@ -20,11 +20,13 @@
  * SOFTWARE.
  */
 
+#include <stdlib.h>
 #include <getopt.h>
 #include "ln_option.h"
+#include "ln_util.h"
 #include "lightnet.h"
 
-void ln_option_sprint_version(char *version_str)
+LN_EXPORT void ln_option_sprint_version(char *version_str)
 {
     snprintf(version_str, 20, "%d.%d.%d",
              LN_MAJOR_VERSION, LN_MINOR_VERSION, LN_MICRO_VERSION);
@@ -73,7 +75,7 @@ Options:\n\
     exit(EXIT_SUCCESS);
 }
 
-ln_option *ln_option_create(int argc, char **argv)
+LN_EXPORT ln_option *ln_option_create(int argc, char **argv)
 {
     int opt;
     int optindex;
@@ -175,53 +177,53 @@ ln_option *ln_option_create(int argc, char **argv)
     return option;
 }
 
-void ln_option_free(ln_option *option)
+LN_EXPORT void ln_option_free(ln_option *option)
 {
     ln_strarray_free(option->argv, option->argc);
     ln_free(option);
 }
 
-const char *ln_option_get_source(ln_option *option)
+LN_EXPORT const char *ln_option_get_source(ln_option *option)
 {
     return option->source;
 }
 
-const char *ln_option_get_outfile(ln_option *option)
+LN_EXPORT const char *ln_option_get_outfile(ln_option *option)
 {
     return option->outfile;
 }
 
-const char *ln_option_get_target(ln_option *option)
+LN_EXPORT const char *ln_option_get_target(ln_option *option)
 {
     return option->target;
 }
 
-const char *ln_option_get_datafile(ln_option *option)
+LN_EXPORT const char *ln_option_get_datafile(ln_option *option)
 {
     return option->datafile;
 }
 
-int ln_option_get_compile(ln_option *option)
+LN_EXPORT int ln_option_get_compile(ln_option *option)
 {
     return option->compile;
 }
 
-int ln_option_get_run(ln_option *option)
+LN_EXPORT int ln_option_get_run(ln_option *option)
 {
     return option->run;
 }
 
-int ln_option_get_Winter(ln_option *option)
+LN_EXPORT int ln_option_get_Winter(ln_option *option)
 {
     return option->Winter;
 }
 
-int ln_option_get_Wwarn(ln_option *option)
+LN_EXPORT int ln_option_get_Wwarn(ln_option *option)
 {
     return option->Wwarn;
 }
 
-int ln_option_get_debug(ln_option *option)
+LN_EXPORT int ln_option_get_debug(ln_option *option)
 {
     return option->debug;
 }

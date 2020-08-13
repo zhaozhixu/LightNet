@@ -40,7 +40,7 @@
 
 static int32_t disp_mask = 0;
 
-void ln_msg_init(ln_option *option)
+LN_EXPORT void ln_msg_init(ln_option *option)
 {
     if (option->Wwarn) {
         disp_mask |= 1 << LN_MSG_WARN;
@@ -55,12 +55,12 @@ void ln_msg_init(ln_option *option)
     }
 }
 
-void ln_msg_cleanup(void)
+LN_EXPORT void ln_msg_cleanup(void)
 {
     disp_mask = 0;
 }
 
-ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
+LN_EXPORT ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
 {
     ln_msg *msg;
     va_list ap;
@@ -84,13 +84,13 @@ ln_msg *ln_msg_create(ln_msg_level level, const char *fmt, ...)
     return msg;
 }
 
-void ln_msg_free(ln_msg *msg)
+LN_EXPORT void ln_msg_free(ln_msg *msg)
 {
     ln_free(msg->err_str);
     ln_free(msg);
 }
 
-void ln_msg_handle(ln_msg **msg)
+LN_EXPORT void ln_msg_handle(ln_msg **msg)
 {
     if (!*msg)
         return;

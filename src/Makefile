@@ -8,9 +8,9 @@ LIBTARGET_SO = lib$(TARGET).so
 
 BUILD_DIR := ../$(BUILD_DIR)
 INCPATHS += -Iarch -Iop -I$(BUILD_DIR)/include/$(TARGET)
-CFLAGS += -fPIC
-CXXFLAGS += -fPIC
-CUFLAGS += --compiler-options '-fPIC' --linker-options '-Wl,--no-undefined -shared' -shared
+CFLAGS += -fPIC -fvisibility=hidden
+CXXFLAGS += -fPIC -fvisibility=hidden
+CUFLAGS += --compiler-options '-fPIC -fvisibility=hidden' --linker-options '-Wl,--no-undefined -shared' -shared
 LDFLAGS_SO = $(LDFLAGS) -shared -Wl,--no-undefined
 
 SRC = $(wildcard *.c)

@@ -61,7 +61,7 @@ static ln_arch *archs[] = {
 
 ln_arch_info ln_global_arch_info;
 
-void ln_arch_init(void)
+LN_EXPORT void ln_arch_init(void)
 {
     ln_op *op;
     int ret;
@@ -86,7 +86,7 @@ void ln_arch_init(void)
     }
 }
 
-void ln_arch_cleanup(void)
+LN_EXPORT void ln_arch_cleanup(void)
 {
     for (int i = 0; archs[i]; i++) {
         if (archs[i]->cleanup_func)
