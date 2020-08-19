@@ -46,20 +46,20 @@ my $INDENT_OFFSET = 4;
 my $root = '';
 my $dir = '';
 GetOptions(
-           'help' => sub {&exit_msg(0, $usage)},
+           'help' => sub {exit_msg(0, $usage)},
            'dir=s' => \$dir,
            'root=s' => \$root,
-          ) or &exit_msg(1, $usage);
+          ) or exit_msg(1, $usage);
 
 my @json_files = @ARGV;
 if (@json_files == 0) {
     my $json_text = join '', <STDIN>;
-    my $json = &read_json_text($json_text);
-    &gen_code($json);
+    my $json = read_json_text($json_text);
+    gen_code($json);
 } else {
     foreach my $file (@json_files) {
-        my $json = &read_json($file);
-        &gen_code($json, $file);
+        my $json = read_json($file);
+        gen_code($json, $file);
     }
 }
 
@@ -67,10 +67,10 @@ sub gen_code {
     my $json = shift;
     my $file = shift;
 
-    &err_exit("JSON needs an 'arch'") unless exists $json->{arch};
-    &err_exit("JSON needs an 'name'") unless exists $json->{name};
-    &err_exit("JSON needs an 'author'") unless exists $json->{author};
-    &err_exit("JSON needs an 'ops'") unless exists $json->{ops};
+    err_exit("JSON needs an 'arch'") unless exists $json->{arch};
+    err_exit("JSON needs an 'name'") unless exists $json->{name};
+    err_exit("JSON needs an 'author'") unless exists $json->{author};
+    err_exit("JSON needs an 'ops'") unless exists $json->{ops};
     my $author = $json->{author};
     my $arch = $json->{arch};
     my $name = $json->{name};
@@ -78,35 +78,35 @@ sub gen_code {
     my $ops = $json->{ops};
 
     my @blocks = ();
-    push @blocks, &gen_head_block($author, $file, $head);
+    push @blocks, gen_head_block($author, $file, $head);
     my @ep_funcs = ();
     foreach my $op (@$ops) {
-        push @blocks, &gen_expander($op, \@ep_funcs);
+        push @blocks, gen_expander($op, \@ep_funcs);
     }
-    push @blocks, &gen_ep_funcs(\@ep_funcs);
-    push @blocks, &gen_overall_funcs($name);
+    push @blocks, gen_ep_funcs(\@ep_funcs);
+    push @blocks, gen_overall_funcs($name);
 
     my $c_code_str = join "\n", @blocks;
     if (not $dir and not $root) {
         print $c_code_str;
     }
     if ($dir) {
-        unless (-d $dir) {
+        if (not -d $dir) {
             make_path($dir, {mode => 0755})
                 or die "Cannot create directory $dir: $!";
         }
         my $dir_file = "${dir}/ln_expander_${name}.c";
-        &backup_write($dir_file, $c_code_str);
+        backup_write($dir_file, $c_code_str);
     }
     if ($root) {
-        unless (-d "${root}/src/arch/auto") {
+        if (not -d "${root}/src/arch/auto") {
             make_path("${root}/src/arch/auto", {mode => 0755})
                 or die "Cannot create directory ${root}/src/arch/auto: $!";
         }
         my $src_file = "${root}/src/arch/auto/ln_expander_${name}.c";
-        &backup_write($src_file, $c_code_str);
+        backup_write($src_file, $c_code_str);
         my $arch_file = "${root}/src/arch/ln_archimpl_${arch}.c";
-        &add_to_arch_file($arch_file, $arch, $name);
+        add_to_arch_file($arch_file, $arch, $name);
     }
 }
 
@@ -152,19 +152,19 @@ EOF
 sub gen_expander {
     my $op = shift;
     my $ep_funcs = shift;
-    &err_exit("needs a 'optype'") unless exists $op->{optype};
+    err_exit("needs a 'optype'") unless exists $op->{optype};
     my $optype = $op->{optype};
-    &err_exit("'${optype}' needs a 'rules'") unless exists $op->{rules};
+    err_exit("'${optype}' needs a 'rules'") unless exists $op->{rules};
     my $rules = $op->{rules};
 
     my @auto_vars = ();
     my @rules_codes;
     my $found_default = 0;
     foreach my $rule (@$rules) {
-        &err_exit("needs a 'cond'") unless exists $rule->{cond};
+        err_exit("needs a 'cond'") unless exists $rule->{cond};
         $found_default = 1 if @{$rule->{cond}} == 0;
         my %defined_ops = (self => $optype);
-        my $cond_code = &gen_cond($rule->{cond}, \%defined_ops);
+        my $cond_code = gen_cond($rule->{cond}, \%defined_ops);
 
         my @new_op_codes;
         my @body_codes;
@@ -179,7 +179,7 @@ sub gen_expander {
                     $defined_ops{$name} = $type;
                 }
             }
-            push @body_codes, &gen_replace($rule->{replace}, $rule->{details},
+            push @body_codes, gen_replace($rule->{replace}, $rule->{details},
                                            \@auto_vars, \%defined_ops);
         } elsif (exists $rule->{err}) {
             push @body_codes, <<EOF;
@@ -189,12 +189,12 @@ EOF
         } elsif (exists $rule->{match} and not $rule->{match}) {
             push @body_codes, "*match = 0;\nreturn NULL;";
         } else {
-            &err_exit("optype '$optype' needs a 'replace' or 'match' or 'err'");
+            err_exit("optype '$optype' needs a 'replace' or 'match' or 'err'");
         }
 
         my $body_code = join "\n", @body_codes;
-        $body_code = &gen_custom($rule, $body_code);
-        $body_code = &indent_block($INDENT_OFFSET, $body_code);
+        $body_code = gen_custom($rule, $body_code);
+        $body_code = indent_block($INDENT_OFFSET, $body_code);
         if ($rule == $rules->[0]) {
             push @rules_codes, <<EOF;
 if ($cond_code) {
@@ -209,14 +209,14 @@ $body_code
 EOF
         }
     }
-    &warn_msg("default conditions (\"cond\": []) not found in optype '$optype'")
+    warn_msg("default conditions (\"cond\": []) not found in optype '$optype'")
         unless $found_default;
 
-    &make_defs_neat(\@auto_vars);
-    my $auto_vars_code = join "\n", &indent_lines($INDENT_OFFSET, \@auto_vars);
+    make_defs_neat(\@auto_vars);
+    my $auto_vars_code = join "\n", indent_lines($INDENT_OFFSET, \@auto_vars);
     my $rules_code = join "\n", @rules_codes;
-    $rules_code = &gen_custom($op, $rules_code);
-    $rules_code = &indent_block($INDENT_OFFSET, $rules_code);
+    $rules_code = gen_custom($op, $rules_code);
+    $rules_code = indent_block($INDENT_OFFSET, $rules_code);
 
     push @$ep_funcs, "{\"$optype\", ep_$optype},";
     my $tpl = <<EOF;
@@ -240,9 +240,9 @@ sub gen_cond {
     my @conds_replaced;
     foreach my $cond (@$conds) {
         my @sub_conds = split /&&|\|\|/, $cond;
-        $cond = &do_rh($cond, $defined_ops);
+        $cond = do_rh($cond, $defined_ops);
         while ($cond =~ /($symbol_p)\s*(=>)\s*($symbol_p)?/g) {
-            $cond_code = (&expand_op_str($&, $defined_ops))[1];
+            $cond_code = (expand_op_str($&, $defined_ops))[1];
             my $pos_bak = pos($cond);
             substr($cond, pos($cond)-length($&), length($&)) = $cond_code;
             pos($cond) = $pos_bak-length($&)+length($cond_code);
@@ -251,20 +251,20 @@ sub gen_cond {
             my $operator = $3;
             my $lhs = $2;
             my $rhs = $4;
-            my ($l_type, $l_code, $l_len) = &expand_op_str($lhs, $defined_ops);
-            my ($r_type, $r_code, $r_len) = &expand_op_str($rhs, $defined_ops);
-            my $type = &type_converse($l_type, $r_type);
+            my ($l_type, $l_code, $l_len) = expand_op_str($lhs, $defined_ops);
+            my ($r_type, $r_code, $r_len) = expand_op_str($rhs, $defined_ops);
+            my $type = type_converse($l_type, $r_type);
             if (not defined $type) {
-                &warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
+                warn_msg("both operands' types are undefined in '$1', using literal string '$1'");
                 $cond_code = $1;
                 next;
             } elsif (not $type) {
-                &err_exit("unmatched type '$l_type' and '$r_type' in '$1'");
+                err_exit("unmatched type '$l_type' and '$r_type' in '$1'");
             }
 
-            &err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
+            err_exit("unmatched operand lengths '$l_len' and '$r_len' in '$1'")
                 if ((defined $l_len or defined $r_len) and $l_len != $r_len);
-            $cond_code = &gen_comparator($operator, $l_code, $r_code, $type, $l_len);
+            $cond_code = gen_comparator($operator, $l_code, $r_code, $type, $l_len);
             my $pos_bak = pos($cond);
             substr($cond, pos($cond)-length($&), length($&)) = $cond_code;
             pos($cond) = $pos_bak-length($&)+length($cond_code);
@@ -323,12 +323,12 @@ EOF
                 default {
                     # $code = "($lhs $op $rhs)";
                     $code = "$lhs $op $rhs";
-                    &warn_msg("'$type' uses default comparator '$code'");
+                    warn_msg("'$type' uses default comparator '$code'");
                 }
             }
         }
         default {
-            &err_exit("'$op' is not a comparator operator");
+            err_exit("'$op' is not a comparator operator");
         }
     }
     $code;
@@ -341,7 +341,7 @@ sub gen_replace {
     my $defined_ops = shift;
 
     my $optype = $defined_ops->{self};
-    my $desc = &find_op_desc($optype);
+    my $desc = find_op_desc($optype);
     my $code;
 
     if (@$replace == 0) {
@@ -350,10 +350,10 @@ sub gen_replace {
     }
 
     if (not defined $details) {
-        &err_exit("need a 'details' to replace with multiple operators")
+        err_exit("need a 'details' to replace with multiple operators")
             if (@$replace > 1);
         my $rep_optype = (split ' ', $replace->[0])[0];
-        my $rep_desc = &find_op_desc($rep_optype);
+        my $rep_desc = find_op_desc($rep_optype);
         # TODO: check validation
         $code = <<EOF;
 ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
@@ -371,7 +371,7 @@ EOF
     push @blocks, "";
     foreach (@$replace) {
         my ($type, $name) = split;
-        &err_exit("replace details needs a list of new op types and names: '$_'")
+        err_exit("replace details needs a list of new op types and names: '$_'")
             if not defined $type or not defined $name;
         my $create_op = <<EOF;
 op_proto = ln_hash_find(LN_ARCH.op_proto_table, "$type");
@@ -381,16 +381,16 @@ new_ops = ln_list_append(new_ops, $name);
 EOF
         push @blocks, $create_op;
     }
-    &check_details($details);
+    check_details($details);
     foreach my $detail (@$details) {
-        $detail = &do_con($detail, $auto_vars);
-        $detail = &do_rh($detail, $defined_ops);
+        $detail = do_con($detail, $auto_vars);
+        $detail = do_rh($detail, $defined_ops);
         # $detail =~ /(($symbol_p)\s*(=)\s*($symbol_p))/;
-        &err_exit("wrong syntax in detail '$detail'")
+        err_exit("wrong syntax in detail '$detail'")
             unless ($detail =~ /^\s*($symbol_p)\s*(=)\s*(.+)\s*$/);
         # say $3;
-        my ($r_type, $r_code, $r_len) = &expand_op_str($3, $defined_ops);
-        my $replace_code = &gen_assign($1, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
+        my ($r_type, $r_code, $r_len) = expand_op_str($3, $defined_ops);
+        my $replace_code = gen_assign($1, $r_type, $r_code, $r_len, $auto_vars, $defined_ops);
         substr($detail, 0, length($&)) = $replace_code;
         push @blocks, $detail;
     }
@@ -407,11 +407,11 @@ sub gen_assign {
     my $auto_vars = shift;
     my $defined_ops = shift;
 
-    &err_exit("rhs_code cannot be undef") unless defined $rhs_code;
-    unless ($lhs =~ /^(\w+)\.(ins|outs|params)\[((\w+(\$\@)?)|(\w+\$\^\w*)|(\w*\$\^\w+))\]$/) {
-        &err_exit("wrong syntax in the lhs symbol of assignment '$lhs'");
+    err_exit("rhs_code cannot be undef") unless defined $rhs_code;
+    if (not $lhs =~ /^(\w+)\.(ins|outs|params)\[((\w+(\$\@)?)|(\w+\$\^\w*)|(\w*\$\^\w+))\]$/) {
+        err_exit("wrong syntax in the lhs symbol of assignment '$lhs'");
     }
-    &err_exit("undefined op '$1'") unless exists $defined_ops->{$1};
+    err_exit("undefined op '$1'") unless exists $defined_ops->{$1};
 
     my $opname = $1;
     my $optype = $defined_ops->{$opname};
@@ -419,10 +419,10 @@ sub gen_assign {
     my $arg_name = $3;
     my $code;
     if ($member eq "ins" or $member eq "outs") {
-        $code = &gen_assign_tensor($opname, $optype, $member, $arg_name,
+        $code = gen_assign_tensor($opname, $optype, $member, $arg_name,
                                    $rhs_type, $rhs_code, $rhs_len, $auto_vars);
     } else {
-        $code = &gen_assign_param($opname, $optype, $member, $arg_name,
+        $code = gen_assign_param($opname, $optype, $member, $arg_name,
                                   $rhs_type, $rhs_code, $rhs_len, $auto_vars);
     }
     $code;
@@ -439,9 +439,9 @@ sub gen_assign_tensor {
     my $auto_vars = shift;
 
     my $tensors = $member eq "ins" ? "tensors_in" : "tensors_out";
-    &err_exit("rhs symbol must be a string (tensor name) for a tensor type lhs symbol")
+    err_exit("rhs symbol must be a string (tensor name) for a tensor type lhs symbol")
         unless not defined $rhs_type or $rhs_type eq "char *";
-    my $op_desc = &find_op_desc($optype);
+    my $op_desc = find_op_desc($optype);
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$tensors}};
     my $code;
     if ($found) {
@@ -501,22 +501,22 @@ sub gen_assign_param {
     my $rhs_len = shift;
     my $auto_vars = shift;
 
-    &err_exit("unsupported rhs type '$rhs_type' for assignment")
+    err_exit("unsupported rhs type '$rhs_type' for assignment")
         if defined $rhs_type and not exists $basic_types{$rhs_type} and
         not exists $array_types{$rhs_type};
-    my $op_desc = &find_op_desc($optype);
+    my $op_desc = find_op_desc($optype);
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{params}};
     my $code;
     if ($found) {
-        my $type = (&param_info($optype, "pe", $arg_name))[0];
-        &err_exit("rhs type '$rhs_type' doesn't match lhs type '$type'")
+        my $type = (param_info($optype, "pe", $arg_name))[0];
+        err_exit("rhs type '$rhs_type' doesn't match lhs type '$type'")
             unless not defined $rhs_type or $type eq $rhs_type;
-        &err_exit("lhs of an array type '$type' needs a length from rhs")
+        err_exit("lhs of an array type '$type' needs a length from rhs")
             if exists $array_types{$type} and not defined $rhs_len;
-        &warn_msg("rhs type is not defined when assigning to type '$type': '$rhs_code'")
+        warn_msg("rhs type is not defined when assigning to type '$type': '$rhs_code'")
             unless defined $rhs_type;
-        my $assign = &gen_copy_param("pe", $rhs_code, $type, $rhs_len);
-        $assign = &indent_block($INDENT_OFFSET, $assign);
+        my $assign = gen_copy_param("pe", $rhs_code, $type, $rhs_len);
+        $assign = indent_block($INDENT_OFFSET, $assign);
         $code = <<EOF;
 {
     ln_param_entry *pe = ln_param_list_find($opname->op_arg->params, "$arg_name");
@@ -524,13 +524,13 @@ $assign
 }
 EOF
     } elsif ($op_desc->{variable_length}) {
-        &err_exit("cannot generate variable-length params with undefined rhs type")
+        err_exit("cannot generate variable-length params with undefined rhs type")
             unless defined $rhs_type;
-        &err_exit("rhs of an array type '$rhs_type' needs a length")
+        err_exit("rhs of an array type '$rhs_type' needs a length")
             if exists $array_types{$rhs_type} and not defined $rhs_len;
-        my $ptype = &type_to_ptype($rhs_type);
-        my $assign = &gen_copy_param("pe", $rhs_code, $rhs_type, $rhs_len);
-        $assign = &indent_block($INDENT_OFFSET, $assign);
+        my $ptype = type_to_ptype($rhs_type);
+        my $assign = gen_copy_param("pe", $rhs_code, $rhs_type, $rhs_len);
+        $assign = indent_block($INDENT_OFFSET, $assign);
         if ($arg_name =~ /\$\@$/) {
             $arg_name =~ s/\$\@$//;
             push @$auto_vars, "int last_index;" unless grep /int last_index;/, @$auto_vars;
@@ -568,7 +568,7 @@ $assign
 EOF
         }
     } else {
-        &err_exit("$opname($optype) doesn't have a '$arg_name' params");
+        err_exit("$opname($optype) doesn't have a '$arg_name' params");
     }
     $code;
 }
@@ -580,7 +580,7 @@ sub gen_copy_param {
     my $len = shift;
 
     my $code;
-    my $member = &type_to_member($type);
+    my $member = type_to_member($type);
     given ($type) {
         when ("char *") {
             $code = <<EOF;
@@ -623,7 +623,7 @@ ln_param_set_bool($pe, $rhs);
 EOF
         }
         default {
-            &err_exit("unknown type '$type', cannot generate assignment");
+            err_exit("unknown type '$type', cannot generate assignment");
         }
     }
     $code;
@@ -633,18 +633,18 @@ sub check_details {
     my $details = shift;
     my %lhs_hash;
     foreach (@$details) {
-        &err_exit("'details' can only contain assignments: '$_'")
+        err_exit("'details' can only contain assignments: '$_'")
             unless /(($symbol_p)\s*(=)\s*($symbol_p))/;
         my $lhs = $2;
-        unless ($lhs =~ /^\w+\.(ins|outs|params)\[(\w+(\$\@)?)|(\w+\$\^\w*)|(\w*\$\^\w+)\]$/) {
-            &err_exit("wrong syntax in the lhs symbol of assignment '$_'");
+        if (not $lhs =~ /^\w+\.(ins|outs|params)\[(\w+(\$\@)?)|(\w+\$\^\w*)|(\w*\$\^\w+)\]$/) {
+            err_exit("wrong syntax in the lhs symbol of assignment '$_'");
         }
         if (exists $lhs_hash{$lhs}) {
             if ($lhs =~ /\$\@/) {
                 map {delete $lhs_hash{$_} if /\$\^/} keys %lhs_hash;
                 next;
             }
-            &err_exit("duplicated lhs symbol of assignment '$_'");
+            err_exit("duplicated lhs symbol of assignment '$_'");
         }
         $lhs_hash{$lhs} = 1;
     }
@@ -654,7 +654,7 @@ sub gen_ep_funcs {
     my $ep_funcs = shift;
 
     push @$ep_funcs, "LN_HASH_INIT_ENTRY_NULL";
-    &indent_lines($INDENT_OFFSET, $ep_funcs);
+    indent_lines($INDENT_OFFSET, $ep_funcs);
     my $entries = join "\n", @$ep_funcs;
     my $tpl = <<EOF;
 static ln_hash_init_entry init_ep_funcs[] = {
@@ -783,7 +783,7 @@ sub do_rh {
 
     my $code;
     while ($str =~ /\$\{rh\s+($symbol_p)\s*\}/g) {
-        $code = (&expand_op_str($1, $defined_ops))[1];
+        $code = (expand_op_str($1, $defined_ops))[1];
         my $pos_bak = pos($str);
         substr($str, pos($str)-length($&), length($&)) = $code;
         pos($str) = $pos_bak-length($&)+length($code);
@@ -815,19 +815,19 @@ sub expand_op_str {
     my $defined_ops = shift;
     my ($directive, @directive_args);
     if ($op_str =~ /^\$\{.+\}$/) {
-        &err_exit("wrong directive syntax: $op_str")
-            unless ($op_str =~ /^\$\{(?<directive>[a-zA-Z0-9_-]+)(?:\((?<arg>.+)?\))?\s+(?<op>.+)\}/);
+        err_exit("wrong directive syntax: $op_str")
+            if (not $op_str =~ /^\$\{(?<directive>[a-zA-Z0-9_-]+)(?:\((?<arg>.+)?\))?\s+(?<op>.+)\}/);
         $directive = $+{directive};
         @directive_args = split /,/, $+{arg} if exists $+{arg};
         $op_str = $+{op};
     }
     # while ($op_str =~ /($symbol_p)/g) {
-    #     my $op_code = (&expand_op($1, $defined_ops))[1];
+    #     my $op_code = (expand_op($1, $defined_ops))[1];
     #     substr($op_str, index($op_str, $1), length($1)) = $op_code;
     # }
     my @fs = split /\.|(?=\[)|(?==>)/, $op_str;
     my ($type, $code, $len);
-    unless (exists $defined_ops->{$fs[0]}) {
+    if (not exists $defined_ops->{$fs[0]}) {
         if ($op_str =~ /^\d+$/) {
             $type = "int";
         } elsif ($op_str =~ /^("(\\.|[^"\\])*")$/) {
@@ -835,12 +835,12 @@ sub expand_op_str {
         } elsif ($op_str =~ /^([-+]?((\d*\.?\d+)|(\d+\.?\d*))([eE][-+]?\d+)?)$/) {
             $type = "double";
         } elsif (defined $directive and $directive eq "type") {
-            &err_exit("directive 'type' needs one argument: $op_str")
+            err_exit("directive 'type' needs one argument: $op_str")
                 unless @directive_args >= 1;
             $type = $directive_args[0];
             $len = $directive_args[1];
         } else {
-            &warn_msg("undefined symbol '$op_str' and its type");
+            warn_msg("undefined symbol '$op_str' and its type");
         }
         return ($type, $op_str, $len);
     }
@@ -873,10 +873,10 @@ sub expand_op_str {
                    },
         );
 
-    ($type, $code, $len) = &parse_member_path(\%member_path, @fs);
+    ($type, $code, $len) = parse_member_path(\%member_path, @fs);
 
     if (defined $directive and $directive eq "type") {
-        &err_exit("directive 'type' needs one argument: $op_str")
+        err_exit("directive 'type' needs one argument: $op_str")
             unless @directive_args == 1;
         $type = $directive_args[0];
     }
@@ -901,22 +901,22 @@ sub parse_member_path {
             }
             if ($next_f) {
                 if ($next_f =~ /^\[.+\]$/) {
-                    &err_unknown_field($index+1, @fs) unless exists $ref->{"[]"};
+                    err_unknown_field($index+1, @fs) unless exists $ref->{"[]"};
                     $ref = $ref->{"[]"};
                 } elsif ($next_f =~ /^=>/) {
-                    &err_unknown_field($index+1, @fs) unless exists $ref->{"=>"};
+                    err_unknown_field($index+1, @fs) unless exists $ref->{"=>"};
                     $ref = $ref->{"=>"};
                 } elsif (exists $ref->{$next_f}) {
                     $ref = $ref->{$next_f};
                 } else {
-                    &err_unknown_field($index+1, @fs);
+                    err_unknown_field($index+1, @fs);
                 }
             }
         } elsif (ref $ref eq ARRAY and ref $ref->[0] eq CODE) {
             ($type, $code, $len) = &{$ref->[0]}(@$ref[1..@$ref-1]);
         } else {
             ($type, $code, $len) = @$ref;
-            &err_unknown_field($index+1, @fs) if ($next_f);
+            err_unknown_field($index+1, @fs) if ($next_f);
         }
     }
 
@@ -931,7 +931,7 @@ sub expand_tensor {
     my $arg_name = $fs[0] =~ s/\[(.+)\]/$1/r;
 
     my $tensors = "tensors_$in_or_out";
-    my $op_desc = &find_op_desc($optype);
+    my $op_desc = find_op_desc($optype);
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$tensors}};
 
     my ($type, $code, $len);
@@ -960,9 +960,9 @@ sub expand_tensor {
              owner => ["struct tl_tensor *", "$entry->tensor->owner"],
              backend_data => ["void *", "$entry->tensor->backend_data"],
             );
-        ($type, $code, $len) = &parse_member_path(\%tensor_member, @fs);
+        ($type, $code, $len) = parse_member_path(\%tensor_member, @fs);
     } else {
-        &util::err_exit("$opname($optype) doesn't have a '$arg_name' $tensors");
+        util::err_exit("$opname($optype) doesn't have a '$arg_name' $tensors");
     }
 
     ($type, $code, $len);
@@ -972,11 +972,11 @@ sub topo_cond {
     my $entry = shift;
     my @params = @_;
 
-    &err_exit("wrong syntax in a topo condition expr")
+    err_exit("wrong syntax in a topo condition expr")
         unless $params[0] =~ /^=>\s*(\w+)?$/;
     my $optype = $1;
 
-    unless (defined $optype) {
+    if (not defined $optype) {
         my ($type, $code, $len);
         $type = "int";
         $code = <<EOF;
@@ -996,18 +996,18 @@ EOF
         return ($type, $code, $len);
     }
 
-    &err_exit("rhs in a topo condition expr should have 3 fields")
+    err_exit("rhs in a topo condition expr should have 3 fields")
         unless @params == 3;
-    &err_exit("wrong syntax in a topo condition expr")
+    err_exit("wrong syntax in a topo condition expr")
         unless $params[1] =~ /^(ins|outs)$/;
     my $member = $1 eq "ins" ? "tensors_in" : "tensors_out";
-    &err_exit("wrong syntax in a topo condition expr")
+    err_exit("wrong syntax in a topo condition expr")
         unless $params[2] =~ /^\[(\w+)\]$/;
     my $arg_name = $1;
 
-    my $op_desc = &find_op_desc($optype); # TODO: =>tensorrt.ins
+    my $op_desc = find_op_desc($optype); # TODO: =>tensorrt.ins
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{$member}};
-    &err_exit("unknown arg_name '$arg_name' of $op_desc->{optype} of the rhs in a topo condition expr")
+    err_exit("unknown arg_name '$arg_name' of $op_desc->{optype} of the rhs in a topo condition expr")
         unless $found;
 
     my ($type, $code, $len);
@@ -1047,7 +1047,7 @@ sub expand_param {
     my @fs = @_;
     my $arg_name = $fs[0] =~ s/\[(.+)\]/$1/r;
 
-    my $op_desc = &find_op_desc($optype);
+    my $op_desc = find_op_desc($optype);
     my $found = grep {$arg_name eq $_->{arg_name}} @{$op_desc->{params}};
 
     my ($type, $code, $len);
@@ -1131,9 +1131,9 @@ sub expand_param {
                            },
              "[]" => [\&param_slice, $optype, $entry, $arg_name, $fs[1]],
             );
-        ($type, $code, $len) = &parse_member_path(\%param_member, @fs);
+        ($type, $code, $len) = parse_member_path(\%param_member, @fs);
     } else {
-        &err_exit("$opname($optype) doesn't have a '$arg_name' param");
+        err_exit("$opname($optype) doesn't have a '$arg_name' param");
     }
 
     ($type, $code, $len);
@@ -1143,7 +1143,7 @@ sub param_info {
     my $optype = shift;
     my $entry = shift;
     my $arg_name = shift;
-    my $op_desc = &find_op_desc($optype);
+    my $op_desc = find_op_desc($optype);
     my ($element_type, $member);
     my ($type, $code, $len);
     foreach my $arg_name_desc (@{$op_desc->{params}}) {
@@ -1181,7 +1181,7 @@ sub param_info {
                 $member = "value_array_bool";
             }
             default {
-                &util::err_exit("unsupported ptype '$_' for optype '$optype''s param '$arg_name'");
+                util::err_exit("unsupported ptype '$_' for optype '$optype''s param '$arg_name'");
             }
         }
     }
@@ -1194,7 +1194,7 @@ sub param_slice {
     my $entry = shift;
     my $arg_name = shift;
     my $index_str = shift;
-    my $op_desc = &find_op_desc($optype);
+    my $op_desc = find_op_desc($optype);
     my ($element_type, $member);
     my ($type, $code, $len);
     foreach my $arg_name_desc (@{$op_desc->{params}}) {
@@ -1216,12 +1216,12 @@ sub param_slice {
                 $member = "value_array_bool";
             }
             default {
-                &util::err_exit("unsupported '[]' operator for optype '$optype''s param '$arg_name'");
+                util::err_exit("unsupported '[]' operator for optype '$optype''s param '$arg_name'");
             }
         }
     }
     $code = "$entry->$member";
-    ($type, $code, $len) = &array_slice($element_type, $code, $index_str);
+    ($type, $code, $len) = array_slice($element_type, $code, $index_str);
 }
 
 sub type_to_member {
@@ -1232,7 +1232,7 @@ sub type_to_member {
                  "char **" => "value_array_string", "double *" => "value_array_double",
                  "float *" => "value_array_float", "int *" => "value_array_int",
                  "ln_bool *" => "value_array_bool");
-    &err_exit("unknow type '$type'") unless exists $table{$type};
+    err_exit("unknow type '$type'") unless exists $table{$type};
     $table{$type};
 }
 
@@ -1247,7 +1247,7 @@ sub type_to_ptype {
                  "float *" => "LN_PARAM_ARRAY_NUMBER",
                  "int *" => "LN_PARAM_ARRAY_NUMBER",
                  "ln_bool *" => "LN_PARAM_ARRAY_BOOL");
-    &err_exit("unknow type '$type'") unless exists $table{$type};
+    err_exit("unknow type '$type'") unless exists $table{$type};
     $table{$type};
 }
 
@@ -1290,20 +1290,20 @@ sub gen_custom {
 sub find_op_desc {
     my $optype = shift;
     my $op = $global_ops{$optype};
-    unless ($op) {
+    if (not $op) {
         my $opdir = abs_path(dirname(__FILE__))."/../protos/op";
-        my @possible_files = &possible_op_files($optype);
+        my @possible_files = possible_op_files($optype);
         foreach (@possible_files) {
             my $file = "$opdir/$_";
             next unless -e $file;
-            &read_op_desc($file, \%global_ops);
+            read_op_desc($file, \%global_ops);
             if (exists $global_ops{$optype}) {
                 $op = $global_ops{$optype};
                 last;
             }
         }
-        unless ($op) {
-            &util::err_exit("Cannot find the description JSON for optype '$optype'");
+        if (not $op) {
+            util::err_exit("Cannot find the description JSON for optype '$optype'");
         }
     }
     $op;
@@ -1331,7 +1331,7 @@ sub read_json {
     open my $fh, '<', $file or die "Cannot open $file: $!";
     my $text = join '', <$fh>;
     close $fh;
-    &read_json_text($text);
+    read_json_text($text);
 }
 
 sub read_op_desc {
@@ -1355,10 +1355,10 @@ sub err_unknown_field {
     my @fields = @_;
     my $prefix = join '.', @fields[0..$index-1];
     my $subfix = $fields[$index];
-    &util::err_exit("$prefix doesn't have a '$subfix' field");
+    util::err_exit("$prefix doesn't have a '$subfix' field");
 }
 
 sub err_unknown_last_field {
     my @fields = @_;
-    &err_unknown_field($#fields, @fields);
+    err_unknown_field($#fields, @fields);
 }

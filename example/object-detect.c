@@ -30,7 +30,7 @@ in NET_FILE and weight data in WEIGHT_FILE datain directory using C API.\n\
 \n\
 options:\n\
     -h    print this message\n\
-    -r    run compiled NET_FILE\n\
+    -r    run NET_FILE already compiled by lightnet\n\
 ";
     fprintf(stderr, "%s", usage);
     exit(exit_code);
