@@ -29,7 +29,7 @@ in NET_FILE and weight data in WEIGHT_FILE datain directory using Python API.
 
 options:
     -h    print this message
-    -r    run compiled NET_FILE
+    -r    run NET_FILE already compiled by lightnet
 '''
     print(usage)
     exit(exit_code)

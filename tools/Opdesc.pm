@@ -244,7 +244,7 @@ our @errors;
 
 # $code = join "", <>;
 # $Data::Dumper::Indent = 1;
-# &parse($code);
+# parse($code);
 # say Dumper($desc_table);
 # say ($desc_table->{ops}->[0]->{check});
 # say Dumper($desc_info_table);
@@ -256,7 +256,7 @@ sub parse {
     $file = @_ == 1 ? shift : "";
 
     my $parser = Parse::RecDescent->new($grammar) or die "Bad grammer!\n";
-    $text = &remove_comment($text);
+    $text = remove_comment($text);
     $code = $text;
     if (defined $parser->operator_description($text)) {
         return $desc_table;
@@ -284,13 +284,13 @@ sub inherit_object {
             delete $new_obj->{$_};
         } elsif (ref $obj->{$_} eq HASH) {
             if (exists $new_obj->{$_} and ref $new_obj->{$_} eq HASH) {
-                $new_obj->{$_} = &inherit_object($base->{$_}, $obj->{$_});
+                $new_obj->{$_} = inherit_object($base->{$_}, $obj->{$_});
             } else {
                 $new_obj->{$_} = clone($obj->{$_});
             }
         } elsif (ref $obj->{$_} eq ARRAY) {
             if (exists $new_obj->{$_} and ref $new_obj->{$_} eq ARRAY) {
-                $new_obj->{$_} = &inherit_array($base->{$_}, $obj->{$_});
+                $new_obj->{$_} = inherit_array($base->{$_}, $obj->{$_});
             } else {
                 $new_obj->{$_} = clone($obj->{$_});
             }
@@ -320,13 +320,13 @@ sub inherit_array {
             push @delete_ids, $i;
         } elsif (ref $array->[$i] eq HASH) {
             if (exists $new_array->[$i] and ref $new_array->[$i] eq HASH) {
-                $new_array->[$i] = &inherit_object($base->[$i], $array->[$i]);
+                $new_array->[$i] = inherit_object($base->[$i], $array->[$i]);
             } else {
                 $new_array->[$i] = clone($array->[$i]);
             }
         } elsif (ref $array->[$i] eq ARRAY) {
             if (exists $new_array->[$i] and ref $new_array->[$i] eq ARRAY) {
-                $new_array->[$i] = &inherit_array($base->[$i], $array->[$i]);
+                $new_array->[$i] = inherit_array($base->[$i], $array->[$i]);
             } else {
                 $new_array->[$i] = clone($array->[$i]);
             }
@@ -371,7 +371,7 @@ sub syntax_error {
     my $expects_str = "";
     $expects_str = "expecting ".(join " or ", @expects) if @expects > 0;
 
-    &error($rule_name, $line, $column, $offset, $expects_str);
+    error($rule_name, $line, $column, $offset, $expects_str);
 }
 
 sub escape {

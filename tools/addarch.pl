@@ -28,12 +28,12 @@ EOF
 my $root = '';
 my $dir = '';
 GetOptions(
-           'help' => sub {&exit_msg(0, $usage)},
+           'help' => sub {exit_msg(0, $usage)},
            'dir=s' => \$dir,
            'root=s' => \$root,
-          ) or &exit_msg(1, $usage);
+          ) or exit_msg(1, $usage);
 
-&exit_msg(1, $usage) unless @ARGV == 1;
+exit_msg(1, $usage) unless @ARGV == 1;
 my $arch = shift @ARGV;
 
 my $code_str = <<EOF;
@@ -108,7 +108,7 @@ if ($dir) {
             or die "Cannot create directory $dir: $!";
     }
     my $dir_file = "${dir}/ln_archimpl_${arch}.c";
-    &backup_write($dir_file, $code_str);
+    backup_write($dir_file, $code_str);
 }
 
 if ($root) {
@@ -117,5 +117,5 @@ if ($root) {
             or die "Cannot create directory ${root}/src/arch: $!";
     }
     my $src_file = "${root}/src/arch/ln_archimpl_${arch}.c";
-    &backup_write($src_file, $code_str);
+    backup_write($src_file, $code_str);
 }
