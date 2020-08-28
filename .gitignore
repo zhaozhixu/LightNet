@@ -33,3 +33,5 @@ __pycache__/
 
 debug*/
 *.org
+compile_commands.json
+.clangd

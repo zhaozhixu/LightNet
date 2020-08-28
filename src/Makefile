@@ -6,6 +6,7 @@ TARGET_BIN = $(TARGET)
 LIBTARGET_A = lib$(TARGET).a
 LIBTARGET_SO = lib$(TARGET).so
 
+TOOLS_DIR := ../$(TOOLS_DIR)
 BUILD_DIR := ../$(BUILD_DIR)
 INCPATHS += -Iarch -Iop -I$(BUILD_DIR)/include/$(TARGET)
 CFLAGS += -fPIC -fvisibility=hidden
@@ -64,7 +65,11 @@ endef
 
 .PHONY: all bin liba libso clean
 
+ifeq ($(GEN_CMD_FILE), no)
 all: bin liba libso
+else
+all: bin
+endif
 
 bin: $(OBJDIR)/$(TARGET_BIN)
 
@@ -72,41 +77,37 @@ liba: $(OBJDIR)/$(LIBTARGET_A)
 
 liba: $(OBJDIR)/$(LIBTARGET_SO)
 
+ifeq ($(GEN_CMD_FILE), no)
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
-	$(ECHO) Linking: $@
+	$(ECHO) CC $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+else
+$(OBJDIR)/$(TARGET_BIN): $(OBJS)
+endif
 
 $(OBJDIR)/$(LIBTARGET_SO): $(OBJS)
-	$(ECHO) Linking: $@
+	$(ECHO) CC $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS_SO)
 
 $(OBJDIR)/$(LIBTARGET_A): $(OBJS)
-	$(ECHO) Packing: $@
+	$(ECHO) AR $@
 	$(AT)$(AR) $@ $^
 
 $(OBJDIR)/%.o: %.c
 	$(call make-obj-dir)
-	$(call make-depend-c,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $@
-	$(AT)$(CC) $(CFLAGS) -c -o $@ $<
+	$(call compile-c)
 
 $(OBJDIR)/%.o: %.cpp
 	$(call make-obj-dir)
-	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $@
-	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(call compile-cxx)
 
 $(OBJDIR)/%.o: %.cc
 	$(call make-obj-dir)
-	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $@
-	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(call compile-cxx)
 
 $(OBJDIR)/%.o: %.cu
 	$(call make-obj-dir)
-	$(call make-depend-cu,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling CUDA: $@
-	$(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
+	$(call compile-cu)
 
 clean:
 	rm -rf $(OBJDIR)

@@ -176,7 +176,11 @@ endef
 
 .PHONY: all lib bin test doc clean info install uninstall
 
+ifeq ($(GEN_CMD_FILE), no)
 all: lib bin
+else
+all: lib
+endif
 
 install:
 	$(call make-install-dir)
@@ -186,13 +190,20 @@ bin: lib
 	$(call make-build-dir)
 	$(call make-bin)
 
+ifeq ($(GEN_CMD_FILE), no)
 lib:
 	$(call make-build-dir)
 	$(call pre-make-lib)
 	$(AT)+(cd $(SRC_DIR) && make)
 	$(call make-lib)
+else
+lib:
+	$(call make-build-dir)
+	$(call pre-make-lib)
+	$(AT)+(cd $(SRC_DIR) && make)
+endif
 
-test:
+test: lib
 	$(AT)+(cd $(TEST_DIR) && make)
 
 doc:

@@ -11,6 +11,8 @@ else
 AT = @
 endif
 
+TOOLS_DIR ?= tools
+
 CFLAGS = -Wall -Wno-format-truncation -std=gnu99 -D_GNU_SOURCE
 CXXFLAGS = -std=c++11 -Wall
 CUFLAGS = -m64 -arch=sm_30 -use_fast_math -ccbin $(CXX)
@@ -71,9 +73,9 @@ define concat
 $1$2$3$4$5$6$7$8
 endef
 
-#$(call make-depend,source-file,object-file,depend-file)
+# $(call make-depend,source-file,object-file,depend-file)
 define make-depend-c
-$(AT)$(CC) -MM -MF $3 -MP -MT $2 $(CFLAGS) $1
+$(AT)$(CC) -MM -MF $(subst .o,.d,$@) -MP -MT $@ $(CFLAGS) $<
 endef
 
 define make-depend-cxx
@@ -85,3 +87,44 @@ $(AT)$(CUCC) -M $(CUFLAGS) $1 > $3.$$$$; \
 sed 's,.*\.o[ :]*,$2 : ,g' < $3.$$$$ > $3; \
 rm -f $3.$$$$
 endef
+
+CMD_FILE ?= $(BUILD_DIR)/compile_commands.json
+
+ifeq ($(GEN_CMD_FILE), no)
+define compile-c
+$(ECHO) CC $@
+$(call make-depend-c)
+$(AT)$(CC) $(CFLAGS) -c -o $@ $<
+endef
+else
+define compile-c
+$(ECHO) GEN_CMD $@
+$(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CC) $(CFLAGS) -c -o $@ $<"
+endef
+endif
+
+ifeq ($(GEN_CMD_FILE), no)
+define compile-cxx
+$(ECHO) CXX $@
+$(call make-depend-cxx)
+$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
+endef
+else
+define compile-cxx
+$(ECHO) GEN_CMD $@
+$(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CXX) $(CXXFLAGS) -c -o $@ $<"
+endef
+endif
+
+ifeq ($(GEN_CMD_FILE), no)
+define compile-cu
+$(ECHO) CUCC $@
+$(call make-depend-cu)
+$(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
+endef
+else
+define compile-cu
+$(ECHO) GEN_CMD $@
+$(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CUCC) $(CUFLAGS) -c -o $@ $<"
+endef
+endif

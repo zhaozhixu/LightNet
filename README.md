@@ -26,6 +26,12 @@ Most required packages can be installed using the following commands
     $ sudo apt-get install build-essential perl git pkg-config check
     $ sudo cpan install JSON Sort::strverscmp
 
+**NOTE** The perl packages listed here are used under v5.26.1. If you are using
+a more recent perl version, there is a chance they are not able to be installed.
+I recommand using [perlbrew](https://perlbrew.pl/) to install and switch to
+perl-5.26.1 (there is another benefit: the `cpan` commands can be used without
+`sudo`).
+
 This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight),
 a lightweight tensor operation library. Install it according to 
 [its repository](https://github.com/zhaozhixu/TensorLight) before continuing to
@@ -68,6 +74,10 @@ build LightNet.
     [CUDA Toolkit](http://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html) and 
     [TensorRT](https://docs.nvidia.com/deeplearning/sdk/tensorrt-install-guide/index.html)
     if you want to build with TensorRT support.
+
+* (Optional) Other packages for development
+
+    $ sudo cpan install Clone Devel::Confess Parse::RecDescent
 
 ### Building and Installation
 

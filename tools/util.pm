@@ -10,7 +10,7 @@ use File::Copy;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(add_custom_block make_defs_neat indent_block indent_lines
-                 indent_line backup_write err_exit warn_msg exit_msg);
+                 indent_line read_file backup_write err_exit warn_msg exit_msg);
 
 sub add_custom_block {
     my $indent_offset = shift;
@@ -67,6 +67,16 @@ sub indent_line {
     my $nspaces = shift;
     my $state = shift;
     $state = " "x$nspaces.$state;
+}
+
+sub read_file {
+  my ($file) = @_;
+
+  open FILE, '<', $file or die "Cannot open ${file}: $!";
+  my $text = join '', <FILE>;
+  close FILE;
+
+  return $text;
 }
 
 sub backup_write {
