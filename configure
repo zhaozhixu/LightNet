@@ -39,6 +39,9 @@ options:
   --python-cmd=CMD            python command [python3]
   --python-user=BOOL          install python packages to user site-package
                               '\$HOME/.local/lib/python<version>/site-packages'
+  --gen-cmd-file=BOOL         set to yes to generate a JSON compilation database
+                              file for clang tooling, which will be placed in
+                              BUILD_DIR/compile_commands.json [no]
   --debug=BOOL                set to yes when debugging [no]
   --doc=BOOL                  set to yes if build the documents too [yes]
 EOF
@@ -62,6 +65,7 @@ my %opts = (
             "PYTHON_VERSION" => "3",
             "PYTHON_CMD" => "python3",
             "PYTHON_USER" => "no",
+            "GEN_CMD_FILE" => "no",
             "DEBUG" => "no",
             "DOC" => "yes",
            );
@@ -87,6 +91,7 @@ GetOptions(
            'python-version=s' => \$opts{PYTHON_VERSION},
            'python-cmd=s' => \$opts{PYTHON_CMD},
            'python-user=s' => \$opts{PYTHON_USER},
+           'gen-cmd-file=s' => \$opts{GEN_CMD_FILE},
            'debug=s' => \$opts{DEBUG},
            'doc=s' => \$opts{DOC},
           ) or &exit_msg(1, $usage);

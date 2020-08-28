@@ -13,6 +13,9 @@ $::RD_WARN   = 3; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1;
 # $::RD_TRACE  = 1;
 
+my @types = ("number", "string", "number\\[\\d\\]", "string\\[\\d\\]");
+my %types = map { $_ => 1 } @types;
+
 my $grammar = <<'_EOGRAMMAR_';
 
 { use 5.014; }
@@ -20,6 +23,7 @@ my $grammar = <<'_EOGRAMMAR_';
 identifier : /[A-Za-z_]\w*/
 
 number : /[-+]?((\d*\.\d+)|(\d+\.?\d*))([eE][-+]?\d+)?/
+    { $return = { type => ""}; }
 
 double_quoted_chars : /(\\.|[^"\\])+/s
 
@@ -42,10 +46,11 @@ string : '"' '"'
     }
 
 primary_expression : identifier | number | string
-    | '(' expression ')'
+    | '(' conditional_expression ')'
     { $return = "($item[2])"; }
 
 right_accessor : identifier '.' identifier '[' identifier ']'
+    { $return = Graphlang::expand_right_accessor(); }
 
 identifier_with_index : /[A-Za-z_]\w*(\$[\@\^])?\w*/
 
@@ -63,12 +68,17 @@ not_expression : '!' postfix_expression
     | postfix_expression
 
 multiplicative_expression : not_expression * multiplicative_expression
+    { $return = "$item[1] * $item[2]"; }
     | not_expression / multiplicative_expression
+    { $return = "$item[1] / $item[2]"; }
     | not_expression % multiplicative_expression
+    { $return = "$item[1] % $item[2]"; }
     | not_expression
 
 additive_expression : multiplicative_expression + additive_expression
+    { $return = "$item[1] + $item[2]"; }
     | multiplicative_expression - additive_expression
+    { $return = "$item[1] - $item[2]"; }
     | multiplicative_expression
 
 relational_expression : additive_expression < relational_expression
@@ -87,12 +97,10 @@ and_expression : equality_expression '&&' and_expression
 or_expression : and_expression '||' or_expression
     | or_expression
 
-conditional_expression : or_expression '?' expression : conditional_expression
+conditional_expression : or_expression '?' conditional_expression : conditional_expression
     | or_expression
 
 assignment_expression : left_accessor '=' right_accessor
-
-
 
 _EOGRAMMAR_
 

@@ -5,6 +5,7 @@ TARGET ?= lightnet
 TARGET_TEST = test_$(TARGET)
 LIBTARGET_A = lib$(TARGET).a
 
+TOOLS_DIR := ../$(TOOLS_DIR)
 BUILD_DIR := ../$(BUILD_DIR)
 SRCOBJ = $(BUILD_DIR)/src/$(LIBTARGET_A)
 TEST_RESULT_DIR = `realpath $(OBJDIR)/result`
@@ -46,38 +47,38 @@ endef
 
 .PHONY: all clean
 
+ifeq ($(GEN_CMD_FILE), no)
 all: $(OBJDIR)/$(TARGET_TEST)
 	$(ECHO) Running tests...
 	$(AT)if [ ! -d $(TEST_RESULT_DIR) ]; then mkdir -p $(TEST_RESULT_DIR); fi
 	$(AT)$(OBJDIR)/$(TARGET_TEST) $(TEST_ARGS)
+else
+all: $(OBJDIR)/$(TARGET_TEST)
+endif
 
+ifeq ($(GEN_CMD_FILE), no)
 $(OBJDIR)/$(TARGET_TEST): $(OBJS) $(SRCOBJ)
-	$(ECHO) Linking: $@
+	$(ECHO) CC $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+else
+$(OBJDIR)/$(TARGET_TEST): $(OBJS)
+endif
 
 $(OBJDIR)/%.o: %.c
 	$(call make-obj-dir)
-	$(call make-depend-c,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $@
-	$(AT)$(CC) $(CFLAGS) -c -o $@ $<
+	$(call compile-c)
 
 $(OBJDIR)/%.o: %.cpp
 	$(call make-obj-dir)
-	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $@
-	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(call compile-cxx)
 
 $(OBJDIR)/%.o: %.cc
 	$(call make-obj-dir)
-	$(call make-depend-cxx,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling: $@
-	$(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(call compile-cxx)
 
 $(OBJDIR)/%.o: %.cu
 	$(call make-obj-dir)
-	$(call make-depend-cu,$<,$@,$(subst .o,.d,$@))
-	$(ECHO) Compiling CUDA: $@
-	$(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
+	$(call compile-cu)
 
 clean:
 	rm -rf $(OBJDIR)
