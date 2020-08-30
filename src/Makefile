@@ -63,13 +63,9 @@ $(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/op/auto; \
 mkdir -p $(OBJDIR)/arch/auto; fi
 endef
 
-.PHONY: all bin liba libso clean
+.PHONY: all bin liba libso cmd clean
 
-ifeq ($(GEN_CMD_FILE), no)
 all: bin liba libso
-else
-all: bin
-endif
 
 bin: $(OBJDIR)/$(TARGET_BIN)
 
@@ -77,16 +73,14 @@ liba: $(OBJDIR)/$(LIBTARGET_A)
 
 liba: $(OBJDIR)/$(LIBTARGET_SO)
 
-ifeq ($(GEN_CMD_FILE), no)
+cmd: $(OBJS)
+
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
-	$(ECHO) CC $@
+	$(ECHO) LD $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
-else
-$(OBJDIR)/$(TARGET_BIN): $(OBJS)
-endif
 
 $(OBJDIR)/$(LIBTARGET_SO): $(OBJS)
-	$(ECHO) CC $@
+	$(ECHO) LD $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS_SO)
 
 $(OBJDIR)/$(LIBTARGET_A): $(OBJS)

@@ -5,6 +5,7 @@ use warnings;
 use strict;
 use JSON;
 use Getopt::Long;
+use Fcntl qw(:flock);
 use Cwd 'abs_path';
 use File::Basename;
 use lib abs_path(dirname(__FILE__));
@@ -17,7 +18,8 @@ to compile command JSON.
 
 Options:
   -h, --help       print this message
-  -f, --file=FILE  update JSON in FILE if it is set; or print to stdout
+  -f, --file=FILE  update JSON in FILE if it is set; or print to stdout;
+                   FILE must already exists and contains a legal JSON array
 EOT
 
 my $file = '';
@@ -29,9 +31,12 @@ GetOptions(
 @ARGV == 3 or exit_msg(1, $usage);
 my ($wd, $src, $cmd) = @ARGV;
 
+my $fh;
 my $cmd_objs = [];
-if ($file and -e $file) {
-    $cmd_objs = JSON->new->relaxed()->decode(read_file($file));
+if ($file) {
+    open $fh, '+<', $file or die "Cannot open ${file}: $!";
+    flock($fh, LOCK_EX) or die "Cannot lock ${file}: $!";
+    $cmd_objs = JSON->new->relaxed()->decode(join '', <$fh>);
 }
 
 my $found = 0;
@@ -50,9 +55,11 @@ if (not $found) {
 }
 my $json_str = JSON->new->pretty()->canonical()->encode($cmd_objs);
 if ($file) {
-    open CMDFILE, '>', $file or die "Cannot open $file: $!";
-    print CMDFILE $json_str;
-    close CMDFILE;
+    truncate($fh, 0) or die "Cannot truncate ${file}: $!";
+    seek($fh, 0, 0) or die "Cannot seek ${file}: $!";
+    print $fh $json_str;
+    flock($fh, LOCK_UN) or die "Cannot unlock ${file}: $!";
+    close $fh;
 } else {
     print $json_str;
 }

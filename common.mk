@@ -21,8 +21,6 @@ LDFLAGS = $(CFLAGS)
 ifeq ($(DEBUG), yes)
 CFLAGS += -g -O0 -DLN_DEBUG
 CXXFLAGS += -g -O0 -DLN_DEBUG
-# CFLAGS += -g -O3
-# CXXFLAGS += -g -O3
 CUFLAGS += -lineinfo
 LDFLAGS += -g -O0
 else
@@ -58,11 +56,12 @@ TENSORRT_INSTALL_DIR ?= /usr
 INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
 LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer -lnvinfer_plugin
 endif
+endif
+
 ifeq ($(WITH_DPU), yes)
 CFLAGS += -DLN_DPU
 CXXFLAGS += -DLN_DPU
 CUFLAGS += -DLN_DPU
-endif
 endif
 
 CFLAGS += $(INCPATHS)
@@ -79,15 +78,19 @@ $(AT)$(CC) -MM -MF $(subst .o,.d,$@) -MP -MT $@ $(CFLAGS) $<
 endef
 
 define make-depend-cxx
-$(AT)$(CXX) -MM -MF $3 -MP -MT $2 $(CXXFLAGS) $1
+$(AT)$(CXX) -MM -MF $(subst .o,.d,$@) -MP -MT $@ $(CXXFLAGS) $<
 endef
 
 define make-depend-cu
-$(AT)$(CUCC) -M $(CUFLAGS) $1 > $3.$$$$; \
-sed 's,.*\.o[ :]*,$2 : ,g' < $3.$$$$ > $3; \
-rm -f $3.$$$$
+$(AT)$(CUCC) -M $(CUFLAGS) $< > $(subst .o,.d,$@).$$$$; \
+sed 's,.*\.o[ :]*,$@ : ,g' < $(subst .o,.d,$@).$$$$ > $(subst .o,.d,$@); \
+rm -f $(subst .o,.d,$@).$$$$
 endef
 
+GEN_CMD_FILE := no
+ifeq ($(MAKECMDGOALS), cmd)
+GEN_CMD_FILE := yes
+endif
 CMD_FILE ?= $(BUILD_DIR)/compile_commands.json
 
 ifeq ($(GEN_CMD_FILE), no)
@@ -98,7 +101,7 @@ $(AT)$(CC) $(CFLAGS) -c -o $@ $<
 endef
 else
 define compile-c
-$(ECHO) GEN_CMD $@
+$(ECHO) GEN $(CMD_FILE) for $@
 $(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CC) $(CFLAGS) -c -o $@ $<"
 endef
 endif
@@ -111,7 +114,7 @@ $(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 endef
 else
 define compile-cxx
-$(ECHO) GEN_CMD $@
+$(ECHO) GEN $(CMD_FILE) for $@
 $(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CXX) $(CXXFLAGS) -c -o $@ $<"
 endef
 endif
@@ -124,7 +127,7 @@ $(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
 endef
 else
 define compile-cu
-$(ECHO) GEN_CMD $@
+$(ECHO) GEN $(CMD_FILE) for $@
 $(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CUCC) $(CUFLAGS) -c -o $@ $<"
 endef
 endif

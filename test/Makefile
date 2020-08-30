@@ -45,24 +45,18 @@ define make-obj-dir
 $(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/lightnettest; fi
 endef
 
-.PHONY: all clean
+.PHONY: all cmd clean
 
-ifeq ($(GEN_CMD_FILE), no)
 all: $(OBJDIR)/$(TARGET_TEST)
 	$(ECHO) Running tests...
 	$(AT)if [ ! -d $(TEST_RESULT_DIR) ]; then mkdir -p $(TEST_RESULT_DIR); fi
 	$(AT)$(OBJDIR)/$(TARGET_TEST) $(TEST_ARGS)
-else
-all: $(OBJDIR)/$(TARGET_TEST)
-endif
 
-ifeq ($(GEN_CMD_FILE), no)
+cmd: $(OBJS)
+
 $(OBJDIR)/$(TARGET_TEST): $(OBJS) $(SRCOBJ)
-	$(ECHO) CC $@
+	$(ECHO) LD $@
 	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
-else
-$(OBJDIR)/$(TARGET_TEST): $(OBJS)
-endif
 
 $(OBJDIR)/%.o: %.c
 	$(call make-obj-dir)

@@ -4,8 +4,9 @@ set -ev
 
 sudo apt update
 sudo apt-get install -y build-essential perl git pkg-config check libjpeg-dev \
-     unzip python3-pip python3-setuptools
+     unzip python3-pip
 
+pip3 install -U setuptools
 pip3 install -U --no-cache-dir mkdocs markdown>=3.1.1 pygments opencv-python
 
 mkdocs --version
