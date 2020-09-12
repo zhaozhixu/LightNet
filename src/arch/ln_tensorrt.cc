@@ -26,7 +26,6 @@
 
 #include "ln_op.h"
 #include "ln_tensorrt.h"
-#include "ln_tensorrt_plugin.h"
 #include "base64.h"
 
 #if NV_TENSORRT_MAJOR < 2
@@ -232,13 +231,6 @@ static void check_activation(char *opname, ln_op_arg *op_arg)
                         "unsupported activation type");
 }
 
-static void check_lrelu(char *opname, ln_op_arg *op_arg)
-{
-    check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
-    check_param(opname, "dst", LN_PARAM_STRING, 0, op_arg);
-    check_param(opname, "negslope", LN_PARAM_NUMBER, 0, op_arg);
-}
-
 static void check_pooling(char *opname, ln_op_arg *op_arg)
 {
     check_param(opname, "src", LN_PARAM_STRING, 0, op_arg);
@@ -342,38 +334,45 @@ void ln_tensorrt_check_op(ln_op_arg *op_arg)
         }
     }
 
-    for (l = op_arg->params; l; l = l->next) {
-        pe = (ln_param_entry *)l->data;
-        if (!ln_streqn(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
-            continue;
+    if (ln_param_list_find(op_arg->params, "bin")) {
+        pe = ln_param_list_find(op_arg->params, "bin");
         ln_opck_param_type(pe, LN_PARAM_STRING);
-        if (ln_streq(pe->value_string, "conv"))
-            check_conv(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "deconv"))
-            check_deconv(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "padding"))
-            check_padding(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "activation"))
-            check_activation(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "lrelu"))
-            check_lrelu(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "pooling"))
-            check_pooling(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "softmax"))
-            check_softmax(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "elew"))
-            check_elew(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "concat"))
-            check_concat(pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "scale"))
-            check_scale(pe->arg_name, op_arg);
-        else
-            ln_opck(LN_MSG_ERROR, 0, "unsupported TensorRT operator");
+        pe = ln_param_list_find(op_arg->params, "bin_size");
+        ln_opck_param_exist(pe, "bin_size");
+        ln_opck_param_type(pe, LN_PARAM_NUMBER);
+        ln_opck_satisfy_msg(pe->value_int > 0, "\"bin_size\" should be a positive integer");
+    } else {
+        for (l = op_arg->params; l; l = l->next) {
+            pe = (ln_param_entry *)l->data;
+            if (!ln_streqn(pe->arg_name, "op", 2) || ln_next_token(pe->arg_name, '_'))
+                continue;
+            ln_opck_param_type(pe, LN_PARAM_STRING);
+            if (ln_streq(pe->value_string, "conv"))
+                check_conv(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "deconv"))
+                check_deconv(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "padding"))
+                check_padding(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "activation"))
+                check_activation(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "pooling"))
+                check_pooling(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "softmax"))
+                check_softmax(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "elew"))
+                check_elew(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "concat"))
+                check_concat(pe->arg_name, op_arg);
+            else if (ln_streq(pe->value_string, "scale"))
+                check_scale(pe->arg_name, op_arg);
+            else
+                ln_opck(LN_MSG_ERROR, 0, "unsupported TensorRT operator");
+        }
+        pe = ln_param_list_find(op_arg->params, "batch_size");
+        ln_opck_param_exist(pe, "batch_size");
+        ln_opck_param_type(pe, LN_PARAM_NUMBER);
+        ln_opck_satisfy_msg(pe->value_int > 0, "\"batch_size\" should be a positive integer");
     }
-    pe = ln_param_list_find(op_arg->params, "batch_size");
-    ln_opck_param_exist(pe, "batch_size");
-    ln_opck_param_type(pe, LN_PARAM_NUMBER);
-    ln_opck_satisfy_msg(pe->value_int > 0, "\"batch_size\" should be a positive integer");
 
     tl_dtype dtype;
     char *arg_name;
@@ -634,37 +633,6 @@ static void add_activation(INetworkDefinition *network,
     tensors[dst] = activation->getOutput(0);
 }
 
-static void add_lrelu(INetworkDefinition *network,
-                      std::map<std::string, ITensor*> &tensors,
-                      char *opname, ln_op_arg *op_arg)
-{
-    char *src;
-    char *dst;
-    float negslope;
-    ln_param_entry *pe;
-
-    pe = ln_param_list_find2(op_arg->params, opname, "src");
-    assert(pe);
-    src = pe->value_string;
-
-    pe = ln_param_list_find2(op_arg->params, opname, "dst");
-    assert(pe);
-    dst = pe->value_string;
-
-    pe = ln_param_list_find2(op_arg->params, opname, "negslope");
-    assert(pe);
-    negslope = pe->value_float;
-
-    IPlugin *lrelu_plugin = plugin::createPReLUPlugin(negslope);
-    IPluginLayer *pl = network->addPlugin(&tensors[src], 1, *lrelu_plugin);
-    assert(pl);
-    char *name = ln_strcat_delim_alloc("lrelu", opname, '_');
-    pl->setName(name);
-    ln_free(name);
-
-    tensors[dst] = pl->getOutput(0);
-}
-
 static void add_pooling(INetworkDefinition *network,
                         std::map<std::string, ITensor*> &tensors,
                         char *opname, ln_op_arg *op_arg)
@@ -905,8 +873,6 @@ static ICudaEngine *create_engine(ln_op_arg *op_arg)
             add_padding(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "activation"))
             add_activation(network, tensors, pe->arg_name, op_arg);
-        else if (ln_streq(pe->value_string, "lrelu"))
-            add_lrelu(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "pooling"))
             add_pooling(network, tensors, pe->arg_name, op_arg);
         else if (ln_streq(pe->value_string, "softmax"))
@@ -953,7 +919,7 @@ static ICudaEngine *deserialize_engine(ln_op_arg *op_arg)
     model_size = base64_decode(bin, bin_size, model);
 
     runtime = createInferRuntime(global_logger);
-    engine = runtime->deserializeCudaEngine(model, model_size);
+    engine = runtime->deserializeCudaEngine(model, model_size, NULL);
 
     runtime->destroy();
     ln_free(model);

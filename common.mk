@@ -13,7 +13,7 @@ endif
 
 TOOLS_DIR ?= tools
 
-CFLAGS = -Wall -Wno-format-truncation -std=gnu99 -D_GNU_SOURCE
+CFLAGS = -Wall -std=gnu99 -D_GNU_SOURCE
 CXXFLAGS = -std=c++11 -Wall
 CUFLAGS = -m64 -arch=sm_30 -use_fast_math -ccbin $(CXX)
 LDFLAGS = $(CFLAGS)
@@ -50,7 +50,7 @@ LDFLAGS += -L$(CUDNN_INSTALL_DIR)/lib -lcudnn
 endif
 ifeq ($(WITH_TENSORRT), yes)
 CFLAGS += -DLN_TENSORRT
-CXXFLAGS += -DLN_TENSORRT
+CXXFLAGS += -DLN_TENSORRT -Wno-deprecated-declarations
 CUFLAGS += -DLN_TENSORRT
 TENSORRT_INSTALL_DIR ?= /usr
 INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
@@ -95,39 +95,54 @@ CMD_FILE ?= $(BUILD_DIR)/compile_commands.json
 
 ifeq ($(GEN_CMD_FILE), no)
 define compile-c
-$(ECHO) CC $@
+$(ECHO) "  CC\t" $@
 $(call make-depend-c)
 $(AT)$(CC) $(CFLAGS) -c -o $@ $<
 endef
 else
 define compile-c
-$(ECHO) GEN $(CMD_FILE) for $@
+$(ECHO) "  GEN\t" $(CMD_FILE) for $@
 $(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CC) $(CFLAGS) -c -o $@ $<"
 endef
 endif
 
 ifeq ($(GEN_CMD_FILE), no)
 define compile-cxx
-$(ECHO) CXX $@
+$(ECHO) "  CXX\t" $@
 $(call make-depend-cxx)
 $(AT)$(CXX) $(CXXFLAGS) -c -o $@ $<
 endef
 else
 define compile-cxx
-$(ECHO) GEN $(CMD_FILE) for $@
+$(ECHO) "  GEN\t" $(CMD_FILE) for $@
 $(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CXX) $(CXXFLAGS) -c -o $@ $<"
 endef
 endif
 
 ifeq ($(GEN_CMD_FILE), no)
 define compile-cu
-$(ECHO) CUCC $@
+$(ECHO) "  CUCC\t" $@
 $(call make-depend-cu)
 $(AT)$(CUCC) $(CUFLAGS) -c -o $@ $<
 endef
 else
 define compile-cu
-$(ECHO) GEN $(CMD_FILE) for $@
+$(ECHO) "  GEN\t" $(CMD_FILE) for $@
 $(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CUCC) $(CUFLAGS) -c -o $@ $<"
 endef
 endif
+
+define ld-bin
+$(ECHO) "  LD\t" $@
+$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+endef
+
+define ld-so
+$(ECHO) "  LD\t" $@
+$(AT)$(CC) -o $@ $^ $(LDFLAGS_SO)
+endef
+
+define ar-a
+$(ECHO) "  AR\t" $@
+$(AT)$(AR) $@ $^
+endef

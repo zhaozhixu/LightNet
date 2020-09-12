@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 
 #include "lightnet.h"
 
@@ -157,25 +158,49 @@ int main(int argc, char **argv)
     const char *net;      /* neural network model file */
     const char *wts;      /* neural network weight file */
     const char *img_dir;  /* image directory */
+    int opt, optindex;  /* for command line options */
     int need_compile = 1; /* need compile or not */
-
     ln_context *ctx;      /* lightnet context for compilation and inference */
 
     /* parse command line arguments */
-    if (argc >= 2 && ln_streq(argv[1], "-h"))
-        exit_usage(EXIT_SUCCESS);
-    if (argc < 4)
-        exit_usage(EXIT_FAILURE);
-    if (ln_streq(argv[1], "-r")) {
-        need_compile = 0;
-        net = argv[2];
-        wts = argv[3];
-        img_dir = argv[4];
-    } else {
-        net = argv[1];
-        wts = argv[2];
-        img_dir = argv[3];
+    const struct option longopts[] = {
+        {"help", no_argument, NULL, 'h'},
+        {"run",  no_argument, NULL, 'r'},
+        {0, 0, 0, 0}
+    };
+    optind = 1;
+    while ((opt = getopt_long_only(argc, argv, ":hr",
+                                   longopts, &optindex)) != -1) {
+        switch (opt) {
+        case 0:
+            break;
+        case 'h':
+            exit_usage(EXIT_SUCCESS);
+            break;
+        case 'r':
+            need_compile = 0;
+            break;
+        case ':':
+            fprintf(stderr, "option %s needs a value", argv[optind-1]);
+            exit(EXIT_FAILURE);
+            break;
+        case '?':
+            fprintf(stderr, "unknown option %s", argv[optind-1]);
+            exit(EXIT_FAILURE);
+            break;
+        default:
+            fprintf(stderr, "getopt_long_only() returned character code %d", opt);
+            exit(EXIT_FAILURE);
+            break;
+        }
     }
+    if (optind + 3 > argc) {
+        fprintf(stderr, "need 3 more arguments: NET_FILE WEIGHT_FILE IMG_DIR\n");
+        exit(EXIT_FAILURE);
+    }
+    net = argv[optind++];
+    wts = argv[optind++];
+    img_dir = argv[optind++];
 
     /* initialize lightnet, compile network and load weight data */
     ln_arch_init();

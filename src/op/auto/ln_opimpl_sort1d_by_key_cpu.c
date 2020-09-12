@@ -155,10 +155,7 @@ static void sort1d_by_key_cpu_pre_run(ln_op_arg *op_arg)
 /* This function should only do the calculations. */
 static void sort1d_by_key_cpu_run(ln_op_arg *op_arg)
 {
-    struct priv_s *priv = op_arg->priv;
-
-    /* begin custom code */
-    /* end custom code */
+    ln_msg_warn("%s(%s): 'run' not defined", op_arg->name, op_arg->optype);
 }
 
 /* This function should free all the memory allocated by other *_run()s. */
@@ -174,7 +171,6 @@ static void sort1d_by_key_cpu_post_run(ln_op_arg *op_arg)
 /* This function is used to manually set the tensor's offset address. */
 static size_t sort1d_by_key_cpu_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
 {
-    struct priv_s *priv = op_arg->priv;
 
     /* begin custom code */
     return ln_tensor_table_find(op_arg->tensor_table, te->owner)->offset;

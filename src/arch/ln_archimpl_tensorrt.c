@@ -393,19 +393,22 @@ static ln_list *od_func_tensorrt(const ln_context *ctx)
     ln_list **lp;
 
     LN_LIST_FOREACH(op, ctx->ops) {
-        if (ln_streq(op->op_arg->optype, "tensorrt"))
+        if (ln_streq(op->op_arg->optype, "tensorrt")) {
             ln_tensorrt_serialize(op->op_arg);
-        for (lp = &op->op_arg->params; *lp;) {
-            pe = (*lp)->data;
-            if (!ln_streq(pe->arg_name, "bin") &&
-                !ln_streq(pe->arg_name, "bin_size")) {
-                tmp = *lp;
-                *lp = tmp->next;
-                ln_param_entry_free(pe);
-                ln_free(tmp);
-                continue;
+            for (lp = &op->op_arg->params; *lp;) {
+                pe = (*lp)->data;
+                if (!ln_streq(pe->arg_name, "bin") &&
+                    !ln_streq(pe->arg_name, "bin_size") &&
+                    !ln_subfixed(pe->arg_name, "_shape") &&
+                    !ln_subfixed(pe->arg_name, "_dtype")) {
+                    tmp = *lp;
+                    *lp = tmp->next;
+                    ln_param_entry_free(pe);
+                    ln_free(tmp);
+                    continue;
+                }
+                lp = &(*lp)->next;
             }
-            lp = &(*lp)->next;
         }
     }
 
