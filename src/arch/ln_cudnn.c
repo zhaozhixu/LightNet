@@ -43,7 +43,7 @@ void ln_cudnn_context_free(ln_cudnn_context *context)
 
 cudnnDataType_t ln_cudnn_datatype(tl_dtype dtype)
 {
-    cudnnDataType_t ret;
+    cudnnDataType_t ret = CUDNN_DATA_FLOAT;
 
     switch (dtype) {
     case TL_DOUBLE:

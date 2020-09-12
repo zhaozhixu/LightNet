@@ -2,7 +2,7 @@
 
 use warnings;
 use strict;
-use Sort::strverscmp;
+use version;
 use Getopt::Long;
 
 # version information and dependencies
@@ -162,7 +162,7 @@ if ($opts{DOC} eq "yes") {
     if (!defined $output or $output eq "") {
         &warn_msg("mkdocs is is not installed; documents are not going to be built");
         $opts{DOC} = "no";
-    } elsif (strverscmp(&mkdocs_version($output), "1.0.0") < 0) {
+    } elsif (version->parse(&mkdocs_version($output)) < version->parse("1.0.0")) {
         my $version = &mkdocs_version($output);
         &warn_msg("mkdocs requires mininal version 1.0.0, but get $version; documents are not going to be built");
         $opts{DOC} = "no";

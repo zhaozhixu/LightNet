@@ -10,6 +10,7 @@ BUILD_DIR := ../$(BUILD_DIR)
 SRCOBJ = $(BUILD_DIR)/src/$(LIBTARGET_A)
 TEST_RESULT_DIR = `realpath $(OBJDIR)/result`
 TEST_DATA_DIR = `realpath data`
+TEST_UTIL_DIR = lightnettest
 
 INCPATHS += -I../src -I../src/arch -I../src/op `pkg-config --cflags check`
 LDFLAGS += `pkg-config --libs check` -lpthread
@@ -23,7 +24,7 @@ SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
 SRC += $(wildcard *.cc)
 SRC += $(wildcard *.cu)
-SRC += $(wildcard lightnettest/*.c)
+SRC += $(wildcard $(TEST_UTIL_DIR)/*.c)
 NORMAL_SRC = $(filter-out %cuda.c %cuda.cu %cudnn.c %cudnn.cu,$(SRC))
 CUDA_SRC = $(filter %cuda.c %cuda.cu,$(SRC))
 CUDNN_SRC = $(filter %cudnn.c %cudnn.cu,$(SRC))
@@ -42,7 +43,7 @@ endif
 endif
 
 define make-obj-dir
-$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/lightnettest; fi
+$(AT)if [ ! -d $(OBJDIR) ]; then mkdir -p $(OBJDIR)/$(TEST_UTIL_DIR); fi
 endef
 
 .PHONY: all cmd clean
@@ -78,5 +79,5 @@ clean:
 
 ifneq "$(MAKECMDGOALS)" "clean"
 -include $(OBJDIR)/*.d
--include $(OBJDIR)/lightnettest/*.d
+-include $(OBJDIR)/$(TEST_UTIL_DIR)/*.d
 endif

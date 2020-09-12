@@ -1,6 +1,6 @@
-CC = gcc
-CXX = g++
-CUCC = nvcc
+CC ?= gcc
+CXX ?= g++
+CUCC ?= nvcc
 AR = ar cr
 ECHO = @echo
 SHELL = /bin/sh
