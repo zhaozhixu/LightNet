@@ -133,9 +133,9 @@ sub gen_head_block {
     push @headers, "#include \"ln_arch.h\"";
     if ($op->{arch} eq "cuda") {
         push @headers, "#include \"ln_cuda.h\"";
-      }
+    }
     if ($op->{arch} eq "cudnn") {
-      push @headers, "#include \"ln_cudnn.h\"";
+        push @headers, "#include \"ln_cudnn.h\"";
     }
     if ($op->{arch} eq "tensorrt") {
         push @headers, "#include \"ln_tensorrt.h\"";
@@ -699,7 +699,7 @@ sub gen_param_decl_from_priv {
         }
         when ("LN_PARAM_STRING") {
             if (exists $param->{realtype}) {
-                    $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_$param->{realtype};";
+                $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_$param->{realtype};";
             } else {
                 $decl = "${type}${arg_name} = priv->${arg_name}_entry->value_string;";
             }
@@ -737,38 +737,41 @@ sub add_dynamic_decs_from_priv {
     my $tensors_out = $op->{tensors_out};
     my $params = $op->{params};
 
-    return unless $code_str;
+    if (not $code_str) {
+        return;
+    }
+    my @decs = ();
     foreach (@$tensors_in) {
         my $arg_name = $_->{arg_name};
         if (&have_variable($code_str, "$_->{arg_name}_entry")) {
-            push @$states, "ln_tensor_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
+            push @decs, "ln_tensor_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
         }
         if (&have_variable($code_str, "$_->{arg_name}")) {
-            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->tensor;";
+            push @decs, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->tensor;";
         }
         if (&have_variable($code_str, "$_->{arg_name}_name")) {
-            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->name;";
+            push @decs, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->name;";
         }
     }
     foreach (@$tensors_out) {
         my $arg_name = $_->{arg_name};
         if (&have_variable($code_str, "$_->{arg_name}_entry")) {
-            push @$states, "ln_tensor_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
+            push @decs, "ln_tensor_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
         }
         if (&have_variable($code_str, "$_->{arg_name}")) {
-            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->tensor;";
+            push @decs, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->tensor;";
         }
         if (&have_variable($code_str, "$_->{arg_name}_name")) {
-            push @$states, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->name;";
+            push @decs, "tl_tensor *$_->{arg_name} = priv->${arg_name}_entry->name;";
         }
     }
     foreach (@$params) {
         my $arg_name = $_->{arg_name};
         if (&have_variable($code_str, "$_->{arg_name}_entry")) {
-            push @$states, "ln_param_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
+            push @decs, "ln_param_entry *$_->{arg_name}_entry = priv->${arg_name}_entry;";
         }
         if (&have_variable($code_str, "$_->{arg_name}")) {
-            push @$states, &gen_param_decl_from_priv($_);
+            push @decs, &gen_param_decl_from_priv($_);
         }
     }
     # if (exists $op->{extra_privs}) {
@@ -776,23 +779,31 @@ sub add_dynamic_decs_from_priv {
     #     foreach (@$extra_privs) {
     #         my $name = $_->{name};
     #         if (&have_variable($code_str, "$_->{name}")) {
-    #             push @$states, "$_->{type} $_->{name} = priv->${name};";
+    #             push @decs, "$_->{type} $_->{name} = priv->${name};";
     #         }
     #     }
     # }
+    if (@decs) {
+        unshift @decs, "struct priv_s *priv = op_arg->priv;";
+    }
+    push @$states, @decs;
 }
 
 sub gen_calc_offset {
     my $op = shift;
 
     my @states = ();
-    push @states, "struct priv_s *priv = op_arg->priv;";
-    &add_dynamic_decs_from_priv($op, $op->{calc_offset}, \@states);
-    &make_defs_neat(\@states);
-    push @states, "";
-    &add_custom_block($op->{calc_offset}, \@states);
+    my $states_str;
+    if ($op->{calc_offset} eq "") {
+        push @states, "ln_msg_warn(\"%s(%s): 'calc_offset' not defined\", op_arg->name, op_arg->optype);";
+    } else {
+        &add_dynamic_decs_from_priv($op, $op->{calc_offset}, \@states);
+        &make_defs_neat(\@states);
+        push @states, "";
+        &add_custom_block($op->{calc_offset}, \@states);
+    }
     &indent_lines($INDENT_OFFSET, \@states);
-    my $states_str = join "\n", @states;
+    $states_str = join "\n", @states;
 
     my $calc_offset_tpl = <<EOF;
 /* This function is used to manually set the tensor's offset address. */
@@ -807,13 +818,17 @@ sub gen_static_run {
     my $op = shift;
 
     my @states = ();
-    push @states, "struct priv_s *priv = op_arg->priv;";
-    &add_dynamic_decs_from_priv($op, $op->{static_run}, \@states);
-    &make_defs_neat(\@states);
-    push @states, "";
-    &add_custom_block($op->{static_run}, \@states);
+    my $states_str;
+    if ($op->{static_run} eq "") {
+        push @states, "ln_msg_warn(\"%s(%s): 'static_run' not defined\", op_arg->name, op_arg->optype);";
+    } else {
+        &add_dynamic_decs_from_priv($op, $op->{static_run}, \@states);
+        &make_defs_neat(\@states);
+        push @states, "";
+        &add_custom_block($op->{static_run}, \@states);
+    }
     &indent_lines($INDENT_OFFSET, \@states);
-    my $states_str = join "\n", @states;
+    $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
 /* This function runs only once per instance right after memory allocation. */
@@ -828,13 +843,17 @@ sub gen_run {
     my $op = shift;
 
     my @states = ();
-    push @states, "struct priv_s *priv = op_arg->priv;";
-    &add_dynamic_decs_from_priv($op, $op->{run}, \@states);
-    &make_defs_neat(\@states);
-    push @states, "";
-    &add_custom_block($op->{run}, \@states);
+    my $states_str;
+    if ($op->{run} eq "") {
+        push @states, "ln_msg_warn(\"%s(%s): 'run' not defined\", op_arg->name, op_arg->optype);";
+    } else {
+        &add_dynamic_decs_from_priv($op, $op->{run}, \@states);
+        &make_defs_neat(\@states);
+        push @states, "";
+        &add_custom_block($op->{run}, \@states);
+    }
     &indent_lines($INDENT_OFFSET, \@states);
-    my $states_str = join "\n", @states;
+    $states_str = join "\n", @states;
 
     my $static_run_tpl = <<EOF;
 /* This function should only do the calculations. */
@@ -852,6 +871,7 @@ sub gen_post_run {
     my @states = ();
     push @states, "struct priv_s *priv = op_arg->priv;";
     &add_dynamic_decs_from_priv($op, $op->{post_run}, \@states);
+    shift @states if @states > 1 and $states[0] eq $states[1];
     &make_defs_neat(\@states);
     push @states, "";
     &add_custom_block($op->{post_run}, \@states) if exists $op->{post_run};
@@ -1038,16 +1058,16 @@ sub indent_line {
 }
 
 sub backup_write {
-  my $file = shift;
-  my $str = shift;
-  if (-e $file) {
-    &warn_msg("${file} exists, backuped with subfix .bak");
-    copy($file, "${file}.bak")
-      or die "Cannot backup file ${file}.bak: $!";
-  }
-  open FILE, '>', $file or die "Cannot open $file: $!";
-  print FILE $str;
-  close FILE;
+    my $file = shift;
+    my $str = shift;
+    if (-e $file) {
+        &warn_msg("${file} exists, backuped with subfix .bak");
+        copy($file, "${file}.bak")
+            or die "Cannot backup file ${file}.bak: $!";
+    }
+    open FILE, '>', $file or die "Cannot open $file: $!";
+    print FILE $str;
+    close FILE;
 }
 
 sub err_exit {

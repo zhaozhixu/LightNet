@@ -179,7 +179,6 @@ static void sort1d_by_key_cuda_post_run(ln_op_arg *op_arg)
 /* This function is used to manually set the tensor's offset address. */
 static size_t sort1d_by_key_cuda_calc_offset(ln_op_arg *op_arg, ln_tensor_entry *te)
 {
-    struct priv_s *priv = op_arg->priv;
 
     /* begin custom code */
     return ln_tensor_table_find(op_arg->tensor_table, te->owner)->offset;

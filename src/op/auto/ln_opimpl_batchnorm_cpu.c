@@ -181,10 +181,7 @@ static void batchnorm_cpu_pre_run(ln_op_arg *op_arg)
 /* This function should only do the calculations. */
 static void batchnorm_cpu_run(ln_op_arg *op_arg)
 {
-    struct priv_s *priv = op_arg->priv;
-
-    /* begin custom code */
-    /* end custom code */
+    ln_msg_warn("%s(%s): 'run' not defined", op_arg->name, op_arg->optype);
 }
 
 /* This function should free all the memory allocated by other *_run()s. */

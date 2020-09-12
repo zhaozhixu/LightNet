@@ -131,6 +131,10 @@ if ($opts{WITH_TENSORRT} eq "yes") {
         $opts{WITH_CUDA} = "yes";
         print ("automatically set --with-cuda=yes\n");
     }
+    if (not $opts{WITH_CUDNN} eq "yes") {
+        $opts{WITH_CUDNN} = "yes";
+        print ("automatically set --with-cudnn=yes\n");
+    }
 }
 
 if ($opts{WITH_CUDA} eq "yes") {

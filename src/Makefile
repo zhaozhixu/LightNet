@@ -76,16 +76,13 @@ liba: $(OBJDIR)/$(LIBTARGET_SO)
 cmd: $(OBJS)
 
 $(OBJDIR)/$(TARGET_BIN): $(OBJS)
-	$(ECHO) LD $@
-	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+	$(call ld-bin)
 
 $(OBJDIR)/$(LIBTARGET_SO): $(OBJS)
-	$(ECHO) LD $@
-	$(AT)$(CC) -o $@ $^ $(LDFLAGS_SO)
+	$(call ld-so)
 
 $(OBJDIR)/$(LIBTARGET_A): $(OBJS)
-	$(ECHO) AR $@
-	$(AT)$(AR) $@ $^
+	$(call ar-a)
 
 $(OBJDIR)/%.o: %.c
 	$(call make-obj-dir)

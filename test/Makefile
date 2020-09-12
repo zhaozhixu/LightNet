@@ -55,8 +55,7 @@ all: $(OBJDIR)/$(TARGET_TEST)
 cmd: $(OBJS)
 
 $(OBJDIR)/$(TARGET_TEST): $(OBJS) $(SRCOBJ)
-	$(ECHO) LD $@
-	$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+	$(call ld-bin)
 
 $(OBJDIR)/%.o: %.c
 	$(call make-obj-dir)

@@ -35,3 +35,4 @@ debug*/
 *.org
 compile_commands.json
 .clangd
+.cache
