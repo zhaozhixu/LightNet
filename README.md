@@ -24,7 +24,7 @@ Most required packages can be installed using the following commands
 (`sudo` permission may be required):
 
     $ sudo apt-get install build-essential perl git pkg-config check
-    $ sudo cpan install JSON Sort::strverscmp
+    $ sudo cpan install JSON
 
 **NOTE** The perl packages listed here are used under v5.26.1. If you are using
 a more recent perl version, there is a chance they are not able to be installed.
@@ -77,7 +77,7 @@ build LightNet.
 
 * (Optional) Other packages for development
 
-    $ sudo cpan install Clone Devel::Confess Parse::RecDescent
+        $ sudo cpan install Clone Devel::Confess Parse::RecDescent
 
 ### Building and Installation
 
