@@ -403,8 +403,9 @@ class Logger : public ILogger
 public:
     void log(ILogger::Severity severity, const char* msg) override
         {
-            // suppress info-level messages
-            if (severity == Severity::kINFO) return;
+            if (severity != Severity::kWARNING || severity != Severity::kERROR ||
+                severity != Severity::kINTERNAL_ERROR || severity != Severity::kINFO)
+                return;
 
             switch (severity)
             {
