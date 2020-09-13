@@ -126,10 +126,10 @@ ln_op *ln_op_create_with_opname(const ln_op *op_proto, const ln_list *ops,
 
     ln_op_list_unique_name(ops, opname, op_proto->op_arg->optype);
     for (i = 0; (arg_name = op_proto->op_arg->in_arg_names[i]); i++)
-        ln_tensor_list_append(tensors_in, arg_name, "");
+        tensors_in = ln_tensor_list_append(tensors_in, arg_name, "");
 
     for (i = 0; (arg_name = op_proto->op_arg->out_arg_names[i]); i++)
-        ln_tensor_list_append(tensors_out, arg_name, "");
+        tensors_out = ln_tensor_list_append(tensors_out, arg_name, "");
 
     for (i = 0; (arg_name = op_proto->op_arg->param_arg_names[i]); i++)
         params = ln_param_list_append_empty(params, arg_name,
@@ -137,6 +137,23 @@ ln_op *ln_op_create_with_opname(const ln_op *op_proto, const ln_list *ops,
 
     return ln_op_create_from_proto(op_proto, opname, tensors_in,
                                    tensors_out, params, tensor_table);
+}
+
+void ln_op_update_names(ln_op *op, const char *update_opname)
+{
+    ln_tensor_list_entry *tle;
+    char tensor_name[LN_MAX_NAME_LEN];
+
+    ln_free(op->op_arg->name);
+    op->op_arg->name = ln_strdup(update_opname);
+    LN_LIST_FOREACH(tle, op->op_arg->tensors_out) {
+        if (strlen(update_opname) + strlen(tle->arg_name) + 2 > LN_MAX_NAME_LEN)
+            ln_msg_inter_error("result '%s_%s' length exceeds LN_MAX_NAME_LEN",
+                               update_opname, tle->arg_name);
+        snprintf(tensor_name, LN_MAX_NAME_LEN, "%s_%s", update_opname, tle->arg_name);
+        ln_free(tle->name);
+        tle->name = ln_strdup(tensor_name);
+    }
 }
 
 ln_op *ln_op_copy(const ln_op *op)

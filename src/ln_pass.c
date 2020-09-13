@@ -109,17 +109,21 @@ void ln_pass_expander(ln_context *ctx, ln_expander_func ep_func)
     ln_op *op;
     ln_list **lp;
     ln_list *ep_ops;
+    int ep_ops_len;
     int match;
 
     ep_ops = NULL;
-    for (lp = &ctx->ops; *lp; lp = &(*lp)->next) {
+    for (lp = &ctx->ops; *lp;) {
         op = (*lp)->data;
         match = 0;
         ep_ops = ep_func(ctx, op, &match);
         if (!match)
             continue;
+        ep_ops_len = ln_list_length(ep_ops);
         ln_context_replace_ops(ctx, lp, 1, ep_ops);
         ln_context_check(ctx);
+        while (ep_ops_len--)
+            lp = &(*lp)->next;
     }
 }
 

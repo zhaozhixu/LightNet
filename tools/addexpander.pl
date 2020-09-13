@@ -366,9 +366,11 @@ EOF
     }
 
     my @blocks;
-    push @blocks, "ln_op *op_proto;";
-    push @blocks, "ln_list *new_ops = NULL;";
-    push @blocks, "";
+    push @blocks, <<EOF;
+ln_op *op_proto;
+ln_list *new_ops = NULL;
+char op_name_buf[LN_MAX_NAME_LEN];
+EOF
     foreach (@$replace) {
         my ($type, $name) = split;
         err_exit("replace details needs a list of new op types and names: '$_'")
@@ -377,6 +379,8 @@ EOF
 op_proto = ln_hash_find(LN_ARCH.op_proto_table, "$type");
 assert(op_proto);
 ln_op *$name = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+if (ln_op_list_unique_name(new_ops, op_name_buf, ${name}->op_arg->optype) > 0)
+    ln_op_update_names($name, op_name_buf);
 new_ops = ln_list_append(new_ops, $name);
 EOF
         push @blocks, $create_op;

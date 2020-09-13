@@ -80,6 +80,7 @@ ln_op *ln_op_create_with_names(const ln_op *op_proto, const ln_list *ops,
    op name */
 ln_op *ln_op_create_with_opname(const ln_op *op_proto, const ln_list *ops,
                                 ln_hash *tensor_table);
+void ln_op_update_names(ln_op *op, const char *update_opname);
 ln_op *ln_op_copy(const ln_op *op);
 ln_op *ln_op_copy_to_optype(const ln_hash *op_proto_table, const ln_op *op,
                             const char *new_optype);

@@ -94,6 +94,15 @@
             ]
         },
         {
+            "optype": "dot_product",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["dot_product_cpu"]
+                }
+            ]
+        },
+        {
             "optype": "softmax",
             "rules": [
                 {

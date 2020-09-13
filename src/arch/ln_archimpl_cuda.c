@@ -56,6 +56,7 @@ extern ln_op ln_opimpl_scatter_cuda;
 extern ln_op ln_opimpl_scatter_nocopy_cuda;
 extern ln_op ln_opimpl_deconv2d_cuda;
 extern ln_op ln_opimpl_submean_cuda;
+extern ln_op ln_opimpl_dot_product_cuda;
 /* end of declare cuda ops */
 
 static ln_op *ops_cuda[] = {
@@ -93,6 +94,7 @@ static ln_op *ops_cuda[] = {
     &ln_opimpl_scatter_nocopy_cuda,
     &ln_opimpl_deconv2d_cuda,
     &ln_opimpl_submean_cuda,
+    &ln_opimpl_dot_product_cuda,
 /* end of init cuda ops */
     NULL
 };

@@ -27,6 +27,8 @@
                         "self.outs[dst]=>submean.ins[src]",
                         "self.outs[dst]=>resize.ins[src]",
                         "self.outs[dst]=>upsample.ins[src]",
+                        "self.outs[dst]=>dot_product.ins[src1]",
+                        "self.outs[dst]=>dot_product.ins[src2]",
                     ],
                     "replace": ["create_cuda"]
                 },
@@ -509,6 +511,35 @@
                         "trt.params[op$^_dst] = self.outs[dst]",
                         "trt.params[op$^_elew_type] = ${type(char *) ln_tensorrt_elew_name(${rh self.params[elew_op]})}",
                         "trt.params[batch_size] = self.ins[src1].dims[0]",
+                    ]
+                }
+            ]
+        },
+        {
+            "optype": "dot_product",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["create_cuda create_ws1", "create_cuda create_ws2",
+                                "dot_product_cuda dot"],
+                    "details": [
+                        "create_ws1.params[dtype] = tl_dtype_name(${rh self.ins[src1].dtype})",
+                        "create_ws1.params[dims] = ${type(int *, 1) (int[]){tl_tensor_dot_product_cuda_ws_len(${rh self.ins[src1].tensor})}}",
+                        "create_ws1.params[ran] = ${type(double *, 2) (double[]){0, 0}}",
+                        "create_ws1.params[data] = ${type(double *, 1) (double[]){0}}",
+                        "create_ws1.params[from_file] = LN_FALSE",
+
+                        "create_ws2.params[dtype] = create_ws1.params[dtype]",
+                        "create_ws2.params[dims] = create_ws1.params[dims]",
+                        "create_ws2.params[ran] = create_ws1.params[ran]",
+                        "create_ws2.params[data] = create_ws1.params[data]",
+                        "create_ws2.params[from_file] = create_ws1.params[from_file]",
+
+                        "dot.ins[src1] = self.ins[src1]",
+                        "dot.ins[src2] = self.ins[src2]",
+                        "dot.ins[ws1] = create_ws1.outs[dst]",
+                        "dot.ins[ws2] = create_ws2.outs[dst]",
+                        "dot.outs[dst] = self.outs[dst]"
                     ]
                 }
             ]

@@ -389,6 +389,54 @@ static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
         }
         ret;
     })
+    ) ||
+        (({
+        ln_list *next_ops;
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret = 0;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "dot_product"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src1")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
+        }
+        ret;
+    })
+    ) ||
+        (({
+        ln_list *next_ops;
+        ln_op *next_op;
+        ln_tensor_entry *te;
+        ln_tensor_list_entry *tle_next;
+        int ret = 0;
+
+        te = ln_tensor_list_find_entry(self->op_arg->tensors_out, self->op_arg->tensor_table, "dst");
+        next_ops = ln_dfg_nexts(ctx->dfg, self, te->name);
+        if (next_ops) {
+            LN_LIST_FOREACH(next_op, next_ops) {
+                if (!ln_streq(next_op->op_arg->optype, "dot_product"))
+                    continue;
+                tle_next = ln_tensor_list_find_by_name(next_op->op_arg->tensors_in, te->name);
+                if (tle_next && ln_streq(tle_next->arg_name, "src2")) {
+                    ret = 1;
+                    break;
+                }
+            }
+            ln_list_free(next_ops);
+        }
+        ret;
+    })
     )) {
         ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
                                              self, "create_cuda");
@@ -436,10 +484,13 @@ static ln_list *ep_conv2d(const ln_context *ctx, const ln_op *self, int *match)
         (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -659,10 +710,13 @@ static ln_list *ep_conv2d(const ln_context *ctx, const ln_op *self, int *match)
     else if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -859,10 +913,13 @@ static ln_list *ep_deconv2d(const ln_context *ctx, const ln_op *self, int *match
         (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1089,10 +1146,13 @@ static ln_list *ep_deconv2d(const ln_context *ctx, const ln_op *self, int *match
     else if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1267,10 +1327,13 @@ static ln_list *ep_relu(const ln_context *ctx, const ln_op *self, int *match)
     if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1367,10 +1430,13 @@ static ln_list *ep_lrelu(const ln_context *ctx, const ln_op *self, int *match)
     if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1467,10 +1533,13 @@ static ln_list *ep_sigmoid(const ln_context *ctx, const ln_op *self, int *match)
     if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1578,10 +1647,13 @@ static ln_list *ep_maxpool2d(const ln_context *ctx, const ln_op *self, int *matc
         (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1745,10 +1817,13 @@ static ln_list *ep_maxpool2d(const ln_context *ctx, const ln_op *self, int *matc
     else if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -1889,10 +1964,13 @@ static ln_list *ep_avgpool2d(const ln_context *ctx, const ln_op *self, int *matc
         (ln_param_list_find(self->op_arg->params, "padding")->value_array_int[1] != ln_param_list_find(self->op_arg->params, "padding")->value_array_int[3] && ln_tensorrt_version_cmp("4.0.0") >= 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2056,10 +2134,13 @@ static ln_list *ep_avgpool2d(const ln_context *ctx, const ln_op *self, int *matc
     else if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2198,10 +2279,13 @@ static ln_list *ep_softmax(const ln_context *ctx, const ln_op *self, int *match)
     else if ((ln_tensorrt_version_cmp("4.4.0") < 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2280,10 +2364,13 @@ static ln_list *ep_softmax(const ln_context *ctx, const ln_op *self, int *match)
     else if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2389,10 +2476,13 @@ static ln_list *ep_concat(const ln_context *ctx, const ln_op *self, int *match)
     else if ((ln_tensorrt_version_cmp("4.0.0") < 0)) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2488,10 +2578,13 @@ static ln_list *ep_concat(const ln_context *ctx, const ln_op *self, int *match)
     else if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2605,15 +2698,20 @@ static ln_list *ep_batchnorm(const ln_context *ctx, const ln_op *self, int *matc
     if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "bn2scale_wts_cpu");
         assert(op_proto);
         ln_op *bwc = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, bwc->op_arg->optype) > 0)
+            ln_op_update_names(bwc, op_name_buf);
         new_ops = ln_list_append(new_ops, bwc);
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2794,10 +2892,13 @@ static ln_list *ep_elew(const ln_context *ctx, const ln_op *self, int *match)
     if (1) {
         ln_op *op_proto;
         ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
 
         op_proto = ln_hash_find(LN_ARCH.op_proto_table, "tensorrt");
         assert(op_proto);
         ln_op *trt = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, trt->op_arg->optype) > 0)
+            ln_op_update_names(trt, op_name_buf);
         new_ops = ln_list_append(new_ops, trt);
 
         {
@@ -2895,6 +2996,128 @@ static ln_list *ep_elew(const ln_context *ctx, const ln_op *self, int *match)
         {
             ln_param_entry *pe = ln_param_list_find(trt->op_arg->params, "batch_size");
             ln_param_set_satu_number(pe, (double)(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->dims[0]));
+        }
+
+        *match = 1;
+        return new_ops;
+    }
+}
+
+static ln_list *ep_dot_product(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "create_cuda");
+        assert(op_proto);
+        ln_op *create_ws1 = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, create_ws1->op_arg->optype) > 0)
+            ln_op_update_names(create_ws1, op_name_buf);
+        new_ops = ln_list_append(new_ops, create_ws1);
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "create_cuda");
+        assert(op_proto);
+        ln_op *create_ws2 = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, create_ws2->op_arg->optype) > 0)
+            ln_op_update_names(create_ws2, op_name_buf);
+        new_ops = ln_list_append(new_ops, create_ws2);
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "dot_product_cuda");
+        assert(op_proto);
+        ln_op *dot = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, dot->op_arg->optype) > 0)
+            ln_op_update_names(dot, op_name_buf);
+        new_ops = ln_list_append(new_ops, dot);
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "dtype");
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->dtype));
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "dims");
+            ln_param_set_satu_array_int(pe,  1, (int[]){tl_tensor_dot_product_cuda_ws_len(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor)});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "ran");
+            ln_param_set_satu_array_double(pe,  2, (double[]){0, 0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "data");
+            ln_param_set_satu_array_double(pe,  1, (double[]){0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "from_file");
+            ln_param_set_bool(pe, LN_FALSE);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "dtype");
+            ln_param_set_string(pe, ln_param_list_find(create_ws1->op_arg->params, "dtype")->value_string);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "dims");
+            ln_param_set_satu_array_int(pe, ln_param_list_find(create_ws1->op_arg->params, "dims")->array_len, ln_param_list_find(create_ws1->op_arg->params, "dims")->value_array_int);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "ran");
+            ln_param_set_satu_array_double(pe, ln_param_list_find(create_ws1->op_arg->params, "ran")->array_len, ln_param_list_find(create_ws1->op_arg->params, "ran")->value_array_double);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "data");
+            ln_param_set_satu_array_double(pe, ln_param_list_find(create_ws1->op_arg->params, "data")->array_len, ln_param_list_find(create_ws1->op_arg->params, "data")->value_array_double);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "from_file");
+            ln_param_set_bool(pe, ln_param_list_find(create_ws1->op_arg->params, "from_file")->value_bool);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "src1");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src1")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "src2");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src2")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "ws1");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(create_ws1->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "ws2");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(create_ws2->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_out,
+                                                                        "dst");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
         }
 
         *match = 1;
@@ -3204,6 +3427,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"concat", ep_concat},
     {"batchnorm", ep_batchnorm},
     {"elew", ep_elew},
+    {"dot_product", ep_dot_product},
     {"maxreduce", ep_maxreduce},
     {"maxreduce_arg", ep_maxreduce_arg},
     {"slice", ep_slice},

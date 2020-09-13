@@ -169,6 +169,20 @@ static ln_list *ep_elew(const ln_context *ctx, const ln_op *self, int *match)
     }
 }
 
+static ln_list *ep_dot_product(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "dot_product_cpu");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+}
+
 static ln_list *ep_softmax(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
@@ -446,6 +460,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"transpose", ep_transpose},
     {"zeros", ep_zeros},
     {"elew", ep_elew},
+    {"dot_product", ep_dot_product},
     {"softmax", ep_softmax},
     {"concat", ep_concat},
     {"batchnorm", ep_batchnorm},

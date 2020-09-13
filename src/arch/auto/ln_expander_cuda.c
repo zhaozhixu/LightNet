@@ -169,6 +169,128 @@ static ln_list *ep_elew(const ln_context *ctx, const ln_op *self, int *match)
     }
 }
 
+static ln_list *ep_dot_product(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *op_proto;
+        ln_list *new_ops = NULL;
+        char op_name_buf[LN_MAX_NAME_LEN];
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "create_cuda");
+        assert(op_proto);
+        ln_op *create_ws1 = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, create_ws1->op_arg->optype) > 0)
+            ln_op_update_names(create_ws1, op_name_buf);
+        new_ops = ln_list_append(new_ops, create_ws1);
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "create_cuda");
+        assert(op_proto);
+        ln_op *create_ws2 = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, create_ws2->op_arg->optype) > 0)
+            ln_op_update_names(create_ws2, op_name_buf);
+        new_ops = ln_list_append(new_ops, create_ws2);
+
+        op_proto = ln_hash_find(LN_ARCH.op_proto_table, "dot_product_cuda");
+        assert(op_proto);
+        ln_op *dot = ln_op_create_with_names(op_proto, ctx->ops, ctx->tensor_table);
+        if (ln_op_list_unique_name(new_ops, op_name_buf, dot->op_arg->optype) > 0)
+            ln_op_update_names(dot, op_name_buf);
+        new_ops = ln_list_append(new_ops, dot);
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "dtype");
+            ln_param_set_string(pe, tl_dtype_name(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor->dtype));
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "dims");
+            ln_param_set_satu_array_int(pe,  1, (int[]){tl_tensor_dot_product_cuda_ws_len(ln_tensor_list_find_entry(self->op_arg->tensors_in, self->op_arg->tensor_table, "src1")->tensor)});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "ran");
+            ln_param_set_satu_array_double(pe,  2, (double[]){0, 0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "data");
+            ln_param_set_satu_array_double(pe,  1, (double[]){0});
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws1->op_arg->params, "from_file");
+            ln_param_set_bool(pe, LN_FALSE);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "dtype");
+            ln_param_set_string(pe, ln_param_list_find(create_ws1->op_arg->params, "dtype")->value_string);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "dims");
+            ln_param_set_satu_array_int(pe, ln_param_list_find(create_ws1->op_arg->params, "dims")->array_len, ln_param_list_find(create_ws1->op_arg->params, "dims")->value_array_int);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "ran");
+            ln_param_set_satu_array_double(pe, ln_param_list_find(create_ws1->op_arg->params, "ran")->array_len, ln_param_list_find(create_ws1->op_arg->params, "ran")->value_array_double);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "data");
+            ln_param_set_satu_array_double(pe, ln_param_list_find(create_ws1->op_arg->params, "data")->array_len, ln_param_list_find(create_ws1->op_arg->params, "data")->value_array_double);
+        }
+
+        {
+            ln_param_entry *pe = ln_param_list_find(create_ws2->op_arg->params, "from_file");
+            ln_param_set_bool(pe, ln_param_list_find(create_ws1->op_arg->params, "from_file")->value_bool);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "src1");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src1")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "src2");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(self->op_arg->tensors_in, "src2")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "ws1");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(create_ws1->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_in,
+                                                                        "ws2");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(create_ws2->op_arg->tensors_out, "dst")->name);
+        }
+
+        {
+            ln_tensor_list_entry *tle = ln_tensor_list_find_by_arg_name(dot->op_arg->tensors_out,
+                                                                        "dst");
+            ln_free(tle->name);
+            tle->name = ln_strdup(ln_tensor_list_find_by_arg_name(self->op_arg->tensors_out, "dst")->name);
+        }
+
+        *match = 1;
+        return new_ops;
+    }
+}
+
 static ln_list *ep_softmax(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
@@ -446,6 +568,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"transpose", ep_transpose},
     {"zeros", ep_zeros},
     {"elew", ep_elew},
+    {"dot_product", ep_dot_product},
     {"softmax", ep_softmax},
     {"concat", ep_concat},
     {"batchnorm", ep_batchnorm},
