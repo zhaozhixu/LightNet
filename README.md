@@ -23,14 +23,7 @@ other distros as well.
 Most required packages can be installed using the following commands
 (`sudo` permission may be required):
 
-    $ sudo apt-get install build-essential perl git pkg-config check
-    $ sudo cpan install JSON
-
-**NOTE** The perl packages listed here are used under v5.26.1. If you are using
-a more recent perl version, there is a chance they are not able to be installed.
-I recommand using [perlbrew](https://perlbrew.pl/) to install and switch to
-perl-5.26.1 (there is another benefit: the `cpan` commands can be used without
-`sudo`).
+    $ sudo apt-get install build-essential perl git pkg-config check libjson-perl
 
 This project also depends on [TensorLight](https://github.com/zhaozhixu/TensorLight),
 a lightweight tensor operation library. Install it according to 
@@ -76,6 +69,12 @@ build LightNet.
     if you want to build with TensorRT support.
 
 * (Optional) Other packages for development
+
+    **NOTE** The perl packages listed here are used under v5.26.1. If you are using
+    a more recent perl version, there is a chance they are not able to be installed.
+    I recommand using [perlbrew](https://perlbrew.pl/) to install and switch to
+    perl-5.26.1 (there is another benefit: the `cpan` commands can be used without
+    `sudo`).
 
         $ sudo cpan install Clone Devel::Confess Parse::RecDescent
 

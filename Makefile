@@ -144,10 +144,10 @@ define make-install
 cp -r $(BUILD_INCLUDE_DIR)/* $(INSTALL_INCLUDE_DIR)
 cp $(BUILD_A) $(INSTALL_A)
 cp $(BUILD_SO_MMM) $(INSTALL_SO_MMM)
-ln -sf $(INSTALL_SO_MMM) $(INSTALL_SO_MM)
-ln -sf $(INSTALL_SO_MMM) $(INSTALL_SO)
+ln -sf $(LIBTARGET_SO_MMM) $(INSTALL_SO_MM)
+ln -sf $(LIBTARGET_SO_MMM) $(INSTALL_SO)
 cp $(BUILD_BIN_MMM) $(INSTALL_BIN_MMM)
-ln -sf $(INSTALL_BIN_MMM) $(INSTALL_BIN)
+ln -sf $(BIN_MMM) $(INSTALL_BIN)
 cp $(BUILD_BIN_DIR)/il2json $(INSTALL_BIN_DIR)/il2json
 $(INSTALL_DOC_CMD)
 perl tools/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
