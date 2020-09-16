@@ -918,6 +918,9 @@ static ICudaEngine *deserialize_engine(ln_op_arg *op_arg)
     bin_size = ln_param_list_find(op_arg->params, "bin_size")->value_int;
     model = (unsigned char *)ln_alloc(BASE64_DECODE_OUT_SIZE(bin_size));
     model_size = base64_decode(bin, bin_size, model);
+    if (!model_size)
+        ln_msg_error("%s(%s): error decoding tensorrt serialized model",
+                     op_arg->name, op_arg->optype);
 
     runtime = createInferRuntime(global_logger);
     engine = runtime->deserializeCudaEngine(model, model_size, NULL);
