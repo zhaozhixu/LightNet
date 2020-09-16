@@ -82,9 +82,7 @@ $(AT)$(CXX) -MM -MF $(subst .o,.d,$@) -MP -MT $@ $(CXXFLAGS) $<
 endef
 
 define make-depend-cu
-$(AT)$(CUCC) -M $(CUFLAGS) $< > $(subst .o,.d,$@).$$$$; \
-sed 's,.*\.o[ :]*,$@ : ,g' < $(subst .o,.d,$@).$$$$ > $(subst .o,.d,$@); \
-rm -f $(subst .o,.d,$@).$$$$
+  $(AT)$(CUCC) -MM -MF $(subst .o,.d,$@) -MT $@ $(CUFLAGS) $<
 endef
 
 GEN_CMD_FILE := no
