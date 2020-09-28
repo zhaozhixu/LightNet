@@ -39,7 +39,6 @@ struct mem_block {
     size_t   size;
 };
 
-typedef struct ln_mem_pool ln_mem_pool;
 struct ln_mem_pool {
     size_t   size;
     size_t   align_size;

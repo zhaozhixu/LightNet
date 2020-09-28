@@ -924,6 +924,9 @@ static ICudaEngine *deserialize_engine(ln_op_arg *op_arg)
 
     runtime = createInferRuntime(global_logger);
     engine = runtime->deserializeCudaEngine(model, model_size, NULL);
+    if (!model_size)
+        ln_msg_error("%s(%s): error deserializing tensorrt serialized model",
+                     op_arg->name, op_arg->optype);
 
     runtime->destroy();
     ln_free(model);

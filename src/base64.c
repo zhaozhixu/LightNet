@@ -148,7 +148,7 @@ base64_decode(const char *in, unsigned int inlen, unsigned char *out)
 			break;
 		case 1:
 			out[j++] |= (c >> 4) & 0x3;
-			out[j] = (c & 0xF) << 4; 
+			out[j] = (c & 0xF) << 4;
 			break;
 		case 2:
 			out[j++] |= (c >> 2) & 0xF;
