@@ -219,29 +219,38 @@
                 }
             ]
         },
+        // {
+        //     "optype": "lrelu",
+        //     "rules":[
+        //         {
+        //             "cond": [],
+        //             "replace": ["tensorrt trt"],
+        //             "details": [
+        //                 "trt.ins[src$@] = self.ins[src]",
+        //                 "trt.outs[dst$@] = self.outs[dst]",
+        //                 "trt.params[dst$^_shape] = self.outs[dst].dims",
+        //                 "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
+        //                 "trt.params[op$@] = \"lrelu\"",
+        //                 "trt.params[op$^_src] = self.ins[src]",
+        //                 "trt.params[op$^_dst] = self.outs[dst]",
+        //                 "trt.params[op$^_negslope] = self.params[negslope]",
+        //                 "trt.params[batch_size] = self.ins[src].dims[0]"
+        //             ],
+        //         }
+        //     ]
+        // },
         {
             "optype": "lrelu",
-            "rules":[
+            "rules": [
                 {
                     "cond": [],
-                    "replace": ["tensorrt trt"],
-                    "details": [
-                        "trt.ins[src$@] = self.ins[src]",
-                        "trt.outs[dst$@] = self.outs[dst]",
-                        "trt.params[dst$^_shape] = self.outs[dst].dims",
-                        "trt.params[dst$^_dtype] = ${type(char *) tl_dtype_name(${rh self.outs[dst].dtype})}",
-                        "trt.params[op$@] = \"lrelu\"",
-                        "trt.params[op$^_src] = self.ins[src]",
-                        "trt.params[op$^_dst] = self.outs[dst]",
-                        "trt.params[op$^_negslope] = self.params[negslope]",
-                        "trt.params[batch_size] = self.ins[src].dims[0]"
-                    ],
+                    "replace": ["lrelu_cuda"]
                 }
             ]
         },
         {
             "optype": "sigmoid",
-            "rules":[
+            "rules": [
                 {
                     "cond": [],
                     "replace": ["tensorrt trt"],
