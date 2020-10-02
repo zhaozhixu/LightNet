@@ -11,8 +11,16 @@ BUILD_DIR := ../$(BUILD_DIR)
 INCPATHS += -Iarch -Iop -I$(BUILD_DIR)/include/$(TARGET)
 CFLAGS += -fPIC -fvisibility=hidden
 CXXFLAGS += -fPIC -fvisibility=hidden
-CUFLAGS += --compiler-options '-fPIC -fvisibility=hidden' --linker-options '-Wl,--no-undefined -shared' -shared
-LDFLAGS_SO = $(LDFLAGS) -shared -Wl,--no-undefined
+
+LDFLAGS_SO += $(LDFLAGS) -shared
+CUFLAGS += --compiler-options '-fPIC -fvisibility=hidden' -shared
+ifeq ($(UNAME_S),Linux)
+LDFLAGS_SO += -Wl,--no-undefined
+CUFLAGS += --linker-options '-Wl,--no-undefined -shared'
+else ifeq ($(UNAME_S),Darwin)
+LDFLAGS_SO += -Wl,-undefined,error
+CUFLAGS += --linker-options '-Wl,-undefined,error'
+endif
 
 SRC = $(wildcard *.c)
 SRC += $(wildcard *.cpp)
