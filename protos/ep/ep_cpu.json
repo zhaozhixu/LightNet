@@ -58,6 +58,15 @@
             ]
         },
         {
+            "optype": "forward",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["forward_cpu"]
+                }
+            ]
+        },
+        {
             "optype": "slice",
             "rules": [
                 {

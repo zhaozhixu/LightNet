@@ -3,9 +3,11 @@
 import json
 import warnings
 
+import onnx
 from onnx import TensorProto
 from onnx import numpy_helper
-from onnx_tf.common import data_type
+from onnx import shape_inference
+# from onnx_tf.common import data_type
 from pb_wrapper import OnnxNode
 from pb_wrapper import OnnxGraph
 from node_converter import new_opname
@@ -18,24 +20,44 @@ TENSOR_TYPE_TO_TL_TYPE = {
     int(TensorProto.UINT16): 'TL_UINT16',
     int(TensorProto.INT16): 'TL_INT16',
     int(TensorProto.INT32): 'TL_INT32',
-    int(TensorProto.INT64): 'TL_DTYPE_INVALID',
+    int(TensorProto.INT64): 'TL_INT64',
     int(TensorProto.BOOL): 'TL_BOOL',
     int(TensorProto.FLOAT16): 'TL_DTYPE_INVALID',
     int(TensorProto.DOUBLE): 'TL_DOUBLE',
     int(TensorProto.COMPLEX64): 'TL_DTYPE_INVALID',
     int(TensorProto.COMPLEX128): 'TL_DTYPE_INVALID',
     int(TensorProto.UINT32): 'TL_UINT32',
-    int(TensorProto.UINT64): 'TL_DTYPE_INVALID',
+    int(TensorProto.UINT64): 'TL_UINT64',
     int(TensorProto.STRING): 'TL_DTYPE_INVALID'
 }
 
-def dtype_onnx2tl(onnx_dtype):
+TENSOR_TYPE_NAME = {
+    int(TensorProto.FLOAT): 'FLOAT',
+    int(TensorProto.UINT8): 'UINT8',
+    int(TensorProto.INT8): 'INT8',
+    int(TensorProto.UINT16): 'UINT16',
+    int(TensorProto.INT16): 'INT16',
+    int(TensorProto.INT32): 'INT32',
+    int(TensorProto.INT64): 'INT64',
+    int(TensorProto.BOOL): 'TL_BOOL',
+    int(TensorProto.FLOAT16): 'FLOAT16',
+    int(TensorProto.DOUBLE): 'DOUBLE',
+    int(TensorProto.COMPLEX64): 'COMPLEX64',
+    int(TensorProto.COMPLEX128): 'COMPLEX128',
+    int(TensorProto.UINT32): 'UINT32',
+    int(TensorProto.UINT64): 'UINT64',
+    int(TensorProto.STRING): 'STRING'
+}
+
+def dtype_onnx2tl(name, onnx_dtype):
     tl_dtype = TENSOR_TYPE_TO_TL_TYPE[onnx_dtype]
     if tl_dtype == 'TL_DTYPE_INVALID':
-        warnings.warn("Can't convert onnx dtype {} to TensorLight dtype. Return TL_DTYPE_INVALID".format(onnx_dtype))
-        return tl_dtype
+        warnings.warn("Can't convert onnx dtype {} of tensor {} to TL_DTYPE. Return TL_DTYPE_INVALID.".format(TENSOR_TYPE_NAME[onnx_dtype], name))
+    return tl_dtype
 
 def get_model(onnx_graph):
+    # onnx_graph = shape_inference.infer_shapes(onnx_graph)
+    # onnx.checker.check_model(onnx_graph)
     if onnx_graph.initializer:
         input_tensors = onnx_initializer_to_data_tensors(
             onnx_graph.initializer);
@@ -52,7 +74,7 @@ def get_model(onnx_graph):
             d.dim_value if (d.dim_value > 0 and d.dim_param == "") else None
             for d in value_info.type.tensor_type.shape.dim)
         tensor = {'name': value_info.name,
-                  'dtype': dtype_onnx2tl(value_info.type.tensor_type.elem_type),
+                  'dtype': dtype_onnx2tl(value_info.name, value_info.type.tensor_type.elem_type),
                   'dims': shape,
                   'data': None}
         input_tensors.append((value_info.name, tensor))
@@ -83,8 +105,8 @@ def onnx_initializer_to_data_tensors(initializer):
         # Use the onnx.numpy_helper because the data may be raw
         return numpy_helper.to_array(onnx_tensor).flatten().tolist()
     tensors = [(init.name, {'name': init.name,
-                            'dtype': dtype_onnx2tl(init.data_type),
-                            'dims': init.dims,
+                            'dtype': dtype_onnx2tl(init.name, init.data_type),
+                            'dims': list(d for d in init.dims),
                             'data': tensor2list(init)})
                for init in initializer]
     return tensors

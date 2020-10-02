@@ -57,6 +57,7 @@ extern ln_op ln_opimpl_ldmr;
 extern ln_op ln_opimpl_deconv2d;
 extern ln_op ln_opimpl_submean;
 extern ln_op ln_opimpl_dot_product;
+extern ln_op ln_opimpl_forward;
 /* end of declare none ops */
 
 /* TODO: use a hash */
@@ -96,6 +97,7 @@ static ln_op *ops_none[] = {
     &ln_opimpl_deconv2d,
     &ln_opimpl_submean,
     &ln_opimpl_dot_product,
+    &ln_opimpl_forward,
 /* end of init none ops */
     NULL
 };

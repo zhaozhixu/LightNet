@@ -50,11 +50,11 @@
             ]
         },
         {
-            "optype": "reshape",
+            "optype": "forward",
             "rules": [
                 {
                     "cond": [],
-                    "replace": ["reshape_cuda"]
+                    "replace": ["forward_cuda"]
                 }
             ]
         },

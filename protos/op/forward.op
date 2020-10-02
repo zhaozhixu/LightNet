@@ -1,0 +1,39 @@
+forward {
+    optype: "forward",
+    author: "Zhao Zhixu",
+    arch: "none",
+    tensors_in: [
+        {arg_name: "src", mtype: "LN_MEM_NONE"}
+    ],
+    tensors_out: [
+        {arg_name: "dst", mtype: "LN_MEM_NONE", owner: "src_name",
+         ndim: "src->ndim", dtype: "src->dtype", dims: "src->dims"}
+    ],
+    params: []
+}
+
+forward_cpu : forward {
+    optype: "forward_cpu",
+    arch: "cpu",
+    tensors_in: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CPU"}
+    ],
+    //           static_run: "dst->data = src->data;",
+    calc_offset: "return src_entry->offset;"
+}
+
+forward_cuda : forward {
+    optype: "forward_cuda",
+    arch: "cuda",
+    tensors_in: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    tensors_out: [
+        {mtype: "LN_MEM_CUDA"}
+    ],
+    //         static_run: "dst->data = src->data;",
+    calc_offset: "return src_entry->offset;"
+}

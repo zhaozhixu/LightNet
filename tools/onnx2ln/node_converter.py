@@ -5,7 +5,7 @@ from pb_wrapper import OnnxNode
 def new_opname(optype):
     if not hasattr(new_opname, 'opname_count'):
         new_opname.opname_count = {}
-    if new_opname.opname_count.has_key(optype):
+    if optype in new_opname.opname_count:
         new_opname.opname_count[optype] += 1
     else:
         new_opname.opname_count[optype] = 0
@@ -14,17 +14,18 @@ def new_opname(optype):
 # TODO: give it a class
 def error(msg):
     try:
-        raise Exception, msg
-    except Exception, e:
-        traceback.print_exc(e)
+        raise Exception(msg)
+    except Exception as e:
+        traceback.print_exc()
 
 def handle_pads(node, tensor_dict):
-    if not node.attrs.has_key('pads') and node.attrs['auto_pad'] == 'NOTSET':
+    if not 'pads' in node.attrs and node.attrs['auto_pad'] == 'NOTSET':
         error("'%s' for node '%s' must have a 'pads' attribute or a non-NOTSET 'auto_pad'"%(node.op_type, node.name))
-    if node.attrs.has_key('pads') and node.attrs['auto_pad'] != 'NOTSET':
+    if 'pads' in node.attrs and 'auto_pad' in node.attrs and node.attrs['auto_pad'] != 'NOTSET':
         error("'%s' for node '%s' cannot use 'pads' and non-NOTSET 'auto_pad' simultaneously"%(node.op_type, node.name))
-    if node.attrs.has_key('pads'):
+    if 'pads' in node.attrs:
         pad_shape = node.attrs['pads']
+        node.attrs['auto_pad'] = 'NOTSET'
     else:
         pad_shape = [0 for i in range(len(node.attrs['strides']) * 2)]
     return pad_shape
@@ -45,7 +46,7 @@ def Add(node, tensor_dict):
 
 def ArgMax(node, tensor_dict):
     assert node.op_type == 'ArgMax'
-    if node.attrs.has_key('keepdims') and node.attrs['keepdims'] == 0:
+    if 'keepdims' in node.attrs and node.attrs['keepdims'] == 0:
         error("'%s' for node '%s' only support 'keepdims' == 1 now"%(node.op_type, node.name))
 
     opname = new_opname('maxreduce_arg') # use it to generate ignored 'dst' name
@@ -54,7 +55,7 @@ def ArgMax(node, tensor_dict):
                                     'dims': None, # TODO: do shape inference
                                     'data': None}
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
-                                    'dtype': TL_INT32,
+                                    'dtype': "TL_INT32",
                                     'dims': None, # TODO: do shape inference
                                     'data': None}
     op = {'name': opname,
@@ -70,7 +71,7 @@ def AveragePool(node, tensor_dict):
     assert node.op_type == 'AveragePool'
     if len(node.attrs['kernel_shape']) != 2:
         error("'%s' for node '%s' only supports 2-d tensors now"%(node.op_type, node.name))
-    pad_shape = handle_pads(node)
+    pad_shape = handle_pads(node, tensor_dict)
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
@@ -88,7 +89,7 @@ def AveragePool(node, tensor_dict):
 
 def BatchNormalization(node, tensor_dict):
     assert node.op_type == 'BatchNormalization'
-    if not node.attrs.has_key('epsilon'):
+    if not 'epsilon' in node.attrs:
         epsilon = 1e-5
     else:
         epsilon = node.attrs['epsilon']
@@ -129,10 +130,10 @@ def Conv(node, tensor_dict):
     assert node.op_type == 'Conv'
     if len(node.attrs['strides']) != 2:
         error("'%s' for node '%s' only supports 2-d tensors now"%(node.op_type, node.name))
-    if not node.attrs.has_key('kernel_shape'):
+    if not 'kernel_shape' in node.attrs:
         error("'%s' for node '%s' must have a 'kernel_shape' attribute now"%(node.op_type, node.name))
 
-    pad_shape = handle_pads(node)
+    pad_shape = handle_pads(node, tensor_dict)
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
@@ -148,8 +149,8 @@ def Conv(node, tensor_dict):
                      {'arg_name': 'size', 'value': node.attrs['kernel_shape']},
                      {'arg_name': 'stride', 'value': node.attrs['strides']},
                      {'arg_name': 'padding', 'value': pad_shape},
-                     {'arg_name': 'autopad', 'value': node.attrs['autopad']},
-                     {'arg_name': 'dilation', 'value': node.attrs['dilation']}]}
+                     {'arg_name': 'autopad', 'value': node.attrs['auto_pad']},
+                     {'arg_name': 'dilation', 'value': node.attrs['dilations']}]}
     return [op]
 
 def Div(node, tensor_dict):
@@ -168,7 +169,7 @@ def Div(node, tensor_dict):
 
 def LeakyRelu(node, tensor_dict):
     assert node.op_type == 'LeakyRelu'
-    if not node.attrs.has_key('alpha'):
+    if not 'alpha' in node.attrs:
         alpha = 0.01
     else:
         alpha = node.attrs['alpha']
@@ -188,7 +189,7 @@ def MaxPool(node, tensor_dict):
     assert node.op_type == 'MaxPool'
     if len(node.attrs['kernel_shape']) != 2:
         error("'%s' for node '%s' only supports 2-d tensors now"%(node.op_type, node.name))
-    pad_shape = handle_pads(node)
+    pad_shape = handle_pads(node, tensor_dict)
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
@@ -220,9 +221,9 @@ def Pow(node, tensor_dict):
 
 def ReduceMax(node, tensor_dict):
     assert node.op_type == 'ReduceMax'
-    if not node.attrs.has_key('axes') or len(node.attrs['axes']) > 1:
+    if not 'axes' in node.attrs or len(node.attrs['axes']) > 1:
         error("'%s' for node '%s' only suppport 'axes' have one element now"%(node.op_type, node.name))
-    if node.attrs.has_key('keepdims') and node.attrs['keepdims'] == 0:
+    if 'keepdims' in node.attrs and node.attrs['keepdims'] == 0:
         error("'%s' for node '%s' only suppport 'keepdims' == 1 now"%(node.op_type, node.name))
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
@@ -253,7 +254,7 @@ def Relu(node, tensor_dict):
 
 def Reshape(node, tensor_dict):
     assert node.op_type == 'Reshape'
-    assert tensor_dict.has_key(node.inputs[1])
+    assert node.inputs[1] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'shape' tensor now"%(node.op_type, node.name))
 
@@ -271,7 +272,7 @@ def Reshape(node, tensor_dict):
 
 def Resize(node, tensor_dict):
     assert node.op_type == 'Resize'
-    if not node.attrs.has_key('mode'):
+    if not 'mode' in node.attrs:
         mode = 'TL_NEAREST'
     elif node.attrs['mode'] == 'nearest':
         mode = 'TL_NEAREST'
@@ -280,7 +281,7 @@ def Resize(node, tensor_dict):
     else:
         error("'%s' for node '%s' doesn't support 'mode' == '%s'"%(node.op_type, node.name, node.attrs['mode']))
 
-    assert tensor_dict.has_key(node.inputs[1])
+    assert node.inputs[1] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'scales' tensor now"%(node.op_type, node.name))
 
@@ -313,10 +314,10 @@ def Sigmoid(node, tensor_dict):
 
 def Slice(node, tensor_dict):
     assert node.op_type == 'Slice'
-    assert tensor_dict.has_key(node.inputs[1])
-    assert tensor_dict.has_key(node.inputs[2])
-    assert tensor_dict.has_key(node.inputs[3])
-    assert tensor_dict.has_key(node.inputs[4])
+    assert node.inputs[1] in tensor_dict
+    assert node.inputs[2] in tensor_dict
+    assert node.inputs[3] in tensor_dict
+    assert node.inputs[4] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'starts' tensor now"%(node.op_type, node.name))
     if tensor_dict[node.inputs[2]]['data'] is None:
@@ -346,7 +347,7 @@ def Slice(node, tensor_dict):
 
 def Softmax(node, tensor_dict):
     assert node.op_type == 'Softmax'
-    if not node.attrs.has_key('axis'):
+    if not 'axis' in node.attrs:
         axis = 1
     else:
         axis = node.attrs['axis']
@@ -380,7 +381,7 @@ def Transpose(node, tensor_dict):
 
 def Upsample(node, tensor_dict):
     assert node.op_type == 'Upsample'
-    if not node.attrs.has_key('mode'):
+    if not 'mode' in node.attrs:
         mode = 'TL_NEAREST'
     elif node.attrs['mode'] == 'nearest':
         mode = 'TL_NEAREST'
@@ -389,7 +390,7 @@ def Upsample(node, tensor_dict):
     else:
         error("'%s' for node '%s' doesn't support 'mode' == '%s'"%(node.op_type, node.name, node.attrs['mode']))
 
-    assert tensor_dict.has_key(node.inputs[1])
+    assert node.inputs[1] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
         error("'%s' for node '%s' doesn't support dynamic supplied 'scales' tensor now"%(node.op_type, node.name))
 
@@ -403,6 +404,21 @@ def Upsample(node, tensor_dict):
           'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
           'params': [{'arg_name': 'mode', 'value': mode},
                      {'arg_name': 'scales', 'value': tensor_dict[node.inputs[1]]['data']}]}
+
+    return [op]
+
+# Dropout treated as a Forward op
+def Dropout(node, tensor_dict):
+    assert node.op_type == 'Dropout'
+    tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
+                                    'dtype': tensor_dict[node.inputs[0]]['dtype'],
+                                    'dims': None, # TODO: do shape inference
+                                    'data': None}
+    op = {'name': new_opname('forward'),
+          'optype': 'forward',
+          'tensors_in': [{'arg_name': 'src', 'name': node.inputs[0]}],
+          'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
+          'params': []}
 
     return [op]
 
@@ -425,6 +441,7 @@ onnx_to_ln_op_converters = {
     'Slice': Slice,
     'Softmax': Softmax,
     'Upsample': Upsample,
+    'Dropout': Dropout,
 }
 
 def unsupported_node(node, tensor_dict):

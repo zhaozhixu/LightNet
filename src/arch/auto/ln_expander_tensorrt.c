@@ -3134,6 +3134,20 @@ static ln_list *ep_reshape(const ln_context *ctx, const ln_op *self, int *match)
     }
 }
 
+static ln_list *ep_forward(const ln_context *ctx, const ln_op *self, int *match)
+{
+    /* auto variables */
+
+
+   /* replace self with new ops */
+    if (1) {
+        ln_op *new_op = ln_op_copy_to_optype(LN_ARCH.op_proto_table,
+                                             self, "forward_cuda");
+        *match = 1;
+        return ln_list_append(NULL, new_op);
+    }
+}
+
 static ln_list *ep_print(const ln_context *ctx, const ln_op *self, int *match)
 {
     /* auto variables */
@@ -3346,6 +3360,7 @@ static ln_hash_init_entry init_ep_funcs[] = {
     {"upsample", ep_upsample},
     {"zeros", ep_zeros},
     {"reshape", ep_reshape},
+    {"forward", ep_forward},
     {"print", ep_print},
     {"fprint", ep_fprint},
     {"sort1d", ep_sort1d},

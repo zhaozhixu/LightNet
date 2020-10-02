@@ -617,6 +617,15 @@
             ]
         },
         {
+            "optype": "forward",
+            "rules": [
+                {
+                    "cond": [],
+                    "replace": ["forward_cuda"]
+                }
+            ]
+        },
+        {
             "optype": "print",
             "rules": [
                 {

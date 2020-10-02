@@ -58,6 +58,7 @@ extern ln_op ln_opimpl_scatter_nocopy_cpu;
 extern ln_op ln_opimpl_deconv2d_cpu;
 extern ln_op ln_opimpl_submean_cpu;
 extern ln_op ln_opimpl_dot_product_cpu;
+extern ln_op ln_opimpl_forward_cpu;
 /* end of declare cpu ops */
 
 static ln_op *ops_cpu[] = {
@@ -97,6 +98,7 @@ static ln_op *ops_cpu[] = {
     &ln_opimpl_deconv2d_cpu,
     &ln_opimpl_submean_cpu,
     &ln_opimpl_dot_product_cpu,
+    &ln_opimpl_forward_cpu,
 /* end of init cpu ops */
     NULL
 };
