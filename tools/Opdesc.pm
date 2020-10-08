@@ -73,12 +73,31 @@ string : '"' '"'
             $return = undef;
         }
     }
+    | '~' '~'
+    { $return = "" }
+    | '~' (tilde_quoted_chars | ...!tilde_quoted_chars) ('~' | ...!'~')
+    {
+        if ($item[2]) {
+            if ($item[3]) {
+                $return = $item[2];
+            } else {
+                Opdesc::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset, "'~'");
+                $return = undef;
+            }
+        } else {
+            Opdesc::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset,
+                                 'tilde quoted chars', "'~'");
+            $return = undef;
+        }
+    }
 
 double_quoted_chars : /(\\.|[^"\\])+/s
 
 single_quoted_chars : /(\\'|[^'])+/s
 
 back_quoted_chars : /(\\`|[^`])+/s
+
+tilde_quoted_chars : /(\\~|[^~])+/s
 
 bool : /true|false/
     { $return = $item[1] eq 'true' ? 1 : 0}

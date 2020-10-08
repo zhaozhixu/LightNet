@@ -11,8 +11,9 @@ use Data::Dumper;
 $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 3; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1;
-# $::RD_TRACE  = 1;
+$::RD_TRACE  = 1;
 
+my %global_ops;
 my @types = ("number", "string", "number\\[\\d\\]", "string\\[\\d\\]");
 my %types = map { $_ => 1 } @types;
 
@@ -23,34 +24,32 @@ my $grammar = <<'_EOGRAMMAR_';
 identifier : /[A-Za-z_]\w*/
 
 number : /[-+]?((\d*\.\d+)|(\d+\.?\d*))([eE][-+]?\d+)?/
-    { $return = { type => ""}; }
 
-double_quoted_chars : /(\\.|[^"\\])+/s
+string : '"' <commit> double_quoted_chars <commit> '"'
+    { $return = Graphlang::escape($item[3]); }
+    | "'" <commit> single_quoted_chars <commit> "'"
+    { $return = Graphlang::escape_char($item[3], "'"); }
+    | '`' <commit> back_quoted_chars <commit> '`'
+    { $return = Graphlang::escape_char($item[3], '`'); }
+    | '~' <commit> tilde_quoted_chars <commit> '~'
+    { $return = Graphlang::escape_char($item[3], '~'); }
+    | <error?><reject>
 
-string : '"' '"'
-    { $return = "" }
-    | '"' (double_quoted_chars | ...!double_quoted_chars) ('"' | ...!'"')
-    {
-        if ($item[2]) {
-            if ($item[3]) {
-                $return = Graphlang::escape($item[2]);
-            } else {
-                Graphlang::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset, "'\"'");
-                $return = undef;
-            }
-        } else {
-            Graphlang::syntax_error($item[0], $thisline, $thiscolumn, $thisoffset,
-                                    'double quoted chars', "'\"'");
-            $return = undef;
-        }
-    }
+double_quoted_chars : /(\\.|[^"\\])*/s
 
-primary_expression : identifier | number | string
-    | '(' conditional_expression ')'
-    { $return = "($item[2])"; }
+single_quoted_chars : /(\\'|[^'])*/s
+
+back_quoted_chars : /(\\`|[^`])*/s
+
+tilde_quoted_chars : /(\\~|[^~])*/s
+
+target : postfix_expression /\s*\Z/
+    { $return = $item[1]; }
+    | <error>
+
+primary_expression : identifier | number | string | parenthese_expression
 
 right_accessor : identifier '.' identifier '[' identifier ']'
-    { $return = Graphlang::expand_right_accessor(); }
 
 identifier_with_index : /[A-Za-z_]\w*(\$[\@\^])?\w*/
 
@@ -59,46 +58,45 @@ left_accessor : identifier '.' identifier '[' identifier_with_index ']'
 edge : right_accessor '=>' right_accessor
     { $return = join ' ', @item[1..$#item]; }
 
-directive_call : '${' identifier conditional_expression(s /,/) '}'
+directive_call : '${' identifier primary_expression(s /,/) '}'
 
 postfix_expression : primary_expression | right_accessor | left_accessor | edge | directive_call
 
 not_expression : '!' postfix_expression
     { $return = "!$item[2]"; }
     | postfix_expression
+    | <error>
 
-multiplicative_expression : not_expression * multiplicative_expression
-    { $return = "$item[1] * $item[2]"; }
-    | not_expression / multiplicative_expression
-    { $return = "$item[1] / $item[2]"; }
-    | not_expression % multiplicative_expression
-    { $return = "$item[1] % $item[2]"; }
-    | not_expression
+multiplicative_expression : <leftop: not_expression /([*\/%])/  not_expression>
+    { $return = join "", @{$item[1]}; }
+    | <error>
 
-additive_expression : multiplicative_expression + additive_expression
-    { $return = "$item[1] + $item[2]"; }
-    | multiplicative_expression - additive_expression
-    { $return = "$item[1] - $item[2]"; }
-    | multiplicative_expression
+additive_expression : <leftop: multiplicative_expression /([+-])/  multiplicative_expression>
+    { $return = join "", @{$item[1]}; }
+    | <error>
 
-relational_expression : additive_expression < relational_expression
-    | additive_expression <= relational_expression
-    | additive_expression > relational_expression
-    | additive_expression >= relational_expression
-    | additive_expression
+relational_expression : <leftop: additive_expression /(<|<=|>|>=)/  additive_expression>
+    { $return = join "", @{$item[1]}; }
+    | <error>
 
-equality_expression : relational_expression == equality_expression
-    | relational_expression != equality_expression
-    | relational_expression
+equality_expression : <leftop: relational_expression /(==|!=)/  relational_expression>
+    { $return = join "", @{$item[1]}; }
+    | <error>
 
-and_expression : equality_expression '&&' and_expression
-    | equality_expression
+and_expression : <leftop: equality_expression /(&&)/ equality_expression>
+    { $return = join "", @{$item[1]}; }
+    | <error>
 
-or_expression : and_expression '||' or_expression
+or_expression : <leftop: and_expression /(\|\|)/ and_expression>
+    { $return = join "", @{$item[1]}; }
+    | <error>
+
+conditional_expression : or_expression '?' conditional_expression ':' conditional_expression
     | or_expression
 
-conditional_expression : or_expression '?' conditional_expression : conditional_expression
-    | or_expression
+parenthese_expression : '(' <commit> conditional_expression <commit> ')'
+    { $return = "($item[3])"; }
+    | <error?><reject>
 
 assignment_expression : left_accessor '=' right_accessor
 
@@ -112,7 +110,7 @@ $code = join "", <>;
 $Data::Dumper::Indent = 1;
 say Dumper(parse($code));
 # say Dumper($desc_table);
-# print STDERR join "", @errors;
+print STDERR join "", @errors;
 
 sub parse {
     my $text = shift;
@@ -120,8 +118,8 @@ sub parse {
 
     my $parser = Parse::RecDescent->new($grammar) or die "Bad grammer!\n";
     $code = $text;
-    if (defined $parser->condition($text)) {
-        return $parser->condition($text);
+    if (defined $parser->target($text)) {
+        return $parser->target($text);
     } else {
         return undef;
     }
@@ -169,4 +167,63 @@ sub escape {
     }seg;
 
     $str;
+}
+
+sub escape_char {
+    my $str = shift;
+    my $char = shift;
+
+    $str =~ s/\\(?:($char))/$1/seg;
+
+    $str;
+}
+
+sub find_op_desc {
+    my $optype = shift;
+    my $op = $global_ops{$optype};
+    if (not $op) {
+        my $opdir = abs_path(dirname(__FILE__))."/../protos/op";
+        my @possible_files = possible_op_files($optype);
+        foreach (@possible_files) {
+            my $file = "$opdir/$_";
+            next unless -e $file;
+            read_op_desc($file, \%global_ops);
+            if (exists $global_ops{$optype}) {
+                $op = $global_ops{$optype};
+                last;
+            }
+        }
+        if (not $op) {
+            util::err_exit("Cannot find the description JSON for optype '$optype'");
+        }
+    }
+
+    return $op;
+}
+
+sub possible_op_files {
+    my $optype = shift;
+
+    my @names = ();
+    push @names, $optype.'.op';
+    my @words = split '_', $optype;
+    push @names, (join '_', @words[0..$#words-1]).'.op';
+
+    return @names;
+}
+
+sub read_op_desc {
+    my $file = shift;
+    my $hash = shift;
+
+    open OPDESC_FILE, '<', $file or die "Cannot open $file: $!";
+    my $opdesc_text = join '', <OPDESC_FILE>;
+    close OPDESC_FILE;
+    my $opdesc = Opdesc::parse($opdesc_text, $file);
+    if (not defined $opdesc) {
+        die (join "", map { "ERROR: $file: $_" } @Opdesc::errors);
+    }
+    foreach (keys %$opdesc) {
+        $hash->{$_} = $opdesc->{$_};
+    }
 }

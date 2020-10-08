@@ -90,13 +90,13 @@ int ln_test_run_tests(const char *filter)
     srunner_free(sr);
     ln_test_record_free(filtered_record);
 
-    exec_cmd("sed -i 's,http://check.sourceforge.net/xml/check_unittest.xslt,#style,g' "
+    exec_cmd("sed -i '' 's,http://check.sourceforge.net/xml/check_unittest.xslt,#style,g' "
              LN_TEST_RESULT_DIR"/check_output.xml");
-    exec_cmd("sed -i '3i\\<doc>' "LN_TEST_RESULT_DIR"/check_output.xml");
+    exec_cmd("sed -i '' '3i\\\n<doc>' "LN_TEST_RESULT_DIR"/check_output.xml");
     exec_cmd("echo '<style>' >> "LN_TEST_RESULT_DIR"/check_output.xml");
     exec_cmd("cat "LN_TEST_DATA_DIR"/check_unittest.xslt >> "
              LN_TEST_RESULT_DIR"/check_output.xml");
-    exec_cmd("sed -i 's,<xsl:stylesheet,<xsl:stylesheet id=\"style\",g' "
+    exec_cmd("sed -i '' 's,<xsl:stylesheet,<xsl:stylesheet id=\"style\",g' "
              LN_TEST_RESULT_DIR"/check_output.xml");
     exec_cmd("echo '</style></doc>' >> "LN_TEST_RESULT_DIR"/check_output.xml");
 
