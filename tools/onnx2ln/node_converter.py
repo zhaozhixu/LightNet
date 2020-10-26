@@ -1,6 +1,10 @@
 import traceback
 import util
+import sys
+import logging
+from onnx import numpy_helper
 from pb_wrapper import OnnxNode
+from type_converter import dtype_onnx2tl
 
 def new_opname(optype):
     if not hasattr(new_opname, 'opname_count'):
@@ -16,7 +20,9 @@ def error(msg):
     try:
         raise Exception(msg)
     except Exception as e:
-        traceback.print_exc()
+        print(e)
+        traceback.print_stack()
+        # exit(1)
 
 def handle_pads(node, tensor_dict):
     if not 'pads' in node.attrs and node.attrs['auto_pad'] == 'NOTSET':
@@ -29,6 +35,44 @@ def handle_pads(node, tensor_dict):
     else:
         pad_shape = [0 for i in range(len(node.attrs['strides']) * 2)]
     return pad_shape
+
+def find_shape_in_tensor_dict(tensor_dict, name):
+    value_infos = tensor_dict['__value_infos']
+    if name in value_infos:
+        shape = list(
+            d.dim_value if (d.dim_value > 0 and d.dim_param == "") else None
+            for d in value_infos[name].type.tensor_type.shape.dim)
+        return shape
+
+    if name in tensor_dict and not tensor_dict[name]['dims'] is None \
+       and not tensor_dict[name]['dims'][0] is None:
+        return tensor_dict[name]['dims']
+
+    return None
+
+def tensor_proto_to_tensor(tensor_proto):
+    def tensor2list(onnx_tensor):
+        # Use the onnx.numpy_helper because the data may be raw
+        return numpy_helper.to_array(onnx_tensor).flatten().tolist()
+    tp = tensor_proto
+    tensor = (tp.name, {'name': tp.name,
+                        'dtype': dtype_onnx2tl(tp.name, tp.data_type),
+                        'dims': list(d for d in tp.dims),
+                        'data': tensor2list(tp)})
+    return tensor
+
+def new_create_op(tensor):
+    data = [0] if tensor['data'] is None else tensor['data']
+    op = {'name': new_opname("create"),
+          'optype': 'create',
+          'tensors_in': [],
+          'tensors_out': [{'arg_name': 'dst', 'name': tensor['name']}],
+          'params': [{'arg_name': 'dtype', 'value': tensor['dtype']},
+                     {'arg_name': 'dims', 'value': tensor['dims']},
+                     {'arg_name': 'data', 'value': data},
+                     {'arg_name': 'ran', 'value': [0, 0]},
+                     {'arg_name': 'from_file', 'value': False}]}
+    return op
 
 def Add(node, tensor_dict):
     assert node.op_type == 'Add'
@@ -139,6 +183,18 @@ def Conv(node, tensor_dict):
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
                                     'dims': None, # TODO: do shape inference
                                     'data': None}
+    if len(node.inputs) == 2:
+        bias_name = node.name + ".bias"
+        node.inputs.append(node.name + ".bias")
+        src_shape = find_shape_in_tensor_dict(tensor_dict, node.inputs[0])
+        # print(src_shape, file=sys.stderr)
+        bias_len = src_shape[1]
+        tensor_dict[bias_name] = {
+            'name': bias_name,
+            'dtype': tensor_dict[node.inputs[0]]['dtype'],
+            'dims': [bias_len],
+            'data': [0 for i in range(bias_len)]
+        }
     op = {'name': new_opname('conv2d'),
           'optype': 'conv2d',
           'tensors_in': [{'arg_name': 'src', 'name': node.inputs[0]},
@@ -153,6 +209,45 @@ def Conv(node, tensor_dict):
                      {'arg_name': 'dilation', 'value': node.attrs['dilations']}]}
     return [op]
 
+def Constant(node, tensor_dict):
+    assert node.op_type == 'Constant'
+    if 'value' in node.attrs:
+        tensor = tensor_proto_to_tensor(node.attrs['value'])[1]
+    elif 'value_float' in node.attrs:
+        tensor = {'dtype': 'TL_FLOAT',
+                  'dims': [1],
+                  'data': node.attrs['value_float']}
+    elif 'value_floats' in node.attrs:
+        tensor = {'dtype': 'TL_FLOAT',
+                  'dims': [len(node.attrs['value_floats'])],
+                  'data': node.attrs['value_floats']}
+    elif 'value_int' in node.attrs:
+        tensor = {'dtype': 'TL_INT64',
+                  'dims': [1],
+                  'data': node.attrs['value_int']}
+    elif 'value_ints' in node.attrs:
+        tensor = {'dtype': 'TL_INT64',
+                  'dims': [len(node.attrs['value_ints'])],
+                  'data': node.attrs['value_ints']}
+    else:
+        error('Unsupported Constant attribute: %s'%node.attrs.keys())
+
+    tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
+                                    'dtype': tensor['dtype'],
+                                    'dims': None, # TODO: do shape inference
+                                    'data': None}
+
+    op = {'name': new_opname('create'),
+          'optype': 'create',
+          'tensors_in': [],
+          'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
+          'params': [{'arg_name': 'dtype', 'value': tensor['dtype']},
+                     {'arg_name': 'dims', 'value': tensor['dims']},
+                     {'arg_name': 'data', 'value': tensor['data']},
+                     {'arg_name': 'ran', 'value': [0, 0]},
+                     {'arg_name': 'from_file', 'value': False}]}
+    return [op]
+
 def Div(node, tensor_dict):
     assert node.op_type == 'Div'
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
@@ -165,6 +260,21 @@ def Div(node, tensor_dict):
                          {'arg_name': 'src2', 'name': node.inputs[1]}],
           'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
           'params': [{'arg_name': 'elew_op', 'value': 'TL_DIV'}]}
+    return [op]
+
+# Dropout treated as a Forward op
+def Dropout(node, tensor_dict):
+    assert node.op_type == 'Dropout'
+    tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
+                                    'dtype': tensor_dict[node.inputs[0]]['dtype'],
+                                    'dims': None, # TODO: do shape inference
+                                    'data': None}
+    op = {'name': new_opname('forward'),
+          'optype': 'forward',
+          'tensors_in': [{'arg_name': 'src', 'name': node.inputs[0]}],
+          'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
+          'params': []}
+
     return [op]
 
 def LeakyRelu(node, tensor_dict):
@@ -255,8 +365,14 @@ def Relu(node, tensor_dict):
 def Reshape(node, tensor_dict):
     assert node.op_type == 'Reshape'
     assert node.inputs[1] in tensor_dict
-    if tensor_dict[node.inputs[1]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'shape' tensor now"%(node.op_type, node.name))
+
+    shape = find_shape_in_tensor_dict(tensor_dict, node.outputs[0])
+    if shape is not None:
+        new_shape = shape
+    elif tensor_dict[node.inputs[1]]['data'] is not None:
+        new_shape = tensor_dict[node.inputs[1]]['data']
+    else:
+        error("'%s' for node '%s' doesn't support dynamically supplied 'shape' tensor '%s' now"%(node.op_type, node.name, node.inputs[1]))
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
@@ -266,7 +382,7 @@ def Reshape(node, tensor_dict):
           'optype': 'reshape',
           'tensors_in': [{'arg_name': 'src', 'name': node.inputs[0]}],
           'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
-          'params': [{'arg_name': 'dims', 'value': tensor_dict[node.inputs[1]]['data']}]}
+          'params': [{'arg_name': 'dims', 'value': new_shape}]}
 
     return [op]
 
@@ -283,7 +399,7 @@ def Resize(node, tensor_dict):
 
     assert node.inputs[1] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'scales' tensor now"%(node.op_type, node.name))
+        error("'%s' for node '%s' doesn't support dynamically supplied 'scales' tensor now"%(node.op_type, node.name))
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
@@ -319,13 +435,13 @@ def Slice(node, tensor_dict):
     assert node.inputs[3] in tensor_dict
     assert node.inputs[4] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'starts' tensor now"%(node.op_type, node.name))
+        error("'%s' for node '%s' doesn't support dynamically supplied 'starts' tensor now"%(node.op_type, node.name))
     if tensor_dict[node.inputs[2]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'ends' tensor now"%(node.op_type, node.name))
+        error("'%s' for node '%s' doesn't support dynamically supplied 'ends' tensor now"%(node.op_type, node.name))
     if tensor_dict[node.inputs[3]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'axes' tensor now"%(node.op_type, node.name))
+        error("'%s' for node '%s' doesn't support dynamically supplied 'axes' tensor now"%(node.op_type, node.name))
     if tensor_dict[node.inputs[4]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'steps' tensor now"%(node.op_type, node.name))
+        error("'%s' for node '%s' doesn't support dynamically supplied 'steps' tensor now"%(node.op_type, node.name))
     if len(tensor_dict[node.inputs[1]]['data']) != 1 or len(tensor_dict[node.inputs[2]]['data']) != 1 or len(tensor_dict[node.inputs[3]]['data']) != 1 or len(tensor_dict[node.inputs[4]]['data']) != 1:
         error("'%s' for node '%s' only support slice on one axis now"%(node.op_type, node.name))
     if tensor_dict[node.inputs[4]]['data'][0] != 1:
@@ -392,7 +508,7 @@ def Upsample(node, tensor_dict):
 
     assert node.inputs[1] in tensor_dict
     if tensor_dict[node.inputs[1]]['data'] is None:
-        error("'%s' for node '%s' doesn't support dynamic supplied 'scales' tensor now"%(node.op_type, node.name))
+        error("'%s' for node '%s' doesn't support dynamically supplied 'scales' tensor now"%(node.op_type, node.name))
 
     tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
                                     'dtype': tensor_dict[node.inputs[0]]['dtype'],
@@ -407,29 +523,16 @@ def Upsample(node, tensor_dict):
 
     return [op]
 
-# Dropout treated as a Forward op
-def Dropout(node, tensor_dict):
-    assert node.op_type == 'Dropout'
-    tensor_dict[node.outputs[0]] = {'name': node.outputs[0],
-                                    'dtype': tensor_dict[node.inputs[0]]['dtype'],
-                                    'dims': None, # TODO: do shape inference
-                                    'data': None}
-    op = {'name': new_opname('forward'),
-          'optype': 'forward',
-          'tensors_in': [{'arg_name': 'src', 'name': node.inputs[0]}],
-          'tensors_out': [{'arg_name': 'dst', 'name': node.outputs[0]}],
-          'params': []}
-
-    return [op]
-
 onnx_to_ln_op_converters = {
     'Add': Add,
     'ArgMax': ArgMax,
     'AveragePool': AveragePool,
     'BatchNormalization': BatchNormalization,
     'Concat': Concat,
+    'Constant': Constant,
     'Conv': Conv,
     'Div': Div,
+    'Dropout': Dropout,
     'LeakyRelu': LeakyRelu,
     'MaxPool': MaxPool,
     'Pow': Pow,
@@ -440,12 +543,12 @@ onnx_to_ln_op_converters = {
     'Sigmoid': Sigmoid,
     'Slice': Slice,
     'Softmax': Softmax,
+    'Transpose': Transpose,
     'Upsample': Upsample,
-    'Dropout': Dropout,
 }
 
 def unsupported_node(node, tensor_dict):
-    error("unimplemented ONNX operator type '%s' for node '%s'"%(node.op_type, node.name))
+    error("Unimplemented ONNX operator type '%s' for node '%s'"%(node.op_type, node.name))
 
 def onnx_node_to_ln_op(onnx_node, tensor_dict):
     return onnx_to_ln_op_converters.get(onnx_node.op_type,

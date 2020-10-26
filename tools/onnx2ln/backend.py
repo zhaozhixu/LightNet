@@ -2,62 +2,92 @@
 
 import json
 import warnings
+import sys
 
 import onnx
 from onnx import TensorProto
 from onnx import numpy_helper
 from onnx import shape_inference
+from onnx import ModelProto
+from onnx import GraphProto
+from onnx import helper
 # from onnx_tf.common import data_type
 from pb_wrapper import OnnxNode
 from pb_wrapper import OnnxGraph
 from node_converter import new_opname
+from node_converter import new_create_op
+from node_converter import tensor_proto_to_tensor
 from node_converter import onnx_node_to_ln_op
+from type_converter import dtype_onnx2tl
 
-TENSOR_TYPE_TO_TL_TYPE = {
-    int(TensorProto.FLOAT): 'TL_FLOAT',
-    int(TensorProto.UINT8): 'TL_UINT8',
-    int(TensorProto.INT8): 'TL_INT8',
-    int(TensorProto.UINT16): 'TL_UINT16',
-    int(TensorProto.INT16): 'TL_INT16',
-    int(TensorProto.INT32): 'TL_INT32',
-    int(TensorProto.INT64): 'TL_INT64',
-    int(TensorProto.BOOL): 'TL_BOOL',
-    int(TensorProto.FLOAT16): 'TL_DTYPE_INVALID',
-    int(TensorProto.DOUBLE): 'TL_DOUBLE',
-    int(TensorProto.COMPLEX64): 'TL_DTYPE_INVALID',
-    int(TensorProto.COMPLEX128): 'TL_DTYPE_INVALID',
-    int(TensorProto.UINT32): 'TL_UINT32',
-    int(TensorProto.UINT64): 'TL_UINT64',
-    int(TensorProto.STRING): 'TL_DTYPE_INVALID'
-}
+def add_value_info_for_constants(model : onnx.ModelProto):
+    """
+    Currently onnx.shape_inference doesn't use the shape of initializers, so add
+    that info explicitly as ValueInfoProtos.
+    Mutates the model.
+    Args:
+        model: The ModelProto to update.
+    """
+    # All (top-level) constants will have ValueInfos before IRv4 as they are all inputs
+    if model.ir_version < 4:
+        return
 
-TENSOR_TYPE_NAME = {
-    int(TensorProto.FLOAT): 'FLOAT',
-    int(TensorProto.UINT8): 'UINT8',
-    int(TensorProto.INT8): 'INT8',
-    int(TensorProto.UINT16): 'UINT16',
-    int(TensorProto.INT16): 'INT16',
-    int(TensorProto.INT32): 'INT32',
-    int(TensorProto.INT64): 'INT64',
-    int(TensorProto.BOOL): 'TL_BOOL',
-    int(TensorProto.FLOAT16): 'FLOAT16',
-    int(TensorProto.DOUBLE): 'DOUBLE',
-    int(TensorProto.COMPLEX64): 'COMPLEX64',
-    int(TensorProto.COMPLEX128): 'COMPLEX128',
-    int(TensorProto.UINT32): 'UINT32',
-    int(TensorProto.UINT64): 'UINT64',
-    int(TensorProto.STRING): 'STRING'
-}
+    def add_const_value_infos_to_graph(graph : onnx.GraphProto):
+        inputs = {i.name for i in graph.input}
+        existing_info = {vi.name: vi for vi in graph.value_info}
+        for init in graph.initializer:
+            # Check it really is a constant, not an input
+            if init.name in inputs:
+                continue
 
-def dtype_onnx2tl(name, onnx_dtype):
-    tl_dtype = TENSOR_TYPE_TO_TL_TYPE[onnx_dtype]
-    if tl_dtype == 'TL_DTYPE_INVALID':
-        warnings.warn("Can't convert onnx dtype {} of tensor {} to TL_DTYPE. Return TL_DTYPE_INVALID.".format(TENSOR_TYPE_NAME[onnx_dtype], name))
-    return tl_dtype
+            # The details we want to add
+            elem_type = init.data_type
+            shape = init.dims
 
-def get_model(onnx_graph):
-    # onnx_graph = shape_inference.infer_shapes(onnx_graph)
-    # onnx.checker.check_model(onnx_graph)
+            # Get existing or create new value info for this constant
+            vi = existing_info.get(init.name)
+            if vi is None:
+                vi = graph.value_info.add()
+                vi.name = init.name
+
+            # Even though it would be weird, we will not overwrite info even if it doesn't match
+            tt = vi.type.tensor_type
+            if tt.elem_type == onnx.TensorProto.UNDEFINED:
+                tt.elem_type = elem_type
+            if not tt.HasField("shape"):
+                # Ensure we set an empty list if the const is scalar (zero dims)
+                tt.shape.dim.extend([])
+                for dim in shape:
+                    tt.shape.dim.add().dim_value = dim
+
+        # Handle subgraphs
+        for node in graph.node:
+            for attr in node.attribute:
+                # Ref attrs refer to other attrs, so we don't need to do anything
+                if attr.ref_attr_name != "":
+                    continue
+
+                if attr.type == onnx.AttributeProto.GRAPH:
+                    add_const_value_infos_to_graph(attr.g)
+                if attr.type == onnx.AttributeProto.GRAPHS:
+                    for g in attr.graphs:
+                        add_const_value_infos_to_graph(g)
+
+
+    return add_const_value_infos_to_graph(model.graph)
+
+def get_model(onnx_model):
+    if not isinstance(onnx_model, ModelProto) and not isinstance(onnx_model, GraphProto):
+        raise TypeError('get_model() only accepts ModelProto or GraphProto '
+                        'incorrect type: {}'.format(type(onnx_model)))
+    if isinstance(onnx_model, GraphProto):
+        onnx_model = helper.make_model(onnx_model)
+    add_value_info_for_constants(onnx_model)
+    onnx_model = shape_inference.infer_shapes(onnx_model)
+    # onnx.checker.check_model(onnx_model)
+    onnx_graph = onnx_model.graph
+    # print(onnx_graph)
+    # exit()
     if onnx_graph.initializer:
         input_tensors = onnx_initializer_to_data_tensors(
             onnx_graph.initializer);
@@ -79,8 +109,11 @@ def get_model(onnx_graph):
                   'data': None}
         input_tensors.append((value_info.name, tensor))
 
-    input_dict = dict(input_tensors)
+    value_infos = {vi.name: vi for vi in onnx_graph.value_info}
+    for vi in onnx_graph.output:
+        value_infos[vi.name] = vi
     tensor_dict = dict(input_tensors)
+    tensor_dict['__value_infos'] = value_infos
     model = {'ops': []}
 
     for tensor in input_tensors:
@@ -95,31 +128,4 @@ def get_model(onnx_graph):
     return model
 
 def onnx_initializer_to_data_tensors(initializer):
-    """ Convert ONNX graph initializer to input tensor items.
-
-    :param initializer: ONNX graph initializer, list of TensorProto.
-    :return: List of input tensor items.
-    """
-
-    def tensor2list(onnx_tensor):
-        # Use the onnx.numpy_helper because the data may be raw
-        return numpy_helper.to_array(onnx_tensor).flatten().tolist()
-    tensors = [(init.name, {'name': init.name,
-                            'dtype': dtype_onnx2tl(init.name, init.data_type),
-                            'dims': list(d for d in init.dims),
-                            'data': tensor2list(init)})
-               for init in initializer]
-    return tensors
-
-def new_create_op(tensor):
-    data = [0] if tensor['data'] is None else tensor['data']
-    op = {'name': new_opname("create"),
-          'optype': 'create',
-          'tensors_in': [],
-          'tensors_out': [{'arg_name': 'dst', 'name': tensor['name']}],
-          'params': [{'arg_name': 'dtype', 'value': tensor['dtype']},
-                     {'arg_name': 'dims', 'value': tensor['dims']},
-                     {'arg_name': 'data', 'value': data},
-                     {'arg_name': 'ran', 'value': [0, 0]},
-                     {'arg_name': 'from_file', 'value': False}]}
-    return op
+    return [tensor_proto_to_tensor(init) for init in initializer]

@@ -25,9 +25,9 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_op.h"
-#include "../src/ln_pass.h"
-#include "../src/ln_arch.h"
+#include "ln_op.h"
+#include "ln_pass.h"
+#include "ln_arch.h"
 
 
 static void checked_setup(void)

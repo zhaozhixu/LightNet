@@ -30,12 +30,12 @@
 
 #include "ln_test_record.h"
 
-#ifndef LN_TEST_RESULT_DIR
-#define LN_TEST_RESULT_DIR "."
+#ifndef LN_TEST_DIR
+#error LN_TEST_DIR should be defined in the command line
 #endif
 
-#ifndef LN_TEST_DATA_DIR
-#define LN_TEST_DATA_DIR "."
+#ifndef LN_BUILD_TEST_DIR
+#error LN_BUILD_TEST_DIR should be defined in the command line
 #endif
 
 struct ln_test_info {

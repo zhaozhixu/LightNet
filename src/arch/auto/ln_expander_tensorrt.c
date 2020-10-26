@@ -27,7 +27,7 @@
 
 #include "ln_arch.h"
 
-#include "ln_tensorrt.h"
+#include "arch/ln_tensorrt.h"
 
 static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
 {

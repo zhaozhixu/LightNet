@@ -26,7 +26,7 @@
 #include <assert.h>
 #include "ln_op.h"
 #include "ln_arch.h"
-#include "ln_cudnn.h"
+#include "arch/ln_cudnn.h"
 
 struct priv_s {
     ln_tensor_entry            *src_entry;

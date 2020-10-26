@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include "ln_op.h"
-#include "ln_cuda.h"
+#include "arch/ln_cuda.h"
 
 struct priv_s {
     ln_list *dst_entries;

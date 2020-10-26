@@ -24,7 +24,7 @@
 #include <tl_check.h>
 #include <errno.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_msg.h"
+#include "ln_msg.h"
 
 static void checked_setup(void)
 {

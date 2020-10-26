@@ -79,7 +79,7 @@ int ln_test_run_tests(const char *filter)
     ln_test_record *filtered_record = NULL;
 
     sr = srunner_create(make_master_suite());
-    srunner_set_xml (sr, LN_TEST_RESULT_DIR"/check_output.xml");
+    srunner_set_xml (sr, LN_BUILD_TEST_DIR"/result/check_output.xml");
 
     filtered_record = ln_test_record_create_filtered(&_global_test_info.record,
                                                      filter);
@@ -91,14 +91,14 @@ int ln_test_run_tests(const char *filter)
     ln_test_record_free(filtered_record);
 
     exec_cmd("sed -i 's,http://check.sourceforge.net/xml/check_unittest.xslt,#style,g' "
-             LN_TEST_RESULT_DIR"/check_output.xml");
-    exec_cmd("sed -i '3i\\<doc>' "LN_TEST_RESULT_DIR"/check_output.xml");
-    exec_cmd("echo '<style>' >> "LN_TEST_RESULT_DIR"/check_output.xml");
-    exec_cmd("cat "LN_TEST_DATA_DIR"/check_unittest.xslt >> "
-             LN_TEST_RESULT_DIR"/check_output.xml");
+             LN_BUILD_TEST_DIR"/result/check_output.xml");
+    exec_cmd("sed -i '3i\\<doc>' "LN_BUILD_TEST_DIR"/result/check_output.xml");
+    exec_cmd("echo '<style>' >> "LN_BUILD_TEST_DIR"/result/check_output.xml");
+    exec_cmd("cat "LN_TEST_DIR"/result/check_unittest.xslt >> "
+             LN_BUILD_TEST_DIR"/result/check_output.xml");
     exec_cmd("sed -i 's,<xsl:stylesheet,<xsl:stylesheet id=\"style\",g' "
-             LN_TEST_RESULT_DIR"/check_output.xml");
-    exec_cmd("echo '</style></doc>' >> "LN_TEST_RESULT_DIR"/check_output.xml");
+             LN_BUILD_TEST_DIR"/result/check_output.xml");
+    exec_cmd("echo '</style></doc>' >> "LN_BUILD_TEST_DIR"/result/check_output.xml");
 
     return num_failed;
 }

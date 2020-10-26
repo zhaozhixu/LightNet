@@ -24,7 +24,7 @@
 #include <tl_check.h>
 #include <assert.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_op.h"
+#include "ln_op.h"
 
 static int pre_run_count = 0;
 static int static_run_count = 0;

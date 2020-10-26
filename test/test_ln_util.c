@@ -23,7 +23,7 @@
 #include <check.h>
 #include <tl_check.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_util.h"
+#include "ln_util.h"
 
 static void checked_setup(void)
 {

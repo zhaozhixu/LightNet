@@ -23,10 +23,10 @@
 #include <check.h>
 #include <tl_check.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_pass.h"
-#include "../src/ln_json.h"
-#include "../src/ln_arch.h"
-#include "../src/ln_context.h"
+#include "ln_pass.h"
+#include "ln_json.h"
+#include "ln_arch.h"
+#include "ln_context.h"
 
 static char *json_str;
 static ln_context *ctx;
@@ -35,7 +35,7 @@ static void checked_setup(void)
 {
     ln_arch_init();
     ctx = ln_context_create();
-    json_str = ln_read_text(LN_TEST_DATA_DIR"/test_ops.json");
+    json_str = ln_read_text(LN_TEST_DIR"/data/test_ops.json");
     ln_json_parse(json_str, ctx);
     ln_context_init_ops(ctx);
 }

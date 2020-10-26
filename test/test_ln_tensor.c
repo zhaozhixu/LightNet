@@ -23,7 +23,7 @@
 #include <check.h>
 #include <tl_check.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_tensor.h"
+#include "ln_tensor.h"
 
 #define ARR(type, varg...) (type[]){varg}
 
@@ -119,7 +119,7 @@ LN_TEST_START(test_ln_tensor_table_load_trt_weight_file)
     ln_tensor_table_insert(table, te);
 
     ln_tensor_table_load_trt_weight_file(
-        table, LN_TEST_DATA_DIR"/test_trt_weight.wts");
+        table, LN_TEST_DIR"/data/test_trt_weight.wts");
     for (int i = 0; i < 10; i++) {
         ck_assert_float_eq_tol(wts1_data[i], ((float*)wts1->data)[i], 1e-6);
     }

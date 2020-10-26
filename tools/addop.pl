@@ -132,13 +132,13 @@ sub gen_head_block {
     push @headers, "#include \"ln_op.h\"";
     push @headers, "#include \"ln_arch.h\"";
     if ($op->{arch} eq "cuda") {
-        push @headers, "#include \"ln_cuda.h\"";
+        push @headers, "#include \"arch/ln_cuda.h\"";
     }
     if ($op->{arch} eq "cudnn") {
-        push @headers, "#include \"ln_cudnn.h\"";
+        push @headers, "#include \"arch/ln_cudnn.h\"";
     }
     if ($op->{arch} eq "tensorrt") {
-        push @headers, "#include \"ln_tensorrt.h\"";
+        push @headers, "#include \"arch/ln_tensorrt.h\"";
     }
     my $headers_str = join "\n", @headers;
     my $head_block_tpl = <<EOF;

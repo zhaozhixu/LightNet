@@ -2,7 +2,7 @@
     "author": "Zhao Zhixu",
     "arch": "tensorrt",
     "name": "tensorrt",
-    "head": "#include \"ln_tensorrt.h\"",
+    "head": "#include \"arch/ln_tensorrt.h\"",
     "ops": [
         {
             "optype": "create",

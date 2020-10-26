@@ -22,7 +22,7 @@
 
 #include <assert.h>
 #include "ln_op.h"
-#include "ln_tensorrt.h"
+#include "arch/ln_tensorrt.h"
 
 struct priv_s {
     ln_tensorrt_bundle *bundle;

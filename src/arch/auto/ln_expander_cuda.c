@@ -27,7 +27,7 @@
 
 #include "ln_arch.h"
 
-#include "ln_cuda.h"
+#include "arch/ln_cuda.h"
 
 static ln_list *ep_create(const ln_context *ctx, const ln_op *self, int *match)
 {

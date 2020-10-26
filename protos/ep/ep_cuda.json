@@ -2,7 +2,7 @@
     "author": "Zhao Zhixu",
     "name": "cuda",
     "arch": "cuda",
-    "head": "#include \"ln_cuda.h\"",
+    "head": "#include \"arch/ln_cuda.h\"",
     "ops": [
         {
             "optype": "create",

@@ -1,27 +1,18 @@
 include config.mk
 include common.mk
 
-TARGET ?= lightnet
-ABBR ?= ln
+export BIN = $(TARGET)
+export LIBTARGET_A = lib$(TARGET).a
+export LIBTARGET_SO = lib$(TARGET).so
 
-BUILD_DIR ?= build
-INSTALL_DIR ?= /usr/local
-
-SRC_DIR = src
-TEST_DIR = test
-BUILD_SRC_DIR = $(BUILD_DIR)/$(SRC_DIR)
-
-LIBTARGET_A = lib$(TARGET).a
-LIBTARGET_SO = lib$(TARGET).so
 LIBTARGET_SO_MM = $(LIBTARGET_SO).$(MAJOR).$(MINOR)
 LIBTARGET_SO_MMM = $(LIBTARGET_SO).$(MAJOR).$(MINOR).$(MICRO)
-BIN = $(TARGET)
 BIN_MMM = $(BIN).$(MAJOR).$(MINOR).$(MICRO)
 
+BUILD_SRC_DIR = $(BUILD_DIR)/$(SRC_DIR)
 OBJ_A = $(BUILD_SRC_DIR)/$(LIBTARGET_A)
 OBJ_SO = $(BUILD_SRC_DIR)/$(LIBTARGET_SO)
 OBJ_BIN = $(BUILD_SRC_DIR)/$(BIN)
-EXPORT_HEADERS = $(SRC_DIR)/ln_option.h $(SRC_DIR)/ln_msg.h $(SRC_DIR)/ln_util_common.h
 
 BUILD_INCLUDE_DIR = $(BUILD_DIR)/include/$(TARGET)
 BUILD_LIB_DIR = $(BUILD_DIR)/lib
@@ -54,20 +45,20 @@ PKGCONFIG_DIR ?= /usr/local/lib/pkgconfig
 CONFIG_SRC = $(SRC_DIR)/$(TARGET).h.in
 CONFIG_DST = $(BUILD_INCLUDE_DIR)/$(TARGET).h
 CONFIG_DEFINES =
-CONFIG_DEFINES += "LN_MAJOR_VERSION ($(MAJOR))"
-CONFIG_DEFINES += "LN_MINOR_VERSION ($(MINOR))"
-CONFIG_DEFINES += "LN_MICRO_VERSION ($(MICRO))"
+CONFIG_DEFINES += "$(ABBR)_MAJOR_VERSION ($(MAJOR))"
+CONFIG_DEFINES += "$(ABBR)_MINOR_VERSION ($(MINOR))"
+CONFIG_DEFINES += "$(ABBR)_MICRO_VERSION ($(MICRO))"
 ifeq ($(WITH_CUDA), yes)
-CONFIG_DEFINES += "LN_CUDA"
+CONFIG_DEFINES += "$(ABBR)_CUDA"
 endif
 ifeq ($(WITH_CUDNN), yes)
-CONFIG_DEFINES += "LN_CUDNN"
+CONFIG_DEFINES += "$(ABBR)_CUDNN"
 endif
 ifeq ($(WITH_TENSORRT), yes)
-CONFIG_DEFINES += "LN_TENSORRT"
+CONFIG_DEFINES += "$(ABBR)_TENSORRT"
 endif
 ifeq ($(WITH_DPU), yes)
-CONFIG_DEFINES += "LN_DPU"
+CONFIG_DEFINES += "$(ABBR)_DPU"
 endif
 
 ifeq ($(WITH_PYTHON), yes)
@@ -85,13 +76,23 @@ UNINSTALL_PYTHON =
 endif
 
 ifeq ($(DOC), yes)
-MAKE_DOC = mkdocs build -c -d $(BUILD_DOC)
+MAKE_DOC_CMD = mkdocs build -c -d $(BUILD_DOC)
 INSTALL_DOC_CMD = if [ -d $(BUILD_DOC) ]; then cp -r $(BUILD_DOC) $(INSTALL_DOC); fi
 UNINSTALL_DOC_CMD = rm -rf $(INSTALL_DOC)
 else
-MAKE_DOC =
+MAKE_DOC_CMD =
 INSTALL_DOC_CMD =
 UNINSTALL_DOC_CMD =
+endif
+
+ifeq ($(HAS_EXTRA_BINS), yes)
+MAKE_EXTRA_BINS_CMD = cp -L $(EXTRA_BINS) $(BUILD_BIN_DIR)
+INSTALL_EXTRA_BINS_CMD = cp $(BUILD_EXTRA_BINS) $(INSTALL_BIN_DIR)
+UNINSTALL_EXTRA_BINS_CMD = rm -f $(INSTALL_EXTRA_BINS)
+else
+MAKE_EXTRA_BINS_CMD =
+INSTALL_EXTRA_BINS_CMD =
+UNINSTALL_EXTRA_BINS_CMD =
 endif
 
 ifdef VERBOSE
@@ -106,6 +107,8 @@ $(AT)if [ ! -d $(BUILD_INCLUDE_DIR) ]; then mkdir -p $(BUILD_INCLUDE_DIR); fi
 $(AT)if [ ! -d $(BUILD_LIB_DIR) ]; then mkdir -p $(BUILD_LIB_DIR); fi
 $(AT)if [ ! -d $(BUILD_BIN_DIR) ]; then mkdir -p $(BUILD_BIN_DIR); fi
 $(AT)if [ ! -d $(BUILD_DOC_DIR) ]; then mkdir -p $(BUILD_DOC_DIR); fi
+$(AT)find $(SRC_DIR) -type d -print0 | xargs -0 -I{} mkdir -p build/{}
+$(AT)find $(TEST_DIR) -type d -print0 | xargs -0 -I{} mkdir -p build/{}
 endef
 
 define make-install-dir
@@ -132,12 +135,11 @@ endef
 define make-bin
 $(AT)cp $(OBJ_BIN) $(BUILD_BIN_MMM)
 $(AT)ln -sf $(BIN_MMM) $(BUILD_BIN)
-$(AT)# TODO: orgnize tools
-$(AT)cp tools/il2json $(BUILD_BIN_DIR)/il2json
+$(AT)$(MAKE_EXTRA_BINS_CMD)
 endef
 
 define make-doc
-$(AT)$(MAKE_DOC)
+$(AT)$(MAKE_DOC_CMD)
 endef
 
 define make-install
@@ -148,7 +150,7 @@ ln -sf $(LIBTARGET_SO_MMM) $(INSTALL_SO_MM)
 ln -sf $(LIBTARGET_SO_MMM) $(INSTALL_SO)
 cp $(BUILD_BIN_MMM) $(INSTALL_BIN_MMM)
 ln -sf $(BIN_MMM) $(INSTALL_BIN)
-cp $(BUILD_BIN_DIR)/il2json $(INSTALL_BIN_DIR)/il2json
+$(INSTALL_EXTRA_BINS_CMD)
 $(INSTALL_DOC_CMD)
 perl tools/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
 $(INSTALL_PYTHON)
@@ -162,19 +164,19 @@ rm -f $(INSTALL_SO_MM)
 rm -f $(INSTALL_SO_MMM)
 rm -f $(INSTALL_BIN)
 rm -f $(INSTALL_BIN_MMM)
-rm -f $(INSTALL_BIN_DIR)/il2json
+$(UNINSTALL_EXTRA_BINS_CMD)
 $(UNINSTALL_DOC_CMD)
 rm -f $(PKGCONFIG_DIR)/$(TARGET).pc
 $(UNINSTALL_PYTHON)
 endef
 
 define make-clean
-$(AT)(cd $(SRC_DIR) && make clean);\
-(cd $(TEST_DIR) && make clean)
+$(AT)(cd $(SRC_DIR) && $(MAKE) clean);\
+(cd $(TEST_DIR) && $(MAKE) clean)
 rm -rf $(BUILD_DIR)
 endef
 
-.PHONY: all lib bin test cmd doc clean info install uninstall
+.PHONY: all lib bin test cmd doc clean info help install uninstall
 
 all: lib bin
 
@@ -183,24 +185,23 @@ install:
 	$(call make-install)
 
 bin: lib
-	$(call make-build-dir)
 	$(call make-bin)
 
 lib:
 	$(call make-build-dir)
 	$(call pre-make-lib)
-	$(AT)+(cd $(SRC_DIR) && make)
+	$(AT)(cd $(SRC_DIR) && $(MAKE))
 	$(call make-lib)
 
 test: lib
-	$(AT)+(cd $(TEST_DIR) && make)
+	$(AT)(cd $(TEST_DIR) && $(MAKE))
 
 cmd:
 	$(call make-build-dir)
 	$(call pre-make-lib)
 	$(AT)[ -e $(CMD_FILE) ] || echo "[]" > $(CMD_FILE)
-	$(AT)+(cd $(SRC_DIR) && make cmd)
-	$(AT)+(cd $(TEST_DIR) && make cmd)
+	$(AT)(cd $(SRC_DIR) && $(MAKE) cmd)
+	$(AT)(cd $(TEST_DIR) && $(MAKE) cmd)
 
 doc:
 	$(call make-build-dir)
@@ -217,11 +218,13 @@ info:
 	@echo "  all: make lib, bin"
 	@echo "  lib: make libraries"
 	@echo "  bin: make executables"
-	@echo "  test: make and run tests"
+	@echo "  test: make lib, test and run test"
 	@echo "  cmd: generate $(BUILD_DIR)/compile_commands.json for clang tooling;"
 	@echo "       use 'cmd' before 'all/lib/bin/test' for the initial generation"
 	@echo "  doc: make documents"
-	@echo "  install: install build directory"
-	@echo "  clean: remove all files generated by the build"
+	@echo "  install: install to $(INSTALL_DIR)"
+	@echo "  clean: remove all the files generated by the build"
 	@echo "  uninstall: uninstall installed files"
-	@echo "  info: show this infomation"
+	@echo "  info/help: show this infomation"
+
+help: info

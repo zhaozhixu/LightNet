@@ -32,9 +32,9 @@ def __convert_onnx_attribute_proto(attr_proto):
 __onnx_attr_translator = {
     "axis": lambda x: int(x),
     "axes": lambda x: [int(a) for a in x],
-    "dtype": lambda x: data_type.onnx2tf(x),
+    # "dtype": lambda x: data_type.onnx2tf(x),
     "keepdims": lambda x: bool(x),
-    "to": lambda x: data_type.onnx2tf(x),
+    # "to": lambda x: data_type.onnx2tf(x),
 }
 
 def translate_onnx(key, val):

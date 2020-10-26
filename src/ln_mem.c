@@ -23,8 +23,8 @@
 #include <assert.h>
 #include "ln_mem.h"
 #include "ln_msg.h"
-#include "ln_cuda.h"
-#include "ln_dpu.h"
+#include "arch/ln_cuda.h"
+#include "arch/ln_dpu.h"
 
 typedef enum block_flag block_flag;
 enum block_flag {

@@ -4,13 +4,29 @@ use warnings;
 use strict;
 use version;
 use Getopt::Long;
+use File::Basename;
+use constant ARRAY => ref [];
 
-# version information and dependencies
+# version information
 my $major = 0;
 my $minor = 1;
 my $micro = 0;
-# my ($major, $minor, $micro) = &get_version("src/lightnet.h");
-my $requires = "tensorlight >= 0.1.0";
+
+my %customs =
+    (
+     "TARGET" => "lightnet",
+     "ABBR" => "LN",
+     "abbr" => "ln",
+     "REQUIRES" => "tensorlight >= 0.1.0",
+     "EXTRA_BINS" => "tools/il2json",
+     "EXPORT_HEADERS" => "src/ln_option.h src/ln_msg.h src/ln_util_common.h",
+     "SRC_DIR" => "src",
+     "SRC_SUB_DIRS" => "op op/auto arch arch/auto",
+     "SRC_EXTRA_FLAGS" => '',
+     "TEST_DIR" => "test",
+     "TEST_SUB_DIRS" => "lightnettest",
+     "TEST_EXTRA_FLAGS" => '-D$(ABBR)_TEST_DIR="\"$(CURDIR)\"" -D$(ABBR)_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\""',
+    );
 
 my $usage = <<EOF;
 Usage: $0 [OPTION[=VALUE]...]
@@ -18,8 +34,6 @@ Generate configuration makefile for building LightNet.
 
 options:
   -h, --help                  print help information
-  --target=NAME               target name [lightnet]
-  --abbr=ABBR                 abbreviation name [ln]
   --build-dir=DIR             building directory [build]
   --install-dir=DIR           installation directory [/usr/local]
   --prefix=DIR                same as --install-dir; who comes later counts
@@ -45,8 +59,6 @@ EOF
 
 # default options, go in config.mk
 my %opts = (
-            "TARGET" => "lightnet",
-            "ABBR" => "ln",
             "BUILD_DIR" => "build",
             "INSTALL_DIR" => "/usr/local",
             "PKGCONFIG_DIR" => "/usr/local/lib/pkgconfig",
@@ -69,8 +81,6 @@ my %opts = (
 # parse arguments
 GetOptions(
            'help' => sub {&exit_msg(0, $usage)},
-           'target=s' => \$opts{TARGET},
-           'abbr=s' => \$opts{ABBR},
            'build-dir=s' => \$opts{BUILD_DIR},
            'install-dir=s' => \&set_prefix,
            'prefix=s' => \&set_prefix,
@@ -90,6 +100,8 @@ GetOptions(
            'debug=s' => \$opts{DEBUG},
            'doc=s' => \$opts{DOC},
           ) or &exit_msg(1, $usage);
+
+print "configure $customs{TARGET} version $major.$minor.$micro\n";
 
 # check configuration
 # TODO: check versions
@@ -174,16 +186,21 @@ my $config_str = <<EOF;
 MAJOR = $major
 MINOR = $minor
 MICRO = $micro
-REQUIRES = $requires
+
 EOF
-foreach my $key (sort keys %opts) {
-    $config_str .= "$key ?= $opts{$key}\n";
-    print "$key = $opts{$key}\n";
-}
+
+$config_str .= config_to_str(\%opts);
+$config_str .= "\n";
+set_extra_bins();
+set_module_files("SRC");
+set_module_files("TEST");
+$config_str .= config_to_str(\%customs);
+
 my $conf_file = "config.mk";
 open my $conf_fh, '>', $conf_file or die "Cannot open $conf_file: $!";
 print $conf_fh $config_str;
 close $conf_fh;
+print $config_str;
 
 sub mkdocs_version {
     my $str = shift;
@@ -213,6 +230,57 @@ sub set_prefix {
     $opts{INSTALL_DIR} = $prefix;
     $opts{PKGCONFIG_DIR} = "$prefix/lib/pkgconfig";
     $opts{PYTHON_PREFIX} = $prefix;
+}
+
+sub set_extra_bins {
+    return if not defined $customs{EXTRA_BINS};
+
+    $customs{HAS_EXTRA_BINS} = "yes";
+    my @extra_bins = split /\s+/, $customs{EXTRA_BINS};
+    my @basenames = map { basename($_) } @extra_bins;
+    my @build_extra_bins = map { "\$(BUILD_BIN_DIR)/$_" } @basenames;
+    my @install_extra_bins = map { "\$(INSTALL_BIN_DIR)/$_" } @basenames;
+    $customs{BUILD_EXTRA_BINS} = join " ", @build_extra_bins;
+    $customs{INSTALL_EXTRA_BINS} = join " ", @install_extra_bins;
+}
+
+sub set_module_files {
+    my ($module_name) = @_;
+
+    my @srcs;
+    push @srcs, "\$(wildcard *.c)";
+    push @srcs, "\$(wildcard *.cc)";
+    push @srcs, "\$(wildcard *.cpp)";
+    push @srcs, "\$(wildcard *.cu)";
+    my @deps;
+    push @deps, "\$(OBJDIR)/*.d";
+
+    if (defined $customs{"${module_name}_SUB_DIRS"}) {
+        my @dirs = split /\s+/, $customs{"${module_name}_SUB_DIRS"};
+        foreach my $dir (@dirs) {
+            push @srcs, "\$(wildcard $dir/*.c)";
+            push @srcs, "\$(wildcard $dir/*.cc)";
+            push @srcs, "\$(wildcard $dir/*.cpp)";
+            push @srcs, "\$(wildcard $dir/*.cu)";
+            push @deps, "\$(OBJDIR)/$dir/*.d";
+        }
+    }
+    $customs{"${module_name}_FILES"} = \@srcs;
+    $customs{"${module_name}_DEP_FILES"} = \@deps;
+}
+
+sub config_to_str {
+    my ($config) = @_;
+
+    my $str;
+    foreach my $key (sort keys %$config) {
+        if (ref $config->{$key} eq ARRAY) {
+            map { $str .= "$key += $_\n" } @{$config->{$key}};
+            next;
+        }
+        $str .= "$key ?= $config->{$key}\n";
+    }
+    return $str;
 }
 
 sub get_python_lib_dir {

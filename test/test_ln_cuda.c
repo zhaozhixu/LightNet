@@ -24,7 +24,7 @@
 #include <check.h>
 #include <tl_check.h>
 #include "lightnettest/ln_test.h"
-#include "../src/arch/ln_cuda.h"
+#include "arch/ln_cuda.h"
 
 static void checked_setup(void)
 {

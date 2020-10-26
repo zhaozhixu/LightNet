@@ -23,7 +23,7 @@
 #include <check.h>
 #include <tl_check.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_hash.h"
+#include "ln_hash.h"
 
 typedef struct test_object test_object;
 struct test_object {

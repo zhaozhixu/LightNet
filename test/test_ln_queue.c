@@ -23,7 +23,7 @@
 #include <check.h>
 #include <tl_check.h>
 #include "lightnettest/ln_test.h"
-#include "../src/ln_queue.h"
+#include "ln_queue.h"
 
 static int *data;
 static size_t data_len;

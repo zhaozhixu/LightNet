@@ -13,14 +13,14 @@ endif
 
 TOOLS_DIR ?= tools
 
-CFLAGS = -Wall -std=gnu99 -D_GNU_SOURCE
-CXXFLAGS = -std=c++11 -Wall
-CUFLAGS = -m64 -arch=sm_30 -use_fast_math -ccbin $(CXX)
-LDFLAGS = $(CFLAGS)
+CFLAGS += -Wall -std=gnu99 -D_GNU_SOURCE
+CXXFLAGS += -std=c++11 -Wall
+CUFLAGS += -m64 -arch=sm_30 -use_fast_math -ccbin $(CXX)
+LDFLAGS += $(CFLAGS)
 
 ifeq ($(DEBUG), yes)
-CFLAGS += -g -O0 -DLN_DEBUG
-CXXFLAGS += -g -O0 -DLN_DEBUG
+CFLAGS += -g -O0 -D$(ABBR)_DEBUG
+CXXFLAGS += -g -O0 -D$(ABBR)_DEBUG
 CUFLAGS += -lineinfo
 LDFLAGS += -g -O0
 else
@@ -30,38 +30,62 @@ CUFLAGS += -O2
 LDFLAGS += -O2
 endif
 
-INCPATHS = -I/usr/local/include -I. `pkg-config --cflags tensorlight`
-LDFLAGS += -L/usr/local/lib -lm `pkg-config --libs tensorlight`
+INCPATHS += -I/usr/local/include -I. `pkg-config --cflags '$(REQUIRES)'`
+LDFLAGS += -L/usr/local/lib -lm `pkg-config --libs '$(REQUIRES)'`
+
+NORMAL_SRC = $(filter-out %cuda.c %cuda.cc %cuda.cpp %cudnn.c %cudnn.cc %cudnn.cpp %tensorrt.c %tensorrt.cc %tensorrt.cpp %dpu.c %dpu.cc %dpu.cpp %.cu,$(SRC))
+CUDA_SRC = $(filter %cuda.c %cuda.cc %cuda.cpp %.cu,$(SRC))
+CUDNN_SRC = $(filter %cudnn.c %cudnn.cc %cudnn.cpp,$(SRC))
+TENSORRT_SRC = $(filter %tensorrt.c %tensorrt.cc %tensorrt.cpp,$(SRC))
+DPU_SRC = $(filter %dpu.c %dpu.cc %dpu.cpp,$(SRC))
+
+OBJDIR = $(BUILD_DIR)/$(notdir $(CURDIR))
+OBJS   = $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(NORMAL_SRC)))
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(NORMAL_SRC)))
+OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(NORMAL_SRC)))
 
 ifeq ($(WITH_CUDA), yes)
-CFLAGS += -DLN_CUDA -DTL_CUDA
-CXXFLAGS += -DLN_CUDA -DTL_CUDA
-CUFLAGS += -DLN_CUDA -DTL_CUDA
+CFLAGS += -D$(ABBR)_CUDA
+CXXFLAGS += -D$(ABBR)_CUDA
+CUFLAGS += -D$(ABBR)_CUDA
 CUDA_INSTALL_DIR ?= /usr/local/cuda
 INCPATHS += -I$(CUDA_INSTALL_DIR)/include
 LDFLAGS += -L$(CUDA_INSTALL_DIR)/lib64 -lcudart -lcublas -lcurand -lstdc++
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDA_SRC)))
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(CUDA_SRC)))
+OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(CUDA_SRC)))
+OBJS  += $(patsubst %.cu,$(OBJDIR)/%.o,$(filter %.cu,$(CUDA_SRC)))
 ifeq ($(WITH_CUDNN), yes)
-CFLAGS += -DLN_CUDNN
-CXXFLAGS += -DLN_CUDNN
-CUFLAGS += -DLN_CUDNN
+CFLAGS += -D$(ABBR)_CUDNN
+CXXFLAGS += -D$(ABBR)_CUDNN
+CUFLAGS += -D$(ABBR)_CUDNN
 CUDNN_INSTALL_DIR ?= /usr/local/cuda
 INCPATHS += -I$(CUDNN_INSTALL_DIR)/include
 LDFLAGS += -L$(CUDNN_INSTALL_DIR)/lib -lcudnn
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(CUDNN_SRC)))
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(CUDNN_SRC)))
+OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(CUDNN_SRC)))
 endif
 ifeq ($(WITH_TENSORRT), yes)
-CFLAGS += -DLN_TENSORRT
-CXXFLAGS += -DLN_TENSORRT -Wno-deprecated-declarations
-CUFLAGS += -DLN_TENSORRT
+CFLAGS += -D$(ABBR)_TENSORRT
+CXXFLAGS += -D$(ABBR)_TENSORRT -Wno-deprecated-declarations
+CUFLAGS += -D$(ABBR)_TENSORRT
 TENSORRT_INSTALL_DIR ?= /usr
 INCPATHS += -I$(TENSORRT_INSTALL_DIR)/include
 LDFLAGS += -L$(TENSORRT_INSTALL_DIR)/lib -lnvinfer -lnvinfer_plugin
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(TENSORRT_SRC)))
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(TENSORRT_SRC)))
+OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(TENSORRT_SRC)))
 endif
 endif
 
 ifeq ($(WITH_DPU), yes)
-CFLAGS += -DLN_DPU
-CXXFLAGS += -DLN_DPU
-CUFLAGS += -DLN_DPU
+CFLAGS += -D$(ABBR)_DPU
+CXXFLAGS += -D$(ABBR)_DPU
+CUFLAGS += -D$(ABBR)_DPU
+OBJS  += $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(DPU_SRC)))
+OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(DPU_SRC)))
+OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(DPU_SRC)))
 endif
 
 CFLAGS += $(INCPATHS)
@@ -72,7 +96,6 @@ define concat
 $1$2$3$4$5$6$7$8
 endef
 
-# $(call make-depend,source-file,object-file,depend-file)
 define make-depend-c
 $(AT)$(CC) -MM -MF $(subst .o,.d,$@) -MP -MT $@ $(CFLAGS) $<
 endef

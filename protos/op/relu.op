@@ -55,7 +55,7 @@ relu_cudnn : relu {
     static_run: `
 ln_arch *arch = ln_hash_find(LN_ARCH.arch_table, "cudnn");
 assert(arch);
-priv->cudnn_context = arch->context;
+priv->cudnn_context = arch->priv;
 priv->src_desc = ln_cudnn_tensor_nchw_init(src);
 priv->dst_desc = ln_cudnn_tensor_nchw_init(dst);
 LN_CUDNN_CK(cudnnCreateActivationDescriptor(&priv->activation_desc));
