@@ -8,12 +8,12 @@ BUILD_DIR := ../$(BUILD_DIR)
 SRCOBJ := $(BUILD_DIR)/$(SRC_DIR)/$(LIBTARGET_A)
 SRC_DIR := ../$(SRC_DIR)
 
-INCPATHS += -I$(SRC_DIR) `pkg-config --cflags check`
-LDFLAGS += `pkg-config --libs check`
+INCPATHS += -I$(SRC_DIR)
 CFLAGS += $(TEST_EXTRA_FLAGS)
 
 SRC = $(TEST_FILES)
 DEP = $(TEST_DEP_FILES)
+REQUIRES = $(TEST_REQUIRES) $(SRC_REQUIRES)
 
 .PHONY: all cmd clean
 

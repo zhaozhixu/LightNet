@@ -95,6 +95,11 @@ INSTALL_EXTRA_BINS_CMD =
 UNINSTALL_EXTRA_BINS_CMD =
 endif
 
+ifeq ($(MAKE_BIN), yes)
+MAKE_BIN_CMD = cp $(OBJ_BIN) $(BUILD_BIN_MMM)
+MAKE_BIN_CMD +=
+endif
+
 ifdef VERBOSE
 AT =
 else
@@ -107,8 +112,8 @@ $(AT)if [ ! -d $(BUILD_INCLUDE_DIR) ]; then mkdir -p $(BUILD_INCLUDE_DIR); fi
 $(AT)if [ ! -d $(BUILD_LIB_DIR) ]; then mkdir -p $(BUILD_LIB_DIR); fi
 $(AT)if [ ! -d $(BUILD_BIN_DIR) ]; then mkdir -p $(BUILD_BIN_DIR); fi
 $(AT)if [ ! -d $(BUILD_DOC_DIR) ]; then mkdir -p $(BUILD_DOC_DIR); fi
-$(AT)find $(SRC_DIR) -type d -print0 | xargs -0 -I{} mkdir -p build/{}
-$(AT)find $(TEST_DIR) -type d -print0 | xargs -0 -I{} mkdir -p build/{}
+$(AT)find $(SRC_DIR) -type d -print0 | xargs -0 -I{} mkdir -p $(BUILD_DIR)/{}
+$(AT)find $(TEST_DIR) -type d -print0 | xargs -0 -I{} mkdir -p $(BUILD_DIR)/{}
 endef
 
 define make-install-dir

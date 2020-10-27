@@ -17,20 +17,21 @@ my %customs =
      "TARGET" => "lightnet",
      "ABBR" => "LN",
      "abbr" => "ln",
-     "REQUIRES" => "tensorlight >= 0.1.0",
      "EXTRA_BINS" => "tools/il2json",
      "EXPORT_HEADERS" => "src/ln_option.h src/ln_msg.h src/ln_util_common.h",
      "SRC_DIR" => "src",
      "SRC_SUB_DIRS" => "op op/auto arch arch/auto",
      "SRC_EXTRA_FLAGS" => '',
+     "SRC_REQUIRES" => "tensorlight >= 0.1.0",
      "TEST_DIR" => "test",
      "TEST_SUB_DIRS" => "lightnettest",
      "TEST_EXTRA_FLAGS" => '-D$(ABBR)_TEST_DIR="\"$(CURDIR)\"" -D$(ABBR)_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\""',
+     "TEST_REQUIRES" => "check"
     );
 
 my $usage = <<EOF;
 Usage: $0 [OPTION[=VALUE]...]
-Generate configuration makefile for building LightNet.
+Generate configuration makefile for building $customs{TARGET}.
 
 options:
   -h, --help                  print help information
@@ -41,7 +42,7 @@ options:
   --with-cuda=BOOL            set to yes if build with CUDA [no]
   --cuda-install-dir=DIR      cuda installation directory [/usr/local/cuda]
   --with-cudnn=BOOL           set to yes if build with cudnn library [no]
-  --cudnn-install-dir=DIR     cudn installation directory [/usr/local/cuda]
+  --cudnn-install-dir=DIR     cudnn installation directory [/usr/local/cuda]
   --with-tensorrt=BOOL        set to yes if build with TensorRT [no]
   --tensorrt-install-dir=DIR  tensorrt installation directory [/usr]
   --with-dpu=BOOL             set to yes if build with DPU [no]
@@ -247,26 +248,16 @@ sub set_extra_bins {
 sub set_module_files {
     my ($module_name) = @_;
 
+    my $sub_dirs = "${module_name}_SUB_DIRS";
+    my $files = "${module_name}_FILES";
+    my $dep_files = "${module_name}_DEP_FILES";
     my @srcs;
-    push @srcs, "\$(wildcard *.c)";
-    push @srcs, "\$(wildcard *.cc)";
-    push @srcs, "\$(wildcard *.cpp)";
-    push @srcs, "\$(wildcard *.cu)";
-    my @deps;
-    push @deps, "\$(OBJDIR)/*.d";
-
-    if (defined $customs{"${module_name}_SUB_DIRS"}) {
-        my @dirs = split /\s+/, $customs{"${module_name}_SUB_DIRS"};
-        foreach my $dir (@dirs) {
-            push @srcs, "\$(wildcard $dir/*.c)";
-            push @srcs, "\$(wildcard $dir/*.cc)";
-            push @srcs, "\$(wildcard $dir/*.cpp)";
-            push @srcs, "\$(wildcard $dir/*.cu)";
-            push @deps, "\$(OBJDIR)/$dir/*.d";
-        }
-    }
-    $customs{"${module_name}_FILES"} = \@srcs;
-    $customs{"${module_name}_DEP_FILES"} = \@deps;
+    push @srcs, "\$(wildcard *.c) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.c))";
+    push @srcs, "\$(wildcard *.cc) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cc))";
+    push @srcs, "\$(wildcard *.cpp) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cpp))";
+    push @srcs, "\$(wildcard *.cu) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cu))";
+    $customs{$files} = \@srcs;
+    $customs{$dep_files} = "\$(OBJDIR)/*.d \$(foreach dir,\$($sub_dirs),\$(OBJDIR)/\$(dir)/*.d)";
 }
 
 sub config_to_str {

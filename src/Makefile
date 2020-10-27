@@ -20,6 +20,7 @@ CFLAGS += $(SRC_EXTRA_FLAGS)
 
 SRC = $(SRC_FILES)
 DEP = $(SRC_DEP_FILES)
+REQUIRES = $(SRC_REQUIRES)
 
 .PHONY: all bin liba libso cmd clean
 
