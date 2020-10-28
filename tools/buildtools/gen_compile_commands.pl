@@ -1,15 +1,10 @@
 #! /usr/bin/env perl
 
-use 5.014;
 use warnings;
 use strict;
 use JSON;
 use Getopt::Long;
 use Fcntl qw(:flock);
-use Cwd 'abs_path';
-use File::Basename;
-use lib abs_path(dirname(__FILE__));
-use util;
 
 my $usage = <<EOT;
 Usage: $0 [Options] WD SRC CMD
@@ -44,7 +39,7 @@ foreach my $cmd_obj (@$cmd_objs) {
     if ($cmd_obj->{directory} eq $wd and $cmd_obj->{file} eq $src) {
         $found = 1;
         last if $cmd_obj->{command} eq $cmd;
-        say "updating compile command file: $wd/$src";
+        print "updating compile command file: $wd/$src\n";
         $cmd_obj->{command} = $cmd;
         last;
     }
@@ -62,4 +57,11 @@ if ($file) {
     close $fh;
 } else {
     print $json_str;
+}
+
+sub exit_msg {
+    my $status = shift;
+    my $msg = shift;
+    print $msg;
+    exit $status;
 }

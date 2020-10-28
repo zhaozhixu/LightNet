@@ -1,6 +1,5 @@
 #! /usr/bin/env perl
 
-use 5.014;
 use warnings;
 use strict;
 
@@ -12,7 +11,7 @@ $_ = <LOG>;
 close LOG;
 my $re = qr|^.+/(site\|dist)-packages/$pkgname[^/]+|;
 if (m|$re|) {
-    say "rm -rf $&";
+    print "rm -rf $&\n";
     !system "rm -rf $&" or die "error removing $&";
     !system "rm -f $logfile" or die "error removing $logfile";
 } else {

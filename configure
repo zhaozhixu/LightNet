@@ -19,13 +19,14 @@ my %customs =
      "abbr" => "ln",
      "EXTRA_BINS" => "tools/il2json",
      "EXPORT_HEADERS" => "src/ln_option.h src/ln_msg.h src/ln_util_common.h",
+     "BUILDTOOLS_DIR" => "tools/buildtools",
      "SRC_DIR" => "src",
      "SRC_SUB_DIRS" => "op op/auto arch arch/auto",
-     "SRC_EXTRA_FLAGS" => '',
+     "SRC_EXTRA_CFLAGS" => '-I$(BUILD_DIR)/include/$(TARGET)',
      "SRC_REQUIRES" => "tensorlight >= 0.1.0",
      "TEST_DIR" => "test",
      "TEST_SUB_DIRS" => "lightnettest",
-     "TEST_EXTRA_FLAGS" => '-D$(ABBR)_TEST_DIR="\"$(CURDIR)\"" -D$(ABBR)_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\""',
+     "TEST_EXTRA_CFLAGS" => '-D$(ABBR)_TEST_DIR="\"$(CURDIR)\"" -D$(ABBR)_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\"" -I../$(SRC_DIR)',
      "TEST_REQUIRES" => "check"
     );
 

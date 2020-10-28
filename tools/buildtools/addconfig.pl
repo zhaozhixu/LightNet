@@ -2,34 +2,30 @@
 
 use warnings;
 use strict;
-use Cwd 'abs_path';
-use File::Basename;
-use lib abs_path(dirname(__FILE__));
-use util;
 
 my $usage = <<EOF;
 Usage: $0 SRC DST -d DEFINE(s) -i INCLUDES
 Generate C defines and includes after /* start of config */ from SRC to DST.
 
 Example:
-	tools/addconfig.pl src/config.h.in build/include/config.h \
+    tools/addconfig.pl src/config.h.in build/include/config.h \
     -d USE_XXX USE_YYY -i a.h b.h
 
-	This example will generate
-	/* start of config */
-	#define USE_XXX
-	#define USE_YYY
+    This example will generate
+    /* start of config */
+    #define USE_XXX
+    #define USE_YYY
 
     #include "a.h"
     #include "b.h"
 EOF
 
-util::exit_msg($usage) if $ARGV[0] eq "-h" or $ARGV[0] eq "--help";
-util::err_exit($usage) if @ARGV < 4;
+exit_msg(0, $usage) if $ARGV[0] eq "-h" or $ARGV[0] eq "--help";
+err_exit($usage) if @ARGV < 4;
 
 my $src = shift @ARGV;
 my $dst = shift @ARGV;
-util::err_exit($usage) if shift @ARGV ne "-d";
+err_exit($usage) if shift @ARGV ne "-d";
 
 my @defines;
 my $define;
@@ -59,3 +55,15 @@ while (<SRC>) {
 }
 close SRC;
 close DST;
+
+sub exit_msg {
+    my $status = shift;
+    my $msg = shift;
+    print $msg;
+    exit $status;
+}
+
+sub err_exit {
+    my $msg = $_[0];
+    die "ERROR: $msg";
+}

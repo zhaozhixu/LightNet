@@ -25,6 +25,7 @@ GRTAGS
 GTAGS
 obj*/
 build*/
+!buildtools/
 dist/
 example/object-detect
 __pycache__/

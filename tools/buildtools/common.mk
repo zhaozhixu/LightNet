@@ -11,8 +11,6 @@ else
 AT = @
 endif
 
-TOOLS_DIR ?= tools
-
 CFLAGS += -Wall -std=gnu99 -D_GNU_SOURCE
 CXXFLAGS += -std=c++11 -Wall
 CUFLAGS += -m64 -arch=sm_30 -use_fast_math -ccbin $(CXX)
@@ -92,6 +90,19 @@ CFLAGS += $(INCPATHS)
 CXXFLAGS += $(INCPATHS)
 CUFLAGS += $(INCPATHS)
 
+CFLAGS += -fPIC -fvisibility=hidden
+CXXFLAGS += -fPIC -fvisibility=hidden
+LDFLAGS_SO += $(LDFLAGS) -shared
+CUFLAGS += --compiler-options '-fPIC -fvisibility=hidden' -shared
+ifeq ($(UNAME_S),Linux)
+LDFLAGS_SO += -Wl,--no-undefined
+CUFLAGS += --linker-options '-Wl,--no-undefined -shared'
+else ifeq ($(UNAME_S),Darwin)
+LDFLAGS_SO += -Wl,-undefined,error
+CUFLAGS += --linker-options '-Wl,-undefined,error'
+endif
+CFLAGS += $(SRC_EXTRA_FLAGS)
+
 define concat
 $1$2$3$4$5$6$7$8
 endef
@@ -125,7 +136,7 @@ endef
 else
 define compile-c
 $(ECHO) "  GEN\t" $(CMD_FILE) for $@
-$(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CC) $(CFLAGS) -c -o $@ $<"
+$(AT)$(BUILDTOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CC) $(CFLAGS) -c -o $@ $<"
 endef
 endif
 
@@ -138,7 +149,7 @@ endef
 else
 define compile-cxx
 $(ECHO) "  GEN\t" $(CMD_FILE) for $@
-$(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CXX) $(CXXFLAGS) -c -o $@ $<"
+$(AT)$(BUILDTOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CXX) $(CXXFLAGS) -c -o $@ $<"
 endef
 endif
 
@@ -151,7 +162,7 @@ endef
 else
 define compile-cu
 $(ECHO) "  GEN\t" $(CMD_FILE) for $@
-$(AT)$(TOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CUCC) $(CUFLAGS) -c -o $@ $<"
+$(AT)$(BUILDTOOLS_DIR)/gen_compile_commands.pl -f $(CMD_FILE) `pwd` $< "$(CUCC) $(CUFLAGS) -c -o $@ $<"
 endef
 endif
 

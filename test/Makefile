@@ -1,46 +1,26 @@
 include ../config.mk
-include ../common.mk
-
-TARGET_TEST = test_$(TARGET)
-
-TOOLS_DIR := ../$(TOOLS_DIR)
+BUILDTOOLS_DIR := ../$(BUILDTOOLS_DIR)
+include $(BUILDTOOLS_DIR)/common.mk
 BUILD_DIR := ../$(BUILD_DIR)
-SRCOBJ := $(BUILD_DIR)/$(SRC_DIR)/$(LIBTARGET_A)
-SRC_DIR := ../$(SRC_DIR)
-
-INCPATHS += -I$(SRC_DIR)
-CFLAGS += $(TEST_EXTRA_FLAGS)
 
 SRC = $(TEST_FILES)
 DEP = $(TEST_DEP_FILES)
 REQUIRES = $(TEST_REQUIRES) $(SRC_REQUIRES)
+CFLAGS += $(TEST_EXTRA_CFLAGS)
 
-.PHONY: all cmd clean
+TARGET_TEST := test_$(TARGET)
 
-all: $(OBJDIR)/$(TARGET_TEST)
+include $(BUILDTOOLS_DIR)/common_recipe.mk
+
+.PHONY: all bin run
+
+all: run
+
+run: bin
 	$(ECHO) Running tests...
 	$(AT)$(OBJDIR)/$(TARGET_TEST) $(TEST_ARGS)
 
-cmd: $(OBJS)
+bin: $(OBJDIR)/$(TARGET_TEST)
 
-$(OBJDIR)/$(TARGET_TEST): $(OBJS) $(SRCOBJ)
+$(OBJDIR)/$(TARGET_TEST): $(OBJS) $(BUILD_DIR)/$(SRC_DIR)/$(LIBTARGET_A)
 	$(call ld-bin)
-
-$(OBJDIR)/%.o: %.c
-	$(call compile-c)
-
-$(OBJDIR)/%.o: %.cpp
-	$(call compile-cxx)
-
-$(OBJDIR)/%.o: %.cc
-	$(call compile-cxx)
-
-$(OBJDIR)/%.o: %.cu
-	$(call compile-cu)
-
-clean:
-	rm -rf $(OBJDIR)
-
-ifneq "$(MAKECMDGOALS)" "clean"
--include DEP
-endif

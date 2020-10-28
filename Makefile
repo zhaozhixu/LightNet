@@ -1,5 +1,4 @@
 include config.mk
-include common.mk
 
 export BIN = $(TARGET)
 export LIBTARGET_A = lib$(TARGET).a
@@ -69,7 +68,7 @@ INSTALL_PYTHON = (cd $(PYTHON_DIR) && $(PYTHON_CMD) setup.py install --user --re
 else
 INSTALL_PYTHON = (cd $(PYTHON_DIR) && $(PYTHON_CMD) setup.py install --prefix $(PYTHON_PREFIX) --record .install-log)
 endif
-UNINSTALL_PYTHON = perl tools/uninstallpy.pl $(PYTHON_DIR)/.install-log $(PYTHON_TARGET)
+UNINSTALL_PYTHON = perl $(BUILDTOOLS_DIR)/uninstallpy.pl $(PYTHON_DIR)/.install-log $(PYTHON_TARGET)
 else
 INSTALL_PYTHON =
 UNINSTALL_PYTHON =
@@ -125,8 +124,8 @@ $(AT)if [ ! -d $(INSTALL_DOC_DIR) ]; then mkdir -p $(INSTALL_DOC_DIR); fi
 $(AT)if [ ! -d $(PKGCONFIG_DIR) ]; then mkdir -p $(PKGCONFIG_DIR); fi
 endef
 
-define pre-make-lib
-$(AT)perl tools/addconfig.pl $(CONFIG_SRC) $(CONFIG_DST) -d $(CONFIG_DEFINES) -i
+define pre-make-config
+$(AT)perl $(BUILDTOOLS_DIR)/addconfig.pl $(CONFIG_SRC) $(CONFIG_DST) -d $(CONFIG_DEFINES) -i
 endef
 
 define make-lib
@@ -157,7 +156,7 @@ cp $(BUILD_BIN_MMM) $(INSTALL_BIN_MMM)
 ln -sf $(BIN_MMM) $(INSTALL_BIN)
 $(INSTALL_EXTRA_BINS_CMD)
 $(INSTALL_DOC_CMD)
-perl tools/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
+perl $(BUILDTOOLS_DIR)/gen_pkgconfig.pl $(TARGET) $(INSTALL_DIR) $(MAJOR).$(MINOR).$(MICRO) $(PKGCONFIG_DIR) "$(REQUIRES)" "A light-weight neural network compiler for different software/hardware backends."
 $(INSTALL_PYTHON)
 endef
 
@@ -176,10 +175,11 @@ $(UNINSTALL_PYTHON)
 endef
 
 define make-clean
-$(AT)(cd $(SRC_DIR) && $(MAKE) clean);\
-(cd $(TEST_DIR) && $(MAKE) clean)
+$(AT)$(MAKE) -C $(SRC_DIR) clean; $(MAKE) -C $(TEST_DIR) clean
 rm -rf $(BUILD_DIR)
 endef
+
+CMD_FILE ?= $(BUILD_DIR)/compile_commands.json
 
 .PHONY: all lib bin test cmd doc clean info help install uninstall
 
@@ -189,24 +189,27 @@ install:
 	$(call make-install-dir)
 	$(call make-install)
 
-bin: lib
+bin:
+	$(call make-build-dir)
+	$(call pre-make-config)
+	$(AT)$(MAKE) -C $(SRC_DIR) bin
 	$(call make-bin)
 
 lib:
 	$(call make-build-dir)
-	$(call pre-make-lib)
-	$(AT)(cd $(SRC_DIR) && $(MAKE))
+	$(call pre-make-config)
+	$(AT)$(MAKE) -C $(SRC_DIR) lib
 	$(call make-lib)
 
 test: lib
-	$(AT)(cd $(TEST_DIR) && $(MAKE))
+	$(AT)$(MAKE) -C $(TEST_DIR) all
 
 cmd:
 	$(call make-build-dir)
-	$(call pre-make-lib)
+	$(call pre-make-config)
 	$(AT)[ -e $(CMD_FILE) ] || echo "[]" > $(CMD_FILE)
-	$(AT)(cd $(SRC_DIR) && $(MAKE) cmd)
-	$(AT)(cd $(TEST_DIR) && $(MAKE) cmd)
+	$(AT)$(MAKE) -C $(SRC_DIR) cmd
+	$(AT)$(MAKE) -C $(TEST_DIR) cmd
 
 doc:
 	$(call make-build-dir)
