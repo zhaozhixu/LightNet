@@ -4,14 +4,15 @@ use warnings;
 use strict;
 use version;
 use Getopt::Long;
-use File::Basename;
-use constant ARRAY => ref [];
+use lib 'tools/buildtools';
+use ConfigUtil;
 
-# version information
+# version number
 my $major = 0;
 my $minor = 1;
 my $micro = 0;
 
+# project specified make variables
 my %customs =
     (
      "TARGET" => "lightnet",
@@ -30,159 +31,62 @@ my %customs =
      "TEST_REQUIRES" => "check"
     );
 
-my $usage = <<EOF;
-Usage: $0 [OPTION[=VALUE]...]
-Generate configuration makefile for building $customs{TARGET}.
+# make variables that can be set by configure options
+my @options =
+    (
+     [ "build-dir", "BUILD_DIR", "DIR", "build", "building directory" ],
+     [ "install-dir", "INSTALL_DIR", "DIR", "/usr/local", "installation directory" ],
+     [ "prefix", "INSTALL_DIR", "DIR", "/usr/local", "same as --install-dir; who comes later counts" ],
+     [ "pkgconfig-dir", "PKGCONFIG_DIR", "DIR", "\$(INSTALL_DIR)/lib/pkgconfig", "pkgconfig directory" ],
+     [ "with-cuda", "WITH_CUDA", "BOOL", "no", "set to yes if build with CUDA"],
+     [ "cuda-install-dir", "CUDA_INSTALL_DIR", "DIR", "/usr/local/cuda", "cuda installation directory"],
+     [ "with-cudnn", "WITH_CUDNN", "BOOL", "no", "set to yes if build with cudnn library"],
+     [ "cudnn-install-dir", "CUDNN_INSTALL_DIR", "DIR", "/usr/local/cuda", "cudnn installation directory"],
+     [ "with-tensorrt", "WITH_TENSORRT", "BOOL", "no", "set to yes if build with TensorRT"],
+     [ "tensorrt-install-dir", "TENSORRT_INSTALL_DIR", "DIR", "/usr/local", "tensorrt installation directory"],
+     [ "with-dpu", "WITH_DPU", "BOOL", "no", "set to yes if build with DPU"],
+     [ "with-python", "WITH_PYTHON", "BOOL", "no", "set to yes if build with Python"],
+     [ "python-prefix", "PYTHON_PREFIX", "DIR", "\$(INSTALL_DIR)", "Python package installation directory; set to your virtualenv directory if using virtualenv"],
+     [ "python-version", "PYTHON_VERSION", "VERSION", "3", "Python version"],
+     [ "python-cmd", "PYTHON_CMD", "CMD", "python3", "Python command"],
+     [ "python-user", "PYTHON_USER", "BOOL", "no", "install Python packages to user's site-package '\$HOME/.local/lib/python<version>/site-packages'" ],
+     [ "debug", "DEBUG", "BOOL", "no", "set to yes when debugging" ],
+     [ "doc", "DOC", "BOOL", "yes", "set to yes if build the documents too" ],
+    );
 
-options:
-  -h, --help                  print help information
-  --build-dir=DIR             building directory [build]
-  --install-dir=DIR           installation directory [/usr/local]
-  --prefix=DIR                same as --install-dir; who comes later counts
-  --pkgconfig-dir=DIR         pkgconfig directory [INSTALL_DIR/lib/pkgconfig]
-  --with-cuda=BOOL            set to yes if build with CUDA [no]
-  --cuda-install-dir=DIR      cuda installation directory [/usr/local/cuda]
-  --with-cudnn=BOOL           set to yes if build with cudnn library [no]
-  --cudnn-install-dir=DIR     cudnn installation directory [/usr/local/cuda]
-  --with-tensorrt=BOOL        set to yes if build with TensorRT [no]
-  --tensorrt-install-dir=DIR  tensorrt installation directory [/usr]
-  --with-dpu=BOOL             set to yes if build with DPU [no]
-  --with-python=BOOL          set to yes if build with Python [no]
-  --python-prefix=DIR         python package installation directory;
-                              set to your virtualenv directory if using
-                              virtualenv [INSTALL_DIR]
-  --python-version=VERSION    python version [3]
-  --python-cmd=CMD            python command [python3]
-  --python-user=BOOL          install python packages to user site-package
-                              '\$HOME/.local/lib/python<version>/site-packages'
-  --debug=BOOL                set to yes when debugging [no]
-  --doc=BOOL                  set to yes if build the documents too [yes]
-EOF
-
-# default options, go in config.mk
-my %opts = (
-            "BUILD_DIR" => "build",
-            "INSTALL_DIR" => "/usr/local",
-            "PKGCONFIG_DIR" => "/usr/local/lib/pkgconfig",
-            "WITH_CUDA" => "no",
-            "CUDA_INSTALL_DIR" => "/usr/local/cuda",
-            "WITH_CUDNN" => "no",
-            "CUDNN_INSTALL_DIR" => "/usr/local/cuda",
-            "WITH_TENSORRT" => "no",
-            "TENSORRT_INSTALL_DIR" => "/usr",
-            "WITH_DPU" => "no",
-            "WITH_PYTHON" => "no",
-            "PYTHON_PREFIX" => "/usr/local",
-            "PYTHON_VERSION" => "3",
-            "PYTHON_CMD" => "python3",
-            "PYTHON_USER" => "no",
-            "DEBUG" => "no",
-            "DOC" => "yes",
-           );
-
-# parse arguments
-GetOptions(
-           'help' => sub {&exit_msg(0, $usage)},
-           'build-dir=s' => \$opts{BUILD_DIR},
-           'install-dir=s' => \&set_prefix,
-           'prefix=s' => \&set_prefix,
-           'pkgconfig-dir=s' => \$opts{PKGCONFIG_DIR},
-           'with-cuda=s' => \$opts{WITH_CUDA},
-           'cuda-install-dir=s' => \$opts{CUDA_INSTALL_DIR},
-           'with-cudnn=s' => \$opts{WITH_CUDNN},
-           'cudnn-install-dir=s' => \$opts{CUDNN_INSTALL_DIR},
-           'with-tensorrt=s' => \$opts{WITH_TENSORRT},
-           'tensorrt-install-dir=s' => \$opts{TENSORRT_INSTALL_DIR},
-           'with-dpu=s' => \$opts{WITH_DPU},
-           'with-python=s' => \$opts{WITH_PYTHON},
-           'python-prefix=s' => \$opts{PYTHON_PREFIX},
-           'python-version=s' => \$opts{PYTHON_VERSION},
-           'python-cmd=s' => \$opts{PYTHON_CMD},
-           'python-user=s' => \$opts{PYTHON_USER},
-           'debug=s' => \$opts{DEBUG},
-           'doc=s' => \$opts{DOC},
-          ) or &exit_msg(1, $usage);
+# parse configure options
+my $options_obj = gen_options(\@options, "Generate configuration makefile for building $customs{TARGET}.");
+GetOptions(%{$options_obj->{getopt_args}}) or die $options_obj->{format_usage};
+my %opts = %{$options_obj->{options}};
 
 print "configure $customs{TARGET} version $major.$minor.$micro\n";
 
 # check configuration
-# TODO: check versions
+common_checks(\%opts);
 my $output;
-$output = `gcc --version`;
-if (!defined $output or $output eq "") {
-    &err_exit("gcc is not installed");
-}
-
-$output = `make --version`;;
-if (!defined $output or $output eq "") {
-    &err_exit("make is not installed");
-}
-
-$output = `pkg-config --version`;;
-if (!defined $output or $output eq "") {
-    &err_exit("pkg-config is not installed");
-}
-
 $output = `pkg-config --modversion check`;
 if (!defined $output or $output eq "") {
-    &err_exit("check is not installed");
+    err_exit("check is not installed");
 }
 
 $output = `pkg-config --modversion tensorlight`;
 if (!defined $output or $output eq "") {
-    &err_exit("tensorlight is not installed");
-}
-
-if ($opts{WITH_CUDNN} eq "yes") {
-    if (not $opts{WITH_CUDA} eq "yes") {
-        $opts{WITH_CUDA} = "yes";
-        print ("automatically set --with-cuda=yes\n");
-    }
-}
-
-if ($opts{WITH_TENSORRT} eq "yes") {
-    if (not $opts{WITH_CUDA} eq "yes") {
-        $opts{WITH_CUDA} = "yes";
-        print ("automatically set --with-cuda=yes\n");
-    }
-    if (not $opts{WITH_CUDNN} eq "yes") {
-        $opts{WITH_CUDNN} = "yes";
-        print ("automatically set --with-cudnn=yes\n");
-    }
-}
-
-if ($opts{WITH_CUDA} eq "yes") {
-    $output = `nvcc --version`;;
-    if (!defined $output or $output eq "") {
-        &err_exit("nvcc is not installed");
-    }
-}
-
-if ($opts{WITH_PYTHON} eq "yes") {
-    $output = `$opts{PYTHON_CMD} --version 2>&1`;
-    if (not defined $output or $output eq "" or
-        not &version_roughly_match($output, $opts{PYTHON_VERSION})) {
-        &warn_msg("PYTHON_CMD $opts{PYTHON_CMD} is not installed or doesn't match PYTHON_VERSION $opts{PYTHON_VERSION}, now set to python$opts{PYTHON_VERSION}");
-        $opts{PYTHON_CMD} = "python$opts{PYTHON_VERSION}";
-        $output = `$opts{PYTHON_CMD} --version 2>&1`;
-        if (!defined $output or $output eq "") {
-            &err_exit("$opts{PYTHON_CMD} is not installed");
-        }
-    }
+    err_exit("tensorlight is not installed");
 }
 
 if ($opts{DOC} eq "yes") {
     $output = `mkdocs --version`;
     if (!defined $output or $output eq "") {
-        &warn_msg("mkdocs is is not installed; documents are not going to be built");
+        warn_msg("mkdocs is is not installed; documents are not going to be built");
         $opts{DOC} = "no";
-    } elsif (version->parse(&mkdocs_version($output)) < version->parse("1.0.0")) {
-        my $version = &mkdocs_version($output);
-        &warn_msg("mkdocs requires mininal version 1.0.0, but get $version; documents are not going to be built");
+    } elsif (version->parse(mkdocs_version($output)) < version->parse("1.0.0")) {
+        my $version = mkdocs_version($output);
+        warn_msg("mkdocs requires mininal version 1.0.0, but get $version; documents are not going to be built");
         $opts{DOC} = "no";
     }
 }
 
+# print configuration
 my $config_str = <<EOF;
 .SUFFIXES:
 MAJOR = $major
@@ -193,9 +97,9 @@ EOF
 
 $config_str .= config_to_str(\%opts);
 $config_str .= "\n";
-set_extra_bins();
-set_module_files("SRC");
-set_module_files("TEST");
+set_extra_bins(\%customs);
+set_module_files(\%customs, "SRC");
+set_module_files(\%customs, "TEST");
 $config_str .= config_to_str(\%customs);
 
 my $conf_file = "config.mk";
@@ -209,110 +113,4 @@ sub mkdocs_version {
     my $version = "";
     $version = $1 if $str =~ /version (\d\.\d(\.\d)?)/;
     $version;
-}
-
-sub get_version {
-    my $version_h = shift;
-    open my $version_h_fh, '<', $version_h or die "Cannot open $version_h: $!";
-    my ($major, $minor, $micro);
-    while (<$version_h_fh>) {
-        $major = $1 if /MAJOR_VERSION \((\d)\)/;
-        $minor = $1 if /MINOR_VERSION \((\d)\)/;
-        $micro = $1 if /MICRO_VERSION \((\d)\)/;
-    }
-    close $version_h_fh;
-    if (not defined $major or not defined $minor or not defined $micro) {
-        &err_exit("cannot find version macros in $version_h, maybe a bug?");
-    }
-    ($major, $minor, $micro);
-}
-
-sub set_prefix {
-    my $prefix = $_[1];
-    $opts{INSTALL_DIR} = $prefix;
-    $opts{PKGCONFIG_DIR} = "$prefix/lib/pkgconfig";
-    $opts{PYTHON_PREFIX} = $prefix;
-}
-
-sub set_extra_bins {
-    return if not defined $customs{EXTRA_BINS};
-
-    $customs{HAS_EXTRA_BINS} = "yes";
-    my @extra_bins = split /\s+/, $customs{EXTRA_BINS};
-    my @basenames = map { basename($_) } @extra_bins;
-    my @build_extra_bins = map { "\$(BUILD_BIN_DIR)/$_" } @basenames;
-    my @install_extra_bins = map { "\$(INSTALL_BIN_DIR)/$_" } @basenames;
-    $customs{BUILD_EXTRA_BINS} = join " ", @build_extra_bins;
-    $customs{INSTALL_EXTRA_BINS} = join " ", @install_extra_bins;
-}
-
-sub set_module_files {
-    my ($module_name) = @_;
-
-    my $sub_dirs = "${module_name}_SUB_DIRS";
-    my $files = "${module_name}_FILES";
-    my $dep_files = "${module_name}_DEP_FILES";
-    my @srcs;
-    push @srcs, "\$(wildcard *.c) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.c))";
-    push @srcs, "\$(wildcard *.cc) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cc))";
-    push @srcs, "\$(wildcard *.cpp) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cpp))";
-    push @srcs, "\$(wildcard *.cu) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cu))";
-    $customs{$files} = \@srcs;
-    $customs{$dep_files} = "\$(OBJDIR)/*.d \$(foreach dir,\$($sub_dirs),\$(OBJDIR)/\$(dir)/*.d)";
-}
-
-sub config_to_str {
-    my ($config) = @_;
-
-    my $str;
-    foreach my $key (sort keys %$config) {
-        if (ref $config->{$key} eq ARRAY) {
-            map { $str .= "$key += $_\n" } @{$config->{$key}};
-            next;
-        }
-        $str .= "$key ?= $config->{$key}\n";
-    }
-    return $str;
-}
-
-sub get_python_lib_dir {
-    my $python_cmd = shift;
-    my $dir =  `echo 'import distutils.sysconfig as conf
-print(conf.get_python_lib())' | $python_cmd`;
-    chomp $dir;
-    $dir;
-}
-
-sub match_version {
-    my $input = shift;
-    my $version;
-    $version = $1 if $input =~ /([0-9a-z.]+)$/;
-}
-
-sub version_roughly_match {
-    my $ver1 = &match_version(shift);
-    my $ver2 = &match_version(shift);
-    if ($ver1 =~ /^$ver2/ or $ver2 =~ /^$ver1/) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-sub err_exit {
-    my $msg = shift;
-    print STDERR "\e[31mError:\e[0m $msg\n";
-    exit 1;
-}
-
-sub exit_msg {
-    my $code = shift;
-    my $msg = shift;
-    print $msg;
-    exit $code;
-}
-
-sub warn_msg {
-    my $msg = shift;
-    print STDERR "\e[35mWarning:\e[0m $msg\n";
 }
