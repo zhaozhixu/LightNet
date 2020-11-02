@@ -75,7 +75,7 @@ EOC
 
 sub set_extra_bins {
     my ($customs) = @_;
-    return if not defined $customs->{EXTRA_BINS};
+    return if not defined $customs->{EXTRA_BINS} or $customs->{EXTRA_BINS} =~ /^\s*$/;
 
     $customs->{HAS_EXTRA_BINS} = "yes";
     my @extra_bins = split /\s+/, $customs->{EXTRA_BINS};
@@ -90,13 +90,20 @@ sub set_module_files {
     my ($customs, $module_name) = @_;
 
     my $sub_dirs = "${module_name}_SUB_DIRS";
+    my @srcs;
+    if (not defined $customs->{$sub_dirs} or $customs->{$sub_dirs} =~ /^\s*$/) {
+        push @srcs, "\$(wildcard *.c)";
+        push @srcs, "\$(wildcard *.cc)";
+        push @srcs, "\$(wildcard *.cpp)";
+        push @srcs, "\$(wildcard *.cu)";
+    } else {
+        push @srcs, "\$(wildcard *.c) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.c))";
+        push @srcs, "\$(wildcard *.cc) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cc))";
+        push @srcs, "\$(wildcard *.cpp) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cpp))";
+        push @srcs, "\$(wildcard *.cu) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cu))";
+    }
     my $files = "${module_name}_FILES";
     my $dep_files = "${module_name}_DEP_FILES";
-    my @srcs;
-    push @srcs, "\$(wildcard *.c) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.c))";
-    push @srcs, "\$(wildcard *.cc) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cc))";
-    push @srcs, "\$(wildcard *.cpp) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cpp))";
-    push @srcs, "\$(wildcard *.cu) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cu))";
     $customs->{$files} = \@srcs;
     $customs->{$dep_files} = "\$(OBJDIR)/*.d \$(foreach dir,\$($sub_dirs),\$(OBJDIR)/\$(dir)/*.d)";
 }

@@ -28,8 +28,11 @@ CUFLAGS += -O2
 LDFLAGS += -O2
 endif
 
-INCPATHS += -I/usr/local/include -I. `pkg-config --cflags '$(REQUIRES)'`
-LDFLAGS += -L/usr/local/lib -lm `pkg-config --libs '$(REQUIRES)'`
+INCPATHS += -I/usr/local/include -I.
+LDFLAGS += -L/usr/local/lib -lm
+# cannot use ifeq/ifneq because they expand immediately
+INCPATHS += $(if $(REQUIRES),`pkg-config --cflags '$(REQUIRES)'`)
+LDFLAGS += $(if $(REQUIRES),`pkg-config --libs '$(REQUIRES)'`)
 
 NORMAL_SRC = $(filter-out %cuda.c %cuda.cc %cuda.cpp %cudnn.c %cudnn.cc %cudnn.cpp %tensorrt.c %tensorrt.cc %tensorrt.cpp %dpu.c %dpu.cc %dpu.cpp %.cu,$(SRC))
 CUDA_SRC = $(filter %cuda.c %cuda.cc %cuda.cpp %.cu,$(SRC))

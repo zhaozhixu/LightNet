@@ -1,5 +1,11 @@
 include config.mk
 
+ifdef VERBOSE
+AT =
+else
+AT = @
+endif
+
 export BIN = $(TARGET)
 export LIBTARGET_A = lib$(TARGET).a
 export LIBTARGET_SO = lib$(TARGET).so
@@ -38,8 +44,6 @@ INSTALL_SO_MMM = $(INSTALL_LIB_DIR)/$(LIBTARGET_SO_MMM)
 INSTALL_BIN = $(INSTALL_BIN_DIR)/$(BIN)
 INSTALL_BIN_MMM = $(INSTALL_BIN_DIR)/$(BIN_MMM)
 INSTALL_DOC = $(INSTALL_DOC_DIR)/$(TARGET)
-
-PKGCONFIG_DIR ?= /usr/local/lib/pkgconfig
 
 CONFIG_SRC = $(SRC_DIR)/$(TARGET).h.in
 CONFIG_DST = $(BUILD_INCLUDE_DIR)/$(TARGET).h
@@ -94,17 +98,6 @@ INSTALL_EXTRA_BINS_CMD =
 UNINSTALL_EXTRA_BINS_CMD =
 endif
 
-ifeq ($(MAKE_BIN), yes)
-MAKE_BIN_CMD = cp $(OBJ_BIN) $(BUILD_BIN_MMM)
-MAKE_BIN_CMD +=
-endif
-
-ifdef VERBOSE
-AT =
-else
-AT = @
-endif
-
 define make-build-dir
 $(AT)if [ ! -d $(BUILD_DIR) ]; then mkdir -p $(BUILD_DIR); fi
 $(AT)if [ ! -d $(BUILD_INCLUDE_DIR) ]; then mkdir -p $(BUILD_INCLUDE_DIR); fi
@@ -125,7 +118,7 @@ $(AT)if [ ! -d $(PKGCONFIG_DIR) ]; then mkdir -p $(PKGCONFIG_DIR); fi
 endef
 
 define pre-make-config
-$(AT)perl $(BUILDTOOLS_DIR)/addconfig.pl $(CONFIG_SRC) $(CONFIG_DST) -d $(CONFIG_DEFINES) -i
+$(AT)perl $(BUILDTOOLS_DIR)/add_config.pl $(CONFIG_SRC) $(CONFIG_DST) -d $(CONFIG_DEFINES) -i
 endef
 
 define make-lib

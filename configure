@@ -3,6 +3,7 @@
 use warnings;
 use strict;
 use version;
+use File::Copy;
 use Getopt::Long;
 use lib 'tools/buildtools';
 use ConfigUtil;
@@ -28,16 +29,17 @@ my %customs =
      "TEST_DIR" => "test",
      "TEST_SUB_DIRS" => "lightnettest",
      "TEST_EXTRA_CFLAGS" => '-D$(ABBR)_TEST_DIR="\"$(CURDIR)\"" -D$(ABBR)_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\"" -I../$(SRC_DIR)',
-     "TEST_REQUIRES" => "check"
+     "TEST_REQUIRES" => 'check $(SRC_REQUIRES)'
     );
 
 # make variables that can be set by configure options
 my @options =
     (
+     # [ $opt_name, $var_name, $type, $default, $desc ]
      [ "build-dir", "BUILD_DIR", "DIR", "build", "building directory" ],
      [ "install-dir", "INSTALL_DIR", "DIR", "/usr/local", "installation directory" ],
      [ "prefix", "INSTALL_DIR", "DIR", "/usr/local", "same as --install-dir; who comes later counts" ],
-     [ "pkgconfig-dir", "PKGCONFIG_DIR", "DIR", "\$(INSTALL_DIR)/lib/pkgconfig", "pkgconfig directory" ],
+     [ "pkgconfig-dir", "PKGCONFIG_DIR", "DIR", '$(INSTALL_DIR)/lib/pkgconfig', "pkgconfig directory" ],
      [ "with-cuda", "WITH_CUDA", "BOOL", "no", "set to yes if build with CUDA"],
      [ "cuda-install-dir", "CUDA_INSTALL_DIR", "DIR", "/usr/local/cuda", "cuda installation directory"],
      [ "with-cudnn", "WITH_CUDNN", "BOOL", "no", "set to yes if build with cudnn library"],
@@ -46,7 +48,7 @@ my @options =
      [ "tensorrt-install-dir", "TENSORRT_INSTALL_DIR", "DIR", "/usr/local", "tensorrt installation directory"],
      [ "with-dpu", "WITH_DPU", "BOOL", "no", "set to yes if build with DPU"],
      [ "with-python", "WITH_PYTHON", "BOOL", "no", "set to yes if build with Python"],
-     [ "python-prefix", "PYTHON_PREFIX", "DIR", "\$(INSTALL_DIR)", "Python package installation directory; set to your virtualenv directory if using virtualenv"],
+     [ "python-prefix", "PYTHON_PREFIX", "DIR", '$(INSTALL_DIR)', "Python package installation directory; set to your virtualenv directory if using virtualenv"],
      [ "python-version", "PYTHON_VERSION", "VERSION", "3", "Python version"],
      [ "python-cmd", "PYTHON_CMD", "CMD", "python3", "Python command"],
      [ "python-user", "PYTHON_USER", "BOOL", "no", "install Python packages to user's site-package '\$HOME/.local/lib/python<version>/site-packages'" ],
@@ -63,6 +65,7 @@ print "configure $customs{TARGET} version $major.$minor.$micro\n";
 
 # check configuration
 common_checks(\%opts);
+
 my $output;
 $output = `pkg-config --modversion check`;
 if (!defined $output or $output eq "") {
@@ -72,6 +75,13 @@ if (!defined $output or $output eq "") {
 $output = `pkg-config --modversion tensorlight`;
 if (!defined $output or $output eq "") {
     err_exit("tensorlight is not installed");
+}
+
+sub mkdocs_version {
+    my $str = shift;
+    my $version = "";
+    $version = $1 if $str =~ /version (\d\.\d(\.\d)?)/;
+    $version;
 }
 
 if ($opts{DOC} eq "yes") {
@@ -87,13 +97,13 @@ if ($opts{DOC} eq "yes") {
 }
 
 # print configuration
-my $config_str = <<EOF;
+my $config_str = <<EOC;
 .SUFFIXES:
 MAJOR = $major
 MINOR = $minor
 MICRO = $micro
 
-EOF
+EOC
 
 $config_str .= config_to_str(\%opts);
 $config_str .= "\n";
@@ -103,14 +113,10 @@ set_module_files(\%customs, "TEST");
 $config_str .= config_to_str(\%customs);
 
 my $conf_file = "config.mk";
+if (-e $conf_file) {
+    copy($conf_file, "$conf_file.bak") or die "Cannot copy $conf_file: $!";
+}
 open my $conf_fh, '>', $conf_file or die "Cannot open $conf_file: $!";
 print $conf_fh $config_str;
 close $conf_fh;
 print $config_str;
-
-sub mkdocs_version {
-    my $str = shift;
-    my $version = "";
-    $version = $1 if $str =~ /version (\d\.\d(\.\d)?)/;
-    $version;
-}
