@@ -388,7 +388,7 @@ char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
     ln_op *op;
     char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUFFIX;
     int max_idx = 0;
     int idx;
 
@@ -397,7 +397,7 @@ char *ln_op_list_new_opname(const ln_list *ops, const char *prefix)
         if (!ln_streqn(op->op_arg->name, prefix, prefix_len))
             continue;
         assert(isdigit(op->op_arg->name[prefix_len]) &&
-               "subfixed with no digit");
+               "suffixed with no digit");
         idx = atoi(&op->op_arg->name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }

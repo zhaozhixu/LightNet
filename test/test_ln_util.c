@@ -130,18 +130,18 @@ LN_TEST_START(test_ln_autopadding_deconv)
 LN_TEST_END
 /* end of tests */
 
-LN_TEST_START(test_ln_subfixed)
+LN_TEST_START(test_ln_suffixed)
 {
-    ck_assert_int_eq(ln_subfixed("aaabbb", "bbb"), 1);
-    ck_assert_int_eq(ln_subfixed("bbb", "bbb"), 1);
-    ck_assert_int_eq(ln_subfixed("aaabbb", ""), 1);
-    ck_assert_int_eq(ln_subfixed("", ""), 1);
-    ck_assert_int_eq(ln_subfixed("aaabbb", "bbbb"), 0);
-    ck_assert_int_eq(ln_subfixed("abbb", "bbbb"), 0);
-    ck_assert_int_eq(ln_subfixed("bbb", "bbbb"), 0);
-    ck_assert_int_eq(ln_subfixed("", "bbbb"), 0);
-    ck_assert_int_eq(ln_subfixed(NULL, ""), 0);
-    ck_assert_int_eq(ln_subfixed("", NULL), 0);
+    ck_assert_int_eq(ln_suffixed("aaabbb", "bbb"), 1);
+    ck_assert_int_eq(ln_suffixed("bbb", "bbb"), 1);
+    ck_assert_int_eq(ln_suffixed("aaabbb", ""), 1);
+    ck_assert_int_eq(ln_suffixed("", ""), 1);
+    ck_assert_int_eq(ln_suffixed("aaabbb", "bbbb"), 0);
+    ck_assert_int_eq(ln_suffixed("abbb", "bbbb"), 0);
+    ck_assert_int_eq(ln_suffixed("bbb", "bbbb"), 0);
+    ck_assert_int_eq(ln_suffixed("", "bbbb"), 0);
+    ck_assert_int_eq(ln_suffixed(NULL, ""), 0);
+    ck_assert_int_eq(ln_suffixed("", NULL), 0);
 }
 LN_TEST_END
 
@@ -165,7 +165,7 @@ LN_TEST_TCASE_START(util, checked_setup, checked_teardown)
     LN_TEST_ADD_TEST(test_ln_next_multiple_power2);
     LN_TEST_ADD_TEST(test_ln_autopadding_conv);
     LN_TEST_ADD_TEST(test_ln_autopadding_deconv);
-    LN_TEST_ADD_TEST(test_ln_subfixed);
+    LN_TEST_ADD_TEST(test_ln_suffixed);
     LN_TEST_ADD_TEST(test_ln_is_prefix_plus_digit);
 }
 LN_TEST_TCASE_END

@@ -43,7 +43,7 @@ char *ln_strdup(const char *s);
 double ln_clock(void);
 int ln_streq(const char *s1, const char *s2);
 int ln_streqn(const char *s1, const char *s2, size_t n);
-int ln_subfixed(const char *s, const char *subfix);
+int ln_suffixed(const char *s, const char *suffix);
 
 #ifdef __cplusplus
 LN_CPPEND

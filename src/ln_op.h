@@ -98,7 +98,7 @@ void ln_op_list_do_pre_run(ln_list *ops);
 void ln_op_list_do_static_run(ln_list *ops);
 void ln_op_list_do_run(ln_list *ops);
 void ln_op_list_do_post_run(ln_list *ops);
-/* Create a new opname with `prefix` subfixed with the next number.
+/* Create a new opname with `prefix` suffixed with the next number.
    Need to be freed. `ops` should not be modified */
 /* char *ln_op_list_new_opname(const ln_list *ops, const char *prefix); */
 int ln_op_list_unique_name(const ln_list *ops, char *buf, const char *prefix);

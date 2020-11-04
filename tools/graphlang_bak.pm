@@ -422,8 +422,8 @@ sub read_ops_from_json_file {
 sub err_unknown_last_field {
     my @fields = @_;
     my $prefix = join '.', @fields[0..$#fields-1];
-    my $subfix = $fields[-1];
-    &util::err_exit("$prefix doesn't have a '$subfix' field");
+    my $suffix = $fields[-1];
+    &util::err_exit("$prefix doesn't have a '$suffix' field");
 }
 
 1;

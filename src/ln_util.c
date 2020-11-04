@@ -92,19 +92,19 @@ LN_EXPORT int ln_streqn(const char *s1, const char *s2, size_t n)
     return !!!strncmp(s1, s2, n);
 }
 
-LN_EXPORT int ln_subfixed(const char *s, const char *subfix)
+LN_EXPORT int ln_suffixed(const char *s, const char *suffix)
 {
-    if (!s || !subfix)
+    if (!s || !suffix)
         return 0;
 
     const char *sp = s;
-    const char *sfp = subfix;
+    const char *sfp = suffix;
 
     while (*sp++);
     while (*sfp++);
-    while (*--sp == *--sfp && sp != s && sfp != subfix);
+    while (*--sp == *--sfp && sp != s && sfp != suffix);
 
-    if (*sp == *sfp && sfp == subfix)
+    if (*sp == *sfp && sfp == suffix)
         return 1;
     return 0;
 }

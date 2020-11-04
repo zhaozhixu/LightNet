@@ -728,12 +728,12 @@ is the argument name of the tensor in the operator, such as "stride" in an
 - **`int ln_tensor_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)`**
 
     Create an arg name that is unique in the tensor list.
-    The arg name is prefixed with `prefix` and subfixed with a serial number,
+    The arg name is prefixed with `prefix` and suffixed with a serial number,
     so that unique names will be created for a same prefix.
     The arg name' length should be less than `LN_MAX_NAME_LEN`. If its length
     exceeds that limit, an internal error will be emited and the program will 
     abort. The arg name  will be printed in `buf`. The return value is the 
-    subfixed number.
+    suffixed number.
     
 ## Parameter
 
@@ -958,12 +958,12 @@ The param list supports the following operations:
 - **`int ln_param_list_unique_arg_name(ln_list *list, char *buf, const char *prefix)`**
 
     Create an arg name that is unique in the param list.
-    The arg name is prefixed with `prefix` and subfixed with a serial number,
+    The arg name is prefixed with `prefix` and suffixed with a serial number,
     so that unique names will be created for a same prefix.
     The arg name' length should be less than `LN_MAX_NAME_LEN`. If its length
     exceeds that limit, an internal error will be emited and the program will 
     abort. The arg name  will be printed in `buf`. The return value is the 
-    subfixed number.
+    suffixed number.
 
 ## Operator
 
@@ -1236,7 +1236,7 @@ The operator list supports the following operations:
 
     Create and print an unique operator name in the scope of `ops`
     with `prefix` in `buf`.
-    The created name is prefixed with `prefix` and subfixed with a serial number,
+    The created name is prefixed with `prefix` and suffixed with a serial number,
     which is the return value.
 
 The operator table supports the following operations:

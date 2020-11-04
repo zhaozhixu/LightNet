@@ -51,8 +51,8 @@ typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 #define LN_MAX_NAME_LEN 512      /* including the terminating null byte */
 #define LN_MAX_NAME_IDX (UINT32_MAX)
 #define LN_MAX_NAME_IDX_LEN 10  /* 2^32 =  4294967296, 10 chars*/
-#define LN_MAX_NAME_SUBFIX (LN_MAX_NAME_IDX_LEN)
-#define LN_MAX_NAME_PREFIX (LN_MAX_NAME_LEN - LN_MAX_NAME_SUBFIX - 1)
+#define LN_MAX_NAME_SUFFIX (LN_MAX_NAME_IDX_LEN)
+#define LN_MAX_NAME_PREFIX (LN_MAX_NAME_LEN - LN_MAX_NAME_SUFFIX - 1)
 
 #ifdef __cplusplus
 LN_CPPSTART

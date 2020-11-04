@@ -67,7 +67,7 @@ static void prepare_anchors(float *anchors)
 static int jpeg_filter(const struct dirent *de)
 {
     if (ln_streq(de->d_name, ".") || ln_streq(de->d_name, "..")
-        || !ln_subfixed(de->d_name, ".jpg"))
+        || !ln_suffixed(de->d_name, ".jpg"))
         return 0;
     return 1;
 }

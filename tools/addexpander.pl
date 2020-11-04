@@ -1358,8 +1358,8 @@ sub err_unknown_field {
     my $index = shift;
     my @fields = @_;
     my $prefix = join '.', @fields[0..$index-1];
-    my $subfix = $fields[$index];
-    util::err_exit("$prefix doesn't have a '$subfix' field");
+    my $suffix = $fields[$index];
+    util::err_exit("$prefix doesn't have a '$suffix' field");
 }
 
 sub err_unknown_last_field {

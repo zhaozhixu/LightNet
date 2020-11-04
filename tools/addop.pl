@@ -1061,7 +1061,7 @@ sub backup_write {
     my $file = shift;
     my $str = shift;
     if (-e $file) {
-        &warn_msg("${file} exists, backuped with subfix .bak");
+        &warn_msg("${file} exists, backuped with suffix .bak");
         copy($file, "${file}.bak")
             or die "Cannot backup file ${file}.bak: $!";
     }

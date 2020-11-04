@@ -276,7 +276,7 @@ which is verbose and well-formed and can be easily parsed, although a little har
 for human to read (when the model gets bigger and has tens of thousands of lines). 
 Thus we also provide a concise format for that JSON IR, 
 called LightNet [Intermediate Language](Documentation/Intermediate-Language.md)
-(IL) for the ease of human reading, subfixed with `.net`.
+(IL) for the ease of human reading, suffixed with `.net`.
 There is of course a tool, `il2json`, to carry out the task of translate 
 the IL to JSON IR, which is installed by default.
 Our sample models in `protos/net` directory are all written in IL.

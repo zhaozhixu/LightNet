@@ -62,14 +62,14 @@ static char *create_arg_name_in_tensors(ln_list *tensors, const char *prefix)
     int max_idx = -1;
     char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX;
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUFFIX;
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(tle, tensors) {
         if (!ln_streqn(tle->arg_name, prefix, prefix_len) ||
             ln_next_token(tle->arg_name, '_'))
             continue;
-        assert(isdigit(tle->arg_name[prefix_len]) && "subfixed with no digit");
+        assert(isdigit(tle->arg_name[prefix_len]) && "suffixed with no digit");
         int idx = atoi(&tle->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
@@ -83,14 +83,14 @@ static char *create_arg_name_in_params(ln_list *params, const char *prefix)
     int max_idx = -1;
     char *buf;
     size_t prefix_len = strlen(prefix);
-    size_t buf_len = prefix_len + LN_MAX_NAME_SUBFIX + 1;
+    size_t buf_len = prefix_len + LN_MAX_NAME_SUFFIX + 1;
 
     buf = ln_alloc(sizeof(char)*buf_len);
     LN_LIST_FOREACH(pe, params) {
         if (!ln_streqn(pe->arg_name, prefix, prefix_len) ||
             ln_next_token(pe->arg_name, '_'))
             continue;
-        assert(isdigit(pe->arg_name[prefix_len]) && "subfixed with no digit");
+        assert(isdigit(pe->arg_name[prefix_len]) && "suffixed with no digit");
         int idx = atoi(&pe->arg_name[prefix_len]);
         max_idx = max_idx < idx ? idx : max_idx;
     }
@@ -399,8 +399,8 @@ static ln_list *od_func_tensorrt(const ln_context *ctx)
                 pe = (*lp)->data;
                 if (!ln_streq(pe->arg_name, "bin") &&
                     !ln_streq(pe->arg_name, "bin_size") &&
-                    !ln_subfixed(pe->arg_name, "_shape") &&
-                    !ln_subfixed(pe->arg_name, "_dtype")) {
+                    !ln_suffixed(pe->arg_name, "_shape") &&
+                    !ln_suffixed(pe->arg_name, "_dtype")) {
                     tmp = *lp;
                     *lp = tmp->next;
                     ln_param_entry_free(pe);
