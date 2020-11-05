@@ -18,7 +18,7 @@ svmr {
 
 svmr_dpu : svmr {
     optype: "svmr_dpu",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "dpu",
     tensors_in:[
         {mtype: "LN_MEM_DPU"}

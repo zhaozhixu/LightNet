@@ -2,7 +2,7 @@
     "ops": [
         {
             "optype": "scale_cpu",
-            "author": "Zhao Zhixu",
+            "author": "Zhixu Zhao",
             "arch": "cpu",
             "tensors_in": [
                 {"arg_name": "src", "mtype": "LN_MEM_CPU"},
@@ -25,7 +25,7 @@
         {
             "optype": "upsample_cuda",
             "arch": "cuda",
-            "author": "Zhao Zhixu",
+            "author": "Zhixu Zhao",
             "extra_privs": [
                 {"type": "cudaXXXX *", "name": "cudaYYYY"},
                 {"type": "cudaXXXX2*", "name": "cudaYYYY2"},

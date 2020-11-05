@@ -1,6 +1,6 @@
 detect_yolov3 {
     optype: "detect_yolov3",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         {arg_name: "feature", mtype: "LN_MEM_NONE", ndim: 4,

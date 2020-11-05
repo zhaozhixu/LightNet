@@ -1,6 +1,6 @@
 tensorrt {
     optype: "tensorrt",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "tensorrt",
     autogen: false,
     variable_length: true,

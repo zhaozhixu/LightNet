@@ -31,7 +31,7 @@ seperated by white spaces and some punctuations.
   -t, --type=<type>        data type set for all weights, see above
   -o, --outfile=<outfile>  output file name
 
-Author: Zhao Zhixu
+Author: Zhixu Zhao
 EOF
 
 my $type = '';

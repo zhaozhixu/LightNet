@@ -1,6 +1,6 @@
 bn2scale_wts_cpu {
     optype: "bn2scale_wts_cpu",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "cpu",
     tensors_in: [
         {arg_name: "src_mean", mtype: "LN_MEM_CPU",

@@ -1,6 +1,6 @@
 sort1d {
     optype: "sort1d",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         {arg_name: "src_key", mtype: "LN_MEM_NONE", ndim: 1},

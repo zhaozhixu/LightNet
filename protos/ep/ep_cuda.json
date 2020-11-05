@@ -1,5 +1,5 @@
 {
-    "author": "Zhao Zhixu",
+    "author": "Zhixu Zhao",
     "name": "cuda",
     "arch": "cuda",
     "head": "#include \"arch/ln_cuda.h\"",

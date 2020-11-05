@@ -25,7 +25,7 @@ Options:
                           operator defination file(s) in ROOT/src/op/auto, and
                           add operator declarations and such to
                           ROOT/src/arch/ln_arch_*.c
-Author: Zhao Zhixu
+Author: Zhixu Zhao
 EOF
 
 my $INDENT_OFFSET = 4;

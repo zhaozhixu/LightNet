@@ -38,7 +38,7 @@ Options:
                           expanders file(s) in ROOT/src/arch/auto, and add
                           expander declarations and such to
                           ROOT/src/arch/ln_archimpl_*.c
-Author: Zhao Zhixu
+Author: Zhixu Zhao
 EOF
 
 my $INDENT_OFFSET = 4;

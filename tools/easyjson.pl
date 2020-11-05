@@ -29,7 +29,7 @@ Options:
   -h, --help       show this help
   -o, --outfile    specify output file name (print to standard out without this)
 
-Author: Zhao Zhixu
+Author: Zhixu Zhao
 EOF
 
 my $outfile = '';

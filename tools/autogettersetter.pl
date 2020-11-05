@@ -17,7 +17,7 @@ Options:
   -h, --help              print this message
   -s, --setter            generate setters
   -g, --getter            generate getters
-Author: Zhao Zhixu
+Author: Zhixu Zhao
 EOF
 
 GetOptions(

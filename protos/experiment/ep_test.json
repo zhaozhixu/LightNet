@@ -1,7 +1,7 @@
 {
     "arch": "tensorrt",
     "name": "tensorrt_expander",
-    "author": "Zhao Zhixu",
+    "author": "Zhixu Zhao",
     "ops": [
         {
             "optype": "softmax",

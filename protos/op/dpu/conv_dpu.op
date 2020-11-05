@@ -1,6 +1,6 @@
 conv1x1_dpu {
     optype: "conv1x1_dpu",
-    author: "Ma Siyuan, Zhao Zhixu",
+    author: "Ma Siyuan, Zhixu Zhao",
     arch: "dpu",
     tensors_in: [
         // [width, input_channel]
@@ -48,7 +48,7 @@ dst_dims = (int[]){ln_output_dim_conv(src->dims[0], 1, stride, padding[0] + padd
 
 conv3x3_dpu {
     optype: "conv3x3_dpu",
-    author: "Ma Siyuan, Zhao Zhixu",
+    author: "Ma Siyuan, Zhixu Zhao",
     arch: "dpu",
     tensors_in: [
         // [width, input_channel]

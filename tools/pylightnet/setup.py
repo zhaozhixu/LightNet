@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="pylightnet-favoryoung",
     version="0.1.0",
-    author="Zhao Zhixu",
+    author="Zhixu Zhao",
     author_email="zhixu001@126.com",
     description="A Python wrapper for Lightnet",
     long_description=long_description,

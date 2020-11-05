@@ -1,6 +1,6 @@
 create {
     optype: "create",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [],
     tensors_out: [

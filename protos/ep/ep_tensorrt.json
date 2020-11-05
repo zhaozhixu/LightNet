@@ -1,5 +1,5 @@
 {
-    "author": "Zhao Zhixu",
+    "author": "Zhixu Zhao",
     "arch": "tensorrt",
     "name": "tensorrt",
     "head": "#include \"arch/ln_tensorrt.h\"",

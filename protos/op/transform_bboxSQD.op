@@ -1,6 +1,6 @@
 transform_bboxSQD {
     optype: "transform_bboxSQD",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         {arg_name: "src_delta", mtype: "LN_MEM_NONE", ndim: 5,

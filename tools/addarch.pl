@@ -22,7 +22,7 @@ Options:
   -d, --dir=DIRECTORY     save generated file in DIRECTORY/ln_archimpl_ARCH.c
   -r, --root=ROOT         set project root directory; this option will save
                           generated file in ROOT/src/arch/ln_archimpl_ARCH.c
-Author: Zhao Zhixu
+Author: Zhixu Zhao
 EOF
 
 my $root = '';
@@ -38,7 +38,7 @@ my $arch = shift @ARGV;
 
 my $code_str = <<EOF;
 /*
- * Copyright (c) 2018-2020 Zhao Zhixu
+ * Copyright (c) 2018-2020 Zhixu Zhao
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

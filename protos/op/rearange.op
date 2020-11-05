@@ -1,6 +1,6 @@
 rearange {
     optype: "rearange",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         {arg_name: "src", mtype: "LN_MEM_NONE", ndim: 1}

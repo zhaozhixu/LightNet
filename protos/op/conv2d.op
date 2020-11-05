@@ -1,6 +1,6 @@
 conv2d {
     optype: "conv2d",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         // [batch, channel, height, width]

@@ -1,7 +1,7 @@
 // same as upsample now
 submean {
     optype: "submean",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         {arg_name: "src", mtype: "LN_MEM_NONE", ndim: 3,

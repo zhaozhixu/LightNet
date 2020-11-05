@@ -22,7 +22,7 @@ dst_dims = (int[]){src->dims[0], ln_next_multiple_power2(src->dims[1], 8)};
 
 ldmr_dpu : ldmr {
     optype: "ldmr_dpu",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "dpu",
     tensors_in:[
         {mtype: "LN_MEM_CPU"}

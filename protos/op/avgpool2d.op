@@ -1,6 +1,6 @@
 avgpool2d {
     optype: "avgpool2d",
-    author: "Zhao Zhixu",
+    author: "Zhixu Zhao",
     arch: "none",
     tensors_in: [
         // [batch, channel, height, width]
