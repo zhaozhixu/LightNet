@@ -22,7 +22,7 @@
 
 #ifdef LN_CUDA
 #include <check.h>
-#include <tl_check.h>
+#include <tensorlight/tl_check.h>
 #include "lightnettest/ln_test.h"
 #include "arch/ln_cuda.h"
 

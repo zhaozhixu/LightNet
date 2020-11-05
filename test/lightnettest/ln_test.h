@@ -51,15 +51,20 @@ typedef struct ln_test_info ln_test_info;
 
 #define LN_TEST_END } END_TEST
 
-#define LN_TEST_TCASE_START(tcase_name, setup, teardown)                \
-    static TCase *_make_##tcase_name##_tcase(                           \
+#define LN_TEST_TCASE_START_TIMEOUT(tcase_name, setup, teardown, timeout) \
+    static TCase *_make_##tcase_name##_tcase(                             \
         ln_test_record *_record, const char *const *_candidates, int _num) { \
     const char *_tcase_name = #tcase_name;                              \
     TCase *_tc = NULL;                                                  \
     if (!_record) {                                                     \
         _tc = tcase_create(#tcase_name);                                \
         tcase_add_checked_fixture(_tc, setup, teardown);                \
+        if ((timeout) >= 0)                                             \
+            tcase_set_timeout(_tc, (timeout));                          \
     }
+
+#define LN_TEST_TCASE_START(tcase_name, setup, teardown)            \
+    LN_TEST_TCASE_START_TIMEOUT(tcase_name, setup, teardown, -1)
 
 #define LN_TEST_ADD_TEST(test_name)                                     \
     do {                                                                \

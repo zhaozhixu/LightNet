@@ -28,7 +28,7 @@ my %customs =
      "SRC_REQUIRES" => "tensorlight >= 0.1.0",
      "TEST_DIR" => "test",
      "TEST_SUB_DIRS" => "lightnettest",
-     "TEST_EXTRA_CFLAGS" => '-D$(ABBR)_TEST_DIR="\"$(CURDIR)\"" -D$(ABBR)_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\"" -I../$(SRC_DIR)',
+     "TEST_EXTRA_CFLAGS" => '-DLN_TEST_DIR="\"$(CURDIR)\"" -DLN_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\"" -I../$(SRC_DIR)',
      "TEST_REQUIRES" => 'check $(SRC_REQUIRES)'
     );
 

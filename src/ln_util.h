@@ -29,7 +29,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "tl_tensor.h"
 #include "ln_util_common.h"
 
 enum ln_bool {
@@ -46,6 +45,7 @@ typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 
 #define LN_EXPORT __attribute__ ((visibility ("default")))
 
+#define LN_MAXDIM 8
 #define LN_MAXLINE 4096
 
 #define LN_MAX_NAME_LEN 512      /* including the terminating null byte */

@@ -294,8 +294,8 @@ int *ln_autopadding_conv(int *padding, const int *input_dims, const int *size,
         return padding;
     }
 
-    int output_shape[TL_MAXDIM];
-    int pad_shape[TL_MAXDIM];
+    int output_shape[LN_MAXDIM];
+    int pad_shape[LN_MAXDIM];
     for (int i = 0; i < ndim; i++) {
         output_shape[i] = (int)ceil((double)input_dims[i] / (double)stride[i]);
         pad_shape[i] = (output_shape[i] - 1) * stride[i] +
@@ -328,7 +328,7 @@ int *ln_autopadding_deconv(int *padding, const int *input_dims,
         return padding;
     }
 
-    int pad_shape[TL_MAXDIM];
+    int pad_shape[LN_MAXDIM];
     for (int i = 0; i < ndim; i++) {
         pad_shape[i] = stride[i] * (input_dims[i] - 1) + output_padding[i] +
             ((size[i] - 1) * dilations[i] + 1) - output_dims[i];

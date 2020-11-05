@@ -21,7 +21,7 @@
  */
 
 #include <check.h>
-#include <tl_check.h>
+#include <tensorlight/tl_check.h>
 #include <assert.h>
 #include "lightnettest/ln_test.h"
 #include "ln_op.h"

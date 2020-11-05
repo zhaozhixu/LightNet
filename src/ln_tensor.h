@@ -23,6 +23,7 @@
 #ifndef _LN_TENSOR_H_
 #define _LN_TENSOR_H_
 
+#include "tensorlight/tensorlight.h"
 #include "ln_list.h"
 #include "ln_hash.h"
 #include "ln_mem.h"
