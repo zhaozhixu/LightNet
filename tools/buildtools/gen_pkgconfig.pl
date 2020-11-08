@@ -31,14 +31,14 @@ my $config_template = <<EOF;
 # Package Information for pkg-config
 
 libdir=$prefix/lib
-includedir=$prefix/include/$target
+includedir=$prefix/include
 
 Name: $target
 Description: $description
 Version: $version
 Requires: $requires
 Libs: -L\$\{libdir\} -l$target
-Cflags: -I\$\{includedir\}
+Cflags: -I\$\{includedir\} -I\$\{includedir\}/$target
 EOF
 
 open OUTFILE, '>', $outfile or die "Cannot open $outfile: $!";

@@ -35,7 +35,7 @@ static int glob_match(const char *glob, const char *str)
         substr = strtok_r(glob_cpy, "*", &save);
         if (!substr) {
             match = 1;
-            goto end;
+            break;
         }
         s = strstr(s, substr);
         if (!s) {
@@ -147,7 +147,7 @@ static char **add_word(char **words, int *count, const char *word)
 {
     char **new_words;
 
-    new_words = realloc(words, sizeof(char *) * (*count + 1));
+    new_words = ln_test_realloc(words, sizeof(char *) * (*count + 1));
     new_words[*count] = ln_test_strdup(word);
     (*count)++;
 
@@ -158,7 +158,7 @@ static char **add_char_as_word(char **words, int *count, char c)
 {
     char **new_words;
 
-    new_words = realloc(words, sizeof(char *) * (*count + 1));
+    new_words = ln_test_realloc(words, sizeof(char *) * (*count + 1));
     new_words[*count] = malloc(sizeof(char) * 2);
     new_words[*count][0] = c;
     new_words[*count][1] = '\0';
