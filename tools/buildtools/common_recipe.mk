@@ -1,4 +1,19 @@
+CFLAGS := $(call uniq,$(CFLAGS))
+CXXFLAGS := $(call uniq,$(CXXFLAGS))
+CUFLAGS := $(call uniq,$(CUFLAGS))
+
+DEP = $(patsubst %.o,%.d,$(OBJS))
+
+ifeq ($(GEN_CMD_FILE), yes)
+make-cmd-file = $(AT)[ -e $@ ] || echo "[]" > $@
+endif
+
 .PHONY: cmd clean
+
+$(CMD_FILE):
+	$(call make-cmd-file)
+
+$(OBJS): | $(CMD_FILE)
 
 cmd: $(OBJS)
 

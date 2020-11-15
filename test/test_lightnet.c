@@ -20,73 +20,9 @@
  * SOFTWARE.
  */
 
-#include <getopt.h>
-#include <stdlib.h>
-#include <check.h>
 #include "lightnettest/ln_test.h"
-
-static void print_test_usage_exit(void)
-{
-    const char *usage = "\
-Usage: test_lightnet [OPTION...]\n\
-Test lightnet.\n\
-\n\
-Options:\n\
-  -h, --help               display this message\n\
-  -f, --filter=SUITE1[|SUITE2...]\n\
-                           specify test suites to be run;\n\
-                           SUITE can contain '*' for glob matching;\n\
-                           add '!' before the glob to take the complement;\n\
-                           use '|' between SUITEs to do multiple matches;\n\
-                           run all tests if omit this option\n\
-";
-    fputs(usage, stderr);
-    exit(EXIT_SUCCESS);
-}
 
 int main(int argc, char **argv)
 {
-    int optindex, opt, num_failed;
-    const char *filter = "*";
-    const struct option longopts[] = {
-        {"help",   no_argument, NULL, 'h'},
-        {"filter", required_argument, NULL, 'f'},
-        {"verbose", required_argument, NULL, 'v'},
-        {0, 0, 0, 0}
-    };
-
-    optind = 1;
-    while ((opt = getopt_long_only(argc, argv, ":hf:v", longopts,
-                                   &optindex)) != -1) {
-        switch (opt) {
-        case 0:
-            break;
-        case 'h':
-            print_test_usage_exit();
-            break;
-        case 'f':
-            filter = optarg;
-            break;
-        case 'v':
-            ln_test_set_verbose(1);
-            break;
-        case ':':
-            fprintf(stderr, "option %s needs a value\n", argv[optind-1]);
-            exit(EXIT_FAILURE);
-            break;
-        case '?':
-            fprintf(stderr, "unknown option %s\n", argv[optind-1]);
-            exit(EXIT_FAILURE);
-            break;
-        default:
-            fprintf(stderr, "getopt_long_only() returned character code %d\n",
-                    opt);
-            exit(EXIT_FAILURE);
-            break;
-        }
-    }
-
-    num_failed = ln_test_run_tests(filter);
-
-    return (num_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
+    return ln_test_main(argc, argv);
 }

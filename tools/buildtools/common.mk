@@ -5,34 +5,29 @@ AR = ar cr
 ECHO = @echo
 SHELL = /bin/sh
 
-ifdef VERBOSE
-AT =
-else
+ifndef VERBOSE
 AT = @
 endif
 
 CFLAGS += -Wall -std=gnu99 -D_GNU_SOURCE
 CXXFLAGS += -std=c++11 -Wall
 CUFLAGS += -m64 -arch=sm_30 -use_fast_math -ccbin $(CXX)
-LDFLAGS += $(CFLAGS)
 
 ifeq ($(DEBUG), yes)
 CFLAGS += -g -O0 -D$(ABBR)_DEBUG
 CXXFLAGS += -g -O0 -D$(ABBR)_DEBUG
 CUFLAGS += -lineinfo
-LDFLAGS += -g -O0
 else
 CFLAGS += -O2
 CXXFLAGS += -O2
 CUFLAGS += -O2
-LDFLAGS += -O2
 endif
 
-INCPATHS += -I/usr/local/include -I.
+INCPATHS += -I/usr/local/include -I. -I$(CURDIR)
 LDFLAGS += -L/usr/local/lib -lm
 # cannot use ifeq/ifneq because they expand immediately
-INCPATHS += $(if $(REQUIRES),`pkg-config --cflags '$(REQUIRES)'`)
-LDFLAGS += $(if $(REQUIRES),`pkg-config --libs '$(REQUIRES)'`)
+INCPATHS += $(if $(REQUIRES),$(shell pkg-config --cflags '$(REQUIRES)'))
+LDFLAGS += $(if $(REQUIRES),$(shell pkg-config --libs '$(REQUIRES)'))
 
 NORMAL_SRC = $(filter-out %cuda.c %cuda.cc %cuda.cpp %cudnn.c %cudnn.cc %cudnn.cpp %tensorrt.c %tensorrt.cc %tensorrt.cpp %dpu.c %dpu.cc %dpu.cpp %.cu,$(SRC))
 CUDA_SRC = $(filter %cuda.c %cuda.cc %cuda.cpp %.cu,$(SRC))
@@ -40,7 +35,13 @@ CUDNN_SRC = $(filter %cudnn.c %cudnn.cc %cudnn.cpp,$(SRC))
 TENSORRT_SRC = $(filter %tensorrt.c %tensorrt.cc %tensorrt.cpp,$(SRC))
 DPU_SRC = $(filter %dpu.c %dpu.cc %dpu.cpp,$(SRC))
 
-OBJDIR = $(BUILD_DIR)/$(notdir $(CURDIR))
+# OBJDIR is BUILD_DIR/{directories from project root to current makefile}
+# project cannot contain subdirectories that have spaces in names to make this code work
+cur_dirs = $(subst /, ,$(abspath .))
+build_dirs = $(subst /, ,$(abspath $(BUILD_DIR)))
+common_dirs = $(foreach dir,$(cur_dirs),$(if $(findstring $(dir),$(build_dirs)),$(dir)))
+space := $(subst ,, )
+OBJDIR = $(BUILD_DIR)/$(subst $(space),/,$(wordlist $(words $(common_dirs) 1),$(words $(cur_dirs)),$(cur_dirs)))
 OBJS   = $(patsubst %.c,$(OBJDIR)/%.o,$(filter %.c,$(NORMAL_SRC)))
 OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(NORMAL_SRC)))
 OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(NORMAL_SRC)))
@@ -93,10 +94,12 @@ CFLAGS += $(INCPATHS)
 CXXFLAGS += $(INCPATHS)
 CUFLAGS += $(INCPATHS)
 
-CFLAGS += -fPIC -fvisibility=hidden
-CXXFLAGS += -fPIC -fvisibility=hidden
+VISIBLE := -fvisibility=hidden
+CFLAGS += -fPIC $(VISIBLE)
+CXXFLAGS += -fPIC $(VISIBLE)
+CUFLAGS += --compiler-options '-fPIC $(VISIBLE)' -shared
 LDFLAGS_SO += $(LDFLAGS) -shared
-CUFLAGS += --compiler-options '-fPIC -fvisibility=hidden' -shared
+UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 LDFLAGS_SO += -Wl,--no-undefined
 CUFLAGS += --linker-options '-Wl,--no-undefined -shared'
@@ -105,6 +108,8 @@ LDFLAGS_SO += -Wl,-undefined,error
 CUFLAGS += --linker-options '-Wl,-undefined,error'
 endif
 CFLAGS += $(SRC_EXTRA_FLAGS)
+
+uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 
 define concat
 $1$2$3$4$5$6$7$8
@@ -171,12 +176,12 @@ endif
 
 define ld-bin
 $(ECHO) "  LD\t" $@
-$(AT)$(CC) -o $@ $^ $(LDFLAGS)
+$(AT)$(CC) -o $@ $^ $(BEFORE_LDFLAGS) $(LDFLAGS)
 endef
 
 define ld-so
 $(ECHO) "  LD\t" $@
-$(AT)$(CC) -o $@ $^ $(LDFLAGS_SO)
+$(AT)$(CC) -o $@ $^ $(BEFORE_LDFLAGS) $(LDFLAGS_SO)
 endef
 
 define ar-a

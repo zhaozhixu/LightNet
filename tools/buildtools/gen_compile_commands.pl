@@ -39,7 +39,7 @@ foreach my $cmd_obj (@$cmd_objs) {
     if ($cmd_obj->{directory} eq $wd and $cmd_obj->{file} eq $src) {
         $found = 1;
         last if $cmd_obj->{command} eq $cmd;
-        print "updating compile command file: $wd/$src\n";
+        # print "updating compile command file: $wd/$src\n";
         $cmd_obj->{command} = $cmd;
         last;
     }

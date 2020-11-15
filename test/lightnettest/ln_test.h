@@ -30,14 +30,6 @@
 
 #include "ln_test_record.h"
 
-#ifndef LN_TEST_DIR
-#error LN_TEST_DIR should be defined in the command line
-#endif
-
-#ifndef LN_BUILD_TEST_DIR
-#error LN_BUILD_TEST_DIR should be defined in the command line
-#endif
-
 struct ln_test_info {
     int            verbose;
     ln_test_record record;
@@ -100,7 +92,8 @@ LN_TEST_CPPSTART
 #endif
 
 void ln_test_set_verbose(int verbose);
-int ln_test_run_tests(const char *filter);
+int ln_test_run_tests(const char *filter, const char *result_file);
+int ln_test_main(int argc, char **argv);
 
 #ifdef __cplusplus
 LN_TEST_CPPEND

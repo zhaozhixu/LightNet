@@ -16,7 +16,7 @@ test.json
 .clang_complete
 vgcore*
 config.mk
-check_output.xml
+test_output.xml
 test_lightnet
 lightnet
 core

@@ -78,6 +78,25 @@ INSTALL_PYTHON =
 UNINSTALL_PYTHON =
 endif
 
+ifneq ($(WITH_PLUGIN), yes)
+make-plugin = @echo "$(TARGET) not configured with plugin support"
+make-plugin-test = @echo "$(TARGET) not configured with plugin support"
+make-plugin-cmd = @echo "$(TARGET) not configured with plugin support"
+else
+ifeq ("$(origin P)", "command line")
+make-plugin = $(AT)+$(MAKE) P=$(P) -C $(SRC_DIR) ext-plugin
+make-plugin-test = $(AT)+$(MAKE) P=$(P) -C $(TEST_DIR) ext-plugin-test
+define make-plugin-cmd
+$(AT)+$(MAKE) P=$(P) -C $(SRC_DIR) ext-plugin-cmd
+$(AT)+$(MAKE) P=$(P) -C $(TEST_DIR) ext-plugin-cmd
+endef
+else
+make-plugin = @echo "must set P=dir to specify the directory of external plugin to build"
+make-plugin-test = @echo "must set P=dir to specify the directory of external plugin to build"
+make-plugin-cmd = @echo "must set P=dir to specify the directory of external plugin to build"
+endif
+endif # WITH_PLUGIN
+
 ifeq ($(DOC), yes)
 MAKE_DOC_CMD = mkdocs build -c -d $(BUILD_DOC)
 INSTALL_DOC_CMD = if [ -d $(BUILD_DOC) ]; then cp -r $(BUILD_DOC) $(INSTALL_DOC); fi
@@ -172,9 +191,7 @@ $(AT)$(MAKE) -C $(SRC_DIR) clean; $(MAKE) -C $(TEST_DIR) clean
 rm -rf $(BUILD_DIR)
 endef
 
-CMD_FILE ?= $(BUILD_DIR)/compile_commands.json
-
-.PHONY: all lib bin test cmd doc clean info help install uninstall
+.PHONY: all lib bin test plugin cmd doc clean info help install uninstall
 
 all: lib bin
 
@@ -182,9 +199,7 @@ install:
 	$(call make-install-dir)
 	$(call make-install)
 
-bin:
-	$(call make-build-dir)
-	$(call pre-make-config)
+bin: lib
 	$(AT)$(MAKE) -C $(SRC_DIR) bin
 	$(call make-bin)
 
@@ -200,9 +215,17 @@ test: lib
 cmd:
 	$(call make-build-dir)
 	$(call pre-make-config)
-	$(AT)[ -e $(CMD_FILE) ] || echo "[]" > $(CMD_FILE)
 	$(AT)$(MAKE) -C $(SRC_DIR) cmd
 	$(AT)$(MAKE) -C $(TEST_DIR) cmd
+
+plugin:
+	$(call make-plugin)
+
+plugin-test:
+	$(call make-plugin-test)
+
+plugin-cmd:
+	$(call make-plugin-cmd)
 
 doc:
 	$(call make-build-dir)
@@ -220,6 +243,7 @@ info:
 	@echo "  lib: make libraries"
 	@echo "  bin: make executables"
 	@echo "  test: make lib, test and run test"
+	@echo "  plugin: make plugin library; should use P=dir to specify plugin directory"
 	@echo "  cmd: generate $(BUILD_DIR)/compile_commands.json for clang tooling;"
 	@echo "       use 'cmd' before 'all/lib/bin/test' for the initial generation"
 	@echo "  doc: make documents"

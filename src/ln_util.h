@@ -43,7 +43,7 @@ typedef void (*ln_fprint_func) (FILE *fp, const void *p);
 typedef uint32_t (*ln_hash_func)(const void *p);
 typedef void *(*ln_copy_func)(void *dst, const void *src, size_t n);
 
-#define LN_EXPORT __attribute__ ((visibility ("default")))
+#define LN_EXPORT __attribute__((visibility("default")))
 
 #define LN_MAXDIM 8
 #define LN_MAXLINE 4096

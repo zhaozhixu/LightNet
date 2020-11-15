@@ -103,9 +103,7 @@ sub set_module_files {
         push @srcs, "\$(wildcard *.cu) \$(foreach dir,\$($sub_dirs),\$(wildcard \$(dir)/*.cu))";
     }
     my $files = "${module_name}_FILES";
-    my $dep_files = "${module_name}_DEP_FILES";
     $customs->{$files} = \@srcs;
-    $customs->{$dep_files} = "\$(OBJDIR)/*.d \$(foreach dir,\$($sub_dirs),\$(OBJDIR)/\$(dir)/*.d)";
 }
 
 sub common_checks {

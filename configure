@@ -24,11 +24,11 @@ my %customs =
      "BUILDTOOLS_DIR" => "tools/buildtools",
      "SRC_DIR" => "src",
      "SRC_SUB_DIRS" => "op op/auto arch arch/auto",
-     "SRC_EXTRA_CFLAGS" => '-I$(BUILD_DIR)/include/$(TARGET)',
+     "SRC_EXTRA_CFLAGS" => '-I$(abspath $(BUILD_DIR))/include/$(TARGET)',
      "SRC_REQUIRES" => "tensorlight >= 0.1.0",
      "TEST_DIR" => "test",
-     "TEST_SUB_DIRS" => "lightnettest",
-     "TEST_EXTRA_CFLAGS" => '-DLN_TEST_DIR="\"$(CURDIR)\"" -DLN_BUILD_TEST_DIR="\"$(shell realpath $(OBJDIR))\"" -I../$(SRC_DIR)',
+     "TEST_SUB_DIRS" => "",
+     "TEST_EXTRA_CFLAGS" => '-DLN_BUILD_TEST_DIR="\"$(abspath $(OBJDIR))\"" -I$(abspath ../$(SRC_DIR))',
      "TEST_REQUIRES" => 'check $(SRC_REQUIRES)'
     );
 
@@ -52,6 +52,7 @@ my @options =
      [ "python-version", "PYTHON_VERSION", "VERSION", "3", "Python version"],
      [ "python-cmd", "PYTHON_CMD", "CMD", "python3", "Python command"],
      [ "python-user", "PYTHON_USER", "BOOL", "no", "install Python packages to user's site-package '\$HOME/.local/lib/python<version>/site-packages'" ],
+     [ "with-plugin", "WITH_PLUGIN", "BOOL", "yes", "set to yes if build with plugin support"],
      [ "debug", "DEBUG", "BOOL", "no", "set to yes when debugging" ],
      [ "doc", "DOC", "BOOL", "yes", "set to yes if build the documents too" ],
     );

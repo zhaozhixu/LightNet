@@ -4,13 +4,15 @@ include $(BUILDTOOLS_DIR)/common.mk
 BUILD_DIR := ../$(BUILD_DIR)
 
 SRC = $(SRC_FILES)
-DEP = $(SRC_DEP_FILES)
 REQUIRES = $(SRC_REQUIRES)
 CFLAGS += $(SRC_EXTRA_CFLAGS)
 
-include $(BUILDTOOLS_DIR)/common_recipe.mk
+ifeq ("$(origin P)", "command line")
+export LDFLAGS += $(abspath $(OBJDIR))/$(LIBTARGET_A)
+export CFLAGS CXXFLAGS CUFLAGS LDFLAGS_SO
+endif
 
-.PHONY: all bin lib liba libso
+.PHONY: all bin lib liba libso ext-plugin
 
 all: bin lib
 
@@ -30,3 +32,11 @@ $(OBJDIR)/$(LIBTARGET_SO): $(OBJS)
 
 $(OBJDIR)/$(LIBTARGET_A): $(OBJS)
 	$(call ar-a)
+
+ext-plugin:
+	$(AT)$(MAKE) -C $(P)
+
+ext-plugin-cmd:
+	$(AT)$(MAKE) -C $(P) cmd
+
+include $(BUILDTOOLS_DIR)/common_recipe.mk
