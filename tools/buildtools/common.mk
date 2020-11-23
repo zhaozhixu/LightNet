@@ -90,6 +90,12 @@ OBJS  += $(patsubst %.cc,$(OBJDIR)/%.o,$(filter %.cc,$(DPU_SRC)))
 OBJS  += $(patsubst %.cpp,$(OBJDIR)/%.o,$(filter %.cpp,$(DPU_SRC)))
 endif
 
+ifeq ($(WITH_PLUGIN), yes)
+CFLAGS += -D$(ABBR)_PLUGIN
+CXXFLAGS += -D$(ABBR)_PLUGIN
+CUFLAGS += -D$(ABBR)_PLUGIN
+endif
+
 CFLAGS += $(INCPATHS)
 CXXFLAGS += $(INCPATHS)
 CUFLAGS += $(INCPATHS)
@@ -107,7 +113,6 @@ else ifeq ($(UNAME_S),Darwin)
 LDFLAGS_SO += -Wl,-undefined,error
 CUFLAGS += --linker-options '-Wl,-undefined,error'
 endif
-CFLAGS += $(SRC_EXTRA_FLAGS)
 
 uniq = $(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 

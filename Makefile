@@ -83,6 +83,7 @@ make-plugin = @echo "$(TARGET) not configured with plugin support"
 make-plugin-test = @echo "$(TARGET) not configured with plugin support"
 make-plugin-cmd = @echo "$(TARGET) not configured with plugin support"
 else
+CONFIG_DEFINES += "$(ABBR)_PLUGIN"
 ifeq ("$(origin P)", "command line")
 make-plugin = $(AT)+$(MAKE) P=$(P) -C $(SRC_DIR) ext-plugin
 make-plugin-test = $(AT)+$(MAKE) P=$(P) -C $(TEST_DIR) ext-plugin-test

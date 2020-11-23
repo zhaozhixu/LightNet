@@ -6,6 +6,9 @@ BUILD_DIR := ../$(BUILD_DIR)
 SRC = $(SRC_FILES)
 REQUIRES = $(SRC_REQUIRES)
 CFLAGS += $(SRC_EXTRA_CFLAGS)
+ifeq ($(WITH_PLUGIN), yes)
+LDFLAGS += -ldl
+endif
 
 ifeq ("$(origin P)", "command line")
 export LDFLAGS += $(abspath $(OBJDIR))/$(LIBTARGET_A)
